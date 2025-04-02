@@ -1,0 +1,46 @@
+﻿<UserControl x:Class="UpdatingParameters.Views.MainWindow"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:UpdatingParameters.Views"
+             xmlns:vm="clr-namespace:UpdatingParameters.ViewModels"
+             mc:Ignorable="d"
+             d:DesignHeight="auto" d:DesignWidth="300" d:DataContext="{d:DesignInstance vm:MainViewModel  }">
+    <Grid>
+        <StackPanel>
+            <TextBlock Text="Трубы: Без типа" />
+            <ComboBox ItemsSource="{Binding PipesWithoutTypes}" />
+            <TextBlock Text="Трубы: Днар х Стенка" />
+            <ComboBox ItemsSource="{Binding PipesOuterDiameterTypes}" />
+            <TextBlock Text="Трубы: Ду х Стенка" />
+            <ComboBox ItemsSource="{Binding PipesInternalDiameterTypes}" />
+            <TextBlock Text="Гибкие трубы: Без типа" />
+            <ComboBox ItemsSource="{Binding FlexPipesWithoutTypes}" />
+            <TextBlock Text="Гибкие трубы: Подводки" />
+            <ComboBox ItemsSource="{Binding FlexPipesConnectionsTypes}" />
+            <TextBlock Text="Гибкие трубы: Гофры" />
+            <ComboBox ItemsSource="{Binding FlexiblePipesCorrugationsTypes}" />
+            <TextBlock Text="Материал изоляции трубы: Трубки" />
+            <ComboBox ItemsSource="{Binding PipeInsulationTubesTypes}" />
+            <TextBlock Text="Материал изоляции трубы: Цилиндры" />
+            <ComboBox ItemsSource="{Binding PipeInsulationCylindersTypes}" />
+            <TextBlock Text="Материал изоляции трубы: Трубки цветные" />
+            <ComboBox ItemsSource="{Binding PipeInsulationColouredTubesTypes}" />
+            <TextBlock Text="Воздуховоды: Без типа" />
+            <ComboBox ItemsSource="{Binding DuctWithoutTypes}" />
+            <TextBlock Text="Воздуховоды: Круглые" />
+            <ComboBox ItemsSource="{Binding DuctRoundTypes}" />
+            <TextBlock Text="Воздуховоды: Пластик" />
+            <ComboBox ItemsSource="{Binding DuctPlasticTypes}" />
+            <TextBlock Text="Воздуховоды: Прямоугольные" />
+            <ComboBox ItemsSource="{Binding DuctRectangularTypes}" />
+            <TextBlock Text="Гибкие воздуховоды: Круглые" />
+            <ComboBox ItemsSource="{Binding FlexibleDuctsRoundTypes}" />
+            <TextBlock Text="Материал изоляции воздуховодов: Огнезащита" />
+            <ComboBox ItemsSource="{Binding DuctInsulationFireproofingTypes}" />
+            <TextBlock Text="Материал изоляции воздуховодов: Теплоизоляция" />
+            <ComboBox ItemsSource="{Binding DuctInsulationThermalInsulationTypes}" />
+        </StackPanel>
+    </Grid>
+</UserControl>

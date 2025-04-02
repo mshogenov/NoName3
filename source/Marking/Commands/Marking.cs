@@ -1,0 +1,20 @@
+﻿using Autodesk.Revit.Attributes;
+using Marking.Services;
+using Marking.ViewModels;
+using Marking.Views;
+using Nice3point.Revit.Toolkit.External;
+
+namespace Marking.Commands;
+
+[UsedImplicitly]
+[Transaction(TransactionMode.Manual)]
+public class Marking : ExternalCommand
+{
+    public override void Execute()
+    {
+        if (WindowController.Focus<MarkingView>()) return;
+        var viewModel = new MarkingVM();
+        var view = new MarkingView(viewModel);
+        WindowController.Show(view, UiApplication.MainWindowHandle);
+    }
+}

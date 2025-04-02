@@ -1,0 +1,5 @@
+﻿using UpdatingParameters.Storages.PipeInsulationMtl;
+
+namespace UpdatingParameters.ViewModels.PipeInsulation;
+
+public class PipeInsulationColouredTubesViewModel(PipeInsulationColouredTubesDataStorage dataStorageFormulas) : ElementTypeViewModelBase(dataStorageFormulas);

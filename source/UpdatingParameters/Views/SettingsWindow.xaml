@@ -1,0 +1,139 @@
+﻿<UserControl x:Class="UpdatingParameters.Views.SettingsWindow"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:UpdatingParameters.Views"
+             xmlns:viewmodels="clr-namespace:UpdatingParameters.ViewModels"
+             xmlns:settings="clr-namespace:UpdatingParameters.ViewModels.Settings"
+             d:DataContext="{d:DesignInstance Type=settings:SettingsViewModel}"
+             mc:Ignorable="d"
+             Height="auto" Width="auto">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/ThemesResourceDictionary.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        </ResourceDictionary>
+
+    </UserControl.Resources>
+    <Grid Style="{StaticResource Grid}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+        <CheckBox x:Name="UpdaterCheckBox"
+                  Style="{StaticResource AnimatedCheckBox}"
+                  Content="Обновление параметров"
+                  Margin="5 5 0 0" IsChecked="{Binding UpdaterIsChecked}" />
+
+        <GroupBox Grid.Row="1" Header="Категории"
+                  Style="{StaticResource GroupBoxStyle}">
+            <GroupBox.Visibility>
+                <Binding Path="IsChecked" ElementName="UpdaterCheckBox"
+                         Converter="{StaticResource BooleanToVisibilityConverter}" />
+            </GroupBox.Visibility>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <StackPanel>
+                    <StackPanel.Resources>
+                        <Style TargetType="CheckBox" BasedOn="{StaticResource AnimatedCheckBox}">
+                            <Setter Property="Margin" Value="0 3" />
+                        </Style>
+                    </StackPanel.Resources>
+                    <CheckBox Content="Трубы:Без типа"
+                              IsChecked="{Binding PipesWithoutIsChecked}" />
+                    <CheckBox Content="Трубы:Днар х Стенка"
+                              IsChecked="{Binding PipesOuterDiameterIsChecked}" />
+                    <CheckBox Content="Трубы:Ду х Стенка"
+                             IsChecked="{Binding PipesInternalDiameterIsChecked}" />
+                    <CheckBox Content="Гибкие трубы: Без типа"
+                           
+                              IsChecked="{Binding FlexPipesWithoutIsChecked}" />
+                    <CheckBox Content="Гибкие трубы: Подводки"
+                          
+                              IsChecked="{Binding FlexPipesConnectionsIsChecked}" />
+                    <CheckBox Content="Гибкие трубы: Гофры"
+                             
+                              IsChecked="{Binding FlexPipesCorrugationsIsChecked}" />
+                    <CheckBox Content="Материал изоляции трубы: Трубки"
+                           
+                              IsChecked="{Binding PipeInsulationTubesIsChecked}" />
+                    <CheckBox Content="Материал изоляции трубы: Цилиндры"
+                            
+                              IsChecked="{Binding PipeInsulationCylindersIsChecked}" />
+                    <CheckBox Content="Материал изоляции трубы: Трубки цветные"
+                             
+                              IsChecked="{Binding PipeInsulationColouredTubesIsChecked}" />
+                    <CheckBox Content="Воздуховоды: Без типа"
+                             
+                              IsChecked="{Binding DuctWithoutIsChecked}" />
+                    <CheckBox Content="Воздуховоды: Круглые"
+                             
+                              IsChecked="{Binding DuctRoundIsChecked}" />
+                    <CheckBox Content="Воздуховоды: Пластик"
+                            
+                              IsChecked="{Binding DuctPlasticIsChecked}" />
+                    <CheckBox Content="Воздуховоды: Прямоугольные"
+                             
+                              IsChecked="{Binding DuctRectangularIsChecked}" />
+                    <CheckBox Content="Гибкие воздуховоды: Круглые"
+                            
+                              IsChecked="{Binding FlexibleDuctsRoundIsChecked}" />
+                    <CheckBox Content="Материал изоляции воздуховодов: Огнезащита"
+                              
+                              IsChecked="{Binding DuctInsulationFireproofingIsChecked}" />
+                    <CheckBox Content="Материал изоляции воздуховодов: Теплоизоляция"
+                             
+                              IsChecked="{Binding DuctInsulationThermalInsulationIsChecked}" />
+                    <CheckBox Content="Соединительные детали воздуховодов"
+                             
+                              IsChecked="{Binding DuctConnectionPartsIsChecked}" />
+                    <CheckBox Content="Параметр: ADSK__Система__Имя"
+                            
+                              IsChecked="{Binding AdskSystemNameIsChecked}" />
+                    <CheckBox Content="Параметр: ADSK__Система__Сокращение"
+                            
+                              IsChecked="{Binding AdskSystemAbbreviationIsChecked}" />
+                    <CheckBox Content="Параметр: ADSK__Толщина стенки"
+                             
+                              IsChecked="{Binding AdskWallThicknessIsChecked}" />
+                    <CheckBox Content="Параметр: Класс герметичности"
+                            
+                              IsChecked="{Binding HermeticClassIsChecked}" />
+                </StackPanel>
+                <Separator Grid.Row="1" Style="{StaticResource ShadowSeparator}" />
+                <StackPanel Orientation="Horizontal" Grid.Row="2" VerticalAlignment="Top">
+                    <Button Command="{Binding HighlightAllCommand}"
+                            Style="{StaticResource SelectAllButton}" />
+                    <Button Command="{Binding DeselectCommand}"
+                            Style="{StaticResource ClearSelectionButton}" />
+                </StackPanel>
+            </Grid>
+
+        </GroupBox>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Content="Восстановить настройки по умолчанию"
+                    Command="{Binding ResetSettingsCommand}"
+                    Style="{StaticResource UpdateButton}"
+                    Margin="5 5 10 5" />
+            <Button Content="Сохранить настройки" Grid.Column="1"
+                    Margin="10 5 5 5"
+                    Style="{StaticResource UpdateButton}"
+                    Command="{Binding SaveSettingsCommand}" />
+        </Grid>
+    </Grid>
+
+</UserControl>

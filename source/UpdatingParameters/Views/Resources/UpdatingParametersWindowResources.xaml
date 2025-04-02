@@ -1,0 +1,129 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:vmPipes="clr-namespace:UpdatingParameters.ViewModels.Pipes"
+                    xmlns:vmFlexPipes="clr-namespace:UpdatingParameters.ViewModels.FlexPipes"
+                    xmlns:vmPipesInsulation="clr-namespace:UpdatingParameters.ViewModels.PipeInsulation"
+                    xmlns:local="clr-namespace:UpdatingParameters.Views"
+                    xmlns:vmDucts="clr-namespace:UpdatingParameters.ViewModels.Ducts"
+                    xmlns:vmDuctsInsulation="clr-namespace:UpdatingParameters.ViewModels.DuctInsulation"
+                    xmlns:settings="clr-namespace:UpdatingParameters.ViewModels.Settings"
+                    xmlns:allCategories="clr-namespace:UpdatingParameters.ViewModels.Parameters"
+                    xmlns:allCategories1="clr-namespace:UpdatingParameters.Views.Parameters"
+                    xmlns:converter="clr-namespace:UpdatingParameters.Views.Converters"
+                    xmlns:model="clr-namespace:UpdatingParameters.Models"
+                    xmlns:parameters="clr-namespace:UpdatingParameters.ViewModels.Parameters">
+    <converter:ButtonSelectedConverter x:Key="ButtonSelectedConverter" />
+ 
+    <!-- Цвета -->
+    <Color x:Key="PrimaryColor">#0078D4</Color>
+    <Color x:Key="HoverColor">#005A9E</Color>
+    <Color x:Key="PressedColor">#004578</Color>
+    <Color x:Key="DisabledColor">#CCCCCC</Color>
+    
+    
+    <DataTemplate DataType="{x:Type parameters:ParametersViewModel}">
+        <allCategories1:ParametersWindow DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmPipes:PipesWithoutViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmPipes:PipesOuterDiameterViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmPipes:PipesInternalDiameterViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmFlexPipes:FlexPipesConnectionsViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmFlexPipes:FlexPipesWithoutViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmFlexPipes:FlexPipesCorrugationsViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmPipesInsulation:PipeInsulationTubesViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmPipesInsulation:PipeInsulationCylindersViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmPipesInsulation:PipeInsulationColouredTubesViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmDucts:DuctWithoutViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmDucts:DuctRoundViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmDucts:DuctPlasticViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmDucts:DuctRectangularViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmDucts:FlexibleDuctsRoundViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmDucts:DuctConnectionPartsViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmDuctsInsulation:DuctInsulationFireproofingViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vmDuctsInsulation:DuctInsulationThermalInsulationViewModel}">
+        <local:CommonLayoutControl DataContext="{Binding}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type settings:SettingsViewModel}">
+        <local:SettingsWindow DataContext="{Binding}" />
+    </DataTemplate>
+
+   
+   <Style x:Key="OutlineButton" TargetType="Button">
+    <!-- Существующие сеттеры -->
+    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    <Setter Property="BorderBrush" Value="#BBDEFB"/>
+    <Setter Property="BorderThickness" Value="2"/>
+    <Setter Property="FontSize" Value="14"/>
+    <Setter Property="Padding" Value="15,5"/>
+
+    <!-- Убираем привязку Background с уровня Button -->
+    <!--<Setter Property="Background"
+            Value="{Binding SelectedButton, 
+                    Converter={StaticResource ButtonSelectedConverter},
+                    ConverterParameter={x:Static model:ButtonType.AllCategories}}"/>-->
+
+    <Setter Property="Template">
+        <Setter.Value>
+            <ControlTemplate TargetType="Button">
+                <Border x:Name="border"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="4">
+                    <!-- Внутренний Border с привязкой Background -->
+                    <Border x:Name="backgroundBorder"
+                            Background="{Binding SelectedButton, 
+                                Converter={StaticResource ButtonSelectedConverter},
+                                ConverterParameter={x:Static model:ButtonType.AllCategories}}">
+                        <ContentPresenter HorizontalAlignment="Center" 
+                                          VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                </Border>
+                <ControlTemplate.Triggers>
+                    <!-- Триггер для IsMouseOver -->
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="backgroundBorder" Property="Background" Value="#E3F2FD"/>
+                    </Trigger>
+                    <!-- Триггер для IsPressed -->
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter TargetName="backgroundBorder" Property="Background" Value="#BBDEFB"/>
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </Setter.Value>
+    </Setter>
+</Style>
+  
+</ResourceDictionary>

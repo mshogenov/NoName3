@@ -1,0 +1,36 @@
+﻿<UserControl x:Class="NumberingOfRisers.Views.SettingsWindow"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:NumberingOfRisers.Views"
+             xmlns:converter="clr-namespace:NumberingOfRisers.Views.Converters" 
+             xmlns:viewmodels="clr-namespace:NumberingOfRisers.ViewModels" d:DataContext="{d:DesignInstance Type=viewmodels:NumberingOfRisersViewModel}"
+             mc:Ignorable="d" Background="White" 
+             d:DesignHeight="450" d:DesignWidth="300">
+
+        <StackPanel>
+        <Button Content="Закрыть" Click="Button_Click"/>
+        <TextBlock Text="Настройки" FontWeight="Bold" FontSize="18" Margin="10" />
+        <RadioButton Content="Ручное заполнение" 
+                     IsChecked="{Binding ManualFillingIsChecked}"
+                       GroupName="FillingMode"/>
+            <RadioButton Content="Автоматическое заполнение" 
+                         IsChecked="{Binding AutomaticFillingIsChecked}"
+                           GroupName="FillingMode"/>
+        <Grid Visibility="{Binding AutomaticFillingIsChecked,Converter={converter:BoolVisibilityConverter}}">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Минимальная длина трубы в стояке:" Grid.Column="0" Grid.Row="0" Margin="2"/>
+            <TextBox Width="60" Grid.Column="1" Grid.Row="0" HorizontalAlignment="Left" Margin="2" Text="{Binding MinimumPipeLength}"/>
+            <TextBlock Text="Минимальное количество труб в стояке:" Margin="2" Grid.Column="0" Grid.Row="1"/>
+            <TextBox Width="60" Grid.Column="1" Grid.Row="1"  HorizontalAlignment="Left" Margin="2" Text="{Binding MinimumCountPipes}"/>
+        </Grid>
+        </StackPanel>
+  </UserControl>

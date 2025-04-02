@@ -1,0 +1,71 @@
+﻿<Window
+    x:Class="RoomsInSpaces.Views.RoomsInSpaceView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:viewModel="clr-namespace:RoomsInSpaces.ViewModels"
+    xmlns:converter="clr-namespace:RoomsInSpaces.Views.Converters"
+    mc:Ignorable="d"
+    d:DataContext="{d:DesignInstance viewModel:RoomsInSpacesViewModel}"
+    WindowStartupLocation="CenterScreen"
+    Title="Импорт помещений в пространства"
+    Height="230"
+    Width="400">
+    <Window.Resources>
+        <converter:RevitLinkNameConverter x:Key="RevitLinkNameConverter" />
+    </Window.Resources>
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Основной контент -->
+        <StackPanel Grid.Row="0" VerticalAlignment="Top" HorizontalAlignment="Stretch">
+
+            <!-- Контейнер для выбора связанного файла -->
+            <Border Background="White" CornerRadius="5" BorderBrush="#CCCCCC" BorderThickness="1" Padding="10">
+                <StackPanel>
+                    <TextBlock Text="Выбрать связанный файл:"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Foreground="#555555"
+                               Margin="0,0,0,5" />
+
+                    <ComboBox ItemsSource="{Binding LinkedFiles}"
+                              SelectedItem="{Binding SelectedLinkedFile}"
+                              Height="30"
+                              Background="#FFFFFF"
+                              BorderBrush="#CCCCCC"
+                              BorderThickness="1"
+                              Padding="5"
+                              FontSize="14">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding  Converter={StaticResource RevitLinkNameConverter}}" FontSize="14" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+            </Border>
+
+            <!-- Кнопка действия -->
+            <Button Content="Помещения в пространство"
+                    Command="{Binding RoomsInSpacesCommand}"
+                    CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
+                    Height="35"
+                    Background="#007ACC"
+                    Foreground="White"
+                    FontWeight="Bold"
+                    BorderBrush="#005A9E"
+                    VerticalContentAlignment="Center"
+                    Margin="0,20,0,0"
+                    >
+                <Button.Effect>
+                    <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.3" />
+                </Button.Effect>
+            </Button>
+        </StackPanel>
+    </Grid>
+</Window>

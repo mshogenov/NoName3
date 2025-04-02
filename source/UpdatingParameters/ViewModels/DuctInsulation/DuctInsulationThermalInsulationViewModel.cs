@@ -1,0 +1,6 @@
+﻿using UpdatingParameters.Storages;
+using UpdatingParameters.Storages.DuctInsulation;
+
+namespace UpdatingParameters.ViewModels.DuctInsulation;
+
+public class DuctInsulationThermalInsulationViewModel(DuctInsulationThermalDataStorage dataStorageFormulas):ElementTypeViewModelBase(dataStorageFormulas);

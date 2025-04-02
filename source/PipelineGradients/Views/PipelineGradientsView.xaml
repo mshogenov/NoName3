@@ -1,0 +1,39 @@
+﻿<Window
+    x:Class="PipelineGradients.Views.PipelineGradientsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:viewModel="clr-namespace:PipelineGradients.ViewModels"
+    mc:Ignorable="d"
+    d:DataContext="{d:DesignInstance viewModel:PipelineGradientsViewModel}"
+   
+    WindowStartupLocation="CenterScreen"
+    Title="PipelineGradients"
+    Height="450"
+    Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="60"/>
+        </Grid.RowDefinitions>
+        <GroupBox Header="Выбрать марку" Grid.Row="0">
+          <ListBox  ItemsSource="{Binding  Path=MarkAnnotationMdls}" >
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                        <StackPanel>
+                            <TextBlock Text="{Binding Name}"/>
+                        </StackPanel>
+                       
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+             
+        </GroupBox>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" >
+          
+            <Button Content="Выбрать трубы" Grid.Row="1" Width="100" Height="40"/>
+        </StackPanel>
+      
+    </Grid>
+</Window>

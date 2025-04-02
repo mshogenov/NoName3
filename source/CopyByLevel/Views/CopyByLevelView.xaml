@@ -1,0 +1,32 @@
+﻿<Window
+    x:Class="CopyByLevel.Views.CopyByLevelView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:viewModel="clr-namespace:CopyByLevel.ViewModels"
+    mc:Ignorable="d"
+    d:DataContext="{d:DesignInstance viewModel:CopyByLevelViewModel}"
+
+    WindowStartupLocation="CenterScreen"
+    Title="CopyByLevel"
+    Height="450"
+    Width="800">
+    <Grid>
+        <StackPanel>
+            <GroupBox Header="Выберите уровни">
+                <ListBox ItemsSource="{Binding Path=FilteredLevelItems}" >
+
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Content="{Binding Path=Name}" 
+                                  IsChecked="{Binding Path=IsSelected, Mode=TwoWay}"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </GroupBox>
+
+            <Button Content="Копировать соединительные детали" Command="{Binding Path=CopyElementsToLevelCommand}" />
+        </StackPanel>
+    </Grid>
+</Window>

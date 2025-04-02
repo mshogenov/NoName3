@@ -1,0 +1,38 @@
+﻿<Window
+    x:Class="DeleteViewFilters.Views.DeleteViewFiltersView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+   
+    xmlns:viewModel="clr-namespace:DeleteViewFilters.ViewModels" 
+ 
+    xmlns:local="clr-namespace:DeleteViewFilters.Services" xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    mc:Ignorable="d"
+    d:DataContext="{d:DesignInstance viewModel:DeleteViewFiltersViewModel}"
+   
+    WindowStartupLocation="CenterScreen"
+    Title="DeleteViewFilters"
+    Height="450"
+    Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="20"/>
+        </Grid.RowDefinitions>
+        <ListBox ItemsSource="{Binding Filters}" SelectionMode="Extended" >
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Name}" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="IsSelected" Value="{Binding Path=IsCheked}"/>
+                </Style>
+            </ListBox.ItemContainerStyle>
+        </ListBox>
+        <Button Grid.Row="1" Content="Удалить фильтры" Command="{Binding Path=DeleteSelectedFiltersCommand}"  CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}}"/>
+
+    </Grid>
+</Window>

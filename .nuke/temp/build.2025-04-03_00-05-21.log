@@ -1,0 +1,29 @@
+V |                      | ArgumentsFromParametersFile.OnBuildCreated (150)
+V |                      | HandleReSharperSurrogateArguments.OnBuildCreated (150)
+V |                      | InjectParameterValues.OnBuildCreated (100)
+V |                      | HandleShellCompletion.OnBuildCreated (75)
+V |                      | GenerateBuildServerConfigurations.OnBuildCreated (50)
+V |                      | InvokeBuildServerConfigurationGeneration.OnBuildCreated (45)
+V |                      | UpdateNotification.OnBuildCreated (10)
+V |                      | UnsetVisualStudioEnvironmentVariables.OnBuildCreated (0)
+V |                      | HandleVisualStudioDebugging.OnBuildCreated (0)
+V |                      | EventInvoker.OnBuildCreated (-3.4028235E+38)
+V |                      | HandlePlanRequests.OnBuildInitialized (10)
+V |                      | HandleHelpRequests.OnBuildInitialized (5)
+V |                      | Telemetry.OnBuildInitialized (0)
+V |                      | InjectNonParameterValues.OnBuildInitialized (-100)
+W |                      | Could not inject value for Build.GitRepository
+System.ArgumentException: Could not find commit information
+   at Nuke.Common.Assert.NotNull[T](T obj, String message, String argumentExpression) in /_/source/Nuke.Utilities/Assert.cs:line 73
+   at Nuke.Common.Git.GitRepository.GetCommitFromHead(AbsolutePath gitDirectory, String head) in /_/source/Nuke.Build/VCS/GitRepository.cs:line 105
+   at Nuke.Common.Git.GitRepository.FromLocalDirectory(AbsolutePath directory) in /_/source/Nuke.Build/VCS/GitRepository.cs:line 54
+   at Nuke.Common.Git.GitRepositoryAttribute.GetValue(MemberInfo member, Object instance) in /_/source/Nuke.Common/Attributes/GitRepositoryAttribute.cs:line 22
+   at Nuke.Common.ValueInjection.ValueInjectionAttributeBase.TryGetValue(MemberInfo member, Object instance) in /_/source/Nuke.Build/Execution/Extensibility/ValueInjectionAttributeBase.cs:line 26
+V |                      | EventInvoker.OnBuildInitialized (-3.4028235E+38)
+V |                      | Target-unrelated exception was thrown
+System.NullReferenceException: Object reference not set to an instance of an object.
+   at Build.OnBuildInitialized() in C:\Users\mshog\source\repos\NoName3\Build\Build.Configuration.cs:line 91
+   at Nuke.Common.Execution.EventInvoker.OnBuildInitialized(IReadOnlyCollection`1 executableTargets, IReadOnlyCollection`1 executionPlan) in /_/source/Nuke.Build/Execution/Extensions/EventInvoker.cs:line 29
+   at Nuke.Common.Utilities.Collections.EnumerableExtensions.ForEach[T](IEnumerable`1 enumerable, Action`1 action) in /_/source/Nuke.Utilities/Collections/Enumerable.ForEach.cs:line 20
+   at Nuke.Common.NukeBuild.ExecuteExtension[TExtension](Expression`1 action)
+   at Nuke.Common.Execution.BuildManager.Execute[T](Expression`1[] defaultTargetExpressions)

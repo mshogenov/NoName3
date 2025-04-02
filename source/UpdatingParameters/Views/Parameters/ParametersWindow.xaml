@@ -1,0 +1,135 @@
+﻿<UserControl x:Class="UpdatingParameters.Views.Parameters.ParametersWindow"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:UpdatingParameters.Views"
+             xmlns:allCategories="clr-namespace:UpdatingParameters.ViewModels.Parameters"
+             xmlns:parameters="clr-namespace:UpdatingParameters.ViewModels.Parameters"
+             d:DataContext="{d:DesignInstance Type=parameters:ParametersViewModel}"
+             mc:Ignorable="d"
+           d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/ThemesResourceDictionary.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid Style="{StaticResource Grid}" >
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Основной контент -->
+        <Border
+            Style="{StaticResource BorderFolding }">
+
+            <Grid Margin="15">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition MinHeight="40" />
+                    <RowDefinition MinHeight="40" />
+                    <RowDefinition MinHeight="40" />
+                    <RowDefinition MinHeight="40" />
+                </Grid.RowDefinitions>
+
+                <!-- Строка 1 -->
+                <CheckBox
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Style="{StaticResource AnimatedCheckBox}"
+                    IsChecked="{Binding SystemAbbreviationIsChecked}" />
+                <TextBlock
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Text="ADSK_Система_Сокращение"
+                    Style="{StaticResource TextBlock}" />
+
+                <!-- Строка 2 -->
+                <CheckBox
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Style="{StaticResource AnimatedCheckBox}"
+                    IsChecked="{Binding SystemNameIsChecked}" />
+                <TextBlock
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Text="ADSK_Система_Имя"
+                    Style="{StaticResource TextBlock}" />
+
+                <!-- Строка 3 -->
+                <Grid Grid.Row="2"
+                      Grid.Column="0"
+                      Grid.ColumnSpan="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <CheckBox
+                        Grid.Column="0"
+                        Style="{StaticResource AnimatedCheckBox}"
+                        IsChecked="{Binding WallThicknessIsChecked}" />
+                    <TextBlock
+                        Grid.Column="1"
+                        Text="ADSK_Толщина стенки"
+                        Style="{StaticResource TextBlock}" />
+                    <Button
+                        Grid.Column="2"
+                        Style="{StaticResource SettingsButton}"
+                        Command="{Binding Path=AdjustWallThicknessCommand}">
+                        <Button.ToolTip>
+                            <ToolTip>Настроить параметры воздуховодов</ToolTip>
+                        </Button.ToolTip>
+                    </Button>
+                </Grid>
+
+
+                <!-- Строка 4 -->
+                <CheckBox
+                    Grid.Row="3"
+                    Grid.Column="0"
+                    Style="{StaticResource AnimatedCheckBox}"
+                    IsChecked="{Binding HermeticClassIsChecked}" />
+                <TextBlock
+                    Grid.Row="3"
+                    Grid.Column="1"
+                    Text="Класс герметичности"
+                    Style="{StaticResource TextBlock}" />
+            </Grid>
+        </Border>
+
+        <!-- Нижние кнопки -->
+        <Grid
+            Grid.Row="1"
+            Margin="5,0,5,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <Button
+                Content="Сохранить настройки"
+                Command="{Binding SaveCommand}"
+                Style="{StaticResource SaveButton}"
+                Margin="0,0,5,0">
+            </Button>
+
+            <Button
+                Grid.Column="1"
+                Content="Обновить параметры"
+                Command="{Binding UpdateParametersCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+              Style="{StaticResource UpdateButton}"
+                Margin="5,0,0,0">
+              
+            </Button>
+        </Grid>
+    </Grid>
+</UserControl>

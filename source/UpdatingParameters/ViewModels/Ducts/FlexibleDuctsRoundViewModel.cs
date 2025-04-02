@@ -1,0 +1,5 @@
+﻿using UpdatingParameters.Storages.Ducts;
+
+namespace UpdatingParameters.ViewModels.Ducts;
+
+public class FlexibleDuctsRoundViewModel(FlexibleDuctsRoundDataStorage dataStorageFormulas):ElementTypeViewModelBase(dataStorageFormulas);

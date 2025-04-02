@@ -1,0 +1,12 @@
+namespace NumberingOfRisers.Models;
+
+/// <summary>
+/// Класс для сериализации данных стояка
+/// </summary>
+[Serializable]
+public class RiserData
+{
+    public Guid Id { get; set; }
+    public int Number { get; set; }
+    public List<long> ElementIds { get; set; } = [];
+}

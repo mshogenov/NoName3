@@ -1,0 +1,5 @@
+﻿using UpdatingParameters.Storages.FlexPipes;
+
+namespace UpdatingParameters.ViewModels.FlexPipes;
+
+public class FlexPipesCorrugationsViewModel(FlexPipesCorrugationsDataStorage dataStorageFormulas) : ElementTypeViewModelBase(dataStorageFormulas);

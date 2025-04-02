@@ -1,0 +1,139 @@
+﻿<UserControl x:Class="UpdatingParameters.Views.CommonLayoutControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:converter="clr-namespace:UpdatingParameters.Views.Converters"
+             xmlns:local="clr-namespace:UpdatingParameters.Views"
+             xmlns:viewmodels="clr-namespace:UpdatingParameters.ViewModels"
+             d:DataContext="{d:DesignInstance Type=viewmodels:ElementTypeViewModelBase}"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="800">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/ThemesResourceDictionary.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid Style="{StaticResource Grid}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <ScrollViewer>
+                <ItemsControl>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="AUTO" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+
+                        </Grid.RowDefinitions>
+
+                        <local:CustomFormulaControl Grid.Row="0"
+                                                    NameParameter="ADSK_Наименование"
+                                                    AdskFormulas="{Binding AdskNameFormulas}"
+                                                    IsChecked="{Binding Path=NameIsChecked}"
+                                                    SearchParametersView="{Binding SearchParametersViewForName, Mode=TwoWay}"
+                                                    ParametersView="{Binding  Path=ParametersViewForName}"
+                                                    SelectParameter="{Binding SelectParameterName, Mode=TwoWay}"
+                                                    AddParameterFormulaCommand="{Binding AddParameterToNameFormulaCommand}"
+                                                    RemoveParameterFormulaCommand="{Binding RemoveParameterToNameFormulaCommand}"
+                                                    SelectFormula="{Binding SelectFormulaName}"
+                                                    MoveUpFormulaCommand="{Binding MoveUpToNameFormulaCommand}"
+                                                    MoveDownFormulaCommand="{Binding MoveDownToNameFormulaCommand}"
+                                                    CombinedValues="{Binding CombinedNameValues}" />
+                        <local:CustomFormulaControl Grid.Row="1"
+                                                    NameParameter="ADSK_Примечание"
+                                                    AdskFormulas="{Binding AdskNoteFormulas}"
+                                                    IsChecked="{Binding Path=NoteIsChecked}"
+                                                    SearchParametersView="{Binding SearchParametersViewForNote, Mode=TwoWay}"
+                                                    ParametersView="{Binding  Path=ParametersForNote}"
+                                                    SelectParameter="{Binding SelectParameterNote, Mode=TwoWay}"
+                                                    AddParameterFormulaCommand="{Binding AddParameterToNoteFormulaCommand}"
+                                                    RemoveParameterFormulaCommand="{Binding RemoveParameterToNoteFormulaCommand}"
+                                                    SelectFormula="{Binding SelectFormulaNote}"
+                                                    MoveUpFormulaCommand="{Binding MoveUpToNoteFormulaCommand}"
+                                                    MoveDownFormulaCommand="{Binding MoveDownToNoteFormulaCommand}"
+                                                    CombinedValues="{Binding CombinedNoteValues}" />
+                        <local:CustomFormulaControl2 Grid.Row="2"
+                                                     NameParameter="ADSK_Количество"
+                                                     AdskFormulas="{Binding AdskQuantityFormulas}"
+                                                     IsChecked="{Binding Path=QuantityIsChecked}"
+                                                     Parameters="{Binding Path=ParametersForQuantity}"
+                                                     SelectParameter="{Binding SelectParameterQuantity,Mode=TwoWay}"
+                                                     AddParameterFormulaCommand="{Binding AddParameterToQuantityFormulaCommand}"
+                                                     RemoveParameterFormulaCommand="{Binding RemoveParameterToQuantityFormulaCommand}"
+                                                     SelectFormula="{Binding SelectFormulaQuantity}"
+                                                     MoveUpFormulaCommand="{Binding MoveUpToQuantityFormulaCommand}"
+                                                     MoveDownFormulaCommand="{Binding MoveDownToQuantityFormulaCommand}"
+                                                     CombinedValues="{Binding CombinedQuantityValues}" />
+                    </Grid>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Button Margin="5 10 10 5"
+                    Style="{StaticResource SaveButton}"
+                    Grid.Column="0" Content="Сохранить настройки"
+                    Command="{Binding SaveSettingsCommand}"
+                    CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}" />
+
+            <Button Margin="10 10 5 5"
+                    Grid.Column="1" Style="{StaticResource UpdateButton}"
+                    Content="Обновить все элементы типа"
+                    Command="{Binding UpdateElementsCommand}"
+                    CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}" />
+
+        </Grid>
+        <StatusBar Grid.Row="2" Height="35">
+            <StatusBar.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#FFF0F0F0" Offset="0" />
+                    <GradientStop Color="#FFE5E5E5" Offset="1" />
+                </LinearGradientBrush>
+            </StatusBar.Background>
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid />
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
+            <StatusBar Grid.Row="2" Height="28">
+                <StatusBar.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#FFF0F0F0" Offset="0" />
+                        <GradientStop Color="#FFE5E5E5" Offset="1" />
+                    </LinearGradientBrush>
+                </StatusBar.Background>
+                <StatusBar.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Grid />
+                    </ItemsPanelTemplate>
+                </StatusBar.ItemsPanel>
+                <StatusBarItem>
+                    <Border BorderThickness="1" CornerRadius="3" Margin="5,0"
+                            BorderBrush="#FFCCCCCC" Background="White"
+                            Padding="8,2">
+                        <TextBlock>
+                            <Run Text="Элементов типа: "
+                                 Foreground="#FF666666" FontFamily="Segoe UI" />
+                            <Run Text="{Binding ElementCounts}"
+                                 Foreground="#FF0066CC" FontWeight="SemiBold" />
+                        </TextBlock>
+                    </Border>
+                </StatusBarItem>
+            </StatusBar>
+        </StatusBar>
+    </Grid>
+
+</UserControl>

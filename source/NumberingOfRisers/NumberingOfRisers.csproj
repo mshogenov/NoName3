@@ -1,0 +1,58 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <UseWPF>true</UseWPF>
+        <LangVersion>default</LangVersion>
+        <PlatformTarget>x64</PlatformTarget>
+        <ImplicitUsings>true</ImplicitUsings>
+        <PublishAddinFiles>true</PublishAddinFiles>
+        <Configurations>Debug R24;Debug R25</Configurations>
+        <Configurations>$(Configurations);Release R24;Release R25</Configurations>
+    </PropertyGroup>
+
+   
+    <PropertyGroup Condition="$(Configuration.Contains('R24'))">
+        <RevitVersion>2024</RevitVersion>
+        <TargetFramework>net48</TargetFramework>
+    </PropertyGroup>
+    <PropertyGroup Condition="$(Configuration.Contains('R25'))">
+        <RevitVersion>2025</RevitVersion>
+        <TargetFramework>net8.0-windows</TargetFramework>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <StartAction>Program</StartAction>
+        <StartProgram>C:\Program Files\Autodesk\Revit $(RevitVersion)\Revit.exe</StartProgram>
+        <StartArguments>/language RUS</StartArguments>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <None Remove="Resources\Icons\done_all_icon_155480.png" />
+      <None Remove="Resources\Icons\icons8-настройки-50.png" />
+      <None Remove="Resources\Icons\icons8-отметить-все-50.png" />
+      <None Remove="Resources\Icons\selection_icon_128394.png" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+        <PackageReference Include="Microsoft.Bcl.HashCode" Version="1.1.1" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Nice3point.Revit.Build.Tasks" Version="2.*" />
+        <PackageReference Include="Nice3point.Revit.Toolkit" Version="$(RevitVersion).*" />
+        <PackageReference Include="Nice3point.Revit.Extensions" Version="$(RevitVersion).*" />
+        <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="$(RevitVersion).*" />
+        <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="$(RevitVersion).*" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\NoNameAPI\NoNameAPI.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Resource Include="Resources\Icons\done_all_icon_155480.png" />
+      <Resource Include="Resources\Icons\icons8-настройки-50.png" />
+      <Resource Include="Resources\Icons\icons8-отметить-все-50.png" />
+      <Resource Include="Resources\Icons\selection_icon_128394.png" />
+    </ItemGroup>
+
+</Project>
