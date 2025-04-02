@@ -1,29 +1,407 @@
-00:05:21.422 | V |                      | ArgumentsFromParametersFile.OnBuildCreated (150)
-00:05:21.467 | V |                      | HandleReSharperSurrogateArguments.OnBuildCreated (150)
-00:05:21.469 | V |                      | InjectParameterValues.OnBuildCreated (100)
-00:05:21.555 | V |                      | HandleShellCompletion.OnBuildCreated (75)
-00:05:22.210 | V |                      | GenerateBuildServerConfigurations.OnBuildCreated (50)
-00:05:22.211 | V |                      | InvokeBuildServerConfigurationGeneration.OnBuildCreated (45)
-00:05:22.239 | V |                      | UpdateNotification.OnBuildCreated (10)
-00:05:22.240 | V |                      | UnsetVisualStudioEnvironmentVariables.OnBuildCreated (0)
-00:05:22.241 | V |                      | HandleVisualStudioDebugging.OnBuildCreated (0)
-00:05:22.243 | V |                      | EventInvoker.OnBuildCreated (-3.4028235E+38)
-00:05:22.278 | V |                      | HandlePlanRequests.OnBuildInitialized (10)
-00:05:22.279 | V |                      | HandleHelpRequests.OnBuildInitialized (5)
-00:05:22.279 | V |                      | Telemetry.OnBuildInitialized (0)
-00:05:23.608 | V |                      | InjectNonParameterValues.OnBuildInitialized (-100)
-00:05:23.625 | W |                      | Could not inject value for Build.GitRepository
-System.ArgumentException: Could not find commit information
-   at Nuke.Common.Assert.NotNull[T](T obj, String message, String argumentExpression) in /_/source/Nuke.Utilities/Assert.cs:line 73
-   at Nuke.Common.Git.GitRepository.GetCommitFromHead(AbsolutePath gitDirectory, String head) in /_/source/Nuke.Build/VCS/GitRepository.cs:line 105
-   at Nuke.Common.Git.GitRepository.FromLocalDirectory(AbsolutePath directory) in /_/source/Nuke.Build/VCS/GitRepository.cs:line 54
-   at Nuke.Common.Git.GitRepositoryAttribute.GetValue(MemberInfo member, Object instance) in /_/source/Nuke.Common/Attributes/GitRepositoryAttribute.cs:line 22
-   at Nuke.Common.ValueInjection.ValueInjectionAttributeBase.TryGetValue(MemberInfo member, Object instance) in /_/source/Nuke.Build/Execution/Extensibility/ValueInjectionAttributeBase.cs:line 26
-00:05:23.726 | V |                      | EventInvoker.OnBuildInitialized (-3.4028235E+38)
-00:05:23.729 | V |                      | Target-unrelated exception was thrown
-System.NullReferenceException: Object reference not set to an instance of an object.
-   at Build.OnBuildInitialized() in C:\Users\mshog\source\repos\NoName3\Build\Build.Configuration.cs:line 91
-   at Nuke.Common.Execution.EventInvoker.OnBuildInitialized(IReadOnlyCollection`1 executableTargets, IReadOnlyCollection`1 executionPlan) in /_/source/Nuke.Build/Execution/Extensions/EventInvoker.cs:line 29
-   at Nuke.Common.Utilities.Collections.EnumerableExtensions.ForEach[T](IEnumerable`1 enumerable, Action`1 action) in /_/source/Nuke.Utilities/Collections/Enumerable.ForEach.cs:line 20
-   at Nuke.Common.NukeBuild.ExecuteExtension[TExtension](Expression`1 action)
-   at Nuke.Common.Execution.BuildManager.Execute[T](Expression`1[] defaultTargetExpressions)
+00:27:51.511 | V |                      | ArgumentsFromParametersFile.OnBuildCreated (150)
+00:27:51.556 | V |                      | HandleReSharperSurrogateArguments.OnBuildCreated (150)
+00:27:51.557 | V |                      | InjectParameterValues.OnBuildCreated (100)
+00:27:51.652 | V |                      | HandleShellCompletion.OnBuildCreated (75)
+00:27:52.187 | V |                      | GenerateBuildServerConfigurations.OnBuildCreated (50)
+00:27:52.188 | V |                      | InvokeBuildServerConfigurationGeneration.OnBuildCreated (45)
+00:27:52.206 | V |                      | UpdateNotification.OnBuildCreated (10)
+00:27:52.206 | V |                      | UnsetVisualStudioEnvironmentVariables.OnBuildCreated (0)
+00:27:52.207 | V |                      | HandleVisualStudioDebugging.OnBuildCreated (0)
+00:27:52.209 | V |                      | EventInvoker.OnBuildCreated (-3.4028235E+38)
+00:27:52.244 | V |                      | HandlePlanRequests.OnBuildInitialized (10)
+00:27:52.244 | V |                      | HandleHelpRequests.OnBuildInitialized (5)
+00:27:52.245 | V |                      | Telemetry.OnBuildInitialized (0)
+00:27:53.478 | V |                      | InjectNonParameterValues.OnBuildInitialized (-100)
+00:27:53.526 | V |                      | EventInvoker.OnBuildInitialized (-3.4028235E+38)
+00:27:53.549 | V | Clean                | EventInvoker.OnTargetRunning (-3.4028235E+38)
+00:27:53.552 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\output
+00:27:53.564 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\install\bin
+00:27:53.568 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\install\obj
+00:27:53.585 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin
+00:27:53.589 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\obj
+00:27:53.615 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\PipelineGradients\bin
+00:27:53.644 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\PipelineGradients\obj
+00:27:53.758 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\ViewOfPipeSystems\bin
+00:27:53.772 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\ViewOfPipeSystems\obj
+00:27:53.808 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\bin
+00:27:53.866 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\obj
+00:27:54.011 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\bin
+00:27:54.016 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\obj
+00:27:54.058 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\bin
+00:27:54.070 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\obj
+00:27:54.123 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\bin
+00:27:54.156 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\obj
+00:27:54.192 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\PositionNumbering\bin
+00:27:54.224 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\PositionNumbering\obj
+00:27:54.257 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\ElementsTypicalFloor\bin
+00:27:54.290 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\ElementsTypicalFloor\obj
+00:27:54.328 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\Marking\bin
+00:27:54.356 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\Marking\obj
+00:27:54.394 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\RoomsInSpace\bin
+00:27:54.428 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\RoomsInSpace\obj
+00:27:54.472 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\LastAllocation\bin
+00:27:54.484 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\LastAllocation\obj
+00:27:54.514 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\MepElementsCopy\bin
+00:27:54.550 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\MepElementsCopy\obj
+00:27:54.592 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\bin
+00:27:54.629 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\obj
+00:27:54.670 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\MakeBreak\bin
+00:27:54.708 | I | Clean                | Cleaning directory: C:\Users\mshog\source\repos\NoName3\source\MakeBreak\obj
+00:27:54.838 | I | Clean                | > "C:\Program Files\dotnet\dotnet.exe" clean C:\Users\mshog\source\repos\NoName3\NoName3.sln --configuration "Release R24" --verbosity minimal --nologo
+00:27:54.839 | V | Clean                | @ C:\Users\mshog\source\repos\NoName3
+00:27:56.588 | I | Clean                | > "C:\Program Files\dotnet\dotnet.exe" clean C:\Users\mshog\source\repos\NoName3\NoName3.sln --configuration "Release R25" --verbosity minimal --nologo
+00:27:56.589 | V | Clean                | @ C:\Users\mshog\source\repos\NoName3
+00:27:58.423 | V | Clean                | Telemetry.OnTargetSucceeded (0)
+00:27:58.424 | V | Clean                | EventInvoker.OnTargetSucceeded (-3.4028235E+38)
+00:27:58.429 | V | Compile              | EventInvoker.OnTargetRunning (-3.4028235E+38)
+00:27:58.444 | I | Compile              | > "C:\Program Files\dotnet\dotnet.exe" build C:\Users\mshog\source\repos\NoName3\NoName3.sln --configuration "Release R24" --verbosity minimal
+00:27:58.445 | V | Compile              | @ C:\Users\mshog\source\repos\NoName3
+00:27:59.922 | D | Compile              |   Определение проектов для восстановления...
+00:28:00.939 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\RoomsInSpace\RoomsInSpaces.csproj (за 481 мс).
+00:28:00.940 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands.csproj (за 481 мс).
+00:28:00.941 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\ViewOfPipeSystems\ViewOfPipeSystems.csproj (за 481 мс).
+00:28:00.942 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\UpdatingParameters.csproj (за 481 мс).
+00:28:00.943 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\NumberingOfRisers.csproj (за 481 мс).
+00:28:00.944 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\MepElementsCopy\MepElementsCopy.csproj (за 481 мс).
+00:28:00.946 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\Marking\Marking.csproj (за 481 мс).
+00:28:00.947 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI.csproj (за 481 мс).
+00:28:00.973 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\LastAllocation\LastAllocation.csproj (за 5 мс).
+00:28:00.977 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\MakeBreak\MakeBreak.csproj (за 9 мс).
+00:28:00.978 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\PositionNumbering\PositionNumbering.csproj (за 8 мс).
+00:28:00.979 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\PipelineGradients\PipelineGradients.csproj (за 11 мс).
+00:28:00.980 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\ElementsTypicalFloor\ElementsTypicalFloor.csproj (за 8 мс).
+00:28:00.983 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers.csproj (за 19 мс).
+00:28:01.007 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj (за 48 мс).
+00:28:01.898 | D | Compile              |   ViewOfPipeSystems -> C:\Users\mshog\source\repos\NoName3\source\ViewOfPipeSystems\bin\Release R24\ViewOfPipeSystems.dll
+00:28:01.942 | D | Compile              |   ViewOfPipeSystems -> C:\Users\mshog\source\repos\NoName3\source\ViewOfPipeSystems\bin\Release R24\publish
+00:28:02.277 | D | Compile              |   LastAllocation -> C:\Users\mshog\source\repos\NoName3\source\LastAllocation\bin\Release R24\LastAllocation.dll
+00:28:02.311 | D | Compile              |   LastAllocation -> C:\Users\mshog\source\repos\NoName3\source\LastAllocation\bin\Release R24\publish
+00:28:02.352 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\Services\SystemModelingServices.cs(48,30): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands_m2jn5eos_wpftmp.csproj]
+00:28:02.355 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\Services\SystemModelingServices.cs(704,38): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands_m2jn5eos_wpftmp.csproj]
+00:28:02.371 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\Views\BaseRevitWindow.cs(27,26): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI_bi4l3oil_wpftmp.csproj]
+00:28:02.372 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\Views\Behaviors\CustomWindowBehavior.cs(110,26): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI_bi4l3oil_wpftmp.csproj]
+00:28:02.492 | D | Compile              |   PipelineGradients -> C:\Users\mshog\source\repos\NoName3\source\PipelineGradients\bin\Release R24\PipelineGradients.dll
+00:28:02.538 | D | Compile              |   PipelineGradients -> C:\Users\mshog\source\repos\NoName3\source\PipelineGradients\bin\Release R24\publish
+00:28:02.661 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\Views\BaseRevitWindow.cs(27,26): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI.csproj]
+00:28:02.662 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\Views\Behaviors\CustomWindowBehavior.cs(110,26): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI.csproj]
+00:28:02.780 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\Services\SystemModelingServices.cs(48,30): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands.csproj]
+00:28:02.781 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\Services\SystemModelingServices.cs(704,38): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands.csproj]
+00:28:02.783 | D | Compile              |   Marking -> C:\Users\mshog\source\repos\NoName3\source\Marking\bin\Release R24\Marking.dll
+00:28:02.808 | D | Compile              |   Marking -> C:\Users\mshog\source\repos\NoName3\source\Marking\bin\Release R24\publish
+00:28:02.820 | D | Compile              |   NoNameAPI -> C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\bin\Release R24\net48\NoNameAPI.dll
+00:28:02.828 | D | Compile              |   SystemModelingCommands -> C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\bin\Release R24\SystemModelingCommands.dll
+00:28:02.855 | D | Compile              |   SystemModelingCommands -> C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\bin\Release R24\publish
+00:28:03.774 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\ViewModels\NumberingOfRisersViewModel.cs(23,42): warning CS0649: Полю "NumberingOfRisersViewModel._settingsDataStorage" нигде не присваивается значение, поэтому оно всегда будет иметь значение по умолчанию null. [C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\NumberingOfRisers_vgbxozei_wpftmp.csproj]
+00:28:04.000 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\Models\PipingSystemMdl.cs(34,33): warning CS0618: "ElementId.IntegerValue" является устаревшим: 'This property is deprecated in Revit 2024 and may be removed in a future version of Revit. Please use the Value property instead.' [C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers_nuwklyqx_wpftmp.csproj]
+00:28:04.002 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\Models\PipingSystemMdl.cs(39,65): warning CS0618: "ElementId.IntegerValue" является устаревшим: 'This property is deprecated in Revit 2024 and may be removed in a future version of Revit. Please use the Value property instead.' [C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers_nuwklyqx_wpftmp.csproj]
+00:28:04.004 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\Models\PipingSystemMdl.cs(99,62): warning CS0618: "ElementId.ElementId(int)" является устаревшим: 'This constructor is deprecated in Revit 2024 and may be removed in a future version of Revit. Please use the ElementId(Int64 id) constructor instead.' [C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers_nuwklyqx_wpftmp.csproj]
+00:28:04.042 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\Models\PipingSystemMdl.cs(103,55): warning CS0618: "ElementId.ElementId(int)" является устаревшим: 'This constructor is deprecated in Revit 2024 and may be removed in a future version of Revit. Please use the ElementId(Int64 id) constructor instead.' [C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers_nuwklyqx_wpftmp.csproj]
+00:28:04.264 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\ViewModels\NumberingOfRisersViewModel.cs(23,42): warning CS0649: Полю "NumberingOfRisersViewModel._settingsDataStorage" нигде не присваивается значение, поэтому оно всегда будет иметь значение по умолчанию null. [C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\NumberingOfRisers.csproj]
+00:28:04.342 | D | Compile              |   NumberingOfRisers -> C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\bin\Release R24\NumberingOfRisers.dll
+00:28:04.388 | D | Compile              |   NumberingOfRisers -> C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\bin\Release R24\publish
+00:28:04.415 | D | Compile              |   Publishing add-in NumberingOfRisers -> C:\Users\mshog\AppData\Roaming\Autodesk\Revit\Addins\2024\NumberingOfRisers
+00:28:04.482 | D | Compile              |   MepElementsCopy -> C:\Users\mshog\source\repos\NoName3\source\MepElementsCopy\bin\Release R24\MepElementsCopy.dll
+00:28:04.518 | D | Compile              |   MepElementsCopy -> C:\Users\mshog\source\repos\NoName3\source\MepElementsCopy\bin\Release R24\publish
+00:28:04.579 | D | Compile              |   DesignationOfRisers -> C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\bin\Release R24\DesignationOfRisers.dll
+00:28:04.630 | D | Compile              |   DesignationOfRisers -> C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\bin\Release R24\publish
+00:28:04.702 | D | Compile              |   ElementsTypicalFloor -> C:\Users\mshog\source\repos\NoName3\source\ElementsTypicalFloor\bin\Release R24\ElementsTypicalFloor.dll
+00:28:04.736 | D | Compile              |   ElementsTypicalFloor -> C:\Users\mshog\source\repos\NoName3\source\ElementsTypicalFloor\bin\Release R24\publish
+00:28:04.771 | D | Compile              |   PositionNumbering -> C:\Users\mshog\source\repos\NoName3\source\PositionNumbering\bin\Release R24\PositionNumbering.dll
+00:28:04.802 | D | Compile              |   PositionNumbering -> C:\Users\mshog\source\repos\NoName3\source\PositionNumbering\bin\Release R24\publish
+00:28:04.857 | D | Compile              |   RoomsInSpaces -> C:\Users\mshog\source\repos\NoName3\source\RoomsInSpace\bin\Release R24\RoomsInSpaces.dll
+00:28:04.888 | D | Compile              |   RoomsInSpaces -> C:\Users\mshog\source\repos\NoName3\source\RoomsInSpace\bin\Release R24\publish
+00:28:05.155 | D | Compile              |   MakeBreak -> C:\Users\mshog\source\repos\NoName3\source\MakeBreak\bin\Release R24\MakeBreak.dll
+00:28:05.184 | D | Compile              |   MakeBreak -> C:\Users\mshog\source\repos\NoName3\source\MakeBreak\bin\Release R24\publish
+00:28:06.259 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\ViewModels\ElementTypeViewModelBase.cs(357,26): warning CS0168: Переменная "e" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\UpdatingParameters_p5u550gl_wpftmp.csproj]
+00:28:07.163 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\ViewModels\ElementTypeViewModelBase.cs(357,26): warning CS0168: Переменная "e" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\UpdatingParameters.csproj]
+00:28:07.227 | D | Compile              |   UpdatingParameters -> C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\bin\Release R24\UpdatingParameters.dll
+00:28:07.265 | D | Compile              |   UpdatingParameters -> C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\bin\Release R24\publish
+00:28:08.031 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Commands\SystemModelingCommands\LastAllocationCommand.cs(11,42): warning CS8601: Возможно, назначение-ссылка, допускающее значение NULL. [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:08.032 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Services\FailureReplacement.cs(29,72): warning CS8604: Возможно, аргумент-ссылка, допускающий значение NULL, для параметра "document" в "Element? ElementIdExtensions.ToElement(ElementId id, Document document)". [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:08.033 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(102,44): warning CS8600: Преобразование литерала, допускающего значение NULL или возможного значения NULL в тип, не допускающий значение NULL. [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:08.034 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(104,42): warning CS8604: Возможно, аргумент-ссылка, допускающий значение NULL, для параметра "pullDownButton" в "PushButton RibbonExtensions.AddPushButton<ElbowDownCommand>(PulldownButton pullDownButton, string buttonText)". [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:08.035 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(182,17): warning CS8600: Преобразование литерала, допускающего значение NULL или возможного значения NULL в тип, не допускающий значение NULL. [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:08.036 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(183,50): warning CS8604: Возможно, аргумент-ссылка, допускающий значение NULL, для параметра "pullDownButton" в "PushButton RibbonExtensions.AddPushButton<ViewOfPipeSystemsCommand>(PulldownButton pullDownButton, string buttonText)". [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:08.037 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(16,36): warning CS8618: поле "_failureReplacement", не допускающий значения NULL, должен содержать значение, отличное от NULL, при выходе из конструктора. Рассмотрите возможность добавления модификатора "required" или объявления значения поле, допускающего значение NULL. [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:08.142 | D | Compile              |   RevitAddIn -> C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\RevitAddIn.dll
+00:28:08.194 | D | Compile              |   RevitAddIn -> C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish
+00:28:08.240 | D | Compile              |   Publishing add-in RevitAddIn -> C:\Users\mshog\AppData\Roaming\Autodesk\Revit\Addins\2024\RevitAddIn
+00:28:08.259 | D | Compile              | 
+00:28:08.260 | D | Compile              | Сборка успешно завершена.
+00:28:08.261 | D | Compile              | 
+00:28:08.262 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\Services\SystemModelingServices.cs(48,30): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands_m2jn5eos_wpftmp.csproj]
+00:28:08.289 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\Services\SystemModelingServices.cs(704,38): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands_m2jn5eos_wpftmp.csproj]
+00:28:08.353 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\Views\BaseRevitWindow.cs(27,26): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI_bi4l3oil_wpftmp.csproj]
+00:28:08.354 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\Views\Behaviors\CustomWindowBehavior.cs(110,26): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI_bi4l3oil_wpftmp.csproj]
+00:28:08.355 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\Views\BaseRevitWindow.cs(27,26): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI.csproj]
+00:28:08.355 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\Views\Behaviors\CustomWindowBehavior.cs(110,26): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI.csproj]
+00:28:08.356 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\Services\SystemModelingServices.cs(48,30): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands.csproj]
+00:28:08.357 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\Services\SystemModelingServices.cs(704,38): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands.csproj]
+00:28:08.358 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\ViewModels\NumberingOfRisersViewModel.cs(23,42): warning CS0649: Полю "NumberingOfRisersViewModel._settingsDataStorage" нигде не присваивается значение, поэтому оно всегда будет иметь значение по умолчанию null. [C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\NumberingOfRisers_vgbxozei_wpftmp.csproj]
+00:28:08.360 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\Models\PipingSystemMdl.cs(34,33): warning CS0618: "ElementId.IntegerValue" является устаревшим: 'This property is deprecated in Revit 2024 and may be removed in a future version of Revit. Please use the Value property instead.' [C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers_nuwklyqx_wpftmp.csproj]
+00:28:08.361 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\Models\PipingSystemMdl.cs(39,65): warning CS0618: "ElementId.IntegerValue" является устаревшим: 'This property is deprecated in Revit 2024 and may be removed in a future version of Revit. Please use the Value property instead.' [C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers_nuwklyqx_wpftmp.csproj]
+00:28:08.363 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\Models\PipingSystemMdl.cs(99,62): warning CS0618: "ElementId.ElementId(int)" является устаревшим: 'This constructor is deprecated in Revit 2024 and may be removed in a future version of Revit. Please use the ElementId(Int64 id) constructor instead.' [C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers_nuwklyqx_wpftmp.csproj]
+00:28:08.364 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\Models\PipingSystemMdl.cs(103,55): warning CS0618: "ElementId.ElementId(int)" является устаревшим: 'This constructor is deprecated in Revit 2024 and may be removed in a future version of Revit. Please use the ElementId(Int64 id) constructor instead.' [C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers_nuwklyqx_wpftmp.csproj]
+00:28:08.365 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\ViewModels\NumberingOfRisersViewModel.cs(23,42): warning CS0649: Полю "NumberingOfRisersViewModel._settingsDataStorage" нигде не присваивается значение, поэтому оно всегда будет иметь значение по умолчанию null. [C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\NumberingOfRisers.csproj]
+00:28:08.366 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\ViewModels\ElementTypeViewModelBase.cs(357,26): warning CS0168: Переменная "e" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\UpdatingParameters_p5u550gl_wpftmp.csproj]
+00:28:08.367 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\ViewModels\ElementTypeViewModelBase.cs(357,26): warning CS0168: Переменная "e" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\UpdatingParameters.csproj]
+00:28:08.367 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Commands\SystemModelingCommands\LastAllocationCommand.cs(11,42): warning CS8601: Возможно, назначение-ссылка, допускающее значение NULL. [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:08.368 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Services\FailureReplacement.cs(29,72): warning CS8604: Возможно, аргумент-ссылка, допускающий значение NULL, для параметра "document" в "Element? ElementIdExtensions.ToElement(ElementId id, Document document)". [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:08.369 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(102,44): warning CS8600: Преобразование литерала, допускающего значение NULL или возможного значения NULL в тип, не допускающий значение NULL. [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:08.370 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(104,42): warning CS8604: Возможно, аргумент-ссылка, допускающий значение NULL, для параметра "pullDownButton" в "PushButton RibbonExtensions.AddPushButton<ElbowDownCommand>(PulldownButton pullDownButton, string buttonText)". [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:08.371 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(182,17): warning CS8600: Преобразование литерала, допускающего значение NULL или возможного значения NULL в тип, не допускающий значение NULL. [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:08.372 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(183,50): warning CS8604: Возможно, аргумент-ссылка, допускающий значение NULL, для параметра "pullDownButton" в "PushButton RibbonExtensions.AddPushButton<ViewOfPipeSystemsCommand>(PulldownButton pullDownButton, string buttonText)". [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:08.373 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(16,36): warning CS8618: поле "_failureReplacement", не допускающий значения NULL, должен содержать значение, отличное от NULL, при выходе из конструктора. Рассмотрите возможность добавления модификатора "required" или объявления значения поле, допускающего значение NULL. [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:08.376 | D | Compile              |     Предупреждений: 23
+00:28:08.377 | D | Compile              |     Ошибок: 0
+00:28:08.377 | D | Compile              | 
+00:28:08.378 | D | Compile              | Прошло времени 00:00:09.42
+00:28:08.416 | I | Compile              | > "C:\Program Files\dotnet\dotnet.exe" build C:\Users\mshog\source\repos\NoName3\NoName3.sln --configuration "Release R25" --verbosity minimal
+00:28:08.417 | V | Compile              | @ C:\Users\mshog\source\repos\NoName3
+00:28:09.915 | D | Compile              |   Определение проектов для восстановления...
+00:28:11.000 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers.csproj (за 521 мс).
+00:28:11.001 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\ViewOfPipeSystems\ViewOfPipeSystems.csproj (за 521 мс).
+00:28:11.002 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\MepElementsCopy\MepElementsCopy.csproj (за 520 мс).
+00:28:11.003 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\LastAllocation\LastAllocation.csproj (за 521 мс).
+00:28:11.008 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands.csproj (за 521 мс).
+00:28:11.009 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\RoomsInSpace\RoomsInSpaces.csproj (за 521 мс).
+00:28:11.009 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\Marking\Marking.csproj (за 521 мс).
+00:28:11.034 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\PipelineGradients\PipelineGradients.csproj (за 14 мс).
+00:28:11.037 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\ElementsTypicalFloor\ElementsTypicalFloor.csproj (за 15 мс).
+00:28:11.040 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI.csproj (за 17 мс).
+00:28:11.046 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\MakeBreak\MakeBreak.csproj (за 15 мс).
+00:28:11.049 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\PositionNumbering\PositionNumbering.csproj (за 21 мс).
+00:28:11.049 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\NumberingOfRisers.csproj (за 24 мс).
+00:28:11.053 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\UpdatingParameters.csproj (за 602 мс).
+00:28:11.078 | D | Compile              |   Восстановлен C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj (за 53 мс).
+00:28:12.315 | D | Compile              |   ViewOfPipeSystems -> C:\Users\mshog\source\repos\NoName3\source\ViewOfPipeSystems\bin\Release R25\ViewOfPipeSystems.dll
+00:28:12.324 | D | Compile              |   ViewOfPipeSystems -> C:\Users\mshog\source\repos\NoName3\source\ViewOfPipeSystems\bin\Release R25\publish
+00:28:12.420 | D | Compile              |   LastAllocation -> C:\Users\mshog\source\repos\NoName3\source\LastAllocation\bin\Release R25\LastAllocation.dll
+00:28:12.447 | D | Compile              |   LastAllocation -> C:\Users\mshog\source\repos\NoName3\source\LastAllocation\bin\Release R25\publish
+00:28:12.681 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\Services\SystemModelingServices.cs(48,30): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands_3cfg5awj_wpftmp.csproj]
+00:28:12.682 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\Services\SystemModelingServices.cs(704,38): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands_3cfg5awj_wpftmp.csproj]
+00:28:12.872 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\Views\BaseRevitWindow.cs(27,26): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI_twnrcpiu_wpftmp.csproj]
+00:28:12.872 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\Views\Behaviors\CustomWindowBehavior.cs(110,26): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI_twnrcpiu_wpftmp.csproj]
+00:28:13.236 | D | Compile              |   PipelineGradients -> C:\Users\mshog\source\repos\NoName3\source\PipelineGradients\bin\Release R25\PipelineGradients.dll
+00:28:13.284 | D | Compile              |   PipelineGradients -> C:\Users\mshog\source\repos\NoName3\source\PipelineGradients\bin\Release R25\publish
+00:28:13.437 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\Services\SystemModelingServices.cs(48,30): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands.csproj]
+00:28:13.446 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\Services\SystemModelingServices.cs(704,38): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands.csproj]
+00:28:13.471 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\Views\BaseRevitWindow.cs(27,26): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI.csproj]
+00:28:13.472 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\Views\Behaviors\CustomWindowBehavior.cs(110,26): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI.csproj]
+00:28:13.554 | D | Compile              |   NoNameAPI -> C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\bin\Release R25\net8.0-windows\NoNameAPI.dll
+00:28:13.571 | D | Compile              |   SystemModelingCommands -> C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\bin\Release R25\SystemModelingCommands.dll
+00:28:13.592 | D | Compile              |   SystemModelingCommands -> C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\bin\Release R25\publish
+00:28:13.617 | D | Compile              |   Marking -> C:\Users\mshog\source\repos\NoName3\source\Marking\bin\Release R25\Marking.dll
+00:28:13.639 | D | Compile              |   Marking -> C:\Users\mshog\source\repos\NoName3\source\Marking\bin\Release R25\publish
+00:28:14.439 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\Models\PipingSystemMdl.cs(34,33): warning CS0618: "ElementId.IntegerValue" является устаревшим: 'This property is deprecated in Revit 2024 and may be removed in a future version of Revit. Please use the Value property instead.' [C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers_ukon3fbp_wpftmp.csproj]
+00:28:14.446 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\Models\PipingSystemMdl.cs(39,65): warning CS0618: "ElementId.IntegerValue" является устаревшим: 'This property is deprecated in Revit 2024 and may be removed in a future version of Revit. Please use the Value property instead.' [C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers_ukon3fbp_wpftmp.csproj]
+00:28:14.450 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\Models\PipingSystemMdl.cs(99,62): warning CS0618: "ElementId.ElementId(int)" является устаревшим: 'This constructor is deprecated in Revit 2024 and may be removed in a future version of Revit. Please use the ElementId(Int64 id) constructor instead.' [C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers_ukon3fbp_wpftmp.csproj]
+00:28:14.462 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\Models\PipingSystemMdl.cs(103,55): warning CS0618: "ElementId.ElementId(int)" является устаревшим: 'This constructor is deprecated in Revit 2024 and may be removed in a future version of Revit. Please use the ElementId(Int64 id) constructor instead.' [C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers_ukon3fbp_wpftmp.csproj]
+00:28:14.546 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\ViewModels\NumberingOfRisersViewModel.cs(23,42): warning CS0649: Полю "NumberingOfRisersViewModel._settingsDataStorage" нигде не присваивается значение, поэтому оно всегда будет иметь значение по умолчанию null. [C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\NumberingOfRisers_zi4mfytw_wpftmp.csproj]
+00:28:15.500 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\ViewModels\NumberingOfRisersViewModel.cs(23,42): warning CS0649: Полю "NumberingOfRisersViewModel._settingsDataStorage" нигде не присваивается значение, поэтому оно всегда будет иметь значение по умолчанию null. [C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\NumberingOfRisers.csproj]
+00:28:15.661 | D | Compile              |   NumberingOfRisers -> C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\bin\Release R25\NumberingOfRisers.dll
+00:28:15.699 | D | Compile              |   NumberingOfRisers -> C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\bin\Release R25\publish
+00:28:15.743 | D | Compile              |   Publishing add-in NumberingOfRisers -> C:\Users\mshog\AppData\Roaming\Autodesk\Revit\Addins\2025\NumberingOfRisers
+00:28:16.015 | D | Compile              |   PositionNumbering -> C:\Users\mshog\source\repos\NoName3\source\PositionNumbering\bin\Release R25\PositionNumbering.dll
+00:28:16.055 | D | Compile              |   PositionNumbering -> C:\Users\mshog\source\repos\NoName3\source\PositionNumbering\bin\Release R25\publish
+00:28:16.306 | D | Compile              |   ElementsTypicalFloor -> C:\Users\mshog\source\repos\NoName3\source\ElementsTypicalFloor\bin\Release R25\ElementsTypicalFloor.dll
+00:28:16.330 | D | Compile              |   ElementsTypicalFloor -> C:\Users\mshog\source\repos\NoName3\source\ElementsTypicalFloor\bin\Release R25\publish
+00:28:16.389 | D | Compile              |   DesignationOfRisers -> C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\bin\Release R25\DesignationOfRisers.dll
+00:28:16.426 | D | Compile              |   DesignationOfRisers -> C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\bin\Release R25\publish
+00:28:16.513 | D | Compile              |   MepElementsCopy -> C:\Users\mshog\source\repos\NoName3\source\MepElementsCopy\bin\Release R25\MepElementsCopy.dll
+00:28:16.538 | D | Compile              |   MepElementsCopy -> C:\Users\mshog\source\repos\NoName3\source\MepElementsCopy\bin\Release R25\publish
+00:28:17.041 | D | Compile              |   MakeBreak -> C:\Users\mshog\source\repos\NoName3\source\MakeBreak\bin\Release R25\MakeBreak.dll
+00:28:17.063 | D | Compile              |   MakeBreak -> C:\Users\mshog\source\repos\NoName3\source\MakeBreak\bin\Release R25\publish
+00:28:18.212 | D | Compile              |   RoomsInSpaces -> C:\Users\mshog\source\repos\NoName3\source\RoomsInSpace\bin\Release R25\RoomsInSpaces.dll
+00:28:18.240 | D | Compile              |   RoomsInSpaces -> C:\Users\mshog\source\repos\NoName3\source\RoomsInSpace\bin\Release R25\publish
+00:28:18.701 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\ViewModels\ElementTypeViewModelBase.cs(357,26): warning CS0168: Переменная "e" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\UpdatingParameters_xuegfuti_wpftmp.csproj]
+00:28:20.055 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\ViewModels\ElementTypeViewModelBase.cs(357,26): warning CS0168: Переменная "e" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\UpdatingParameters.csproj]
+00:28:20.348 | D | Compile              |   UpdatingParameters -> C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\bin\Release R25\UpdatingParameters.dll
+00:28:20.438 | D | Compile              |   UpdatingParameters -> C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\bin\Release R25\publish
+00:28:21.047 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(25,69): warning CS8622: Допустимость значений NULL для ссылочных типов в типе параметра "sender" объекта "void Application.ControlledOnFailuresProcessing(object sender, FailuresProcessingEventArgs e)" не соответствует целевому объекту делегирования "EventHandler<FailuresProcessingEventArgs>" (возможно, из-за атрибутов допустимости значений NULL). [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.048 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(26,45): warning CS8622: Допустимость значений NULL для ссылочных типов в типе параметра "sender" объекта "void Application.LastAllocation(object sender, SelectionChangedEventArgs e)" не соответствует целевому объекту делегирования "EventHandler<SelectionChangedEventArgs>" (возможно, из-за атрибутов допустимости значений NULL). [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.049 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Commands\SystemModelingCommands\LastAllocationCommand.cs(11,42): warning CS8601: Возможно, назначение-ссылка, допускающее значение NULL. [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.049 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Services\FailureReplacement.cs(29,27): warning CS8604: Возможно, аргумент-ссылка, допускающий значение NULL, для параметра "id" в "Element? ElementIdExtensions.ToElement(ElementId id, Document document)". [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.050 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Services\FailureReplacement.cs(29,72): warning CS8604: Возможно, аргумент-ссылка, допускающий значение NULL, для параметра "document" в "Element? ElementIdExtensions.ToElement(ElementId id, Document document)". [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.051 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(102,44): warning CS8600: Преобразование литерала, допускающего значение NULL или возможного значения NULL в тип, не допускающий значение NULL. [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.052 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(104,42): warning CS8604: Возможно, аргумент-ссылка, допускающий значение NULL, для параметра "pullDownButton" в "PushButton RibbonExtensions.AddPushButton<ElbowDownCommand>(PulldownButton pullDownButton, string buttonText)". [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.053 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(182,17): warning CS8600: Преобразование литерала, допускающего значение NULL или возможного значения NULL в тип, не допускающий значение NULL. [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.054 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(183,50): warning CS8604: Возможно, аргумент-ссылка, допускающий значение NULL, для параметра "pullDownButton" в "PushButton RibbonExtensions.AddPushButton<ViewOfPipeSystemsCommand>(PulldownButton pullDownButton, string buttonText)". [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.055 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(16,36): warning CS8618: поле "_failureReplacement", не допускающий значения NULL, должен содержать значение, отличное от NULL, при выходе из конструктора. Рассмотрите возможность добавления модификатора "required" или объявления значения поле, допускающего значение NULL. [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.610 | D | Compile              |   RevitAddIn -> C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\RevitAddIn.dll
+00:28:21.714 | D | Compile              |   RevitAddIn -> C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish
+00:28:21.799 | D | Compile              |   Publishing add-in RevitAddIn -> C:\Users\mshog\AppData\Roaming\Autodesk\Revit\Addins\2025\RevitAddIn
+00:28:21.805 | D | Compile              | 
+00:28:21.807 | D | Compile              | Сборка успешно завершена.
+00:28:21.807 | D | Compile              | 
+00:28:21.808 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\Services\SystemModelingServices.cs(48,30): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands_3cfg5awj_wpftmp.csproj]
+00:28:21.809 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\Services\SystemModelingServices.cs(704,38): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands_3cfg5awj_wpftmp.csproj]
+00:28:21.810 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\Views\BaseRevitWindow.cs(27,26): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI_twnrcpiu_wpftmp.csproj]
+00:28:21.811 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\Views\Behaviors\CustomWindowBehavior.cs(110,26): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI_twnrcpiu_wpftmp.csproj]
+00:28:21.814 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\Services\SystemModelingServices.cs(48,30): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands.csproj]
+00:28:21.816 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\Services\SystemModelingServices.cs(704,38): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\SystemModelingComands\SystemModelingCommands.csproj]
+00:28:21.818 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\Views\BaseRevitWindow.cs(27,26): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI.csproj]
+00:28:21.820 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\Views\Behaviors\CustomWindowBehavior.cs(110,26): warning CS0168: Переменная "ex" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\NoNameAPI\NoNameAPI.csproj]
+00:28:21.822 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\Models\PipingSystemMdl.cs(34,33): warning CS0618: "ElementId.IntegerValue" является устаревшим: 'This property is deprecated in Revit 2024 and may be removed in a future version of Revit. Please use the Value property instead.' [C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers_ukon3fbp_wpftmp.csproj]
+00:28:21.826 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\Models\PipingSystemMdl.cs(39,65): warning CS0618: "ElementId.IntegerValue" является устаревшим: 'This property is deprecated in Revit 2024 and may be removed in a future version of Revit. Please use the Value property instead.' [C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers_ukon3fbp_wpftmp.csproj]
+00:28:21.828 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\Models\PipingSystemMdl.cs(99,62): warning CS0618: "ElementId.ElementId(int)" является устаревшим: 'This constructor is deprecated in Revit 2024 and may be removed in a future version of Revit. Please use the ElementId(Int64 id) constructor instead.' [C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers_ukon3fbp_wpftmp.csproj]
+00:28:21.833 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\Models\PipingSystemMdl.cs(103,55): warning CS0618: "ElementId.ElementId(int)" является устаревшим: 'This constructor is deprecated in Revit 2024 and may be removed in a future version of Revit. Please use the ElementId(Int64 id) constructor instead.' [C:\Users\mshog\source\repos\NoName3\source\DesignationOfRisers\DesignationOfRisers_ukon3fbp_wpftmp.csproj]
+00:28:21.834 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\ViewModels\NumberingOfRisersViewModel.cs(23,42): warning CS0649: Полю "NumberingOfRisersViewModel._settingsDataStorage" нигде не присваивается значение, поэтому оно всегда будет иметь значение по умолчанию null. [C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\NumberingOfRisers_zi4mfytw_wpftmp.csproj]
+00:28:21.835 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\ViewModels\NumberingOfRisersViewModel.cs(23,42): warning CS0649: Полю "NumberingOfRisersViewModel._settingsDataStorage" нигде не присваивается значение, поэтому оно всегда будет иметь значение по умолчанию null. [C:\Users\mshog\source\repos\NoName3\source\NumberingOfRisers\NumberingOfRisers.csproj]
+00:28:21.836 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\ViewModels\ElementTypeViewModelBase.cs(357,26): warning CS0168: Переменная "e" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\UpdatingParameters_xuegfuti_wpftmp.csproj]
+00:28:21.837 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\ViewModels\ElementTypeViewModelBase.cs(357,26): warning CS0168: Переменная "e" объявлена, но ни разу не использована. [C:\Users\mshog\source\repos\NoName3\source\UpdatingParameters\UpdatingParameters.csproj]
+00:28:21.838 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(25,69): warning CS8622: Допустимость значений NULL для ссылочных типов в типе параметра "sender" объекта "void Application.ControlledOnFailuresProcessing(object sender, FailuresProcessingEventArgs e)" не соответствует целевому объекту делегирования "EventHandler<FailuresProcessingEventArgs>" (возможно, из-за атрибутов допустимости значений NULL). [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.844 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(26,45): warning CS8622: Допустимость значений NULL для ссылочных типов в типе параметра "sender" объекта "void Application.LastAllocation(object sender, SelectionChangedEventArgs e)" не соответствует целевому объекту делегирования "EventHandler<SelectionChangedEventArgs>" (возможно, из-за атрибутов допустимости значений NULL). [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.847 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Commands\SystemModelingCommands\LastAllocationCommand.cs(11,42): warning CS8601: Возможно, назначение-ссылка, допускающее значение NULL. [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.848 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Services\FailureReplacement.cs(29,27): warning CS8604: Возможно, аргумент-ссылка, допускающий значение NULL, для параметра "id" в "Element? ElementIdExtensions.ToElement(ElementId id, Document document)". [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.852 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Services\FailureReplacement.cs(29,72): warning CS8604: Возможно, аргумент-ссылка, допускающий значение NULL, для параметра "document" в "Element? ElementIdExtensions.ToElement(ElementId id, Document document)". [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.863 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(102,44): warning CS8600: Преобразование литерала, допускающего значение NULL или возможного значения NULL в тип, не допускающий значение NULL. [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.865 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(104,42): warning CS8604: Возможно, аргумент-ссылка, допускающий значение NULL, для параметра "pullDownButton" в "PushButton RibbonExtensions.AddPushButton<ElbowDownCommand>(PulldownButton pullDownButton, string buttonText)". [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.866 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(182,17): warning CS8600: Преобразование литерала, допускающего значение NULL или возможного значения NULL в тип, не допускающий значение NULL. [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.867 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(183,50): warning CS8604: Возможно, аргумент-ссылка, допускающий значение NULL, для параметра "pullDownButton" в "PushButton RibbonExtensions.AddPushButton<ViewOfPipeSystemsCommand>(PulldownButton pullDownButton, string buttonText)". [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.868 | W | Compile              | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\Application.cs(16,36): warning CS8618: поле "_failureReplacement", не допускающий значения NULL, должен содержать значение, отличное от NULL, при выходе из конструктора. Рассмотрите возможность добавления модификатора "required" или объявления значения поле, допускающего значение NULL. [C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\RevitAddIn.csproj]
+00:28:21.872 | D | Compile              |     Предупреждений: 26
+00:28:21.872 | D | Compile              |     Ошибок: 0
+00:28:21.873 | D | Compile              | 
+00:28:21.874 | D | Compile              | Прошло времени 00:00:12.98
+00:28:21.930 | V | Compile              | Telemetry.OnTargetSucceeded (0)
+00:28:21.930 | V | Compile              | EventInvoker.OnTargetSucceeded (-3.4028235E+38)
+00:28:21.935 | V | CreateInstaller      | EventInvoker.OnTargetRunning (-3.4028235E+38)
+00:28:21.937 | I | CreateInstaller      | Project: RevitAddIn
+00:28:21.942 | I | CreateInstaller      | > "C:\Program Files\dotnet\dotnet.exe" build C:\Users\mshog\source\repos\NoName3\install\Installer.csproj --configuration Release --verbosity minimal
+00:28:21.943 | V | CreateInstaller      | @ C:\Users\mshog\source\repos\NoName3
+00:28:23.279 | D | CreateInstaller      |   Определение проектов для восстановления...
+00:28:23.992 | D | CreateInstaller      |   Восстановлен C:\Users\mshog\source\repos\NoName3\install\Installer.csproj (за 365 мс).
+00:28:25.128 | D | CreateInstaller      |   Installer -> C:\Users\mshog\source\repos\NoName3\install\bin\Release\Installer.exe
+00:28:25.143 | D | CreateInstaller      | 
+00:28:25.143 | D | CreateInstaller      | Сборка успешно завершена.
+00:28:25.147 | D | CreateInstaller      |     Предупреждений: 0
+00:28:25.148 | D | CreateInstaller      |     Ошибок: 0
+00:28:25.148 | D | CreateInstaller      | 
+00:28:25.149 | D | CreateInstaller      | Прошло времени 00:00:02.78
+00:28:25.917 | I | CreateInstaller      | Installer files for version 2024:
+00:28:25.919 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn.addin
+00:28:25.920 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\CommunityToolkit.Mvvm.dll
+00:28:25.921 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\Dapper.dll
+00:28:25.922 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\DesignationOfRisers.dll
+00:28:25.922 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\ElementsTypicalFloor.dll
+00:28:25.923 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\EntityFramework.dll
+00:28:25.924 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\EntityFramework.SqlServer.dll
+00:28:25.924 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\JetBrains.Annotations.dll
+00:28:25.925 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\MakeBreak.dll
+00:28:25.926 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\Marking.dll
+00:28:25.927 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\MepElementsCopy.dll
+00:28:25.927 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\Microsoft.Bcl.AsyncInterfaces.dll
+00:28:25.928 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\Microsoft.Bcl.HashCode.dll
+00:28:25.929 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\Microsoft.Xaml.Behaviors.dll
+00:28:25.930 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\Newtonsoft.Json.dll
+00:28:25.931 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\Nice3point.Revit.Extensions.dll
+00:28:25.931 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\Nice3point.Revit.Toolkit.dll
+00:28:25.932 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\NoNameAPI.dll
+00:28:25.933 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\NumberingOfRisers.dll
+00:28:25.934 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\PipelineGradients.dll
+00:28:25.934 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\PositionNumbering.dll
+00:28:25.935 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\RevitAddIn.dll
+00:28:25.936 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\ricaun.Revit.UI.StatusBar.1.0.0.dll
+00:28:25.937 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\RoomsInSpaces.dll
+00:28:25.937 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\System.Buffers.dll
+00:28:25.938 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\System.ComponentModel.Annotations.dll
+00:28:25.939 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\System.Data.SQLite.dll
+00:28:25.939 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\System.Data.SQLite.EF6.dll
+00:28:25.940 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\System.Data.SQLite.Linq.dll
+00:28:25.941 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\System.Memory.dll
+00:28:25.941 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\System.Numerics.Vectors.dll
+00:28:25.942 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\System.Runtime.CompilerServices.Unsafe.dll
+00:28:25.943 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\System.Threading.Tasks.Extensions.dll
+00:28:25.943 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\SystemModelingCommands.dll
+00:28:25.944 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\UpdatingParameters.dll
+00:28:25.945 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\ViewOfPipeSystems.dll
+00:28:25.946 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R24\publish\Revit 2024 Release R24 addin\RevitAddIn\Utils\Helpers.cs
+00:28:25.946 | I | CreateInstaller      | Installer files for version 2025:
+00:28:25.947 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn.addin
+00:28:25.948 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\CommunityToolkit.Mvvm.dll
+00:28:25.948 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\Dapper.dll
+00:28:25.949 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\DesignationOfRisers.dll
+00:28:25.950 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\ElementsTypicalFloor.dll
+00:28:25.950 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\EntityFramework.dll
+00:28:25.951 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\EntityFramework.SqlServer.dll
+00:28:25.952 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\JetBrains.Annotations.dll
+00:28:25.952 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\MakeBreak.dll
+00:28:25.953 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\Marking.dll
+00:28:25.953 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\MepElementsCopy.dll
+00:28:25.954 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\Microsoft.Bcl.HashCode.dll
+00:28:25.955 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\Microsoft.Xaml.Behaviors.dll
+00:28:25.955 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\Newtonsoft.Json.dll
+00:28:25.956 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\Nice3point.Revit.Extensions.dll
+00:28:25.957 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\Nice3point.Revit.Toolkit.dll
+00:28:25.957 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\NoNameAPI.dll
+00:28:25.958 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\NumberingOfRisers.dll
+00:28:25.958 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\PipelineGradients.dll
+00:28:25.959 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\PositionNumbering.dll
+00:28:25.960 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\RevitAddIn.deps.json
+00:28:25.960 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\RevitAddIn.dll
+00:28:25.961 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\RevitAddIn.runtimeconfig.json
+00:28:25.962 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\ricaun.Revit.UI.StatusBar.1.0.0.dll
+00:28:25.963 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\RoomsInSpaces.dll
+00:28:25.963 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\System.Data.SqlClient.dll
+00:28:25.964 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\System.Data.SQLite.dll
+00:28:25.965 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\System.Data.SQLite.EF6.dll
+00:28:25.966 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\SystemModelingCommands.dll
+00:28:25.966 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\UpdatingParameters.dll
+00:28:25.967 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\ViewOfPipeSystems.dll
+00:28:25.968 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\runtimes\linux-x64\native\SQLite.Interop.dll
+00:28:25.969 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\runtimes\osx-x64\native\SQLite.Interop.dll
+00:28:25.969 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\runtimes\unix\lib\netcoreapp2.1\System.Data.SqlClient.dll
+00:28:25.970 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\runtimes\win\lib\netcoreapp2.1\System.Data.SqlClient.dll
+00:28:25.971 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\runtimes\win-arm64\native\sni.dll
+00:28:25.972 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\runtimes\win-x64\native\sni.dll
+00:28:25.972 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\runtimes\win-x64\native\SQLite.Interop.dll
+00:28:25.973 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\runtimes\win-x86\native\sni.dll
+00:28:25.974 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\runtimes\win-x86\native\SQLite.Interop.dll
+00:28:25.975 | I | CreateInstaller      | C:\Users\mshog\source\repos\NoName3\source\RevitAddIn\bin\Release R25\publish\Revit 2025 Release R25 addin\RevitAddIn\Utils\Helpers.cs
+00:28:26.363 | D | CreateInstaller      | 
+00:28:26.364 | D | CreateInstaller      | ----------------------------------------------------------
+00:28:26.364 | D | CreateInstaller      | 
+00:28:26.365 | D | CreateInstaller      | Wix project file has been built: C:\Users\mshog\source\repos\NoName3\output\NoName3-1.0.0-SingleUser.wxs
+00:28:26.365 | D | CreateInstaller      | 
+00:28:26.606 | D | CreateInstaller      | Windows Installer XML Toolset Compiler version 3.14.1.8722
+00:28:26.607 | D | CreateInstaller      | Copyright (c) .NET Foundation and contributors. All rights reserved.
+00:28:26.607 | D | CreateInstaller      | 
+00:28:26.724 | D | CreateInstaller      | NoName3-1.0.0-SingleUser.wxs
+00:28:27.544 | D | CreateInstaller      | Windows Installer XML Toolset Linker version 3.14.1.8722
+00:28:27.544 | D | CreateInstaller      | Copyright (c) .NET Foundation and contributors. All rights reserved.
+00:28:27.545 | D | CreateInstaller      | 
+00:28:47.344 | D | CreateInstaller      | 
+00:28:47.345 | D | CreateInstaller      | ----------------------------------------------------------
+00:28:47.346 | D | CreateInstaller      | 
+00:28:47.346 | D | CreateInstaller      | MSI file has been built: C:\Users\mshog\source\repos\NoName3\output\NoName3-1.0.0-SingleUser.msi
+00:28:47.347 | D | CreateInstaller      | 
+00:28:47.347 | D | CreateInstaller      |  ProductName: NoName3
+00:28:47.348 | D | CreateInstaller      |  Version    : 1.0.0
+00:28:47.348 | D | CreateInstaller      |  ProductId  : {901779d3-3085-46dc-8294-b1f06314f7c9}
+00:28:47.349 | D | CreateInstaller      |  UpgradeCode: {901779d3-3085-46dc-8294-b1f05314e7c9}
+00:28:47.350 | D | CreateInstaller      | 
+00:28:47.366 | D | CreateInstaller      | 
+00:28:47.367 | D | CreateInstaller      | ----------------------------------------------------------
+00:28:47.367 | D | CreateInstaller      | 
+00:28:47.368 | D | CreateInstaller      | Wix project file has been built: C:\Users\mshog\source\repos\NoName3\output\NoName3-1.0.0-MultiUser.wxs
+00:28:47.369 | D | CreateInstaller      | 
+00:28:47.583 | D | CreateInstaller      | Windows Installer XML Toolset Compiler version 3.14.1.8722
+00:28:47.583 | D | CreateInstaller      | Copyright (c) .NET Foundation and contributors. All rights reserved.
+00:28:47.584 | D | CreateInstaller      | 
+00:28:47.674 | D | CreateInstaller      | NoName3-1.0.0-MultiUser.wxs
+00:28:48.064 | D | CreateInstaller      | Windows Installer XML Toolset Linker version 3.14.1.8722
+00:28:48.065 | D | CreateInstaller      | Copyright (c) .NET Foundation and contributors. All rights reserved.
+00:28:48.065 | D | CreateInstaller      | 
+00:29:08.306 | D | CreateInstaller      | 
+00:29:08.307 | D | CreateInstaller      | ----------------------------------------------------------
+00:29:08.308 | D | CreateInstaller      | 
+00:29:08.310 | D | CreateInstaller      | MSI file has been built: C:\Users\mshog\source\repos\NoName3\output\NoName3-1.0.0-MultiUser.msi
+00:29:08.311 | D | CreateInstaller      | 
+00:29:08.312 | D | CreateInstaller      |  ProductName: NoName3
+00:29:08.313 | D | CreateInstaller      |  Version    : 1.0.0
+00:29:08.314 | D | CreateInstaller      |  ProductId  : {901779d3-3085-46dc-8294-b1f06314f7c9}
+00:29:08.314 | D | CreateInstaller      |  UpgradeCode: {901779d3-3085-46dc-8294-b1f05314e7c9}
+00:29:08.315 | D | CreateInstaller      | 
+00:29:08.326 | V | CreateInstaller      | Telemetry.OnTargetSucceeded (0)
+00:29:08.326 | V | CreateInstaller      | EventInvoker.OnTargetSucceeded (-3.4028235E+38)
