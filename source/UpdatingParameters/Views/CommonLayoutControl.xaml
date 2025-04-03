@@ -12,12 +12,15 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary
-                    Source="pack://application:,,,/UpdatingParameters;component/Views/Resources/CommonLayoutControlResources.xaml" />
+                <!-- <ResourceDictionary -->
+                <!--     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/ThemesResourceDictionary.xaml" /> -->
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
-    <Grid Style="{StaticResource Grid}">
+    <Grid>
+        <!-- <Grid.Style> -->
+        <!--     <StaticResource ResourceKey="Grid" /> -->
+        <!-- </Grid.Style> -->
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
@@ -84,16 +87,23 @@
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
             <Button Margin="5 10 10 5"
-                    Style="{StaticResource SaveButton}"
                     Grid.Column="0" Content="Сохранить настройки"
                     Command="{Binding SaveSettingsCommand}"
-                    CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}" />
+                    CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}">
+                <!-- <Button.Style> -->
+                <!--     <StaticResource ResourceKey="SaveButton" /> -->
+                <!-- </Button.Style> -->
+            </Button>
 
             <Button Margin="10 10 5 5"
-                    Grid.Column="1" Style="{StaticResource UpdateButton}"
+                    Grid.Column="1"
                     Content="Обновить все элементы типа"
                     Command="{Binding UpdateElementsCommand}"
-                    CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}" />
+                    CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}">
+                <!-- <Button.Style> -->
+                <!--     <StaticResource ResourceKey="UpdateButton" /> -->
+                <!-- </Button.Style> -->
+            </Button>
 
         </Grid>
         <StatusBar Grid.Row="2" Height="35">

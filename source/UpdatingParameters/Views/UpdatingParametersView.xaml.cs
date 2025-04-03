@@ -8,5 +8,6 @@ public sealed partial class UpdatingParametersView
     {
         DataContext = viewModel;
         InitializeComponent();
+       
     }
 }

@@ -12,26 +12,34 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary
-                    Source="pack://application:,,,/UpdatingParameters;component/Views/Resources/CommonLayoutControlResources.xaml" />
+                <!-- <ResourceDictionary -->
+                <!--     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/ThemesResourceDictionary.xaml" /> -->
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         </ResourceDictionary>
 
     </UserControl.Resources>
-    <Grid Style="{StaticResource Grid}">
+    <Grid>
+        <!-- <Grid.Style> -->
+        <!--     <StaticResource ResourceKey="Grid" /> -->
+        <!-- </Grid.Style> -->
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
         <CheckBox x:Name="UpdaterCheckBox"
-                  Style="{StaticResource AnimatedCheckBox}"
                   Content="Обновление параметров"
-                  Margin="5 5 0 0" IsChecked="{Binding UpdaterIsChecked}" />
+                  Margin="5 5 0 0" IsChecked="{Binding UpdaterIsChecked}">
+            <!-- <CheckBox.Style> -->
+            <!--     <StaticResource ResourceKey="AnimatedCheckBox" /> -->
+            <!-- </CheckBox.Style> -->
+        </CheckBox>
 
-        <GroupBox Grid.Row="1" Header="Категории"
-                  Style="{StaticResource GradientGroupBoxStyle}">
+        <GroupBox Grid.Row="1" Header="Категории">
+            <!-- <GroupBox.Style> -->
+            <!--     <StaticResource ResourceKey="GradientGroupBoxStyle" /> -->
+            <!-- </GroupBox.Style> -->
             <GroupBox.Visibility>
                 <Binding Path="IsChecked" ElementName="UpdaterCheckBox"
                          Converter="{StaticResource BooleanToVisibilityConverter}" />
@@ -44,7 +52,10 @@
                 </Grid.RowDefinitions>
                 <StackPanel>
                     <StackPanel.Resources>
-                        <Style TargetType="CheckBox" BasedOn="{StaticResource AnimatedCheckBox}">
+                        <Style TargetType="CheckBox">
+                            <!-- <Style.BasedOn> -->
+                            <!--     <StaticResource ResourceKey="AnimatedCheckBox" /> -->
+                            <!-- </Style.BasedOn> -->
                             <Setter Property="Margin" Value="0 3" />
                         </Style>
                     </StackPanel.Resources>
@@ -109,12 +120,22 @@
                             
                               IsChecked="{Binding HermeticClassIsChecked}" />
                 </StackPanel>
-                <Separator Grid.Row="1" Style="{StaticResource ShadowSeparator}" />
+                <Separator Grid.Row="1">
+                    <!-- <Separator.Style> -->
+                    <!--     <StaticResource ResourceKey="ShadowSeparator" /> -->
+                    <!-- </Separator.Style> -->
+                </Separator>
                 <StackPanel Orientation="Horizontal" Grid.Row="2" VerticalAlignment="Top">
-                    <Button Command="{Binding HighlightAllCommand}"
-                            Style="{StaticResource SelectAllButton}" />
-                    <Button Command="{Binding DeselectCommand}"
-                            Style="{StaticResource ClearSelectionButton}" />
+                    <Button Command="{Binding HighlightAllCommand}">
+                        <!-- <Button.Style> -->
+                        <!--     <StaticResource ResourceKey="SelectAllButton" /> -->
+                        <!-- </Button.Style> -->
+                    </Button>
+                    <Button Command="{Binding DeselectCommand}">
+                        <!-- <Button.Style> -->
+                        <!--     <StaticResource ResourceKey="ClearSelectionButton" /> -->
+                        <!-- </Button.Style> -->
+                    </Button>
                 </StackPanel>
             </Grid>
 
@@ -127,12 +148,18 @@
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Content="Восстановить настройки по умолчанию"
                     Command="{Binding ResetSettingsCommand}"
-                    Style="{StaticResource UpdateButton}"
-                    Margin="5 5 10 5" />
+                    Margin="5 5 10 5">
+                <!-- <Button.Style> -->
+                <!--     <StaticResource ResourceKey="UpdateButton" /> -->
+                <!-- </Button.Style> -->
+            </Button>
             <Button Content="Сохранить настройки" Grid.Column="1"
                     Margin="10 5 5 5"
-                    Style="{StaticResource UpdateButton}"
-                    Command="{Binding SaveSettingsCommand}" />
+                    Command="{Binding SaveSettingsCommand}">
+                <!-- <Button.Style> -->
+                <!--     <StaticResource ResourceKey="UpdateButton" /> -->
+                <!-- </Button.Style> -->
+            </Button>
         </Grid>
     </Grid>
 
