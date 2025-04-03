@@ -22,11 +22,11 @@ namespace RevitAddIn
             CreateRibbon();
             RegisterUpdaterParameters();
             _failureReplacement = new FailureReplacement();
-            Application.ControlledApplication.FailuresProcessing += ControlledOnFailuresProcessing;
+            // Application.ControlledApplication.FailuresProcessing += ControlledOnFailuresProcessing;
             Application.SelectionChanged += LastAllocation;
         }
 
-        private void LastAllocation(object sender, SelectionChangedEventArgs e)
+        private void LastAllocation(object? sender, SelectionChangedEventArgs e)
         {
            
             ICollection<ElementId> currentSelection = e.GetSelectedElements();
@@ -99,36 +99,59 @@ namespace RevitAddIn
             #region Elbow
 
             SplitButtonData splitButtonDataElbow = new("sds", "sdsa");
-            SplitButton splitButtonElbow = panelSystemModeling.AddItem(splitButtonDataElbow) as SplitButton;
+            SplitButton? splitButtonElbow = panelSystemModeling.AddItem(splitButtonDataElbow) as SplitButton;
 
-            var elbowDownCommandButton = splitButtonElbow.AddPushButton<ElbowDownCommand>("Поворот вниз")
-                .SetImage("/RevitAddIn;component/Resources/Icons/ElbowDown16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/ElbowDown32.png");
-            ((PushButton)elbowDownCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
-            var elbowUpCommandButton = splitButtonElbow.AddPushButton<ElbowUpCommand>("Поворот вверх")
-                .SetImage("/RevitAddIn;component/Resources/Icons/ElbowUp16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/ElbowUp32.png");
-            ((PushButton)elbowUpCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
-            var elbowLeftCommandButton = splitButtonElbow.AddPushButton<ElbowLeftCommand>("Поворот влево")
-                .SetImage("/RevitAddIn;component/Resources/Icons/ElbowLeft16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/ElbowLeft32.png");
-            ((PushButton)elbowLeftCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
-            var elbowRightCommandButton = splitButtonElbow.AddPushButton<ElbowRightCommand>("Поворот вправо")
-                .SetImage("/RevitAddIn;component/Resources/Icons/ElbowRight16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/ElbowRight32.png");
-            ((PushButton)elbowRightCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
-            var elbowDownFortyFiveCommandButton = splitButtonElbow
-                .AddPushButton<ElbowDownFortyFiveCommand>("Поворот вниз на 45°")
-                .SetImage("/RevitAddIn;component/Resources/Icons/ElbowDown45 16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/ElbowDown45 32.png");
-            ((PushButton)elbowDownFortyFiveCommandButton).AvailabilityClassName =
-                typeof(CommandAvailability).FullName;
-            var elbowUpFortyFiveCommandButton = splitButtonElbow
-                .AddPushButton<ElbowUpFortyFiveCommand>("Поворот вверх на 45°")
-                .SetImage("/RevitAddIn;component/Resources/Icons/elbowUp45-16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/elbowUp45-32.ico");
-            ((PushButton)elbowUpFortyFiveCommandButton).AvailabilityClassName =
-                typeof(CommandAvailability).FullName;
+            if (splitButtonElbow != null)
+            {
+                var elbowDownCommandButton = splitButtonElbow.AddPushButton<ElbowDownCommand>("Поворот вниз")
+                    .SetImage("/RevitAddIn;component/Resources/Icons/ElbowDown16.ico")
+                    .SetLargeImage("/RevitAddIn;component/Resources/Icons/ElbowDown32.png");
+                ((PushButton)elbowDownCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
+            }
+
+            if (splitButtonElbow != null)
+            {
+                var elbowUpCommandButton = splitButtonElbow.AddPushButton<ElbowUpCommand>("Поворот вверх")
+                    .SetImage("/RevitAddIn;component/Resources/Icons/ElbowUp16.ico")
+                    .SetLargeImage("/RevitAddIn;component/Resources/Icons/ElbowUp32.png");
+                ((PushButton)elbowUpCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
+            }
+
+            if (splitButtonElbow != null)
+            {
+                var elbowLeftCommandButton = splitButtonElbow.AddPushButton<ElbowLeftCommand>("Поворот влево")
+                    .SetImage("/RevitAddIn;component/Resources/Icons/ElbowLeft16.ico")
+                    .SetLargeImage("/RevitAddIn;component/Resources/Icons/ElbowLeft32.png");
+                ((PushButton)elbowLeftCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
+            }
+
+            if (splitButtonElbow != null)
+            {
+                var elbowRightCommandButton = splitButtonElbow.AddPushButton<ElbowRightCommand>("Поворот вправо")
+                    .SetImage("/RevitAddIn;component/Resources/Icons/ElbowRight16.ico")
+                    .SetLargeImage("/RevitAddIn;component/Resources/Icons/ElbowRight32.png");
+                ((PushButton)elbowRightCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
+            }
+
+            if (splitButtonElbow != null)
+            {
+                var elbowDownFortyFiveCommandButton = splitButtonElbow
+                    .AddPushButton<ElbowDownFortyFiveCommand>("Поворот вниз на 45°")
+                    .SetImage("/RevitAddIn;component/Resources/Icons/ElbowDown45 16.ico")
+                    .SetLargeImage("/RevitAddIn;component/Resources/Icons/ElbowDown45 32.png");
+                ((PushButton)elbowDownFortyFiveCommandButton).AvailabilityClassName =
+                    typeof(CommandAvailability).FullName;
+            }
+
+            if (splitButtonElbow != null)
+            {
+                var elbowUpFortyFiveCommandButton = splitButtonElbow
+                    .AddPushButton<ElbowUpFortyFiveCommand>("Поворот вверх на 45°")
+                    .SetImage("/RevitAddIn;component/Resources/Icons/elbowUp45-16.ico")
+                    .SetLargeImage("/RevitAddIn;component/Resources/Icons/elbowUp45-32.ico");
+                ((PushButton)elbowUpFortyFiveCommandButton).AvailabilityClassName =
+                    typeof(CommandAvailability).FullName;
+            }
 
             #endregion
 
@@ -178,26 +201,33 @@ namespace RevitAddIn
             #region ViewSystems
 
             SplitButtonData splitButtonDataViewSystems = new("dgfg", "sуццц");
-            SplitButton splitButtonViewSystems =
+            SplitButton? splitButtonViewSystems =
                 panelSystemCreatingSchematics.AddItem(splitButtonDataViewSystems) as SplitButton;
-            var viewOfPipeSystemsCommandButton = splitButtonViewSystems
-                .AddPushButton<ViewOfPipeSystemsCommand>("Создать\nвиды систем")
-                .SetImage("/RevitAddIn;component/Resources/Icons/Pipe systems 16.png")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/Pipe systems 32.png");
-            ((PushButton)viewOfPipeSystemsCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
-            var updateViewsCommandButton = splitButtonViewSystems.AddPushButton<UpdateViewsCommand>("Обновить виды")
-                .SetImage("/RevitAddIn;component/Resources/Icons/Обновить виды_16.png")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/Обновить виды_32.png");
-            ((PushButton)updateViewsCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
+            if (splitButtonViewSystems != null)
+            {
+                var viewOfPipeSystemsCommandButton = splitButtonViewSystems
+                    .AddPushButton<ViewOfPipeSystemsCommand>("Создать\nвиды систем")
+                    .SetImage("/RevitAddIn;component/Resources/Icons/Pipe systems 16.png")
+                    .SetLargeImage("/RevitAddIn;component/Resources/Icons/Pipe systems 32.png");
+                ((PushButton)viewOfPipeSystemsCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
+            }
+
+            if (splitButtonViewSystems != null)
+            {
+                var updateViewsCommandButton = splitButtonViewSystems.AddPushButton<UpdateViewsCommand>("Обновить виды")
+                    .SetImage("/RevitAddIn;component/Resources/Icons/Обновить виды_16.png")
+                    .SetLargeImage("/RevitAddIn;component/Resources/Icons/Обновить виды_32.png");
+                ((PushButton)updateViewsCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
+            }
 
             #endregion
 
             #region DesignationOfRisers
 
-            var designationOfRisersCommandButton = panelSystemCreatingSchematics
-                .AddPushButton<DesignationOfRisersCommand>("Обозначение\nстояков")
-                .SetImage("/RevitAddIn;component/Resources/Icons/Обозначение стояка_16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/Обозначение стояка_32.ico");
+            // var designationOfRisersCommandButton = panelSystemCreatingSchematics
+            //     .AddPushButton<DesignationOfRisersCommand>("Обозначение\nстояков")
+            //     .SetImage("/RevitAddIn;component/Resources/Icons/Обозначение стояка_16.ico")
+            //     .SetLargeImage("/RevitAddIn;component/Resources/Icons/Обозначение стояка_32.ico");
 
             #endregion
             #region MakeBreak
