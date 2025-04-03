@@ -1,0 +1,136 @@
+﻿<Window
+    x:Class="PlacementOfStamps.Views.PlacementOfStampsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:viewModel="clr-namespace:PlacementOfStamps.ViewModels"
+    mc:Ignorable="d"
+    d:DataContext="{d:DesignInstance viewModel:PlacementOfStampsViewModel}"
+    WindowStartupLocation="CenterScreen" Width="400" Height="300"
+    Title="PlacementOfStamps">
+    <Window.Resources>
+        <!-- Стиль для CheckBox -->
+        <Style TargetType="CheckBox" x:Key="FormCheckBoxStyle">
+            <Setter Property="Margin" Value="5" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- Стиль для TextBlock -->
+        <Style TargetType="TextBlock" x:Key="FormTextBlockStyle">
+            <Setter Property="Margin" Value="5" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- Стиль для ComboBox -->
+        <Style TargetType="ComboBox" x:Key="FormComboBoxStyle">
+            <Setter Property="Margin" Value="5" />
+            <Setter Property="MinWidth" Value="100" />
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <!-- Определение строк Grid -->
+        <Grid.RowDefinitions>
+            <!-- Верхняя часть с формой -->
+            <RowDefinition />
+            <!-- Нижняя часть с кнопкой -->
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Контейнер для формы с марками -->
+        <Border Grid.Row="0" Padding="10" BorderBrush="Gray" BorderThickness="1">
+            <Grid>
+                <!-- Определение колонок Grid -->
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" /> <!-- Для CheckBox -->
+                    <ColumnDefinition Width="2*" />    <!-- Для TextBlock -->
+                    <ColumnDefinition Width="2*" />   <!-- Для ComboBox -->
+                </Grid.ColumnDefinitions>
+
+                <!-- Определение строк Grid -->
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Первая строка -->
+                <CheckBox Grid.Column="0" Grid.Row="0"
+                          Style="{StaticResource FormCheckBoxStyle}"
+                          IsChecked="{Binding PipesOuterDiametersIsChecked}" />
+                <TextBlock Grid.Column="1" Grid.Row="0"
+                           Style="{StaticResource FormTextBlockStyle}"
+                           Text="Трубы: Днар" />
+                <ComboBox Grid.Column="2" Grid.Row="0"
+                          Style="{StaticResource FormComboBoxStyle}"
+                          ItemsSource="{Binding PipeMarks}"
+                          SelectedItem="{Binding PipesOuterDiameterMarkSelected}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+
+                <!-- Вторая строка -->
+                <CheckBox Grid.Column="0" Grid.Row="1"
+                          Style="{StaticResource FormCheckBoxStyle}"
+                          IsChecked="{Binding PipesDNIsChecked}" />
+                <TextBlock Grid.Column="1" Grid.Row="1"
+                           Style="{StaticResource FormTextBlockStyle}"
+                           Text="Трубы: DN" />
+                <ComboBox Grid.Column="2" Grid.Row="1"
+                          Style="{StaticResource FormComboBoxStyle}"
+                          ItemsSource="{Binding PipeMarks}"
+                          SelectedItem="{Binding SelectedPipeMarkDN}" />
+
+                <!-- Третья строка -->
+                <CheckBox Grid.Column="0" Grid.Row="2"
+                          Style="{StaticResource FormCheckBoxStyle}"
+                          IsChecked="{Binding SystemAbbreviationIsChecked}" />
+                <TextBlock Grid.Column="1" Grid.Row="2"
+                           Style="{StaticResource FormTextBlockStyle}"
+                           Text="Сокращение системы" />
+                <ComboBox Grid.Column="2" Grid.Row="2"
+                          Style="{StaticResource FormComboBoxStyle}"
+                          ItemsSource="{Binding PipeMarks}"
+                          SelectedItem="{Binding SystemAbbreviationMarkSelected}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <!-- Четвертая строка -->
+                <CheckBox Grid.Column="0" Grid.Row="3"
+                          Style="{StaticResource FormCheckBoxStyle}"
+                          IsChecked="{Binding PipeInsulationIsChecked}" />
+                <TextBlock Grid.Column="1" Grid.Row="3"
+                           Style="{StaticResource FormTextBlockStyle}"
+                           Text="Изоляция труб" />
+                <ComboBox Grid.Column="2" Grid.Row="3"
+                          Style="{StaticResource FormComboBoxStyle}"
+                          ItemsSource="{Binding PipeMarks}"
+                          SelectedItem="{Binding PipeInsulationMarkSelected}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </Grid>
+        </Border>
+
+        <!-- Кнопка в нижней части -->
+        <Button Grid.Row="1" Content="Расставить марки"
+                Command="{Binding PlacementMarksCommand}"
+                HorizontalAlignment="Right"
+                Margin="10"
+                Padding="10,5" />
+    </Grid>
+
+
+</Window>
