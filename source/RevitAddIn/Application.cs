@@ -80,7 +80,7 @@ namespace RevitAddIn
 
             #region Bloom
 
-            var bloomCommandButton = panelSystemModeling.AddPushButton<BloomCommand>("Расширение")
+            var bloomCommandButton = panelSystemModeling.AddPushButton<BloomCommand>("Вставить трубу")
                 .SetImage("/RevitAddIn;component/Resources/Icons/Bloom16.ico")
                 .SetLargeImage("/RevitAddIn;component/Resources/Icons/Bloom32.png");
             ((PushButton)bloomCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;

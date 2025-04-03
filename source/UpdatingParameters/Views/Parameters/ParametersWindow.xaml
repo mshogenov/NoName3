@@ -13,7 +13,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
-                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/ThemesResourceDictionary.xaml" />
+                    Source="pack://application:,,,/UpdatingParameters;component/Views/Resources/CommonLayoutControlResources.xaml " />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>

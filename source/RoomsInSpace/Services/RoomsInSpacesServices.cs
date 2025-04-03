@@ -2,13 +2,14 @@
 using Autodesk.Revit.DB.Mechanical;
 using Autodesk.Revit.UI;
 using NoNameApi.Views;
+using RoomsInSpaces.Models;
 using GeometryObject = Autodesk.Revit.DB.GeometryObject;
 
 namespace RoomsInSpaces.Services;
 
 public class RoomsInSpacesServices
 {
-    public void RoomsInSpaces(Document doc, RevitLinkInstance linkInstance)
+    public void RoomsInSpaces(Document doc, RevitLinkInstance linkInstance, List<Room> linkedRooms)
     {
         if (linkInstance == null)
         {
@@ -17,8 +18,6 @@ public class RoomsInSpacesServices
 
         Document linkedDoc = linkInstance.GetLinkDocument();
         Transform linkTransform = linkInstance.GetTotalTransform();
-        // Получение помещений из связанного документа
-        var linkedRooms = GetRooms(linkedDoc).ToList();
         // Собираем все существующие пространства в текущем документе 
         List<Space> existingSpaces = GetSpace(doc).ToList();
         List<Level> currentLevels = GenerateNecessaryLevels(doc, linkedDoc, linkedRooms);
@@ -26,7 +25,7 @@ public class RoomsInSpacesServices
         int updatedCount = 0;
         using Transaction trans = new(doc, "Импорт пространств из связанного файла");
         trans.Start();
-        using var progressBar = new ProgressWindow(linkedRooms.Count);
+        var progressBar = new ProgressWindow(linkedRooms.Count);
         progressBar.Show();
         for (int currentIndex = 0; currentIndex < linkedRooms.Count; currentIndex++)
         {
@@ -71,7 +70,7 @@ public class RoomsInSpacesServices
                 {
                     TaskDialog.Show("Предупреждение",
                         $"Не удалось определить координаты для помещения '{linkedRoom.Number}'. Пропуск.");
-                    continue;
+                    return;
                 }
 
                 try
@@ -83,10 +82,8 @@ public class RoomsInSpacesServices
                 }
                 catch (Exception ex)
                 {
-                    trans.RollBack();
                     TaskDialog.Show("Ошибка",
                         $"Не удалось создать пространство для помещения '{linkedRoom.Number}': {ex.Message}");
-                    return;
                 }
             }
         }
@@ -96,57 +93,103 @@ public class RoomsInSpacesServices
             $"Создано пространств: {createdCount}\n" + $"Обновлено пространств: {updatedCount}");
     }
 
-    private Space FindIntersectedSpace(List<Space> spaces, Room room, Transform linkTransform, Document doc)
+   private Space FindIntersectedSpace(List<Space> spaces, Room room, Transform linkTransform, Document doc)
+{
+    // 1. Быстрая проверка по ограничивающим прямоугольникам перед сложными вычислениями
+    BoundingBoxXYZ roomBBox = room.get_BoundingBox(null);
+    if (roomBBox == null) return null;
+
+    // Трансформируем ограничивающий прямоугольник помещения
+    BoundingBoxXYZ transformedRoomBBox = new BoundingBoxXYZ();
+    transformedRoomBBox.Min = linkTransform.OfPoint(roomBBox.Min);
+    transformedRoomBBox.Max = linkTransform.OfPoint(roomBBox.Max);
+
+    // Фильтруем пространства по пересечению ограничивающих прямоугольников
+    List<Space> potentialSpaces = new List<Space>();
+    foreach (Space space in spaces)
     {
-        // Создаем калькулятор геометрии пространственных элементов
-        SpatialElementGeometryCalculator calculator = new SpatialElementGeometryCalculator(doc);
+        BoundingBoxXYZ spaceBBox = space.get_BoundingBox(null);
+        if (spaceBBox == null) continue;
 
-        // Получаем геометрию помещения из связанного файла
-        SpatialElementGeometryResults roomResults;
-        try
+        // Проверяем пересечение ограничивающих прямоугольников
+        if (DoBoxesIntersect(transformedRoomBBox, spaceBBox))
         {
-            roomResults = calculator.CalculateSpatialElementGeometry(room);
+            potentialSpaces.Add(space);
         }
-        catch
-        {
-            return null; // Если не получилось вычислить геометрию
-        }
+    }
 
-        Solid roomSolid = roomResults.GetGeometry();
-        if (roomSolid == null) return null;
+    // Если нет потенциальных пространств, сразу возвращаем null
+    if (potentialSpaces.Count == 0) return null;
+
+    // 2. Вычисляем геометрию только для отфильтрованных пространств
+    SpatialElementGeometryCalculator calculator = new SpatialElementGeometryCalculator(doc);
+
+    // Получаем геометрию помещения из связанного файла (делаем однократно)
+    Solid roomSolid;
+    try
+    {
+        SpatialElementGeometryResults roomResults = calculator.CalculateSpatialElementGeometry(room);
+        roomSolid = roomResults.GetGeometry();
+        if (roomSolid == null || roomSolid.Volume < 0.001) return null;
 
         // Трансформируем геометрию помещения в координаты текущего документа
         roomSolid = SolidUtils.CreateTransformed(roomSolid, linkTransform);
+    }
+    catch
+    {
+        return null; // Если не получилось вычислить геометрию
+    }
 
-        // Проверяем каждое пространство на пересечение
-        foreach (Space space in spaces)
+    // 3. Отслеживаем наилучшее совпадение по объему пересечения
+    Space bestMatch = null;
+    double maxIntersectionRatio = 0.05; // Минимальный порог пересечения (5% объема)
+
+    foreach (Space space in potentialSpaces)
+    {
+        try
         {
-            try
+            SpatialElementGeometryResults spaceResults = calculator.CalculateSpatialElementGeometry(space);
+            Solid spaceSolid = spaceResults.GetGeometry();
+
+            if (spaceSolid == null || spaceSolid.Volume < 0.001) continue;
+
+            // Вычисляем пересечение объемов
+            Solid intersection = BooleanOperationsUtils.ExecuteBooleanOperation(
+                roomSolid, spaceSolid, BooleanOperationsType.Intersect);
+
+            if (intersection != null && intersection.Volume > 0.001)
             {
-                SpatialElementGeometryResults spaceResults = calculator.CalculateSpatialElementGeometry(space);
-                Solid spaceSolid = spaceResults.GetGeometry();
+                // Вычисляем соотношение объема пересечения к объему помещения
+                double intersectionRatio = intersection.Volume / roomSolid.Volume;
 
-                if (spaceSolid == null) continue;
-
-                // Вычисляем пересечение объемов
-                Solid intersection = BooleanOperationsUtils.ExecuteBooleanOperation(
-                    roomSolid, spaceSolid, BooleanOperationsType.Intersect);
-
-                if (intersection != null && intersection.Volume > 0)
+                // Если это лучшее совпадение, запоминаем его
+                if (intersectionRatio > maxIntersectionRatio)
                 {
-                    // Можно добавить проверку на минимальный объем пересечения
-                    // Например, если intersection.Volume / roomSolid.Volume > 0.5
-                    return space;
+                    maxIntersectionRatio = intersectionRatio;
+                    bestMatch = space;
+
+                    // Если нашли почти полное пересечение, можем сразу вернуть результат
+                    if (intersectionRatio > 0.9) return space;
                 }
             }
-            catch
-            {
-                continue; // Если не получилось вычислить геометрию для этого пространства
-            }
         }
-
-        return null;
+        catch
+        {
+            continue; // Если не получилось вычислить геометрию для этого пространства
+        }
     }
+
+    return bestMatch;
+}
+
+// Вспомогательный метод для проверки пересечения ограничивающих прямоугольников
+private bool DoBoxesIntersect(BoundingBoxXYZ box1, BoundingBoxXYZ box2)
+{
+    // Проверка по x, y, z
+    return (box1.Min.X <= box2.Max.X && box1.Max.X >= box2.Min.X) &&
+           (box1.Min.Y <= box2.Max.Y && box1.Max.Y >= box2.Min.Y) &&
+           (box1.Min.Z <= box2.Max.Z && box1.Max.Z >= box2.Min.Z);
+}
 
     private BoundingBoxXYZ CreateBoundingBoxAtPoint(
         XYZ centerPoint,
@@ -393,7 +436,7 @@ public class RoomsInSpacesServices
     /// </summary>
     /// <param name="doc"></param>
     /// <returns>Возвращает список помещений</returns>
-    private IEnumerable<Room> GetRooms(Document doc)
+    public IEnumerable<Room> GetRooms(Document doc)
     {
         if (doc != null)
         {

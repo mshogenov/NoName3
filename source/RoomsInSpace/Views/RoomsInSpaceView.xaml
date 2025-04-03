@@ -10,19 +10,20 @@
     d:DataContext="{d:DesignInstance viewModel:RoomsInSpacesViewModel}"
     WindowStartupLocation="CenterScreen"
     Title="Импорт помещений в пространства"
-    Height="230"
+    Height="600"
     Width="400">
     <Window.Resources>
         <converter:RevitLinkNameConverter x:Key="RevitLinkNameConverter" />
     </Window.Resources>
     <Grid Margin="20">
         <Grid.RowDefinitions>
-
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Основной контент -->
-        <StackPanel Grid.Row="0" VerticalAlignment="Top" HorizontalAlignment="Stretch">
+        <Grid Grid.Row="0" VerticalAlignment="Top" HorizontalAlignment="Stretch">
 
             <!-- Контейнер для выбора связанного файла -->
             <Border Background="White" CornerRadius="5" BorderBrush="#CCCCCC" BorderThickness="1" Padding="10">
@@ -49,7 +50,32 @@
                     </ComboBox>
                 </StackPanel>
             </Border>
-
+            </Grid>
+        <Grid Grid.Row="1">
+          <TextBlock Text="Уровни:"/>
+            <ListBox ItemsSource="{Binding LevelInfos}"
+                     Margin=" 0 3">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <CheckBox IsChecked="{Binding IsChecked}"
+                                      Content="{Binding LevelName}" 
+                                      Margin="3 0"/>
+                            <TextBlock Grid.Column="1" >
+                                <Run Text="Количество помещений: "/>
+                                <Run Text="{Binding RoomCount}"/>
+                            </TextBlock>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+          
+        </Grid>
+        <Grid Grid.Row="2">
             <!-- Кнопка действия -->
             <Button Content="Помещения в пространство"
                     Command="{Binding RoomsInSpacesCommand}"
@@ -61,11 +87,11 @@
                     BorderBrush="#005A9E"
                     VerticalContentAlignment="Center"
                     Margin="0,20,0,0"
-                    >
+            >
                 <Button.Effect>
                     <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.3" />
                 </Button.Effect>
             </Button>
-        </StackPanel>
+        </Grid>
     </Grid>
 </Window>

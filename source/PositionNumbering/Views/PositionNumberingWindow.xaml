@@ -7,17 +7,20 @@
                        xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
                        d:DataContext="{d:DesignInstance Type=viewModels:NumberingViewModel}"
                        mc:Ignorable="d"
+                       xmlns:comverter="clr-namespace:PositionNumbering.Views.Converters"
                        Title="Нумеровать по позиции"
                        WindowStartupLocation="CenterScreen"
                        Height="700" Width="400">
+  
     <Window.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary
-                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/ThemesResourceDictionary.xaml" />
+          <ResourceDictionary.MergedDictionaries>
+               <ResourceDictionary Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
+ 
     <!-- Содержимое окна -->
     <Grid
         Style="{StaticResource Grid}">
@@ -33,7 +36,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Button Content="Добавить группу"
-                    Command="{Binding AddGroupCommand}"
+                   Command="{Binding AddGroupCommand}"
                     Style="{StaticResource AddButtonStyle}"
                     Margin="5 5"
                     HorizontalAlignment="Left" />
@@ -45,10 +48,9 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border BorderBrush="LightGray"
-                                   
+                                    Style="{StaticResource BorderFolding}" 
                                     Margin="0,0,0,10"
-                                    Style="{StaticResource BorderFolding}"
-                                    Padding="5">
+                                    Padding="5"> 
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
@@ -69,16 +71,18 @@
                                                   
                                                   Content="{Binding Name}"
                                                   IsChecked="{Binding NumberingIsChecked}"
-                                                  Style="{StaticResource JellyCheckboxStyle}" />
+                                                  Style="{StaticResource JellyCheckboxStyle}"   
+                                                  />      
 
                                         <Button Grid.Column="2"
                                                 Command="{Binding DataContext.RemoveGroupCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                Style="{StaticResource DeleteButtonStyle}"
+                                               
                                                 ToolTip="Удалить группу"
-                                                CommandParameter="{Binding}" />
+                                                CommandParameter="{Binding}" /> <!-- Style="{StaticResource DeleteButtonStyle}" -->
                                     </Grid>
                                     <Separator Grid.Row="1"
-                                               Style="{StaticResource ShadowSeparator}" />
+                                              
+                                               /> <!-- Style="{StaticResource ShadowSeparator}"  -->
                                     <!-- Список систем в группе -->
                                     <ItemsControl Grid.Row="2"
                                                   ItemsSource="{Binding Systems}">
@@ -90,12 +94,12 @@
                                                         <ColumnDefinition Width="Auto" />
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{Binding Name}"
-                                                               Style="{StaticResource TextBlock}" />
+                                                               Style="{StaticResource TextBlockStyle}" />
                                                     <Button Grid.Column="1"
-                                                            Style="{StaticResource DeleteXSvgButtonStyle}"
+                                                         
                                                             Command="{Binding DataContext.RemoveFromGroupCommand, 
                                                           RelativeSource={RelativeSource AncestorType=Window}}"
-                                                            CommandParameter="{Binding}" />
+                                                            CommandParameter="{Binding}" />   <!-- Style="{StaticResource DeleteXSvgButtonStyle}" -->
                                                 </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
@@ -104,11 +108,11 @@
                                     <!-- Кнопка добавления систем -->
                                     <Button Grid.Row="3"
                                             Content="Добавить системы"
-                                            Style="{StaticResource AddButtonStyle3}"
+                                         
                                             Command="{Binding DataContext.AddSystemsCommand, 
                                           RelativeSource={RelativeSource AncestorType=Window}}"
 
-                                            CommandParameter="{Binding RelativeSource={RelativeSource Self}}" />
+                                            CommandParameter="{Binding RelativeSource={RelativeSource Self}}" />   <!-- Style="{StaticResource AddButtonStyle3}" -->
                                 </Grid>
                             </Border>
                         </DataTemplate>
@@ -122,11 +126,12 @@
             <ListView ItemsSource="{Binding AvailableSystems}"
                       Grid.Row="1"
            PreviewMouseDown="UIElement_OnPreviewMouseDown"
-                      Style="{StaticResource SystemsListViewStyle }">
+                    >
+                <!-- Style="{StaticResource SystemsListViewStyle }" -->
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <TextBlock Text="{Binding Name}"
-                                   Style="{StaticResource TextBlock}" />
+                                   Style="{StaticResource TextBlockStyle}" />
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
@@ -139,12 +144,12 @@
             
             <Button Content="Нумеровать"
                     HorizontalAlignment="Right"
-                    Style="{StaticResource BlueButton}"
+                    Style="{StaticResource CommonButton}"
                     Command="{Binding NumberingCommand}"
                     CommandParameter="{Binding  RelativeSource={RelativeSource AncestorType=Window}}"
 
                     Width="100" />
-            <Button Grid.Column="1" Content="Закрыть"
+            <Button Content="Закрыть"
                     HorizontalAlignment="Right"
                     Command="{Binding CloseCommand}"
                     CommandParameter="{Binding  RelativeSource={RelativeSource AncestorType=Window}}"
@@ -153,8 +158,9 @@
         </DockPanel>
 
         <!-- Общий Popup -->
+        <!-- Style="{StaticResource ModernPopupStyle}" -->
         <Popup
-            Style="{StaticResource ModernPopupStyle}"
+           
             Grid.Row="0"
             IsOpen="{Binding IsPopupOpen}"
             PlacementTarget="{Binding CurrentPopupTarget}"
@@ -162,9 +168,10 @@
             Grid.Column="0">
 
             <Border
-                
+                Style="{StaticResource BorderFolding}"
                 Margin="5"
-                Style="{StaticResource BorderFolding}">
+                >
+              
                 <Grid Width="300" MaxHeight="400">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -176,11 +183,13 @@
                     <ListView Grid.Row="0"
                               ItemsSource="{Binding AvailableSystems}"
                               MaxHeight="300"
-                              Style="{StaticResource SystemsListViewStyle}">
-                       
+                              >
+                        <!-- Style="{StaticResource SystemsListViewStyle}" -->
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <CheckBox Style="{StaticResource JellyCheckboxStyle}"
+                                <!-- Style="{StaticResource JellyCheckboxStyle}" -->
+                                <CheckBox
+                                   
                                           IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}">
                                     <CheckBox.Content>
                                         <TextBlock Text="{Binding Name}" />
@@ -193,12 +202,14 @@
                                 Orientation="Horizontal"
                                 HorizontalAlignment="Left"
                                 Margin="5">
+                        <!-- Style="{StaticResource SelectAllButton}" -->
                         <Button
-                            Style="{StaticResource SelectAllButton}"
+                           
                             Command="{Binding SelectAllSystemsCommand}"
                             Margin="0,0,5,0" />
+                        <!-- Style="{StaticResource ClearSelectionButton}" -->
                         <Button
-                            Style="{StaticResource ClearSelectionButton}"
+                       
                             Margin="0 0 5 0"
                             Command="{Binding ClearSelectionSystemsCommand}" />
                     </StackPanel>
@@ -210,7 +221,7 @@
                                 HorizontalAlignment="Right"
                                 Margin="0,5,0,0">
                         <Button Content="Добавить"
-                                Style="{StaticResource BlueButton}"
+                                Style="{StaticResource CommonButton}"
                                 Command="{Binding AddSelectedSystemsCommand}"
                                 Margin="0,0,5,5" />
                         <Button Content="Отмена"

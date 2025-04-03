@@ -318,12 +318,11 @@ public static class UpdaterParametersService
 
     public static void CopyParameter(Document doc, Element element, string getParamName, string setParamName)
     {
-        if (element?.Category == null) return;
         try
         {
             Parameter getParam = element.FindParameter(getParamName);
             Parameter setParam = element.FindParameter(setParamName);
-            if (element.Category?.BuiltInCategory == BuiltInCategory.OST_MechanicalEquipment)
+            if (element.Category.BuiltInCategory == BuiltInCategory.OST_MechanicalEquipment)
             {
                 if (getParamName == "Сокращение для системы")
                 {
@@ -811,7 +810,6 @@ public static class UpdaterParametersService
             hermeticСlass?.Set(formattedValue);
         }
     }
-
     public static void ReturnWindowState(Window window)
     {
         if (window == null || window.WindowState == WindowState.Minimized) return;

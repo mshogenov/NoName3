@@ -333,32 +333,19 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
 
     private void UpdateSignificance(Formula formula)
     {
-        try
+        Parameter parameter = _element.FindParameter(formula.ParameterName);
+        formula.Significance = formula.MeasurementUnit switch
         {
-            if (_element == null || _element.IsValidObject == false)
-            {
-                formula.Significance = string.Empty;
-                return;
-            }
-            Parameter parameter = _element.FindParameter(formula.ParameterName);
-            formula.Significance = formula.MeasurementUnit switch
-            {
-                MeasurementUnit.Meter => parameter?.AsDouble().ToMeters().ToString("F3", CultureInfo.CurrentCulture),
-                MeasurementUnit.Millimeter => parameter?.AsDouble().ToMillimeters()
-                    .ToString("F3", CultureInfo.CurrentCulture),
-                MeasurementUnit.CubicMeter => parameter?.AsDouble().ToUnit(UnitTypeId.CubicMeters)
-                    .ToString("F3", CultureInfo.CurrentCulture),
-                MeasurementUnit.SquareMeters => parameter?.AsDouble().ToUnit(UnitTypeId.SquareMeters)
-                    .ToString("F3", CultureInfo.CurrentCulture),
-                MeasurementUnit.Piece => "1",
-                _ => ""
-            } ?? string.Empty;
-        }
-        catch (Exception e)
-        {
-            formula.Significance = string.Empty;
-        }
-       
+            MeasurementUnit.Meter => parameter?.AsDouble().ToMeters().ToString("F3", CultureInfo.CurrentCulture),
+            MeasurementUnit.Millimeter => parameter?.AsDouble().ToMillimeters()
+                .ToString("F3", CultureInfo.CurrentCulture),
+            MeasurementUnit.CubicMeter => parameter?.AsDouble().ToUnit(UnitTypeId.CubicMeters)
+                .ToString("F3", CultureInfo.CurrentCulture),
+            MeasurementUnit.SquareMeters => parameter?.AsDouble().ToUnit(UnitTypeId.SquareMeters)
+                .ToString("F3", CultureInfo.CurrentCulture),
+            MeasurementUnit.Piece => "1",
+            _ => ""
+        } ?? string.Empty;
     }
 
     #region ADSK_Наименование

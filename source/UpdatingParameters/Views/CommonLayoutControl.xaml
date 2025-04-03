@@ -13,7 +13,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
-                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/ThemesResourceDictionary.xaml" />
+                    Source="pack://application:,,,/UpdatingParameters;component/Views/Resources/CommonLayoutControlResources.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
@@ -99,25 +99,25 @@
         <StatusBar Grid.Row="2" Height="35">
             <StatusBar.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <GradientStop Color="#FFF0F0F0" Offset="0" />
-                    <GradientStop Color="#FFE5E5E5" Offset="1" />
+                    <GradientStop Color="#FFF0F0F0" Offset="0"/>
+                    <GradientStop Color="#FFE5E5E5" Offset="1"/>
                 </LinearGradientBrush>
             </StatusBar.Background>
             <StatusBar.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <Grid />
+                    <Grid/>
                 </ItemsPanelTemplate>
             </StatusBar.ItemsPanel>
             <StatusBar Grid.Row="2" Height="28">
                 <StatusBar.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#FFF0F0F0" Offset="0" />
-                        <GradientStop Color="#FFE5E5E5" Offset="1" />
+                        <GradientStop Color="#FFF0F0F0" Offset="0"/>
+                        <GradientStop Color="#FFE5E5E5" Offset="1"/>
                     </LinearGradientBrush>
                 </StatusBar.Background>
                 <StatusBar.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <Grid />
+                        <Grid/>
                     </ItemsPanelTemplate>
                 </StatusBar.ItemsPanel>
                 <StatusBarItem>
@@ -125,10 +125,10 @@
                             BorderBrush="#FFCCCCCC" Background="White"
                             Padding="8,2">
                         <TextBlock>
-                            <Run Text="Элементов типа: "
-                                 Foreground="#FF666666" FontFamily="Segoe UI" />
-                            <Run Text="{Binding ElementCounts}"
-                                 Foreground="#FF0066CC" FontWeight="SemiBold" />
+                            <Run Text="Элементов типа: " 
+                                 Foreground="#FF666666" FontFamily="Segoe UI"/>
+                            <Run Text="{Binding ElementCounts}" 
+                                 Foreground="#FF0066CC" FontWeight="SemiBold"/>
                         </TextBlock>
                     </Border>
                 </StatusBarItem>

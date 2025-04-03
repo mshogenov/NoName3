@@ -1,4 +1,6 @@
 ﻿using System.Windows;
+using Autodesk.Revit.DB.Architecture;
+using RoomsInSpaces.Models;
 using RoomsInSpaces.Services;
 
 namespace RoomsInSpaces.ViewModels
@@ -9,6 +11,9 @@ namespace RoomsInSpaces.ViewModels
         [ObservableProperty] private RevitLinkInstance _selectedLinkedFile;
         private readonly Document _doc;
         private readonly RoomsInSpacesServices _roomsInSpacesServices;
+        [ObservableProperty] private List<LevelInfo> _levelInfos = [];
+        private readonly List<Room> _linkedRooms;
+
         public RoomsInSpacesViewModel()
         {
             _doc = Context.ActiveDocument;
@@ -30,15 +35,46 @@ namespace RoomsInSpaces.ViewModels
             if (LinkedFiles.Count != 0)
             {
                 SelectedLinkedFile = LinkedFiles.First();
+                Document linkedDoc = SelectedLinkedFile.GetLinkDocument();
+                _linkedRooms = _roomsInSpacesServices.GetRooms(linkedDoc).ToList();
+                LoadLevelsWithRoomCounts(_linkedRooms, linkedDoc);
             }
-           
+        }
+
+        private void LoadLevelsWithRoomCounts(List<Room> linkedRooms, Document linkedDoc)
+        {
+            LevelInfos.Clear();
+
+            var levelsInfo = linkedRooms
+                .Where(room => room.Level != null)
+                .GroupBy(room => room.Level.Id)
+                .Select(group => new LevelInfo
+                {
+                    Level = linkedDoc.GetElement(group.Key) as Level,
+                    LevelId = group.Key,
+                    LevelName = (linkedDoc.GetElement(group.Key) as Level)?.Name,
+                    RoomCount = group.Count()
+                })
+                .OrderBy(item => item.Level.Elevation)
+                .ToList();
+
+            foreach (var levelInfo in levelsInfo)
+            {
+                LevelInfos.Add(levelInfo);
+            }
         }
 
         [RelayCommand]
         private void RoomsInSpaces(Window window)
         {
             window.Close();
-            _roomsInSpacesServices.RoomsInSpaces(_doc, SelectedLinkedFile);
-         }
+            var selectedLinkedRooms = new List<Room>();
+            foreach (var levelInfo in LevelInfos.Where(l => l.IsChecked))
+            {
+                selectedLinkedRooms.AddRange(_linkedRooms.Where(linkedRoom =>
+                    linkedRoom.Level.Id.Value == levelInfo.LevelId.Value));
+            }
+            _roomsInSpacesServices.RoomsInSpaces(_doc, SelectedLinkedFile, selectedLinkedRooms);
+        }
     }
 }

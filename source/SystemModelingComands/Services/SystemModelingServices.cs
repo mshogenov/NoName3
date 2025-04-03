@@ -5,6 +5,7 @@ using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using SystemModelingCommands.Filters;
 using SystemModelingCommands.Model;
+using SystemModelingCommands.Views;
 
 namespace SystemModelingCommands.Services
 {
@@ -12,6 +13,79 @@ namespace SystemModelingCommands.Services
     {
         private readonly Document _doc = Context.ActiveDocument;
         private readonly UIDocument _uiDoc = Context.ActiveUiDocument;
+
+        public void Bloom()
+        {
+            // Создаем фильтр для проверки
+            FittingSelectionFilter filter = new FittingSelectionFilter();
+            Element selectedElement = null;
+            // Проверка, есть ли выбранный элемент до запуска скрипта
+            var selectedIds = Context.ActiveUiDocument?.Selection.GetElementIds();
+            try
+            {
+                if (selectedIds is { Count: 1 })
+                {
+                    // Получить первый выбранный элемент
+                    if (_doc != null)
+                    {
+                        Element preSelectedElement = _doc.GetElement(selectedIds.First());
+                        // Проверка, проходит ли выбранный элемент фильтр
+                        if (filter.AllowElement(preSelectedElement))
+                        {
+                            selectedElement = preSelectedElement;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Ошибка", ex.Message);
+            }
+
+            // Если элемент не был предварительно выбран или не соответствует фильтру, запустить выбор элемента пользователем
+            if (selectedElement == null)
+            {
+                try
+                {
+                    Reference reference = _uiDoc?.Selection.PickObject(ObjectType.Element, filter);
+                    selectedElement = _doc?.GetElement(reference);
+                }
+                catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+                {
+                    return; // Пользователь отменил выбор
+                }
+            }
+            MEPCurveType pipeType = DeterminingTypeOfPipeByFitting(_doc, selectedElement);
+            if (pipeType == null)
+            {
+                BloomView view = new BloomView(_doc, selectedElement);
+                view.ShowDialog();
+                if (view.MepCurveType != null)
+                {
+                    pipeType = view.MepCurveType;
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            using Transaction transaction = new(_doc, "Расширение");
+            transaction.Start();
+            try
+            {
+                Bloom(_doc, selectedElement, pipeType);
+                transaction.Commit();
+            }
+            catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                transaction.RollBack();
+                TaskDialog.Show("Ошибка", ex.Message);
+            }
+        }
 
         public void ThreeDeeBranchAlignLite()
         {
@@ -480,30 +554,6 @@ namespace SystemModelingCommands.Services
                 const double oppositeThreshold = -1.0;
                 XYZ translationVector = targetElement.ClosestConnector.Origin -
                                         attachingElement.ClosestConnector.Origin;
-                if (attachingElement.Element is FlexPipe or FlexDuct)
-                {
-                    // Показываем диалог выбора действия
-                    TaskDialog dialog = new TaskDialog("Соединить");
-                    dialog.MainInstruction = "Выберите действие";
-                    dialog.MainIcon = TaskDialogIcon.TaskDialogIconNone;
-                    dialog.CommonButtons = TaskDialogCommonButtons.Cancel;
-                    dialog.AddCommandLink(TaskDialogCommandLinkId.CommandLink1, "Переместить выбранный элемент");
-                    dialog.AddCommandLink(TaskDialogCommandLinkId.CommandLink2, "Переместить все элементы");
-                    TaskDialogResult tdResult = dialog.Show();
-                    switch (tdResult)
-                    {
-                        case TaskDialogResult.Cancel:
-                            return;
-                        case TaskDialogResult.CommandLink1:
-                            LengthenCurve(attachingElement, targetElement);
-                            ElementTransformUtils.MoveElement(_doc, attachingElement.Id, translationVector);
-                            // 3. Соединяем элементы
-                            attachingElement.ClosestConnector.ConnectTo(targetElement.ClosestConnector);
-                            transaction.Commit();
-                            return;
-                    }
-                }
-
                 if (Math.Abs(Math.Round(dotProduct, 10) - Math.Round(oppositeThreshold, 10)) < 0.001)
                 {
                     if (attachingElement.Element is Pipe or Duct)
@@ -1282,7 +1332,7 @@ namespace SystemModelingCommands.Services
                 (xyz7.Z - xyz6.Z) / 2.0 + xyz6.Z);
         }
 
-        public static void Bloom(Document doc, Element selectedElement, MEPCurveType elementType)
+        private static void Bloom(Document doc, Element selectedElement, MEPCurveType elementType)
         {
             Connector[] source = ConnectorArrayUnused(selectedElement);
             if (source == null)

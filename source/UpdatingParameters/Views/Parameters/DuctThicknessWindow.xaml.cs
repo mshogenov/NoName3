@@ -4,7 +4,7 @@ using UpdatingParameters.ViewModels.Parameters;
 
 namespace UpdatingParameters.Views.Parameters;
 
-public partial class DuctThicknessWindow
+public partial class DuctThicknessWindow : Window
 {
     public DuctThicknessWindow( DuctThicknessViewModel ductThicknessViewModel)
     {

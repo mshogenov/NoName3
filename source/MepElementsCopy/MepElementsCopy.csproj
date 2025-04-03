@@ -5,8 +5,8 @@
         <LangVersion>latest</LangVersion>
         <PlatformTarget>x64</PlatformTarget>
         <ImplicitUsings>true</ImplicitUsings>
-        <Configurations>Debug R24;Debug R25</Configurations>
-        <Configurations>$(Configurations);Release R24;Release R25</Configurations>
+        <Configurations>Debug R24;Debug R25;Debug R26</Configurations>
+        <Configurations>$(Configurations);Release R24;Release R25;Release R26</Configurations>
     </PropertyGroup>
 
    
@@ -18,6 +18,10 @@
         <RevitVersion>2025</RevitVersion>
         <TargetFramework>net8.0-windows</TargetFramework>
     </PropertyGroup>
+    <PropertyGroup Condition="$(Configuration.Contains('R26'))">
+        <RevitVersion>2026</RevitVersion>
+        <TargetFramework>net8.0-windows</TargetFramework>
+    </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Nice3point.Revit.Build.Tasks" Version="2.*"/>
@@ -25,7 +29,7 @@
         <PackageReference Include="Nice3point.Revit.Extensions" Version="$(RevitVersion).*"/>
         <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="$(RevitVersion).*"/>
         <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="$(RevitVersion).*"/>
-        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*"/>
     </ItemGroup>
 
     <ItemGroup>

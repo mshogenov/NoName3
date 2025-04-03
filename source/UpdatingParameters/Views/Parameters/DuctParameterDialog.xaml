@@ -1,14 +1,13 @@
-<views:BaseRevitWindow x:Class="UpdatingParameters.Views.Parameters.DuctParameterDialog"
-                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                 xmlns:local="clr-namespace:UpdatingParameters.Views.Parameters"
-                 xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
-                 mc:Ignorable="d"
-                 Title="Параметры воздуховода" 
-                 Height="400" Width="400"
-                 WindowStartupLocation="CenterScreen">
+<Window x:Class="UpdatingParameters.Views.Parameters.DuctParameterDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:UpdatingParameters.Views.Parameters"
+        mc:Ignorable="d"
+        Title="Параметры воздуховода" 
+        Height="400" Width="400"
+        WindowStartupLocation="CenterScreen">
   <Grid Margin="20">
     <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto"/>
@@ -125,4 +124,4 @@
                 Click="CancelButton_Click"/>
     </StackPanel>
 </Grid>
-</views:BaseRevitWindow>
+</Window>

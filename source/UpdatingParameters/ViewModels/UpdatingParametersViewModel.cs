@@ -4,7 +4,6 @@ using System.Windows;
 using System.Windows.Threading;
 using Autodesk.Revit.UI.Events;
 using Nice3point.Revit.Toolkit.External.Handlers;
-using NoNameApi.Views;
 using UpdatingParameters.Models;
 using UpdatingParameters.Services;
 using UpdatingParameters.Storages;
@@ -23,7 +22,6 @@ using UpdatingParameters.ViewModels.PipeInsulation;
 using UpdatingParameters.ViewModels.Pipes;
 using UpdatingParameters.ViewModels.Settings;
 using UpdatingParameters.Views;
-using ProgressWindow = NoNameApi.Views.ProgressWindow;
 using Visibility = System.Windows.Visibility;
 
 
@@ -540,6 +538,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
         {
             if (_allElementsCount > 1000)
             {
+                InitializeProgressWorkflow(modalWindow, updateActions);
                 ExecuteLongUpdateWithProgress(modalWindow, updateActions, updateResults);
             }
             else
@@ -553,13 +552,21 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
         }
     }
 
+// Вынесенная общая логика
+    private void InitializeProgressWorkflow(Window modalWindow,
+        List<(string TypeName, Func<int> UpdateAction)> updateActions)
+    {
+        SetWindowVisibility(modalWindow, Visibility.Hidden);
+        modalWindow.Dispatcher.Invoke(DispatcherPriority.Render, new Action(() => { }));
+        var totalCategories = updateActions.Count;
+        _progressWindow = new ProgressWindow(totalCategories);
+        _progressWindow.Show();
+    }
+
 // Основной рабочий процесс с прогресс-баром
     private void ExecuteLongUpdateWithProgress(Window modalWindow,
         List<(string TypeName, Func<int> UpdateAction)> updateActions, List<UpdateResult> results)
     {
-        var totalCategories = updateActions.Count;
-        _progressWindow = new ProgressWindow(totalCategories);
-        _progressWindow.Show();
         _actionEventHandler.Raise(app =>
         {
             using var tr = new Transaction(app.ActiveUIDocument.Document, "Обновление параметров");
@@ -570,16 +577,23 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
                 int currentIndex = 0;
                 foreach (var (typeName, updateAction) in updateActions)
                 {
+                    _progressWindow.Dispatcher.Invoke(() =>
+                    {
+                        _progressWindow.UpdateCurrentTask($"Обработка: {typeName}");
+                    });
                     if (CheckForCancellation(modalWindow))
                     {
                         tr.RollBack();
                         return;
                     }
+
                     ExecuteUpdateAction(typeName, updateAction, results);
                     currentIndex++;
                     var index = currentIndex;
-                    _progressWindow.UpdateProgress(index);
+                    _progressWindow.Dispatcher.Invoke(() => { _progressWindow.UpdateProgress(index); });
+                    _progressWindow.Dispatcher.Invoke(DispatcherPriority.Background, new Action(() => { }));
                 }
+
                 tr.Commit();
                 FinalizeProgressWorkflow(modalWindow, results);
             }
@@ -613,12 +627,12 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
 // Общие вспомогательные методы
     private bool CheckForCancellation(Window modalWindow)
     {
-        if (!_progressWindow.IsCancelling)
+        if (!_progressWindow.IsCanceled)
             return false;
 
         _progressWindow.Close();
         TaskDialog.Show("Отмена", "Операция была отменена пользователем.");
-
+        SetWindowVisibility(modalWindow, Visibility.Visible);
         return true;
     }
 
@@ -635,13 +649,27 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
 
     private void FinalizeProgressWorkflow(Window modalWindow, List<UpdateResult> results)
     {
+        _progressWindow.Dispatcher.Invoke(() => _progressWindow.Close());
         ProcessUpdateResults(results); // Передаем результаты
+        SetWindowVisibility(modalWindow, Visibility.Visible);
     }
 
+    private void SetWindowVisibility(Window window, Visibility visibility)
+    {
+        window?.Dispatcher.Invoke(() =>
+        {
+            window.Visibility = visibility;
+            if (visibility == Visibility.Visible)
+                window.Activate();
+        });
+    }
 
     private void HandleError(Exception ex, Window modalWindow)
     {
         TaskDialog.Show("Ошибка", $"{ex.Message}\n\n{ex.StackTrace}");
+        SetWindowVisibility(modalWindow, Visibility.Visible);
+        // Добавьте логирование ошибки при необходимости
+        // Logger.LogError(ex);
     }
 
 

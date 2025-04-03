@@ -1,4 +1,4 @@
-﻿<views:BaseRevitWindow
+﻿<Window
     x:Class="UpdatingParameters.Views.UpdatingParametersView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -7,7 +7,6 @@
     xmlns:vm="clr-namespace:UpdatingParameters.ViewModels"
     xmlns:converter="clr-namespace:UpdatingParameters.Views.Converters"
     xmlns:model="clr-namespace:UpdatingParameters.Models"
-    xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
     WindowStartupLocation="CenterScreen"
     d:DataContext="{d:DesignInstance Type=vm:UpdatingParametersViewModel}"
     mc:Ignorable="d"
@@ -19,7 +18,7 @@
                 <ResourceDictionary
                     Source="pack://application:,,,/UpdatingParameters;component/Views/Resources/UpdatingParametersWindowResources.xaml " />
                 <ResourceDictionary
-                        Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/ThemesResourceDictionary.xaml" />
+                    Source="pack://application:,,,/UpdatingParameters;component/Views/Resources/CommonLayoutControlResources.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <converter:BoolVisibilityConverter x:Key="BoolVisibilityConverter" />
         </ResourceDictionary>
@@ -204,4 +203,4 @@
                         <ContentControl Content="{Binding SelectedContent}" />
                 </Grid>
         </Grid>
-</views:BaseRevitWindow>
+</Window>

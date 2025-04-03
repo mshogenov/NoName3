@@ -1,11 +1,11 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                  
-                    xmlns:system="clr-namespace:System;assembly=mscorlib">
+                    xmlns:converters="clr-namespace:NoNameApi.Views.Converters">
+    <!-- Создаем конвертер для определения темы -->
+    <converters:ThemeConverter x:Key="ThemeConverter" />
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/LightTheme.xaml"/>
-     
+      
+        <ResourceDictionary Source="/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
     </ResourceDictionary.MergedDictionaries>
-    
- 
 </ResourceDictionary>

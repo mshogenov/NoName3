@@ -6,7 +6,7 @@
         WindowStartupLocation="CenterScreen"
         mc:Ignorable="d"
         Title="Прогресс выполнения"
-        Height="300"
+        Height="250"
         WindowStyle="ToolWindow"
         ShowInTaskbar="False"
         Width="450"

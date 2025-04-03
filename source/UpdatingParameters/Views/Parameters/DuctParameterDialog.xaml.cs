@@ -3,7 +3,7 @@ using UpdatingParameters.Models;
 
 namespace UpdatingParameters.Views.Parameters;
 
-public partial class DuctParameterDialog 
+public partial class DuctParameterDialog : Window
 {
     private DuctParameters _parameters;
     public DuctParameterDialog(DuctParameters parameters)

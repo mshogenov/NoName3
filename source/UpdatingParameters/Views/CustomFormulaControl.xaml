@@ -12,7 +12,7 @@
             <converter:BoolVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
-                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/ThemesResourceDictionary.xaml" />
+                    Source="pack://application:,,,/UpdatingParameters;component/Views/Resources/CommonLayoutControlResources.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
@@ -57,7 +57,7 @@
                 </Grid.RowDefinitions>
                 <GroupBox Grid.Row="0" Header="Список параметров"
                           Grid.Column="0"
-                          Style="{StaticResource GroupBoxStyle}">
+                          Style="{StaticResource GradientGroupBoxStyle}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -106,7 +106,7 @@
                         <RowDefinition Height="auto" />
                     </Grid.RowDefinitions>
                     <GroupBox Grid.Row="0" Header="Формула"
-                              Style="{StaticResource GroupBoxStyle}">
+                              Style="{StaticResource GradientGroupBoxStyle}">
                         <DataGrid
                             ItemsSource="{Binding Path=AdskFormulas, 
                       RelativeSource={RelativeSource AncestorType=UserControl}}"

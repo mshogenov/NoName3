@@ -13,7 +13,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
-                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/ThemesResourceDictionary.xaml" />
+                    Source="pack://application:,,,/UpdatingParameters;component/Views/Resources/CommonLayoutControlResources.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         </ResourceDictionary>
@@ -31,7 +31,7 @@
                   Margin="5 5 0 0" IsChecked="{Binding UpdaterIsChecked}" />
 
         <GroupBox Grid.Row="1" Header="Категории"
-                  Style="{StaticResource GroupBoxStyle}">
+                  Style="{StaticResource GradientGroupBoxStyle}">
             <GroupBox.Visibility>
                 <Binding Path="IsChecked" ElementName="UpdaterCheckBox"
                          Converter="{StaticResource BooleanToVisibilityConverter}" />

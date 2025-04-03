@@ -113,16 +113,25 @@ public partial class NumberingOfRisersViewModel : ObservableObject
 
         // Инициализация списка стратегий нумерации
         NumberingStrategies.Add(new NumberingStrategy("Снизу вверх, слева направо",
-            NumberingDirection.LeftToRight, NumberingDirection.BottomToTop));
+            NumberingDirection.LeftToRight, NumberingDirection.BottomToTop, SortDirection.Y));
 
         NumberingStrategies.Add(new NumberingStrategy("Снизу вверх, справа налево",
-            NumberingDirection.RightToLeft, NumberingDirection.BottomToTop));
+            NumberingDirection.RightToLeft, NumberingDirection.BottomToTop, SortDirection.Y));
 
         NumberingStrategies.Add(new NumberingStrategy("Сверху вниз, слева направо",
-            NumberingDirection.LeftToRight, NumberingDirection.TopToBottom));
+            NumberingDirection.LeftToRight, NumberingDirection.TopToBottom, SortDirection.Y));
 
         NumberingStrategies.Add(new NumberingStrategy("Сверху вниз, справа налево",
-            NumberingDirection.RightToLeft, NumberingDirection.TopToBottom));
+            NumberingDirection.RightToLeft, NumberingDirection.TopToBottom, SortDirection.Y));
+
+        NumberingStrategies.Add(new NumberingStrategy("Слева направо, снизу вверх",
+            NumberingDirection.LeftToRight, NumberingDirection.BottomToTop, SortDirection.X));
+        NumberingStrategies.Add(new NumberingStrategy("Слева направо, сверху вниз",
+            NumberingDirection.LeftToRight, NumberingDirection.TopToBottom, SortDirection.X));
+        NumberingStrategies.Add(new NumberingStrategy("Справа налево, снизу вверх",
+            NumberingDirection.RightToLeft, NumberingDirection.BottomToTop, SortDirection.X));
+        NumberingStrategies.Add(new NumberingStrategy("Справа налево, сверху вниз",
+            NumberingDirection.RightToLeft, NumberingDirection.TopToBottom, SortDirection.X));
 
         // Установка стратегии по умолчанию
         SelectedStrategy = NumberingStrategies[0];
@@ -217,7 +226,7 @@ public partial class NumberingOfRisersViewModel : ObservableObject
                 var verticalPipesAlongLocations = verticalPipes.GroupBy(p => p, new PipeIEqualityComparer()).ToList();
                 var risers = verticalPipesAlongLocations
                     .Select(verticalPipesAlongLocation => new Riser(verticalPipesAlongLocation))
-                    .Where(x => x.TotalLength > 2000).ToList();
+                    .Where(x => x.TotalLength > 2500).ToList().OrderBy(x=>x.Number);
                 RiserSystemTypes = new ObservableCollection<RiserSystemType>(risers
                     .GroupBy(r => r.MepSystemType?.Name ?? "Без системы")
                     .Select(group => new RiserSystemType(group.ToList()))
@@ -323,6 +332,7 @@ public partial class NumberingOfRisersViewModel : ObservableObject
 
                     // Используем выбранную стратегию для нумерации
                     var numberingService = new RiserNumberingService(
+                        SelectedStrategy.PrimarySortDirection,
                         SelectedStrategy.XDirection,
                         SelectedStrategy.YDirection
                     );

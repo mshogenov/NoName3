@@ -1,137 +1,77 @@
-﻿<Window
+﻿<views:BaseRevitWindow
     x:Class="SystemModelingCommands.Views.BloomView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:viewModel="clr-namespace:SystemModelingCommands.ViewModels"
-    xmlns:viewModels="clr-namespace:SystemModelingCommands.ViewModels"
-    d:DataContext="{d:DesignInstance Type=viewModels:BloomViewModel}"
+    xmlns:local="clr-namespace:SystemModelingCommands.Views"
+    d:DataContext="{d:DesignInstance local:BloomView}"
+    xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
     mc:Ignorable="d"
     Width="500"
+    SizeToContent="Height"
     WindowStartupLocation="Manual"
     Left="400"
     Top="100"
-    Title="Расширение">
-   
-    <Grid Background="#F5F6FA">
+    Title="Вставить трубу">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/ThemesResourceDictionary.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+  
+    <Grid
+        Style="{StaticResource Grid}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="40" />
-            <RowDefinition />
-            <RowDefinition Height="60" />
+            <RowDefinition Height="5*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-
-        <!-- Заголовок -->
-        <Border Background="#FFFFFF" Grid.Row="0" VerticalAlignment="Stretch">
-            <TextBlock Text="Типы труб"
-                       FontSize="16"
-                       FontWeight="SemiBold"
-                       Margin="20,0,0,0"
-                       VerticalAlignment="Center"
-                       Foreground="#1E293B" />
-        </Border>
-
         <!-- Список -->
-        <Border Grid.Row="1"
-                Background="White"
-                Margin="15,10"
-                CornerRadius="8"
-                BorderThickness="1"
-                BorderBrush="#E2E8F0">
+        <GroupBox
+            Style="{StaticResource GroupBoxStyle}"
+            Header="Типы труб"
+            Grid.Row="0">
             <ListBox ItemsSource="{Binding  Path=MepCurveTypes}"
-                     SelectedItem="{Binding SelectedMepCurveType}"
-                     DisplayMemberPath="Name"
-                     BorderThickness="0"
-                     Background="Transparent"
-                     AlternationCount="2">
-                <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
-                        <Setter Property="FontSize" Value="12" />
-                        <Setter Property="Padding" Value="12,8" />
-                        <Setter Property="Margin" Value="4,2" />
-                        <Setter Property="Background" Value="Transparent" />
-                        <Setter Property="BorderThickness" Value="0" />
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListBoxItem">
-                                    <Border x:Name="Bd"
-                                            Background="{TemplateBinding Background}"
-                                            CornerRadius="4"
-                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                            Padding="{TemplateBinding Padding}">
-                                        <ContentPresenter />
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter Property="Background" Value="#EBF8FF" />
-                                            <Setter Property="Foreground" Value="#2B6CB0" />
-                                        </Trigger>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#F7FAFC" />
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                        <Style.Triggers>
-                            <Trigger Property="ItemsControl.AlternationIndex" Value="0">
-                                <Setter Property="Background" Value="Transparent" />
-                            </Trigger>
-                            <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                                <Setter Property="Background" Value="#F8FAFC" />
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </ListBox.ItemContainerStyle>
+                     SelectedItem="{Binding SelectedMepCurveType, UpdateSourceTrigger=PropertyChanged}"
+                    
+                     Style="{StaticResource ModernListBoxStyle}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
             </ListBox>
-        </Border>
+        </GroupBox>
+        <Grid Grid.Row="0">
 
-        <!-- Кнопка -->
-        <Button Grid.Row="2"
-                Content="Выбрать"
-                Width="140"
-                Height="40"
-                FontSize="14"
-                Command="{Binding ExecuteCheckAndCloseCommand}"
-                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center">
-            <Button.Style>
-                <Style TargetType="Button">
-                    <Setter Property="Background" Value="#3182CE" />
-                    <Setter Property="Foreground" Value="White" />
-                    <Setter Property="BorderThickness" Value="0" />
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}"
-                                        CornerRadius="6"
-                                        BorderThickness="{TemplateBinding BorderThickness}">
-                                    <ContentPresenter HorizontalAlignment="Center"
-                                                      VerticalAlignment="Center" />
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#2B6CB0" />
-                                    </Trigger>
-                                    <Trigger Property="IsPressed" Value="True">
-                                        <Setter Property="Background" Value="#2C5282" />
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </Button.Style>
-        </Button>
+        </Grid>
+        <DockPanel Grid.Row="1"
+                   HorizontalAlignment="Right"
+                   Margin="5 5 10 5 ">
+            <Button
+                Content="Вставить трубу"
+                Style="{StaticResource CommonButton}"
+                Click="ButtonInsertPipe_OnClick">
+            </Button>
+            <Button
+                Content="Закрыть"
+                Style="{StaticResource OutlineCloseButtonStyle}"
+                Margin="10 0 0 0"
+                Click="ButtonClose_OnClick" />
+        </DockPanel>
 
         <!-- Сообщение об ошибке -->
-        <TextBlock Grid.Row="3"
+        <TextBlock Grid.Row="2"
                    Text="{Binding Message}"
+                   Style="{StaticResource TextBlockStyle}"
                    Foreground="#E53E3E"
-                   Margin="20,5,20,15"
+                   Margin="10,0,10,10"
                    TextWrapping="Wrap"
                    HorizontalAlignment="Center" />
     </Grid>
-</Window>
+</views:BaseRevitWindow>

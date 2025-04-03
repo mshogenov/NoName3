@@ -8,12 +8,16 @@ public class RiserNumberingService
     // Направления нумерации по осям X и Y
     private readonly NumberingDirection _xDirection;
     private readonly NumberingDirection _yDirection;
+    private readonly SortDirection _primarySortDirection;
 
-    public RiserNumberingService(NumberingDirection xDir = NumberingDirection.LeftToRight,
+    public RiserNumberingService(SortDirection primarySortDirection,
+        NumberingDirection xDir = NumberingDirection.LeftToRight,
         NumberingDirection yDir = NumberingDirection.BottomToTop)
     {
+        _primarySortDirection = primarySortDirection;
         _xDirection = xDir;
         _yDirection = yDir;
+        _primarySortDirection = primarySortDirection;
     }
 
     public List<Riser> NumberRisers(List<Riser> riserGroups)
@@ -78,55 +82,105 @@ public class RiserNumberingService
         }
 
         List<Riser> result;
-
-        if (_yDirection == NumberingDirection.BottomToTop)
+        if (_primarySortDirection == SortDirection.X)
         {
+            // Сначала сортируем по X, затем по Y
             if (_xDirection == NumberingDirection.LeftToRight)
             {
-                // Снизу вверх, слева направо
-                // Используем GUID как последний критерий для обеспечения уникального порядка
-                result = risers
-                    .OrderBy(r => Math.Round(centers[r].Y, 5)) // Округляем до 5 знаков для группировки близких значений
-                    .ThenBy(r => Math.Round(centers[r].X, 5))
-                    .ThenBy(r => centers[r].Z) // Используем Z как дополнительный критерий
-                    .ThenBy(r => riserIds[r]) // Случайный, но стабильный порядок
-                    .ToList();
+                if (_yDirection == NumberingDirection.BottomToTop)
+                {
+                    // Слева направо, снизу вверх
+                    return risers
+                        .OrderBy(r => Math.Round(centers[r].X, 5))
+                        .ThenBy(r => Math.Round(centers[r].Y, 5))
+                        .ThenBy(r => centers[r].Z)
+                        .ThenBy(r => riserIds[r])
+                        .ToList();
+                }
+                else
+                {
+                    // Слева направо, сверху вниз
+                    return risers
+                        .OrderBy(r => Math.Round(centers[r].X, 5))
+                        .ThenByDescending(r => Math.Round(centers[r].Y, 5))
+                        .ThenBy(r => centers[r].Z)
+                        .ThenBy(r => riserIds[r])
+                        .ToList();
+                }
             }
             else
             {
-                // Снизу вверх, справа налево
-                result = risers
-                    .OrderBy(r => Math.Round(centers[r].Y, 5))
-                    .ThenByDescending(r => Math.Round(centers[r].X, 5))
-                    .ThenBy(r => centers[r].Z)
-                    .ThenBy(r => riserIds[r])
-                    .ToList();
+                if (_yDirection == NumberingDirection.BottomToTop)
+                {
+                    // Справа налево, снизу вверх
+                    return risers
+                        .OrderByDescending(r => Math.Round(centers[r].X, 5))
+                        .ThenBy(r => Math.Round(centers[r].Y, 5))
+                        .ThenBy(r => centers[r].Z)
+                        .ThenBy(r => riserIds[r])
+                        .ToList();
+                }
+                else
+                {
+                    // Справа налево, сверху вниз
+                    return risers
+                        .OrderByDescending(r => Math.Round(centers[r].X, 5))
+                        .ThenByDescending(r => Math.Round(centers[r].Y, 5))
+                        .ThenBy(r => centers[r].Z)
+                        .ThenBy(r => riserIds[r])
+                        .ToList();
+                }
             }
         }
         else
         {
-            if (_xDirection == NumberingDirection.LeftToRight)
+            // Сначала сортируем по Y, затем по X
+            if (_yDirection == NumberingDirection.BottomToTop)
             {
-                // Сверху вниз, слева направо
-                result = risers
-                    .OrderByDescending(r => Math.Round(centers[r].Y, 5))
-                    .ThenBy(r => Math.Round(centers[r].X, 5))
-                    .ThenBy(r => centers[r].Z)
-                    .ThenBy(r => riserIds[r])
-                    .ToList();
+                if (_xDirection == NumberingDirection.LeftToRight)
+                {
+                    // Снизу вверх, слева направо
+                    return risers
+                        .OrderBy(r => Math.Round(centers[r].Y, 5))
+                        .ThenBy(r => Math.Round(centers[r].X, 5))
+                        .ThenBy(r => centers[r].Z)
+                        .ThenBy(r => riserIds[r])
+                        .ToList();
+                }
+                else
+                {
+                    // Снизу вверх, справа налево
+                    return risers
+                        .OrderBy(r => Math.Round(centers[r].Y, 5))
+                        .ThenByDescending(r => Math.Round(centers[r].X, 5))
+                        .ThenBy(r => centers[r].Z)
+                        .ThenBy(r => riserIds[r])
+                        .ToList();
+                }
             }
             else
             {
-                // Сверху вниз, справа налево
-                result = risers
-                    .OrderByDescending(r => Math.Round(centers[r].Y, 5))
-                    .ThenByDescending(r => Math.Round(centers[r].X, 5))
-                    .ThenBy(r => centers[r].Z)
-                    .ThenBy(r => riserIds[r])
-                    .ToList();
+                if (_xDirection == NumberingDirection.LeftToRight)
+                {
+                    // Сверху вниз, слева направо
+                    return risers
+                        .OrderByDescending(r => Math.Round(centers[r].Y, 5))
+                        .ThenBy(r => Math.Round(centers[r].X, 5))
+                        .ThenBy(r => centers[r].Z)
+                        .ThenBy(r => riserIds[r])
+                        .ToList();
+                }
+                else
+                {
+                    // Сверху вниз, справа налево
+                    return risers
+                        .OrderByDescending(r => Math.Round(centers[r].Y, 5))
+                        .ThenByDescending(r => Math.Round(centers[r].X, 5))
+                        .ThenBy(r => centers[r].Z)
+                        .ThenBy(r => riserIds[r])
+                        .ToList();
+                }
             }
         }
-
-        return result;
     }
 }

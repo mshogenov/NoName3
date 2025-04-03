@@ -1,5 +1,4 @@
-﻿using System.Windows;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
 using System.Windows.Input;
 using Autodesk.Revit.UI;
 using NoNameApi.Views;
@@ -15,6 +14,7 @@ public partial class PositionNumberingWindow
     {
         InitializeComponent();
         DataContext = viewModel;
+       LoadWindowTemplate();
     }
 
     private void UIElement_OnPreviewMouseDown(object sender, MouseButtonEventArgs e)

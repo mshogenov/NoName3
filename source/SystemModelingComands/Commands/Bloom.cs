@@ -1,6 +1,6 @@
 ﻿using Autodesk.Revit.Attributes;
 using Nice3point.Revit.Toolkit.External;
-using SystemModelingCommands.ViewModels;
+using SystemModelingCommands.Services;
 
 
 namespace SystemModelingCommands.Commands;
@@ -11,6 +11,7 @@ public class Bloom : ExternalCommand
 {
     public override void Execute()
     {
-        var viewModel = new BloomViewModel();
+        SystemModelingServices systemModelingServices = new();
+        systemModelingServices.Bloom();
     }
 }
