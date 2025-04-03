@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Threading;
 using Autodesk.Revit.UI.Events;
 using Nice3point.Revit.Toolkit.External.Handlers;
+using NoNameApi.Views;
 using UpdatingParameters.Models;
 using UpdatingParameters.Services;
 using UpdatingParameters.Storages;
@@ -627,7 +628,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
 // Общие вспомогательные методы
     private bool CheckForCancellation(Window modalWindow)
     {
-        if (!_progressWindow.IsCanceled)
+        if (!_progressWindow.IsCancelling)
             return false;
 
         _progressWindow.Close();

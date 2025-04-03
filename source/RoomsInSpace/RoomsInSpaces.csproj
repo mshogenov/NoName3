@@ -36,10 +36,5 @@
       <ProjectReference Include="..\NoNameAPI\NoNameAPI.csproj" />
     </ItemGroup>
    
-    <ItemGroup>
-      <Reference Include="RoomsInSpaces">
-        <HintPath>..\..\..\..\..\AppData\Roaming\Autodesk\Revit\Addins\2025\RevitAddIn\RoomsInSpaces.dll</HintPath>
-      </Reference>
-    </ItemGroup>
-
+    
 </Project>
