@@ -18,9 +18,6 @@ public class BaseRevitWindow : Window
             AllowsTransparency = true;
             ResizeMode = ResizeMode.CanResizeWithGrip;
 
-            // Загружаем шаблон
-            // LoadWindowTemplate();
-
             // Регистрируем обработчик Loaded
             Loaded += BaseRevitWindow_Loaded;
 
@@ -50,7 +47,7 @@ public class BaseRevitWindow : Window
     }
 
 
-    public void LoadWindowTemplate()
+    protected void LoadWindowTemplate()
     {
         // Очищаем текущие словари ресурсов
         Resources.MergedDictionaries.Clear();

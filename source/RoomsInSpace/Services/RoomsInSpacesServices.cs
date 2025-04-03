@@ -2,7 +2,6 @@
 using Autodesk.Revit.DB.Mechanical;
 using Autodesk.Revit.UI;
 using NoNameApi.Views;
-using RoomsInSpaces.Models;
 using GeometryObject = Autodesk.Revit.DB.GeometryObject;
 
 namespace RoomsInSpaces.Services;
