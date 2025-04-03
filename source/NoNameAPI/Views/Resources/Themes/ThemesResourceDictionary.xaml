@@ -2,7 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:converters="clr-namespace:NoNameApi.Views.Converters">
     <!-- Создаем конвертер для определения темы -->
-    <converters:ThemeConverter x:Key="ThemeConverter" />
+ 
     <ResourceDictionary.MergedDictionaries>
       
         <ResourceDictionary Source="/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />

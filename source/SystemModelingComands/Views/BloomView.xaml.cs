@@ -12,7 +12,7 @@ namespace SystemModelingCommands.Views;
 
 public sealed partial class BloomView : BaseRevitWindow, INotifyPropertyChanged
 {
-    public List<MEPCurveType> MepCurveTypes { get; }
+    public List<MEPCurveType> MepCurveTypes { get; } = [];
     private MEPCurveType _selectedMepCurveType;
 
     public MEPCurveType SelectedMepCurveType
@@ -45,7 +45,7 @@ public sealed partial class BloomView : BaseRevitWindow, INotifyPropertyChanged
     {
         InitializeComponent();
         DataContext = this;
-       
+        LoadWindowTemplate();
         Connector[] source = SystemModelingServices.ConnectorArrayUnused(selectedElement);
         switch (selectedElement?.Category.BuiltInCategory)
         {

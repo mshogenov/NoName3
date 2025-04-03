@@ -22,4 +22,9 @@
         <Using Include="Serilog"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="..\.nuke\temp\build.2025-04-03_20-28-36.log" />
+      <None Remove="..\.nuke\temp\build.2025-04-03_20-22-43.log" />
+    </ItemGroup>
+
 </Project>

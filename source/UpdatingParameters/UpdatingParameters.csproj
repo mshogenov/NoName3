@@ -78,8 +78,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Resource Include="Views\Resources\Icons\стрелка вверх-30.png" />
-      <Resource Include="Views\Resources\Icons\стрелка влево-30.png" />
       <Resource Include="Views\Resources\Icons\стрелка вниз-30.png" />
       <Resource Include="Views\Resources\Icons\стрелка вправо-30.png" />
       <Page Remove="Views\Resources\UpdaterParametersWindowResources.xaml" />
@@ -94,6 +92,10 @@
 
     <ItemGroup>
       <ProjectReference Include="..\NoNameAPI\NoNameAPI.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Views\Resources\Icons\" />
     </ItemGroup>
 
 </Project>
