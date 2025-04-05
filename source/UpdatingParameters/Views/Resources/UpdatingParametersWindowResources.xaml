@@ -13,14 +13,7 @@
                     xmlns:model="clr-namespace:UpdatingParameters.Models"
                     xmlns:parameters="clr-namespace:UpdatingParameters.ViewModels.Parameters">
     <converter:ButtonSelectedConverter x:Key="ButtonSelectedConverter" />
- 
-    <!-- Цвета -->
-    <Color x:Key="PrimaryColor">#0078D4</Color>
-    <Color x:Key="HoverColor">#005A9E</Color>
-    <Color x:Key="PressedColor">#004578</Color>
-    <Color x:Key="DisabledColor">#CCCCCC</Color>
-    
-    
+    <converter:BoolVisibilityConverter x:Key="BoolVisibilityConverter" />
     <DataTemplate DataType="{x:Type parameters:ParametersViewModel}">
         <allCategories1:ParametersWindow DataContext="{Binding}" />
     </DataTemplate>

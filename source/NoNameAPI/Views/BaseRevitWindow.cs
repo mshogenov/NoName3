@@ -17,7 +17,7 @@ public class BaseRevitWindow : Window
             WindowStyle = WindowStyle.None;
             AllowsTransparency = true;
             ResizeMode = ResizeMode.CanResizeWithGrip;
-
+           
             // Регистрируем обработчик Loaded
             Loaded += BaseRevitWindow_Loaded;
 
@@ -47,14 +47,15 @@ public class BaseRevitWindow : Window
     }
 
 
+    private bool _stylesLoaded;
+
     protected void LoadWindowTemplate()
     {
-        // Очищаем текущие словари ресурсов
-        Resources.MergedDictionaries.Clear();
+        if (_stylesLoaded) return;
 
         // Определяем тему
         bool isDark = IsDarkTheme();
-        
+
         // Загружаем нужную тему напрямую
         string themePath = isDark
             ? "pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml"
@@ -74,51 +75,14 @@ public class BaseRevitWindow : Window
                 UriKind.Absolute)
         };
         Resources.MergedDictionaries.Add(stylesDictionary);
-        // Применяем шаблон окна, если он определен
+
+        // Применяем шаблон окна если он определен
         if (Resources.Contains("CustomWindowTemplate"))
         {
             Template = Resources["CustomWindowTemplate"] as ControlTemplate;
         }
-    }
 
-    public void UpdateTheme()
-    {
-        // Находим и обновляем тему в ресурсах окна
-        ResourceDictionary themeDictionary = null;
-
-        foreach (ResourceDictionary dict in Resources.MergedDictionaries)
-        {
-            if (dict.Source != null &&
-                (dict.Source.ToString().Contains("DarkTheme.xaml") ||
-                 dict.Source.ToString().Contains("LightTheme.xaml")))
-            {
-                themeDictionary = dict;
-                break;
-            }
-        }
-
-        // Если нашли словарь темы, заменяем его
-        if (themeDictionary != null)
-        {
-            int index = Resources.MergedDictionaries.IndexOf(themeDictionary);
-
-            // Создаем новый словарь с нужной темой
-            ResourceDictionary newThemeDictionary = new ResourceDictionary
-            {
-                Source = new Uri(IsDarkTheme()
-                        ? "pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml"
-                        : "pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/LightTheme.xaml",
-                    UriKind.Absolute)
-            };
-
-            // Заменяем словарь в коллекции
-            Resources.MergedDictionaries[index] = newThemeDictionary;
-        }
-        else
-        {
-            // Если по какой-то причине словарь не найден, перезагружаем весь шаблон
-            LoadWindowTemplate();
-        }
+        _stylesLoaded = true;
     }
 
     private void BaseRevitWindow_Loaded(object sender, RoutedEventArgs e)
@@ -219,123 +183,42 @@ public class BaseRevitWindow : Window
     }
 
     public override void OnApplyTemplate()
-{
-    base.OnApplyTemplate();
-
-    // Получаем визуальное дерево
-    if (Template == null) return;
-
-    var templateRoot = (FrameworkElement)Template.LoadContent();
-
-    // Проверяем, есть ли ресурсы в корне шаблона
-    if (templateRoot.Resources != null)
     {
-        // Замораживаем ресурсы в корне шаблона
-        foreach (var resource in templateRoot.Resources.Values)
+        base.OnApplyTemplate();
+        // Привязываем обработчики к кнопкам управления окном
+        if (GetTemplateChild("MinimizeButton") is Button minimizeButton)
         {
-            FreezeResourceIfPossible(resource);
+            minimizeButton.Click += (_, _) => WindowState = WindowState.Minimized;
         }
-    }
 
-    // Проверяем и замораживаем Storyboard в триггерах шаблона
-    FreezeStoryboardsInTemplate(Template);
-
-    // Привязываем обработчики к кнопкам управления окном
-    if (GetTemplateChild("MinimizeButton") is Button minimizeButton)
-    {
-        minimizeButton.Click += (_, _) => WindowState = WindowState.Minimized;
-    }
-
-    if (GetTemplateChild("MaximizeButton") is Button maximizeButton)
-    {
-        maximizeButton.Click += (_, _) =>
+        if (GetTemplateChild("MaximizeButton") is Button maximizeButton)
         {
-            WindowState = (WindowState == WindowState.Maximized)
-                ? WindowState.Normal
-                : WindowState.Maximized;
-
-            // Обновляем иконку кнопки
-            maximizeButton.Content = (WindowState == WindowState.Maximized) ? "\uE923" : "\uE922";
-        };
-    }
-
-    if (GetTemplateChild("CloseButton") is Button closeButton)
-    {
-        closeButton.Click += (_, _) => Close();
-    }
-
-    // Добавляем перетаскивание окна через заголовок
-    if (GetTemplateChild("PART_HeaderGrid") is Grid headerGrid)
-    {
-        headerGrid.MouseLeftButtonDown += (_, e) =>
-        {
-            if (e.ButtonState == MouseButtonState.Pressed)
+            maximizeButton.Click += (_, _) =>
             {
-                DragMove();
-            }
-        };
-    }
-}
+                WindowState = (WindowState == WindowState.Maximized)
+                    ? WindowState.Normal
+                    : WindowState.Maximized;
 
-// Вспомогательный метод для замораживания ресурса
-private void FreezeResourceIfPossible(object resource)
-{
-    if (resource is Freezable freezable && !freezable.IsFrozen && freezable.CanFreeze)
-    {
-        try
-        {
-            freezable.Freeze();
+                // Обновляем иконку кнопки
+                maximizeButton.Content = (WindowState == WindowState.Maximized) ? "\uE923" : "\uE922";
+            };
         }
-        catch (Exception ex)
+
+        if (GetTemplateChild("CloseButton") is Button closeButton)
         {
-        
+            closeButton.Click += (_, _) => Close();
         }
-    }
-}
 
-// Метод для поиска и замораживания Storyboard в триггерах ControlTemplate
-private void FreezeStoryboardsInTemplate(ControlTemplate template)
-{
-    if (template == null) return;
-
-    // Получаем все триггеры из шаблона
-    if (template.Triggers != null)
-    {
-        foreach (var trigger in template.Triggers)
+        // Добавляем перетаскивание окна через заголовок
+        if (GetTemplateChild("PART_HeaderGrid") is Grid headerGrid)
         {
-            // EventTrigger содержит BeginStoryboard
-            if (trigger is EventTrigger eventTrigger)
+            headerGrid.MouseLeftButtonDown += (_, e) =>
             {
-                foreach (var action in eventTrigger.Actions)
+                if (e.ButtonState == MouseButtonState.Pressed)
                 {
-                    if (action is BeginStoryboard beginStoryboard && beginStoryboard.Storyboard != null)
-                    {
-                        FreezeResourceIfPossible(beginStoryboard.Storyboard);
-                    }
+                    DragMove();
                 }
-            }
-            // Trigger может содержать EnterActions и ExitActions
-            else if (trigger is Trigger regularTrigger)
-            {
-                // Проверяем EnterActions
-                foreach (var action in regularTrigger.EnterActions)
-                {
-                    if (action is BeginStoryboard beginStoryboard && beginStoryboard.Storyboard != null)
-                    {
-                        FreezeResourceIfPossible(beginStoryboard.Storyboard);
-                    }
-                }
-
-                // Проверяем ExitActions
-                foreach (var action in regularTrigger.ExitActions)
-                {
-                    if (action is BeginStoryboard beginStoryboard && beginStoryboard.Storyboard != null)
-                    {
-                        FreezeResourceIfPossible(beginStoryboard.Storyboard);
-                    }
-                }
-            }
+            };
         }
     }
-}
 }

@@ -12,34 +12,30 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- <ResourceDictionary -->
-                <!--     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/ThemesResourceDictionary.xaml" /> -->
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/LightTheme.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         </ResourceDictionary>
 
     </UserControl.Resources>
-    <Grid>
-        <!-- <Grid.Style> -->
-        <!--     <StaticResource ResourceKey="Grid" /> -->
-        <!-- </Grid.Style> -->
-        <Grid.RowDefinitions>
+    <Grid Style="{DynamicResource Grid}">
+       <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
         <CheckBox x:Name="UpdaterCheckBox"
+                  Style="{DynamicResource JellyCheckboxStyle}"
                   Content="Обновление параметров"
                   Margin="5 5 0 0" IsChecked="{Binding UpdaterIsChecked}">
-            <!-- <CheckBox.Style> -->
-            <!--     <StaticResource ResourceKey="AnimatedCheckBox" /> -->
-            <!-- </CheckBox.Style> -->
-        </CheckBox>
+      </CheckBox>
 
-        <GroupBox Grid.Row="1" Header="Категории">
-            <!-- <GroupBox.Style> -->
-            <!--     <StaticResource ResourceKey="GradientGroupBoxStyle" /> -->
-            <!-- </GroupBox.Style> -->
+        <GroupBox Grid.Row="1" Header="Категории"
+                  Style="{DynamicResource GroupBoxStyle}">
+            
             <GroupBox.Visibility>
                 <Binding Path="IsChecked" ElementName="UpdaterCheckBox"
                          Converter="{StaticResource BooleanToVisibilityConverter}" />
@@ -53,9 +49,9 @@
                 <StackPanel>
                     <StackPanel.Resources>
                         <Style TargetType="CheckBox">
-                            <!-- <Style.BasedOn> -->
-                            <!--     <StaticResource ResourceKey="AnimatedCheckBox" /> -->
-                            <!-- </Style.BasedOn> -->
+                            <Style.BasedOn>
+                                <StaticResource ResourceKey="JellyCheckboxStyle" />
+                            </Style.BasedOn>
                             <Setter Property="Margin" Value="0 3" />
                         </Style>
                     </StackPanel.Resources>
@@ -120,22 +116,17 @@
                             
                               IsChecked="{Binding HermeticClassIsChecked}" />
                 </StackPanel>
-                <Separator Grid.Row="1">
-                    <!-- <Separator.Style> -->
-                    <!--     <StaticResource ResourceKey="ShadowSeparator" /> -->
-                    <!-- </Separator.Style> -->
-                </Separator>
+                <Separator Grid.Row="1"
+                           Style="{DynamicResource ShadowSeparator}">
+                   </Separator>
                 <StackPanel Orientation="Horizontal" Grid.Row="2" VerticalAlignment="Top">
-                    <Button Command="{Binding HighlightAllCommand}">
-                        <!-- <Button.Style> -->
-                        <!--     <StaticResource ResourceKey="SelectAllButton" /> -->
-                        <!-- </Button.Style> -->
+                    <Button Command="{Binding HighlightAllCommand}"
+                            Style="{DynamicResource SelectAllButton}">
+                     
                     </Button>
-                    <Button Command="{Binding DeselectCommand}">
-                        <!-- <Button.Style> -->
-                        <!--     <StaticResource ResourceKey="ClearSelectionButton" /> -->
-                        <!-- </Button.Style> -->
-                    </Button>
+                    <Button Command="{Binding DeselectCommand}"
+                            Style="{DynamicResource ClearSelectionButton}">
+                       </Button>
                 </StackPanel>
             </Grid>
 
@@ -148,18 +139,15 @@
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Content="Восстановить настройки по умолчанию"
                     Command="{Binding ResetSettingsCommand}"
-                    Margin="5 5 10 5">
-                <!-- <Button.Style> -->
-                <!--     <StaticResource ResourceKey="UpdateButton" /> -->
-                <!-- </Button.Style> -->
+                    Margin="5 5 10 5"
+                    Style="{DynamicResource CommonButton}">
+             
             </Button>
             <Button Content="Сохранить настройки" Grid.Column="1"
                     Margin="10 5 5 5"
+                    Style="{DynamicResource CommonButton}"
                     Command="{Binding SaveSettingsCommand}">
-                <!-- <Button.Style> -->
-                <!--     <StaticResource ResourceKey="UpdateButton" /> -->
-                <!-- </Button.Style> -->
-            </Button>
+               </Button>
         </Grid>
     </Grid>
 

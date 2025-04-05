@@ -8,30 +8,26 @@
              xmlns:parameters="clr-namespace:UpdatingParameters.ViewModels.Parameters"
              d:DataContext="{d:DesignInstance Type=parameters:ParametersViewModel}"
              mc:Ignorable="d"
-           d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- <ResourceDictionary -->
-                <!--     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/ThemesResourceDictionary.xaml " /> -->
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/LightTheme.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
-    <Grid>
-        <!-- <Grid.Style> -->
-        <!--     <StaticResource ResourceKey="Grid" /> -->
-        <!-- </Grid.Style> -->
+    <Grid Style="{DynamicResource Grid}">
+
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
 
         <!-- Основной контент -->
-        <Border>
-
-            <!-- <Border.Style> -->
-            <!--     <StaticResource ResourceKey="BorderFolding" /> -->
-            <!-- </Border.Style> -->
+        <Border Style="{DynamicResource BorderFolding}">
             <Grid Margin="15">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -46,39 +42,23 @@
 
                 <!-- Строка 1 -->
                 <CheckBox
+                    Style="{DynamicResource JellyCheckboxStyle}"
+                    Content="ADSK_Система_Сокращение"
                     Grid.Row="0"
                     Grid.Column="0"
                     IsChecked="{Binding SystemAbbreviationIsChecked}">
-                    <!-- <CheckBox.Style> -->
-                    <!--     <StaticResource ResourceKey="AnimatedCheckBox" /> -->
-                    <!-- </CheckBox.Style> -->
+
                 </CheckBox>
-                <TextBlock
-                    Grid.Row="0"
-                    Grid.Column="1"
-                    Text="ADSK_Система_Сокращение">
-                    <!-- <TextBlock.Style> -->
-                    <!--     <StaticResource ResourceKey="TextBlock" /> -->
-                    <!-- </TextBlock.Style> -->
-                </TextBlock>
 
                 <!-- Строка 2 -->
                 <CheckBox
+                    Style="{DynamicResource JellyCheckboxStyle}"
                     Grid.Row="1"
                     Grid.Column="0"
+                    Content="ADSK_Система_Имя"
                     IsChecked="{Binding SystemNameIsChecked}">
-                    <!-- <CheckBox.Style> -->
-                    <!--     <StaticResource ResourceKey="AnimatedCheckBox" /> -->
-                    <!-- </CheckBox.Style> -->
+
                 </CheckBox>
-                <TextBlock
-                    Grid.Row="1"
-                    Grid.Column="1"
-                    Text="ADSK_Система_Имя">
-                    <!-- <TextBlock.Style> -->
-                    <!--     <StaticResource ResourceKey="TextBlock" /> -->
-                    <!-- </TextBlock.Style> -->
-                </TextBlock>
 
                 <!-- Строка 3 -->
                 <Grid Grid.Row="2"
@@ -90,25 +70,17 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <CheckBox
+                        Style="{DynamicResource JellyCheckboxStyle}"
                         Grid.Column="0"
-                        IsChecked="{Binding WallThicknessIsChecked}">
-                        <!-- <CheckBox.Style> -->
-                        <!--     <StaticResource ResourceKey="AnimatedCheckBox" /> -->
-                        <!-- </CheckBox.Style> -->
+                        IsChecked="{Binding WallThicknessIsChecked}"
+                        Content="ADSK_Толщина стенки">
+
                     </CheckBox>
-                    <TextBlock
-                        Grid.Column="1"
-                        Text="ADSK_Толщина стенки">
-                        <!-- <TextBlock.Style> -->
-                        <!--     <StaticResource ResourceKey="TextBlock" /> -->
-                        <!-- </TextBlock.Style> -->
-                    </TextBlock>
+
                     <Button
                         Grid.Column="2"
+                        Style="{DynamicResource SettingsButton}"
                         Command="{Binding Path=AdjustWallThicknessCommand}">
-                        <!-- <Button.Style> -->
-                        <!--     <StaticResource ResourceKey="SettingsButton" /> -->
-                        <!-- </Button.Style> -->
                         <Button.ToolTip>
                             <ToolTip>Настроить параметры воздуховодов</ToolTip>
                         </Button.ToolTip>
@@ -118,21 +90,13 @@
 
                 <!-- Строка 4 -->
                 <CheckBox
+                    Style="{DynamicResource JellyCheckboxStyle}"
                     Grid.Row="3"
                     Grid.Column="0"
-                    IsChecked="{Binding HermeticClassIsChecked}">
-                    <!-- <CheckBox.Style> -->
-                    <!--     <StaticResource ResourceKey="AnimatedCheckBox" /> -->
-                    <!-- </CheckBox.Style> -->
+                    IsChecked="{Binding HermeticClassIsChecked}"
+                    Content="Класс герметичности">
+
                 </CheckBox>
-                <TextBlock
-                    Grid.Row="3"
-                    Grid.Column="1"
-                    Text="Класс герметичности">
-                    <!-- <TextBlock.Style> -->
-                    <!--     <StaticResource ResourceKey="TextBlock" /> -->
-                    <!-- </TextBlock.Style> -->
-                </TextBlock>
             </Grid>
         </Border>
 
@@ -146,24 +110,19 @@
             </Grid.ColumnDefinitions>
 
             <Button
+                Style="{DynamicResource CommonButton}"
                 Content="Сохранить настройки"
                 Command="{Binding SaveCommand}"
                 Margin="0,0,5,0">
-                <!-- <Button.Style> -->
-                <!--     <StaticResource ResourceKey="SaveButton" /> -->
-                <!-- </Button.Style> -->
-            </Button>
+               </Button>
 
             <Button
                 Grid.Column="1"
+                Style="{DynamicResource CommonButton}"
                 Content="Обновить параметры"
                 Command="{Binding UpdateParametersCommand}"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                 Margin="5,0,0,0">
-
-                <!-- <Button.Style> -->
-                <!--     <StaticResource ResourceKey="UpdateButton" /> -->
-                <!-- </Button.Style> -->
             </Button>
         </Grid>
     </Grid>
