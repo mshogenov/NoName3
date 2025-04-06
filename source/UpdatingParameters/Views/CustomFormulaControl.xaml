@@ -20,8 +20,8 @@
     </UserControl.Resources>
     <Border
         Style="{DynamicResource BorderFolding}"
-        Padding="3"
         MaxHeight="350"
+        Margin="0 0 0 5"
         VerticalAlignment="Top"
         Tag="{Binding ElementName=NameCheckBox}">
         <Grid>

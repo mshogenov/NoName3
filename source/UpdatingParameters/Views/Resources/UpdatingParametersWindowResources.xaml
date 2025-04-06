@@ -9,7 +9,7 @@
                     xmlns:settings="clr-namespace:UpdatingParameters.ViewModels.Settings"
                     xmlns:allCategories="clr-namespace:UpdatingParameters.ViewModels.Parameters"
                     xmlns:allCategories1="clr-namespace:UpdatingParameters.Views.Parameters"
-                    xmlns:converter="clr-namespace:UpdatingParameters.Views.Converters"
+                    xmlns:converter="clr-namespace:NoNameApi.Views.Converters;assembly=NoNameAPI"
                     xmlns:model="clr-namespace:UpdatingParameters.Models"
                     xmlns:parameters="clr-namespace:UpdatingParameters.ViewModels.Parameters">
     <converter:ButtonSelectedConverter x:Key="ButtonSelectedConverter" />
@@ -71,52 +71,4 @@
     <DataTemplate DataType="{x:Type settings:SettingsViewModel}">
         <local:SettingsWindow DataContext="{Binding}" />
     </DataTemplate>
-
-   
-   <Style x:Key="OutlineButton" TargetType="Button">
-    <!-- Существующие сеттеры -->
-    <Setter Property="HorizontalContentAlignment" Value="Center"/>
-    <Setter Property="BorderBrush" Value="#BBDEFB"/>
-    <Setter Property="BorderThickness" Value="2"/>
-    <Setter Property="FontSize" Value="14"/>
-    <Setter Property="Padding" Value="15,5"/>
-
-    <!-- Убираем привязку Background с уровня Button -->
-    <!--<Setter Property="Background"
-            Value="{Binding SelectedButton, 
-                    Converter={StaticResource ButtonSelectedConverter},
-                    ConverterParameter={x:Static model:ButtonType.AllCategories}}"/>-->
-
-    <Setter Property="Template">
-        <Setter.Value>
-            <ControlTemplate TargetType="Button">
-                <Border x:Name="border"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="4">
-                    <!-- Внутренний Border с привязкой Background -->
-                    <Border x:Name="backgroundBorder"
-                            Background="{Binding SelectedButton, 
-                                Converter={StaticResource ButtonSelectedConverter},
-                                ConverterParameter={x:Static model:ButtonType.AllCategories}}">
-                        <ContentPresenter HorizontalAlignment="Center" 
-                                          VerticalAlignment="Center"
-                                          Margin="{TemplateBinding Padding}"/>
-                    </Border>
-                </Border>
-                <ControlTemplate.Triggers>
-                    <!-- Триггер для IsMouseOver -->
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter TargetName="backgroundBorder" Property="Background" Value="#E3F2FD"/>
-                    </Trigger>
-                    <!-- Триггер для IsPressed -->
-                    <Trigger Property="IsPressed" Value="True">
-                        <Setter TargetName="backgroundBorder" Property="Background" Value="#BBDEFB"/>
-                    </Trigger>
-                </ControlTemplate.Triggers>
-            </ControlTemplate>
-        </Setter.Value>
-    </Setter>
-</Style>
-  
 </ResourceDictionary>

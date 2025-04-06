@@ -27,7 +27,7 @@
     <SolidColorBrush x:Key="TitleButtonContentIsMouseOvertBrush" Color="Black" />
     <SolidColorBrush x:Key="TextBlockColorBrush" Color="Black" />
     <SolidColorBrush x:Key="GroupBoxHeaderBrush" Color="{StaticResource DodgerBlue}" />
-    <SolidColorBrush x:Key="Border1Brush" Color="#DDDDDD" />
+    <SolidColorBrush x:Key="BorderBrush" Color="#DDDDDD" />
     <SolidColorBrush x:Key="GroupBoxContentBrush" Color="White" />
     <SolidColorBrush x:Key="SetupButtonBrush" Color="{StaticResource DodgerBlue}" />
     <SolidColorBrush x:Key="SetupButtonBrush2" Color="{StaticResource DarkBlueColor}" />
@@ -39,7 +39,8 @@
     <SolidColorBrush x:Key="IsMouseOverButtonBrush" Color="{StaticResource DarkBlueColor}" />
     <SolidColorBrush x:Key="IsPressedButtonBrush" Color="{StaticResource DeepBlueColor}" />
     <SolidColorBrush x:Key="SelectionIndicatorBrush" Color="{StaticResource DodgerBlue}" />
-   
+    <SolidColorBrush x:Key="GridSplitterBrush" Color="#808080" /> 
+    <SolidColorBrush x:Key="GridSplitterBorderBrush" Color="#777777" />
     <Style x:Key="DeleteButtonStyle" TargetType="Button">
         <Setter Property="Width" Value="28" />
         <Setter Property="Height" Value="28" />
@@ -586,39 +587,7 @@
         </Setter>
     </Style>
 
-    
-    <Style TargetType="Button" x:Key="CommonButtonStyle">
-        <Setter Property="BorderBrush" Value="#DDDDDD" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="Padding" Value="10,3" />
-        <Setter Property="Margin" Value="5 5 5 0" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="border"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="4">
-                        <ContentPresenter HorizontalAlignment="Left"
-                                          VerticalAlignment="Center"
-                                          Margin="{TemplateBinding Padding}" />
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <!-- Исправленный триггер для IsMouseOver -->
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#E3F2FD" />
-                        </Trigger>
-                        <!-- Исправленный триггер для IsPressed -->
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#BBDEFB" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-
-        </Setter>
-    </Style>
+ 
 
 
   

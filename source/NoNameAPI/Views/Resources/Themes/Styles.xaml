@@ -6,12 +6,20 @@
     <converters:ScaleMarginConverter x:Key="ScaleMarginConverter" />
     <converters:MultiplyConverter x:Key="MultiplyConverter" />
     <converters:NegationConverter x:Key="NegationConverter" />
-    
+
     <!-- Общие значения -->
     <FontFamily x:Key="AppFontFamily">Segoe UI</FontFamily>
-    <system:Double x:Key="AppFontSize">12</system:Double>
+    <system:Double x:Key="AppFontSize">13</system:Double>
     <Thickness x:Key="AppMargin">10</Thickness>
     <FontWeight x:Key="AppFontWeight">Normal</FontWeight>
+    <!-- Создание стиля для кнопок с иконкой -->
+    <Style x:Key="ArrowTextBlockStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+        <Setter Property="Foreground" Value="Black" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+    
     <!-- Шаблон для окна -->
     <ControlTemplate x:Key="CustomWindowTemplate" TargetType="{x:Type Window}">
         <Border
@@ -83,7 +91,7 @@
             </Grid>
         </Border>
     </ControlTemplate>
-
+    <!-- Стили для кнопок -->
     <Style x:Key="WindowButtonStyle" TargetType="{x:Type Button}">
         <Setter Property="Width" Value="46" />
         <Setter Property="Height" Value="32" />
@@ -113,9 +121,8 @@
             </Setter.Value>
         </Setter>
     </Style>
-
-    <Style x:Key="CloseButtonStyle"
-           TargetType="{x:Type Button}"
+ 
+    <Style x:Key="CloseButtonStyle"  TargetType="{x:Type Button}"
            BasedOn="{StaticResource WindowButtonStyle}">
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
@@ -124,13 +131,863 @@
         </Style.Triggers>
     </Style>
 
+     <Style x:Key="AddButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SetupButtonBrush}" />
+        <!-- <Setter Property="BorderBrush" Value="{DynamicResource Border1Brush}" /> -->
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Width" Value="150" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border x:Name="MainBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <Grid>
+                                <TextBlock x:Name="ButtonText"
+                                           Text="{TemplateBinding Content}"
+                                           Foreground="White"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,39,0" />
 
+                                <Border x:Name="IconBorder"
+                                        HorizontalAlignment="Right"
+                                        Width="39"><!-- Background="{DynamicResource SetupButtonBrush2}" -->
+                                    <Path x:Name="PlusIcon"
+                                          Data="M 12,6 L 12,18 M 6,12 L 18,12"
+                                          Stroke="White"
+                                          StrokeThickness="2"
+                                          Width="24"
+                                          Height="24"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="IconBorder"
+                                                     Storyboard.TargetProperty="Width"
+                                                     To="148" Duration="0:0:0.3" />
+                                    <ThicknessAnimation Storyboard.TargetName="ButtonText"
+                                                        Storyboard.TargetProperty="Margin"
+                                                        To="0,0,0,0" Duration="0:0:0.3" />
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="IconBorder"
+                                                     Storyboard.TargetProperty="Width"
+                                                     To="39" Duration="0:0:0.3" />
+                                    <ThicknessAnimation Storyboard.TargetName="ButtonText"
+                                                        Storyboard.TargetProperty="Margin"
+                                                        To="0,0,39,0" Duration="0:0:0.3" />
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource IsMouseOverButtonBrush}" />
+                            <Setter TargetName="ButtonText" Property="Foreground" Value="Transparent" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource IsPressedButtonBrush}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource IsPressedButtonBrush}" />
+                            <Setter TargetName="IconBorder" Property="Background"
+                                    Value="{DynamicResource IsPressedButtonBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Background" Value="#CCCCCC" />
+                            <Setter Property="BorderBrush" Value="#AAAAAA" />
+                            <Setter TargetName="IconBorder" Property="Background" Value="#AAAAAA" />
+                            <Setter TargetName="ButtonText" Property="Foreground" Value="#888888" />
+                            <Setter TargetName="PlusIcon" Property="Stroke" Value="#888888" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+        <Style x:Key="CommonButtonStyle2" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource SetupButtonBrush}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="Padding" Value="12,8" /> <!-- Горизонтальный отступ 12, вертикальный 8 -->
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="MinWidth" Value="0" /> <!-- Убрать минимальную ширину -->
+        <Setter Property="MinHeight" Value="0" /> <!-- Убрать минимальную высоту -->
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="4"
+                            BorderThickness="0"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          RecognizesAccessKey="True"
+                                          SnapsToDevicePixels="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource IsMouseOverButtonBrush}" />
+                            <Setter Property="Cursor" Value="Hand" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource IsPressedButtonBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.6" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+       <Style x:Key="OutlineCloseButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Padding" Value="15,8" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="4"
+                            Padding="{TemplateBinding Padding}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            BorderBrush="{TemplateBinding BorderBrush}">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="BorderBrush" Value="#9E9E9E" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource WindowBackgroundColor}" />
+                            <Setter Property="BorderBrush" Value="#9E9E9E" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+     <Style x:Key="BaseAnimatedArrowButtonHorizontal" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="MinWidth" Value="30" /> <Setter Property="MinHeight" Value="30" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="RootBorder" Background="Transparent">
+                        <Grid ClipToBounds="True">
+                            <Ellipse x:Name="OuterCircle"
+                                     Margin="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.125}"
+                                     StrokeThickness="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.071}"
+                                     Stroke="#F0EEEF">
+                                <Ellipse.RenderTransform>
+                                    <ScaleTransform ScaleX="1" ScaleY="1"
+                                                    CenterX="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.375}"
+                                                    CenterY="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.375}" />
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+
+                            <Ellipse x:Name="InnerCircle"
+                                     Margin="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.125}"
+                                     StrokeThickness="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.071}"
+                                     Stroke="#96DAF0"
+                                     Opacity="0">
+                                <Ellipse.RenderTransform>
+                                    <ScaleTransform ScaleX="1.3" ScaleY="1.3"
+                                                    CenterX="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.375}"
+                                                    CenterY="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.375}" />
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+
+                            <Canvas ClipToBounds="True"
+                                    Width="{Binding ActualWidth, ElementName=RootBorder}"
+                                    Height="{Binding ActualHeight, ElementName=RootBorder}"
+                                    IsHitTestVisible="False">
+                                <Grid x:Name="ButtonBox"
+                                      Width="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource MultiplyConverter}, ConverterParameter=2}"
+                                      Height="{Binding ActualHeight, ElementName=RootBorder}">
+                                    <Grid.RenderTransform>
+                                        <TranslateTransform x:Name="ButtonBoxTransform" X="0" Y="0" />
+                                    </Grid.RenderTransform>
+
+                                    <Path x:Name="Arrow1"
+                                          Width="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.357}"
+                                          Height="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.357}"
+                                          Margin="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleMarginConverter}, ConverterParameter=0.32;0.32;0.32;0.32}"
+                                          HorizontalAlignment="Left"
+                                          VerticalAlignment="Top" Fill="#F0EEEF"
+                                          Stretch="Uniform"
+                                          Data="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z">
+                                        <Path.RenderTransform>
+                                            <RotateTransform
+                                                Angle="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Tag, TargetNullValue=180}"
+                                                CenterX="{Binding ActualWidth, ElementName=Arrow1, Converter={StaticResource ScaleConverter}, ConverterParameter=0.5}"
+                                                CenterY="{Binding ActualHeight, ElementName=Arrow1, Converter={StaticResource ScaleConverter}, ConverterParameter=0.5}" />
+                                        </Path.RenderTransform>
+                                    </Path>
+
+                                    <Path x:Name="Arrow2"
+                                          Width="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.357}"
+                                          Height="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.357}"
+                                          Margin="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleMarginConverter}, ConverterParameter=1.32;0.32;0.32;0.32}"
+                                          HorizontalAlignment="Left"
+                                          VerticalAlignment="Top" Fill="#F0EEEF"
+                                          Stretch="Uniform"
+                                          Data="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z">
+                                        <Path.RenderTransform>
+                                            <RotateTransform
+                                                Angle="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Tag, TargetNullValue=180}"
+                                                CenterX="{Binding ActualWidth, ElementName=Arrow2, Converter={StaticResource ScaleConverter}, ConverterParameter=0.5}"
+                                                CenterY="{Binding ActualHeight, ElementName=Arrow2, Converter={StaticResource ScaleConverter}, ConverterParameter=0.5}" />
+                                        </Path.RenderTransform>
+                                    </Path>
+                                </Grid>
+                            </Canvas>
+                        </Grid>
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard x:Name="MouseOverStoryboard">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="0.7"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="0.7"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1"
+                                                         Duration="0:0:0.5" />
+
+                                        <DoubleAnimation Storyboard.TargetName="ButtonBoxTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource NegationConverter}}"
+                                                         Duration="0:0:0.4" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1.3"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1.3"
+                                                         Duration="0:0:0.5" />
+
+                                        <DoubleAnimation Storyboard.TargetName="ButtonBoxTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0" Duration="0:0:0.4" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+
+                        <Trigger Property="IsFocused" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard x:Name="FocusStoryboard">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="0.7"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="0.7"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1"
+                                                         Duration="0:0:0.5" />
+
+                                        <DoubleAnimation Storyboard.TargetName="ButtonBoxTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource NegationConverter}}"
+                                                         Duration="0:0:0.4" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1.3"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1.3"
+                                                         Duration="0:0:0.5" />
+
+                                        <DoubleAnimation Storyboard.TargetName="ButtonBoxTransform"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0" Duration="0:0:0.4" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="BaseAnimatedArrowButtonVertical" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="MinWidth" Value="30" /> <Setter Property="MinHeight" Value="30" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="RootBorder" Background="Transparent">
+                        <Grid ClipToBounds="True">
+                            <Ellipse x:Name="OuterCircle"
+                                     Margin="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.125}"
+                                     StrokeThickness="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.071}"
+                                     Stroke="#F0EEEF">
+                                <Ellipse.RenderTransform>
+                                    <ScaleTransform ScaleX="1" ScaleY="1"
+                                                    CenterX="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.375}"
+                                                    CenterY="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.375}" />
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+                            <Ellipse x:Name="InnerCircle"
+                                     Margin="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.125}"
+                                     StrokeThickness="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.071}"
+                                     Stroke="#96DAF0"
+                                     Opacity="0">
+                                <Ellipse.RenderTransform>
+                                    <ScaleTransform ScaleX="1.3" ScaleY="1.3"
+                                                    CenterX="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.375}"
+                                                    CenterY="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.375}" />
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+
+                            <Canvas ClipToBounds="True"
+                                    Width="{Binding ActualWidth, ElementName=RootBorder}"
+                                    Height="{Binding ActualHeight, ElementName=RootBorder}"
+                                    IsHitTestVisible="False">
+                                <Grid x:Name="ButtonBox"
+                                      Width="{Binding ActualWidth, ElementName=RootBorder}"
+                                      Height="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource MultiplyConverter}, ConverterParameter=2}">
+                                    <Grid.RenderTransform>
+                                        <TranslateTransform x:Name="ButtonBoxTransform" X="0" Y="0" />
+                                    </Grid.RenderTransform>
+
+                                    <Path x:Name="Arrow1"
+                                          Width="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.357}"
+                                          Height="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.357}"
+                                          Margin="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleMarginConverter}, ConverterParameter=0.32;0.32;0.32;0.32}"
+                                          HorizontalAlignment="Left" VerticalAlignment="Top"
+                                          Fill="#F0EEEF"
+                                          Stretch="Uniform"
+                                          Data="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z">
+                                        <Path.RenderTransform>
+                                            <RotateTransform
+                                                Angle="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Tag, TargetNullValue=90}"
+                                                CenterX="{Binding ActualWidth, ElementName=Arrow1, Converter={StaticResource ScaleConverter}, ConverterParameter=0.5}"
+                                                CenterY="{Binding ActualHeight, ElementName=Arrow1, Converter={StaticResource ScaleConverter}, ConverterParameter=0.5}" />
+                                        </Path.RenderTransform>
+                                    </Path>
+
+                                    <Path x:Name="Arrow2"
+                                          Width="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.357}"
+                                          Height="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.357}"
+                                          Margin="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleMarginConverter}, ConverterParameter=0.32;1.32;0.32;0.32}"
+                                          HorizontalAlignment="Left" VerticalAlignment="Top"
+                                          Fill="#F0EEEF"
+                                          Stretch="Uniform"
+                                          Data="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z">
+                                        <Path.RenderTransform>
+                                            <RotateTransform
+                                                Angle="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Tag, TargetNullValue=90}"
+                                                CenterX="{Binding ActualWidth, ElementName=Arrow2, Converter={StaticResource ScaleConverter}, ConverterParameter=0.5}"
+                                                CenterY="{Binding ActualHeight, ElementName=Arrow2, Converter={StaticResource ScaleConverter}, ConverterParameter=0.5}" />
+                                        </Path.RenderTransform>
+                                    </Path>
+                                </Grid>
+                            </Canvas>
+                        </Grid>
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard x:Name="MouseOverStoryboard">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="0.7"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="0.7"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1"
+                                                         Duration="0:0:0.5" />
+
+                                        <DoubleAnimation Storyboard.TargetName="ButtonBoxTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource NegationConverter}}"
+                                                         Duration="0:0:0.4" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1.3"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1.3"
+                                                         Duration="0:0:0.5" />
+
+                                        <DoubleAnimation Storyboard.TargetName="ButtonBoxTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0" Duration="0:0:0.4" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+
+                        <Trigger Property="IsFocused" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard x:Name="FocusStoryboard">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="0.7"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="0.7"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1"
+                                                         Duration="0:0:0.5" />
+
+                                        <DoubleAnimation Storyboard.TargetName="ButtonBoxTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource NegationConverter}}"
+                                                         Duration="0:0:0.4" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1.3"
+                                                         Duration="0:0:0.5" />
+                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
+                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1.3"
+                                                         Duration="0:0:0.5" />
+
+                                        <DoubleAnimation Storyboard.TargetName="ButtonBoxTransform"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0" Duration="0:0:0.4" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="AnimatedArrowButtonLeft" TargetType="Button"
+           BasedOn="{StaticResource BaseAnimatedArrowButtonHorizontal}">
+        <Setter Property="Tag" Value="180" /> <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="30" />
+    </Style>
+
+    <Style x:Key="AnimatedArrowButtonRight" TargetType="Button"
+           BasedOn="{StaticResource BaseAnimatedArrowButtonHorizontal}">
+        <Setter Property="Tag" Value="0" /> <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="30" />
+    </Style>
+
+    <Style x:Key="AnimatedArrowButtonUp" TargetType="Button" BasedOn="{StaticResource BaseAnimatedArrowButtonVertical}">
+        <Setter Property="Tag" Value="-90" /> <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="30" />
+    </Style>
+
+    <Style x:Key="AnimatedArrowButtonDown" TargetType="Button"
+           BasedOn="{StaticResource BaseAnimatedArrowButtonVertical}">
+        <Setter Property="Tag" Value="90" /> <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="30" />
+    </Style>
+    
+    <Style x:Key="BaseArrowButton" TargetType="Button">
+        <Setter Property="Background" Value="White" />
+        <Setter Property="BorderBrush" Value="White" />
+        <Setter Property="Margin" Value="1" />
+    </Style>
+    <Style x:Key="ButtonArrowRightStyle" TargetType="Button" BasedOn="{StaticResource BaseArrowButton}">
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <TextBlock Text="&#xF0AF;"
+                               Style="{StaticResource ArrowTextBlockStyle}" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ButtonArrowLeftStyle" TargetType="Button" BasedOn="{StaticResource BaseArrowButton}">
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <TextBlock Text="&#xF0B0;"
+                               Style="{StaticResource ArrowTextBlockStyle}" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="ButtonArrowUpStyle" TargetType="Button" BasedOn="{StaticResource BaseArrowButton}">
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <TextBlock Text="&#xF0AD;"
+                               Style="{StaticResource ArrowTextBlockStyle}" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="ButtonArrowDownStyle" TargetType="Button" BasedOn="{StaticResource BaseArrowButton}">
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <TextBlock Text="&#xF0AE;"
+                               Style="{StaticResource ArrowTextBlockStyle}" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+     <Style x:Key="SelectAllButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Margin" Value="0,5,0,5" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="ToolTip" Value="Выбрать все" />
+        <Setter Property="MinWidth" Value="30" />
+        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#E8E8E8" TargetName="border" />
+                            <Setter Property="BorderBrush" Value="#CCCCCC" TargetName="border" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="#D5D5D5" TargetName="border" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Content">
+            <Setter.Value>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xEA98;"
+                               FontFamily="Segoe MDL2 Assets"
+                               Foreground="{DynamicResource BlueBrush}"
+                               FontSize="22"
+                               VerticalAlignment="Center" />
+
+                </StackPanel>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ClearSelectionButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Margin" Value="5,5,0,5" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="ToolTip" Value="Очистить выбор" />
+        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="MinWidth" Value="30" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#E8E8E8" TargetName="border" />
+                            <Setter Property="BorderBrush" Value="#CCCCCC" TargetName="border" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="#D5D5D5" TargetName="border" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Content">
+            <Setter.Value>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE8E6;"
+                               FontFamily="Segoe MDL2 Assets"
+                               Foreground="{DynamicResource BlueBrush}"
+                               FontSize="22"
+                               VerticalAlignment="Center" />
+
+                </StackPanel>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="SettingsButtonStyle" TargetType="Button">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="Transparent"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+    <Setter Property="Padding" Value="10"/>
+    <Setter Property="Template">
+        <Setter.Value>
+            <ControlTemplate TargetType="Button">
+                <Grid x:Name="ButtonGrid">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <!-- Содержимое кнопки -->
+                    <Path x:Name="SettingsIcon" Grid.Row="1" 
+                          Data="m370-80-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm70-80h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Zm42-180q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm-2-140Z"
+                          Fill="{DynamicResource TitleButtonIsMouseOverBrush}" Width="24" Height="24" Stretch="Uniform"
+                          RenderTransformOrigin="0.5,0.5">
+                        <Path.RenderTransform>
+                            <RotateTransform x:Name="IconRotation" Angle="0"/>
+                        </Path.RenderTransform>
+                    </Path>
+                </Grid>
+                <ControlTemplate.Triggers>
+                    <!-- Анимация вращения при наведении -->
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger.EnterActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation 
+                                        Storyboard.TargetName="IconRotation" 
+                                        Storyboard.TargetProperty="Angle"
+                                        From="0" To="60" Duration="0:0:0.4"
+                                        AccelerationRatio="0.1" DecelerationRatio="0.5"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.EnterActions>
+                        <Trigger.ExitActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation 
+                                        Storyboard.TargetName="IconRotation" 
+                                        Storyboard.TargetProperty="Angle"
+                                        To="0" Duration="0:0:0.3"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.ExitActions>
+                    </Trigger>
+                    <!-- Анимация вращения при нажатии -->
+                    <Trigger Property="IsPressed" Value="True">
+                        <Trigger.EnterActions>
+                            <BeginStoryboard Name="ContinuousRotation">
+                                <Storyboard>
+                                    <DoubleAnimation 
+                                        Storyboard.TargetName="IconRotation" 
+                                        Storyboard.TargetProperty="Angle"
+                                        From="-100" To="180" Duration="0:0:1" 
+                                        RepeatBehavior="Forever"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.EnterActions>
+                        <Trigger.ExitActions>
+                            <StopStoryboard BeginStoryboardName="ContinuousRotation"/>
+                        </Trigger.ExitActions>
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </Setter.Value>
+    </Setter>
+</Style>
+    <Style x:Key="SettingsButton" TargetType="Button" 
+           BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Background" Value="White" />
+        <Setter Property="BorderBrush" Value="White" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="Margin" Value="5" />
+        <Setter Property="Content">
+            <Setter.Value>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE713;"
+                               FontFamily="Segoe MDL2 Assets"
+                               Foreground="Black"
+                               FontSize="16"
+                               Margin="0,0,5,0" />
+                </StackPanel>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <Style TargetType="Button" x:Key="CommonButtonStyle">
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
+        <Setter Property="Padding" Value="5,4" />
+        <Setter Property="Background" Value="White" />
+        <Setter Property="Margin" Value="5 1 5 1" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Left"
+                                          VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- Исправленный триггер для IsMouseOver -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background"
+                                    Value="{DynamicResource IsMouseOverBrush}" />
+                            <Setter Property="Cursor" Value="Hand"/>
+                        </Trigger>
+                        <!-- Исправленный триггер для IsPressed -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource IsSelectedBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
     <Style x:Key="Grid" TargetType="Grid">
         <Setter Property="Background" Value="{DynamicResource WindowBackgroundBrush }" />
     </Style>
 
     <Style x:Key="GroupBoxStyle" TargetType="{x:Type GroupBox}">
-        <Setter Property="BorderBrush" Value="{DynamicResource Border1Brush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="6" />
         <Setter Property="Margin" Value="{StaticResource AppMargin}" />
@@ -279,7 +1136,7 @@
                         <Border x:Name="CheckboxBorder"
                                 Width="24" Height="24"
                                 BorderThickness="1"
-                                BorderBrush="{DynamicResource Border1Brush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
                                 Background="Transparent"
                                 CornerRadius="3"
                                 VerticalAlignment="Center"
@@ -417,104 +1274,15 @@
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
     </Style>
 
-    <!-- Стиль для кнопки "Добавить" -->
-    <Style x:Key="AddButtonStyle" TargetType="Button">
-
-        <Setter Property="Background" Value="{DynamicResource SetupButtonBrush}" />
-        <!-- <Setter Property="BorderBrush" Value="{DynamicResource Border1Brush}" /> -->
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="Width" Value="150" />
-        <Setter Property="Height" Value="30" />
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Grid>
-                        <Border x:Name="MainBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                            <Grid>
-                                <TextBlock x:Name="ButtonText"
-                                           Text="{TemplateBinding Content}"
-                                           Foreground="White"
-                                           FontWeight="SemiBold"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           Margin="0,0,39,0" />
-
-                                <Border x:Name="IconBorder"
-                                        HorizontalAlignment="Right"
-                                        Width="39"><!-- Background="{DynamicResource SetupButtonBrush2}" -->
-                                    <Path x:Name="PlusIcon"
-                                          Data="M 12,6 L 12,18 M 6,12 L 18,12"
-                                          Stroke="White"
-                                          StrokeThickness="2"
-                                          Width="24"
-                                          Height="24"
-                                          HorizontalAlignment="Center"
-                                          VerticalAlignment="Center" />
-                                </Border>
-                            </Grid>
-                        </Border>
-                    </Grid>
-                    <ControlTemplate.Triggers>
-                        <EventTrigger RoutedEvent="MouseEnter">
-                            <BeginStoryboard>
-                                <Storyboard>
-                                    <DoubleAnimation Storyboard.TargetName="IconBorder"
-                                                     Storyboard.TargetProperty="Width"
-                                                     To="148" Duration="0:0:0.3" />
-                                    <ThicknessAnimation Storyboard.TargetName="ButtonText"
-                                                        Storyboard.TargetProperty="Margin"
-                                                        To="0,0,0,0" Duration="0:0:0.3" />
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </EventTrigger>
-
-                        <EventTrigger RoutedEvent="MouseLeave">
-                            <BeginStoryboard>
-                                <Storyboard>
-                                    <DoubleAnimation Storyboard.TargetName="IconBorder"
-                                                     Storyboard.TargetProperty="Width"
-                                                     To="39" Duration="0:0:0.3" />
-                                    <ThicknessAnimation Storyboard.TargetName="ButtonText"
-                                                        Storyboard.TargetProperty="Margin"
-                                                        To="0,0,39,0" Duration="0:0:0.3" />
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </EventTrigger>
-
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource IsMouseOverButtonBrush}" />
-                            <Setter TargetName="ButtonText" Property="Foreground" Value="Transparent" />
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource IsPressedButtonBrush}" />
-                            <Setter Property="BorderBrush" Value="{DynamicResource IsPressedButtonBrush}" />
-                            <Setter TargetName="IconBorder" Property="Background"
-                                    Value="{DynamicResource IsPressedButtonBrush}" />
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Background" Value="#CCCCCC" />
-                            <Setter Property="BorderBrush" Value="#AAAAAA" />
-                            <Setter TargetName="IconBorder" Property="Background" Value="#AAAAAA" />
-                            <Setter TargetName="ButtonText" Property="Foreground" Value="#888888" />
-                            <Setter TargetName="PlusIcon" Property="Stroke" Value="#888888" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
+    
+  
 
 
     <Style x:Key="BorderFolding" TargetType="Border">
-        <Setter Property="Margin" Value="5 10 5 3" />
         <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
         <Setter Property="CornerRadius" Value="5" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Border1Brush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="Padding" Value="3" />
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
@@ -523,6 +1291,7 @@
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Width" Value="8" />
+        <Setter Property="Margin" Value="0 0 1 0" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ScrollBar}">
@@ -685,82 +1454,9 @@
     </Style>
 
 
-    <Style x:Key="CommonButton" TargetType="Button">
-        <Setter Property="Background" Value="{DynamicResource SetupButtonBrush}" />
-        <Setter Property="Foreground" Value="White" />
-        <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
-        <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Border1Brush}" />
-        <Setter Property="Padding" Value="12,8" /> <!-- Горизонтальный отступ 12, вертикальный 8 -->
-        <Setter Property="HorizontalContentAlignment" Value="Center" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="MinWidth" Value="0" /> <!-- Убрать минимальную ширину -->
-        <Setter Property="MinHeight" Value="0" /> <!-- Убрать минимальную высоту -->
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border Background="{TemplateBinding Background}"
-                            CornerRadius="4"
-                            BorderThickness="0"
-                            Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                          RecognizesAccessKey="True"
-                                          SnapsToDevicePixels="True" />
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource IsMouseOverButtonBrush}" />
-                            <Setter Property="Cursor" Value="Hand" />
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource IsPressedButtonBrush}" />
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.6" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
 
-    <Style x:Key="OutlineCloseButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Padding" Value="15,8" />
-        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Border1Brush}" />
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border Background="{TemplateBinding Background}"
-                            CornerRadius="4"
-                            Padding="{TemplateBinding Padding}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            BorderBrush="{TemplateBinding BorderBrush}">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <ContentPresenter VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="BorderBrush" Value="#9E9E9E" />
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource WindowBackgroundColor}" />
-                            <Setter Property="BorderBrush" Value="#9E9E9E" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
+
+ 
 
     <Style x:Key="TextBlockStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
@@ -790,17 +1486,8 @@
         </Setter>
     </Style>
     <Style x:Key="ShadowSeparator" TargetType="Separator">
-        <Setter Property="Height" Value="3" />
-        <Setter Property="Background" Value="#BBBBBB" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Separator">
-                    <Border Height="1">
-
-                    </Border>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
+        <Setter Property="Height" Value="5" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
     </Style>
     <Style x:Key="SearchTextBoxStyle" TargetType="TextBox">
         <Setter Property="Height" Value="auto" />
@@ -845,522 +1532,12 @@
         </Setter>
     </Style>
 
+
+   
   
-  
 
-    <Style x:Key="BaseAnimatedArrowButtonHorizontal" TargetType="Button">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="MinWidth" Value="30" /> <Setter Property="MinHeight" Value="30" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="RootBorder" Background="Transparent">
-                        <Grid ClipToBounds="True">
-                            <Ellipse x:Name="OuterCircle"
-                                     Margin="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.125}"
-                                     StrokeThickness="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.071}"
-                                     Stroke="#F0EEEF">
-                                <Ellipse.RenderTransform>
-                                    <ScaleTransform ScaleX="1" ScaleY="1"
-                                                    CenterX="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.375}"
-                                                    CenterY="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.375}" />
-                                </Ellipse.RenderTransform>
-                            </Ellipse>
-
-                            <Ellipse x:Name="InnerCircle"
-                                     Margin="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.125}"
-                                     StrokeThickness="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.071}"
-                                     Stroke="#96DAF0"
-                                     Opacity="0">
-                                <Ellipse.RenderTransform>
-                                    <ScaleTransform ScaleX="1.3" ScaleY="1.3"
-                                                    CenterX="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.375}"
-                                                    CenterY="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.375}" />
-                                </Ellipse.RenderTransform>
-                            </Ellipse>
-
-                            <Canvas ClipToBounds="True"
-                                    Width="{Binding ActualWidth, ElementName=RootBorder}"
-                                    Height="{Binding ActualHeight, ElementName=RootBorder}"
-                                    IsHitTestVisible="False">
-                                <Grid x:Name="ButtonBox"
-                                      Width="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource MultiplyConverter}, ConverterParameter=2}"
-                                      Height="{Binding ActualHeight, ElementName=RootBorder}">
-                                    <Grid.RenderTransform>
-                                        <TranslateTransform x:Name="ButtonBoxTransform" X="0" Y="0" />
-                                    </Grid.RenderTransform>
-
-                                    <Path x:Name="Arrow1"
-                                          Width="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.357}"
-                                          Height="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.357}"
-                                          Margin="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleMarginConverter}, ConverterParameter=0.32;0.32;0.32;0.32}"
-                                          HorizontalAlignment="Left"
-                                          VerticalAlignment="Top" Fill="#F0EEEF"
-                                          Stretch="Uniform"
-                                          Data="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z">
-                                        <Path.RenderTransform>
-                                            <RotateTransform
-                                                Angle="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Tag, TargetNullValue=180}"
-                                                CenterX="{Binding ActualWidth, ElementName=Arrow1, Converter={StaticResource ScaleConverter}, ConverterParameter=0.5}"
-                                                CenterY="{Binding ActualHeight, ElementName=Arrow1, Converter={StaticResource ScaleConverter}, ConverterParameter=0.5}" />
-                                        </Path.RenderTransform>
-                                    </Path>
-
-                                    <Path x:Name="Arrow2"
-                                          Width="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.357}"
-                                          Height="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.357}"
-                                          Margin="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleMarginConverter}, ConverterParameter=1.32;0.32;0.32;0.32}"
-                                          HorizontalAlignment="Left"
-                                          VerticalAlignment="Top" Fill="#F0EEEF"
-                                          Stretch="Uniform"
-                                          Data="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z">
-                                        <Path.RenderTransform>
-                                            <RotateTransform
-                                                Angle="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Tag, TargetNullValue=180}"
-                                                CenterX="{Binding ActualWidth, ElementName=Arrow2, Converter={StaticResource ScaleConverter}, ConverterParameter=0.5}"
-                                                CenterY="{Binding ActualHeight, ElementName=Arrow2, Converter={StaticResource ScaleConverter}, ConverterParameter=0.5}" />
-                                        </Path.RenderTransform>
-                                    </Path>
-                                </Grid>
-                            </Canvas>
-                        </Grid>
-                    </Border>
-
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard x:Name="MouseOverStoryboard">
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4" />
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="0.7"
-                                                         Duration="0:0:0.5" />
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="0.7"
-                                                         Duration="0:0:0.5" />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4" />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1"
-                                                         Duration="0:0:0.5" />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1"
-                                                         Duration="0:0:0.5" />
-
-                                        <DoubleAnimation Storyboard.TargetName="ButtonBoxTransform"
-                                                         Storyboard.TargetProperty="X"
-                                                         To="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource NegationConverter}}"
-                                                         Duration="0:0:0.4" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4" />
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1"
-                                                         Duration="0:0:0.5" />
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1"
-                                                         Duration="0:0:0.5" />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4" />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1.3"
-                                                         Duration="0:0:0.5" />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1.3"
-                                                         Duration="0:0:0.5" />
-
-                                        <DoubleAnimation Storyboard.TargetName="ButtonBoxTransform"
-                                                         Storyboard.TargetProperty="X"
-                                                         To="0" Duration="0:0:0.4" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
-                        </Trigger>
-
-                        <Trigger Property="IsFocused" Value="True">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard x:Name="FocusStoryboard">
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4" />
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="0.7"
-                                                         Duration="0:0:0.5"
-                                                         />
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="0.7"
-                                                         Duration="0:0:0.5"
-                                                         />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4"
-                                                          />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1"
-                                                         Duration="0:0:0.5"
-                                                          />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1"
-                                                         Duration="0:0:0.5"
-                                                         />
-
-                                        <DoubleAnimation Storyboard.TargetName="ButtonBoxTransform"
-                                                         Storyboard.TargetProperty="X"
-                                                         To="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource NegationConverter}}"
-                                                         Duration="0:0:0.4"
-                                                         />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4"
-                                                        />
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1"
-                                                         Duration="0:0:0.5"
-                                                          />
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1"
-                                                         Duration="0:0:0.5"
-                                                        />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4"
-                                                          />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1.3"
-                                                         Duration="0:0:0.5"
-                                                       />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1.3"
-                                                         Duration="0:0:0.5"
-                                                        />
-
-                                        <DoubleAnimation Storyboard.TargetName="ButtonBoxTransform"
-                                                         Storyboard.TargetProperty="X"
-                                                         To="0" Duration="0:0:0.4"
-                                                         />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <Style x:Key="BaseAnimatedArrowButtonVertical" TargetType="Button">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="MinWidth" Value="30" /> <Setter Property="MinHeight" Value="30" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="RootBorder" Background="Transparent">
-                        <Grid ClipToBounds="True">
-                            <Ellipse x:Name="OuterCircle"
-                                     Margin="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.125}"
-                                     StrokeThickness="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.071}"
-                                     Stroke="#F0EEEF">
-                                <Ellipse.RenderTransform>
-                                    <ScaleTransform ScaleX="1" ScaleY="1"
-                                                    CenterX="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.375}"
-                                                    CenterY="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.375}" />
-                                </Ellipse.RenderTransform>
-                            </Ellipse>
-                            <Ellipse x:Name="InnerCircle"
-                                     Margin="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.125}"
-                                     StrokeThickness="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.071}"
-                                     Stroke="#96DAF0"
-                                     Opacity="0">
-                                <Ellipse.RenderTransform>
-                                    <ScaleTransform ScaleX="1.3" ScaleY="1.3"
-                                                    CenterX="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.375}"
-                                                    CenterY="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.375}" />
-                                </Ellipse.RenderTransform>
-                            </Ellipse>
-
-                            <Canvas ClipToBounds="True"
-                                    Width="{Binding ActualWidth, ElementName=RootBorder}"
-                                    Height="{Binding ActualHeight, ElementName=RootBorder}"
-                                    IsHitTestVisible="False">
-                                <Grid x:Name="ButtonBox"
-                                      Width="{Binding ActualWidth, ElementName=RootBorder}"
-                                      Height="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource MultiplyConverter}, ConverterParameter=2}">
-                                    <Grid.RenderTransform>
-                                        <TranslateTransform x:Name="ButtonBoxTransform" X="0" Y="0" />
-                                    </Grid.RenderTransform>
-
-                                    <Path x:Name="Arrow1"
-                                          Width="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.357}"
-                                          Height="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.357}"
-                                          Margin="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleMarginConverter}, ConverterParameter=0.32;0.32;0.32;0.32}"
-                                          HorizontalAlignment="Left" VerticalAlignment="Top"
-                                          Fill="#F0EEEF"
-                                          Stretch="Uniform"
-                                          Data="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z">
-                                        <Path.RenderTransform>
-                                            <RotateTransform
-                                                Angle="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Tag, TargetNullValue=90}"
-                                                CenterX="{Binding ActualWidth, ElementName=Arrow1, Converter={StaticResource ScaleConverter}, ConverterParameter=0.5}"
-                                                CenterY="{Binding ActualHeight, ElementName=Arrow1, Converter={StaticResource ScaleConverter}, ConverterParameter=0.5}" />
-                                        </Path.RenderTransform>
-                                    </Path>
-
-                                    <Path x:Name="Arrow2"
-                                          Width="{Binding ActualWidth, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.357}"
-                                          Height="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleConverter}, ConverterParameter=0.357}"
-                                          Margin="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource ScaleMarginConverter}, ConverterParameter=0.32;1.32;0.32;0.32}"
-                                          HorizontalAlignment="Left" VerticalAlignment="Top"
-                                          Fill="#F0EEEF"
-                                          Stretch="Uniform"
-                                          Data="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z">
-                                        <Path.RenderTransform>
-                                            <RotateTransform
-                                                Angle="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Tag, TargetNullValue=90}"
-                                                CenterX="{Binding ActualWidth, ElementName=Arrow2, Converter={StaticResource ScaleConverter}, ConverterParameter=0.5}"
-                                                CenterY="{Binding ActualHeight, ElementName=Arrow2, Converter={StaticResource ScaleConverter}, ConverterParameter=0.5}" />
-                                        </Path.RenderTransform>
-                                    </Path>
-                                </Grid>
-                            </Canvas>
-                        </Grid>
-                    </Border>
-
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard x:Name="MouseOverStoryboard">
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4"
-                                                          />
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="0.7"
-                                                         Duration="0:0:0.5"
-                                                          />
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="0.7"
-                                                         Duration="0:0:0.5"
-                                                        />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4"
-                                                         />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1"
-                                                         Duration="0:0:0.5"
-                                                          />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1"
-                                                         Duration="0:0:0.5"
-                                                          />
-
-                                        <DoubleAnimation Storyboard.TargetName="ButtonBoxTransform"
-                                                         Storyboard.TargetProperty="Y"
-                                                         To="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource NegationConverter}}"
-                                                         Duration="0:0:0.4"
-                                                         />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4"
-                                                         />
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1"
-                                                         Duration="0:0:0.5"
-                                                        />
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1"
-                                                         Duration="0:0:0.5"
-                                                          />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4"
-                                                          />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1.3"
-                                                         Duration="0:0:0.5"
-                                                      />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1.3"
-                                                         Duration="0:0:0.5"
-                                                         />
-
-                                        <DoubleAnimation Storyboard.TargetName="ButtonBoxTransform"
-                                                         Storyboard.TargetProperty="Y"
-                                                         To="0" Duration="0:0:0.4"
-                                                         />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
-                        </Trigger>
-
-                        <Trigger Property="IsFocused" Value="True">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard x:Name="FocusStoryboard">
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4"
-                                                         />
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="0.7"
-                                                         Duration="0:0:0.5"
-                                                        />
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="0.7"
-                                                         Duration="0:0:0.5"
-                                                         />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4"
-                                                          />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1"
-                                                         Duration="0:0:0.5"
-                                                     />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1"
-                                                         Duration="0:0:0.5"
-                                                         />
-
-                                        <DoubleAnimation Storyboard.TargetName="ButtonBoxTransform"
-                                                         Storyboard.TargetProperty="Y"
-                                                         To="{Binding ActualHeight, ElementName=RootBorder, Converter={StaticResource NegationConverter}}"
-                                                         Duration="0:0:0.4" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4"
-                                                         />
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1"
-                                                         Duration="0:0:0.5"
-                                                         />
-                                        <DoubleAnimation Storyboard.TargetName="OuterCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1"
-                                                         Duration="0:0:0.5"
-                                                        />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4"
-                                                          />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleX" To="1.3"
-                                                         Duration="0:0:0.5"
-                                                       />
-                                        <DoubleAnimation Storyboard.TargetName="InnerCircle"
-                                                         Storyboard.TargetProperty="RenderTransform.ScaleY" To="1.3"
-                                                         Duration="0:0:0.5"
-                                                      />
-
-                                        <DoubleAnimation Storyboard.TargetName="ButtonBoxTransform"
-                                                         Storyboard.TargetProperty="Y"
-                                                         To="0" Duration="0:0:0.4" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <Style x:Key="AnimatedArrowButtonLeft" TargetType="Button"
-           BasedOn="{StaticResource BaseAnimatedArrowButtonHorizontal}">
-        <Setter Property="Tag" Value="180" /> <Setter Property="Width" Value="30" />
-        <Setter Property="Height" Value="30" />
-    </Style>
-
-    <Style x:Key="AnimatedArrowButtonRight" TargetType="Button"
-           BasedOn="{StaticResource BaseAnimatedArrowButtonHorizontal}">
-        <Setter Property="Tag" Value="0" /> <Setter Property="Width" Value="30" />
-        <Setter Property="Height" Value="30" />
-    </Style>
-
-    <Style x:Key="AnimatedArrowButtonUp" TargetType="Button" BasedOn="{StaticResource BaseAnimatedArrowButtonVertical}">
-        <Setter Property="Tag" Value="-90" /> <Setter Property="Width" Value="30" />
-        <Setter Property="Height" Value="30" />
-    </Style>
-
-    <Style x:Key="AnimatedArrowButtonDown" TargetType="Button"
-           BasedOn="{StaticResource BaseAnimatedArrowButtonVertical}">
-        <Setter Property="Tag" Value="90" /> <Setter Property="Width" Value="30" />
-        <Setter Property="Height" Value="30" />
-    </Style>
-      <!-- Создание стиля для кнопок с иконкой -->
-    <Style x:Key="ArrowTextBlockStyle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
-        <Setter Property="Foreground" Value="Black" />
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="HorizontalAlignment" Value="Center" />
-    </Style>
-
-    <Style x:Key="BaseArrowButton" TargetType="Button">
-
-        <Setter Property="Background" Value="White" />
-        <Setter Property="BorderBrush" Value="White" />
-        <Setter Property="Margin" Value="1" />
-    </Style>
-
-    <Style x:Key="ButtonArrowRightStyle" TargetType="Button" BasedOn="{StaticResource BaseArrowButton}">
-        <Setter Property="ContentTemplate">
-            <Setter.Value>
-                <DataTemplate>
-                    <TextBlock Text="&#xF0AF;"
-                               Style="{StaticResource ArrowTextBlockStyle}" />
-                </DataTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <Style x:Key="ButtonArrowLeftStyle" TargetType="Button" BasedOn="{StaticResource BaseArrowButton}">
-        <Setter Property="ContentTemplate">
-            <Setter.Value>
-                <DataTemplate>
-                    <TextBlock Text="&#xF0B0;"
-                               Style="{StaticResource ArrowTextBlockStyle}" />
-                </DataTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-    <Style x:Key="ButtonArrowUpStyle" TargetType="Button" BasedOn="{StaticResource BaseArrowButton}">
-        <Setter Property="ContentTemplate">
-            <Setter.Value>
-                <DataTemplate>
-                    <TextBlock Text="&#xF0AD;"
-                               Style="{StaticResource ArrowTextBlockStyle}" />
-                </DataTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-    <Style x:Key="ButtonArrowDownStyle" TargetType="Button" BasedOn="{StaticResource BaseArrowButton}">
-        <Setter Property="ContentTemplate">
-            <Setter.Value>
-                <DataTemplate>
-                    <TextBlock Text="&#xF0AE;"
-                               Style="{StaticResource ArrowTextBlockStyle}" />
-                </DataTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
     
+
     <Style x:Key="CleanDataGridStyle" TargetType="DataGrid">
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Background" Value="White" />
@@ -1378,8 +1555,8 @@
         <Setter Property="FontSize" Value="12" />
         <Setter Property="Margin" Value="0" />
     </Style>
-    
-     <!-- В стиле заголовка колонки добавляем правую границу -->
+
+    <!-- В стиле заголовка колонки добавляем правую границу -->
     <Style x:Key="CleanColumnHeaderStyle" TargetType="DataGridColumnHeader">
         <Setter Property="Background" Value="#F8F9FA" />
         <Setter Property="Foreground" Value="#212529" />
@@ -1460,115 +1637,132 @@
         </Style.Triggers>
     </Style>
 
-    <Style x:Key="SelectAllButton" TargetType="Button">
+   
+    <Style x:Key="InvisibleGridSplitter" TargetType="GridSplitter">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="HorizontalAlignment" Value="Left" />
-        <Setter Property="Padding" Value="10,8" />
-        <Setter Property="Margin" Value="0,5,0,5" />
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="ToolTip" Value="Выбрать все" />
-        <Setter Property="MinWidth" Value="30" />
-        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="Width" Value="5" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="border"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="4">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <ControlTemplate TargetType="GridSplitter">
+                    <Border Background="Transparent">
+                        <!-- Убраны все визуальные элементы, но функциональность сохраняется -->
                     </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#E8E8E8" TargetName="border" />
-                            <Setter Property="BorderBrush" Value="#CCCCCC" TargetName="border" />
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="#D5D5D5" TargetName="border" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <Setter Property="Content">
-            <Setter.Value>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="&#xEA98;"
-                               FontFamily="Segoe MDL2 Assets"
-                               Foreground="{DynamicResource BlueBrush}"
-                               FontSize="22"
-                               VerticalAlignment="Center" />
-
-                </StackPanel>
-            </Setter.Value>
-        </Setter>
+        <Style.Triggers>
+            <Trigger Property="ResizeDirection" Value="Rows">
+                <Setter Property="Height" Value="5" />
+                <Setter Property="Width" Value="Auto" />
+                <Setter Property="Cursor" Value="SizeNS" />
+            </Trigger>
+            <Trigger Property="ResizeDirection" Value="Columns">
+                <Setter Property="Cursor" Value="SizeWE" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
-
-    <Style x:Key="ClearSelectionButton" TargetType="Button">
-        <Setter Property="Background" Value="Transparent" />
+    <Style x:Key="GridSplitterStyle" TargetType="GridSplitter">
+        <Setter Property="Background" Value="#E0E0E0" />
+        <Setter Property="BorderBrush" Value="#CCCCCC" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="HorizontalAlignment" Value="Left" />
-        <Setter Property="Padding" Value="10,8" />
-        <Setter Property="Margin" Value="5,5,0,5" />
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="ToolTip" Value="Очистить выбор" />
-        <Setter Property="MinHeight" Value="30" />
-        <Setter Property="MinWidth" Value="30" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="Width" Value="5" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="border"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="4">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <ControlTemplate TargetType="GridSplitter">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver">
+                                    <Storyboard>
+                                        <ColorAnimation
+                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                            To="#C0C0C0"
+                                            Duration="0:0:0.1" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <ColorAnimation
+                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                            To="#A0A0A0"
+                                            Duration="0:0:0.1" />
+                                    </Storyboard>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Grid>
+                            <Rectangle x:Name="FocusVisualElement" Opacity="0" Stroke="#FF6DBDD1" StrokeThickness="1" />
+
+                        </Grid>
                     </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#E8E8E8" TargetName="border" />
-                            <Setter Property="BorderBrush" Value="#CCCCCC" TargetName="border" />
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="#D5D5D5" TargetName="border" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <Setter Property="Content">
-            <Setter.Value>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="&#xE8E6;"
-                               FontFamily="Segoe MDL2 Assets"
-                               Foreground="{DynamicResource BlueBrush}"
-                               FontSize="22"
-                               VerticalAlignment="Center" />
+        <Style.Triggers>
+            <Trigger Property="ResizeDirection" Value="Rows">
+                <Setter Property="Height" Value="5" />
+                <Setter Property="Width" Value="Auto" />
+                <Setter Property="Cursor" Value="SizeNS" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="GridSplitter">
+                            <Border
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="MouseOver">
+                                            <Storyboard>
+                                                <ColorAnimation
+                                                    Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                    To="#C0C0C0"
+                                                    Duration="0:0:0.1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <ColorAnimation
+                                                    Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                    To="#A0A0A0"
+                                                    Duration="0:0:0.1" />
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Grid>
+                                    <Rectangle x:Name="FocusVisualElement" Opacity="0" Stroke="#FF6DBDD1"
+                                               StrokeThickness="1" />
 
-                </StackPanel>
-            </Setter.Value>
-        </Setter>
+                                </Grid>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
     </Style>
-    <Style x:Key="SettingsButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-        <Setter Property="Background" Value="White" />
-        <Setter Property="BorderBrush" Value="White" />
-        <Setter Property="HorizontalAlignment" Value="Left" />
-        <Setter Property="Padding" Value="10,0" />
-        <Setter Property="Margin" Value="5" />
-        <Setter Property="Content">
-            <Setter.Value>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="&#xE713;"
-                               FontFamily="Segoe MDL2 Assets"
-                               Foreground="Black"
-                               FontSize="16"
-                               Margin="0,0,5,0" />
-                </StackPanel>
-            </Setter.Value>
-        </Setter>
+    <Style x:Key="BorderContentStyle" TargetType="Border">
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="CornerRadius" Value="0 5 5 0" />
+        <Setter Property="Padding" Value="5" />
     </Style>
+
+
+  
 </ResourceDictionary>

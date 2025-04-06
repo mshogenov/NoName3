@@ -78,8 +78,9 @@
                     </CheckBox>
 
                     <Button
-                        Grid.Column="2"
-                        Style="{DynamicResource SettingsButton}"
+                        Margin="5 0"
+                      Grid.Column="2"
+                        Style="{DynamicResource SettingsButtonStyle}"
                         Command="{Binding Path=AdjustWallThicknessCommand}">
                         <Button.ToolTip>
                             <ToolTip>Настроить параметры воздуховодов</ToolTip>
@@ -110,7 +111,7 @@
             </Grid.ColumnDefinitions>
 
             <Button
-                Style="{DynamicResource CommonButton}"
+                Style="{DynamicResource CommonButtonStyle2}"
                 Content="Сохранить настройки"
                 Command="{Binding SaveCommand}"
                 Margin="0,0,5,0">
@@ -118,7 +119,7 @@
 
             <Button
                 Grid.Column="1"
-                Style="{DynamicResource CommonButton}"
+                Style="{DynamicResource CommonButtonStyle2}"
                 Content="Обновить параметры"
                 Command="{Binding UpdateParametersCommand}"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"

@@ -57,7 +57,7 @@
                    Margin="5 5 10 5 ">
             <Button
                 Content="Вставить трубу"
-                Style="{StaticResource CommonButton}"
+                Style="{StaticResource CommonButtonStyle2}"
                 Click="ButtonInsertPipe_OnClick">
             </Button>
             <Button

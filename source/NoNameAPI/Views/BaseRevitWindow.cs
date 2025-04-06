@@ -4,12 +4,13 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
 using Autodesk.Revit.UI;
+using NoNameApi.Views.Services;
 
 namespace NoNameApi.Views;
 
 public class BaseRevitWindow : Window
 {
-    protected BaseRevitWindow()
+   protected BaseRevitWindow()
     {
         try
         {
@@ -17,7 +18,7 @@ public class BaseRevitWindow : Window
             WindowStyle = WindowStyle.None;
             AllowsTransparency = true;
             ResizeMode = ResizeMode.CanResizeWithGrip;
-           
+
             // Регистрируем обработчик Loaded
             Loaded += BaseRevitWindow_Loaded;
 
@@ -53,19 +54,11 @@ public class BaseRevitWindow : Window
     {
         if (_stylesLoaded) return;
 
-        // Определяем тему
-        bool isDark = IsDarkTheme();
+        // Обновляем текущую тему в менеджере
+        RevitThemeManager.UpdateCurrentTheme();
 
-        // Загружаем нужную тему напрямую
-        string themePath = isDark
-            ? "pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml"
-            : "pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/LightTheme.xaml";
-
-        // Сначала добавляем тему
-        ResourceDictionary themeDictionary = new ResourceDictionary
-        {
-            Source = new Uri(themePath, UriKind.Absolute)
-        };
+        // Получаем словарь ресурсов текущей темы
+        ResourceDictionary themeDictionary = RevitThemeManager.GetCurrentThemeDictionary();
         Resources.MergedDictionaries.Add(themeDictionary);
 
         // Затем добавляем стили

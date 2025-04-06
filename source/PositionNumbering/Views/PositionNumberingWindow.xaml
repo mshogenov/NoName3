@@ -144,7 +144,7 @@
             
             <Button Content="Нумеровать"
                     HorizontalAlignment="Right"
-                    Style="{StaticResource CommonButton}"
+                    Style="{StaticResource CommonButtonStyle2}"
                     Command="{Binding NumberingCommand}"
                     CommandParameter="{Binding  RelativeSource={RelativeSource AncestorType=Window}}"
 
@@ -221,7 +221,7 @@
                                 HorizontalAlignment="Right"
                                 Margin="0,5,0,0">
                         <Button Content="Добавить"
-                                Style="{StaticResource CommonButton}"
+                                Style="{StaticResource CommonButtonStyle2}"
                                 Command="{Binding AddSelectedSystemsCommand}"
                                 Margin="0,0,5,5" />
                         <Button Content="Отмена"

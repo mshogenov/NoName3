@@ -1,9 +1,9 @@
 ﻿using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
-using Color = System.Windows.Media.Color;
+using NoNameApi.Views.Services;
 
-namespace UpdatingParameters.Views.Converters;
+namespace NoNameApi.Views.Converters;
 
 public class ButtonSelectedConverter : IValueConverter
 {
@@ -11,16 +11,16 @@ public class ButtonSelectedConverter : IValueConverter
     {
         if (value == null || parameter == null)
         {
-            return Brushes.White;
+            return RevitThemeManager.GetBrush(RevitThemeManager.DefaultButtonBackgroundKey);
         }
 
         if (value.ToString() == parameter.ToString())
         {
-            return Brushes.LightBlue;
+            return RevitThemeManager.GetBrush(RevitThemeManager.SelectedButtonBackgroundKey);
         }
         else
         {
-            return Brushes.White;
+            return RevitThemeManager.GetBrush(RevitThemeManager.DefaultButtonBackgroundKey);
         }
     }
 

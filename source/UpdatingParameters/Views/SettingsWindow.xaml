@@ -140,12 +140,12 @@
             <Button Grid.Column="0" Content="Восстановить настройки по умолчанию"
                     Command="{Binding ResetSettingsCommand}"
                     Margin="5 5 10 5"
-                    Style="{DynamicResource CommonButton}">
+                    Style="{DynamicResource CommonButtonStyle2}">
              
             </Button>
             <Button Content="Сохранить настройки" Grid.Column="1"
                     Margin="10 5 5 5"
-                    Style="{DynamicResource CommonButton}"
+                    Style="{DynamicResource CommonButtonStyle2}"
                     Command="{Binding SaveSettingsCommand}">
                </Button>
         </Grid>
