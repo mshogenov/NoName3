@@ -289,7 +289,7 @@
                             <Setter Property="BorderBrush" Value="#9E9E9E" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource WindowBackgroundColor}" />
+                            <Setter Property="Background" Value="{DynamicResource WindowBackgroundBrush}" />
                             <Setter Property="BorderBrush" Value="#9E9E9E" />
                         </Trigger>
                     </ControlTemplate.Triggers>
