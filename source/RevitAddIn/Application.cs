@@ -285,9 +285,20 @@ namespace RevitAddIn
             var parametersUpdater = new ParametersUpdater();
             UpdaterRegistry.RegisterUpdater(parametersUpdater, true);
             var updaterId = parametersUpdater.GetUpdaterId();
-            var filter = new ElementClassFilter(typeof(MEPCurve));
-            UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeGeometry());
-            UpdaterRegistry.AddTrigger(updaterId, filter, Element.GetChangeTypeElementAddition());
+
+            // Создаем фильтры для разных типов элементов
+            var mepCurveFilter = new ElementClassFilter(typeof(MEPCurve));
+            var pipeFittingFilter = new ElementCategoryFilter(BuiltInCategory.OST_PipeFitting);
+            var ductFittingFilter = new ElementCategoryFilter(BuiltInCategory.OST_DuctFitting);
+
+            // Объединяем фильтры
+            var orFilter = new LogicalOrFilter(
+                [mepCurveFilter, pipeFittingFilter, ductFittingFilter]
+            );
+
+            // Регистрация триггеров
+            UpdaterRegistry.AddTrigger(updaterId, orFilter, Element.GetChangeTypeGeometry());
+            UpdaterRegistry.AddTrigger(updaterId, orFilter, Element.GetChangeTypeElementAddition());
         }
     }
 }
