@@ -104,76 +104,79 @@ public class BaseRevitWindow : Window
         source?.AddHook(WndProc);
     }
 
-    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+   private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+{
+    const int WM_NCHITTEST = 0x0084;
+    const int HTLEFT = 10;
+    const int HTRIGHT = 11;
+    const int HTTOP = 12;
+    const int HTTOPLEFT = 13;
+    const int HTTOPRIGHT = 14;
+    const int HTBOTTOM = 15;
+    const int HTBOTTOMLEFT = 16;
+    const int HTBOTTOMRIGHT = 17;
+
+    // Ширина невидимой рамки для изменения размера
+    const int borderWidth = 8;
+    // Смещение области изменения размера (отрицательное значение смещает наружу)
+    const int offsetBorder = -4; 
+
+    if (msg != WM_NCHITTEST) return IntPtr.Zero;
+    Point ptScreen = new Point(
+        (int)(lParam) & 0xFFFF,
+        (int)(lParam) >> 16
+    );
+
+    Point ptClient = PointFromScreen(ptScreen);
+
+    // Проверяем, находится ли курсор в области изменения размера
+    // Используем смещение, чтобы сдвинуть область ближе к границе
+    if (ptClient.X <= borderWidth + offsetBorder)
     {
-        const int WM_NCHITTEST = 0x0084;
-        const int HTLEFT = 10;
-        const int HTRIGHT = 11;
-        const int HTTOP = 12;
-        const int HTTOPLEFT = 13;
-        const int HTTOPRIGHT = 14;
-        const int HTBOTTOM = 15;
-        const int HTBOTTOMLEFT = 16;
-        const int HTBOTTOMRIGHT = 17;
-
-        // Ширина невидимой рамки для изменения размера
-        const int borderWidth = 8;
-
-        if (msg != WM_NCHITTEST) return IntPtr.Zero;
-        Point ptScreen = new Point(
-            (int)(lParam) & 0xFFFF,
-            (int)(lParam) >> 16
-        );
-
-        Point ptClient = PointFromScreen(ptScreen);
-
-        // Проверяем, находится ли курсор в области изменения размера
-        if (ptClient.X <= borderWidth)
-        {
-            if (ptClient.Y <= borderWidth)
-            {
-                handled = true;
-                return (IntPtr)HTTOPLEFT;
-            }
-
-            if (ptClient.Y >= ActualHeight - borderWidth)
-            {
-                handled = true;
-                return (IntPtr)HTBOTTOMLEFT;
-            }
-
-            handled = true;
-            return (IntPtr)HTLEFT;
-        }
-
-        if (ptClient.X >= ActualWidth - borderWidth)
-        {
-            if (ptClient.Y <= borderWidth)
-            {
-                handled = true;
-                return (IntPtr)HTTOPRIGHT;
-            }
-
-            if (ptClient.Y >= ActualHeight - borderWidth)
-            {
-                handled = true;
-                return (IntPtr)HTBOTTOMRIGHT;
-            }
-
-            handled = true;
-            return (IntPtr)HTRIGHT;
-        }
-
-        if (ptClient.Y <= borderWidth)
+        if (ptClient.Y <= borderWidth + offsetBorder)
         {
             handled = true;
-            return (IntPtr)HTTOP;
+            return (IntPtr)HTTOPLEFT;
         }
 
-        if (!(ptClient.Y >= ActualHeight - borderWidth)) return IntPtr.Zero;
+        if (ptClient.Y >= ActualHeight - (borderWidth + offsetBorder))
+        {
+            handled = true;
+            return (IntPtr)HTBOTTOMLEFT;
+        }
+
         handled = true;
-        return (IntPtr)HTBOTTOM;
+        return (IntPtr)HTLEFT;
     }
+
+    if (ptClient.X >= ActualWidth - (borderWidth + offsetBorder))
+    {
+        if (ptClient.Y <= borderWidth + offsetBorder)
+        {
+            handled = true;
+            return (IntPtr)HTTOPRIGHT;
+        }
+
+        if (ptClient.Y >= ActualHeight - (borderWidth + offsetBorder))
+        {
+            handled = true;
+            return (IntPtr)HTBOTTOMRIGHT;
+        }
+
+        handled = true;
+        return (IntPtr)HTRIGHT;
+    }
+
+    if (ptClient.Y <= borderWidth + offsetBorder)
+    {
+        handled = true;
+        return (IntPtr)HTTOP;
+    }
+
+    if (!(ptClient.Y >= ActualHeight - (borderWidth + offsetBorder))) return IntPtr.Zero;
+    handled = true;
+    return (IntPtr)HTBOTTOM;
+}
 
     public override void OnApplyTemplate()
     {

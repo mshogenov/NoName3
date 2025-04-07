@@ -19,7 +19,7 @@
         <Setter Property="FontSize" Value="16" />
         <Setter Property="HorizontalAlignment" Value="Center" />
     </Style>
-    
+
     <!-- Шаблон для окна -->
     <ControlTemplate x:Key="CustomWindowTemplate" TargetType="{x:Type Window}">
         <Border
@@ -121,8 +121,8 @@
             </Setter.Value>
         </Setter>
     </Style>
- 
-    <Style x:Key="CloseButtonStyle"  TargetType="{x:Type Button}"
+
+    <Style x:Key="CloseButtonStyle" TargetType="{x:Type Button}"
            BasedOn="{StaticResource WindowButtonStyle}">
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
@@ -131,7 +131,7 @@
         </Style.Triggers>
     </Style>
 
-     <Style x:Key="AddButtonStyle" TargetType="Button">
+    <Style x:Key="AddButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="{DynamicResource SetupButtonBrush}" />
         <!-- <Setter Property="BorderBrush" Value="{DynamicResource Border1Brush}" /> -->
         <Setter Property="BorderThickness" Value="1" />
@@ -221,7 +221,7 @@
         </Setter>
     </Style>
 
-        <Style x:Key="CommonButtonStyle2" TargetType="Button">
+    <Style x:Key="CommonButtonStyle2" TargetType="Button">
         <Setter Property="Background" Value="{DynamicResource SetupButtonBrush}" />
         <Setter Property="Foreground" Value="White" />
         <Setter Property="FontWeight" Value="Medium" />
@@ -261,8 +261,8 @@
             </Setter.Value>
         </Setter>
     </Style>
-    
-       <Style x:Key="OutlineCloseButtonStyle" TargetType="Button">
+
+    <Style x:Key="OutlineCloseButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
         <Setter Property="FontWeight" Value="SemiBold" />
@@ -297,8 +297,8 @@
             </Setter.Value>
         </Setter>
     </Style>
-    
-     <Style x:Key="BaseAnimatedArrowButtonHorizontal" TargetType="Button">
+
+    <Style x:Key="BaseAnimatedArrowButtonHorizontal" TargetType="Button">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Cursor" Value="Hand" />
@@ -715,11 +715,12 @@
         <Setter Property="Tag" Value="90" /> <Setter Property="Width" Value="30" />
         <Setter Property="Height" Value="30" />
     </Style>
-    
+
     <Style x:Key="BaseArrowButton" TargetType="Button">
         <Setter Property="Background" Value="White" />
         <Setter Property="BorderBrush" Value="White" />
         <Setter Property="Margin" Value="1" />
+        <Setter Property="Cursor" Value="Hand"/>
     </Style>
     <Style x:Key="ButtonArrowRightStyle" TargetType="Button" BasedOn="{StaticResource BaseArrowButton}">
         <Setter Property="ContentTemplate">
@@ -762,8 +763,8 @@
             </Setter.Value>
         </Setter>
     </Style>
-    
-     <Style x:Key="SelectAllButton" TargetType="Button">
+
+    <Style x:Key="SelectAllButton" TargetType="Button">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="BorderBrush" Value="Transparent" />
@@ -857,77 +858,76 @@
         </Setter>
     </Style>
     <Style x:Key="SettingsButtonStyle" TargetType="Button">
-    <Setter Property="Background" Value="Transparent"/>
-    <Setter Property="BorderBrush" Value="Transparent"/>
-    <Setter Property="Cursor" Value="Hand"/>
-    <Setter Property="VerticalAlignment" Value="Center"/>
-    <Setter Property="Padding" Value="10"/>
-    <Setter Property="Template">
-        <Setter.Value>
-            <ControlTemplate TargetType="Button">
-                <Grid x:Name="ButtonGrid">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <!-- Содержимое кнопки -->
-                    <Path x:Name="SettingsIcon" Grid.Row="1" 
-                          Data="m370-80-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm70-80h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Zm42-180q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm-2-140Z"
-                          Fill="{DynamicResource TitleButtonIsMouseOverBrush}" Width="24" Height="24" Stretch="Uniform"
-                          RenderTransformOrigin="0.5,0.5">
-                        <Path.RenderTransform>
-                            <RotateTransform x:Name="IconRotation" Angle="0"/>
-                        </Path.RenderTransform>
-                    </Path>
-                </Grid>
-                <ControlTemplate.Triggers>
-                    <!-- Анимация вращения при наведении -->
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Trigger.EnterActions>
-                            <BeginStoryboard>
-                                <Storyboard>
-                                    <DoubleAnimation 
-                                        Storyboard.TargetName="IconRotation" 
-                                        Storyboard.TargetProperty="Angle"
-                                        From="0" To="60" Duration="0:0:0.4"
-                                        AccelerationRatio="0.1" DecelerationRatio="0.5"/>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </Trigger.EnterActions>
-                        <Trigger.ExitActions>
-                            <BeginStoryboard>
-                                <Storyboard>
-                                    <DoubleAnimation 
-                                        Storyboard.TargetName="IconRotation" 
-                                        Storyboard.TargetProperty="Angle"
-                                        To="0" Duration="0:0:0.3"/>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </Trigger.ExitActions>
-                    </Trigger>
-                    <!-- Анимация вращения при нажатии -->
-                    <Trigger Property="IsPressed" Value="True">
-                        <Trigger.EnterActions>
-                            <BeginStoryboard Name="ContinuousRotation">
-                                <Storyboard>
-                                    <DoubleAnimation 
-                                        Storyboard.TargetName="IconRotation" 
-                                        Storyboard.TargetProperty="Angle"
-                                        From="-100" To="180" Duration="0:0:1" 
-                                        RepeatBehavior="Forever"/>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </Trigger.EnterActions>
-                        <Trigger.ExitActions>
-                            <StopStoryboard BeginStoryboardName="ContinuousRotation"/>
-                        </Trigger.ExitActions>
-                    </Trigger>
-                </ControlTemplate.Triggers>
-            </ControlTemplate>
-        </Setter.Value>
-    </Setter>
-</Style>
-    <Style x:Key="SettingsButton" TargetType="Button" 
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Padding" Value="10" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="ButtonGrid" Background="Transparent">
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+                        <Path x:Name="SettingsIcon"
+                              Grid.Row="1" Width="20" Height="20" Stretch="Uniform"
+                              Fill="{DynamicResource SettingsButtonBrush}"
+                              RenderTransformOrigin="0.5,0.5"
+                              Data="M19.43,12.98C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.48,5.31 14.87,5.07L14.49,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.51,2.42L9.13,5.07C8.52,5.31 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.98L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.52,18.69 9.13,18.93L9.51,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.49,21.58L14.87,18.93C15.48,18.69 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.98ZM12,15.5C10.07,15.5 8.5,13.93 8.5,12C8.5,10.07 10.07,8.5 12,8.5C13.93,8.5 15.5,10.07 15.5,12C15.5,13.93 13.93,15.5 12,15.5Z">
+                            <Path.RenderTransform>
+                                <RotateTransform x:Name="IconRotation" Angle="0" />
+                            </Path.RenderTransform>
+                        </Path>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard Name="RotateForwardStoryboard">
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                            Storyboard.TargetName="IconRotation"
+                                            Storyboard.TargetProperty="Angle"
+                                            From="0" To="60" Duration="0:0:0.4"
+                                            AccelerationRatio="0.1" DecelerationRatio="0.5" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <StopStoryboard BeginStoryboardName="RotateForwardStoryboard" />
+                                <BeginStoryboard Name="RotateBackStoryboard">
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                            Storyboard.TargetName="IconRotation"
+                                            Storyboard.TargetProperty="Angle"
+                                            To="0" Duration="0:0:0.3" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard Name="ContinuousRotation">
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                            Storyboard.TargetName="IconRotation"
+                                            Storyboard.TargetProperty="Angle"
+                                            From="-100" To="180" Duration="0:0:1"
+                                            RepeatBehavior="Forever" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <StopStoryboard BeginStoryboardName="ContinuousRotation" />
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="SettingsButton" TargetType="Button"
            BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="Background" Value="White" />
         <Setter Property="BorderBrush" Value="White" />
@@ -946,7 +946,7 @@
             </Setter.Value>
         </Setter>
     </Style>
-    
+
     <Style TargetType="Button" x:Key="CommonButtonStyle">
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
@@ -970,7 +970,7 @@
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="border" Property="Background"
                                     Value="{DynamicResource IsMouseOverBrush}" />
-                            <Setter Property="Cursor" Value="Hand"/>
+                            <Setter Property="Cursor" Value="Hand" />
                         </Trigger>
                         <!-- Исправленный триггер для IsPressed -->
                         <Trigger Property="IsPressed" Value="True">
@@ -981,7 +981,7 @@
             </Setter.Value>
         </Setter>
     </Style>
-    
+
     <Style x:Key="Grid" TargetType="Grid">
         <Setter Property="Background" Value="{DynamicResource WindowBackgroundBrush }" />
     </Style>
@@ -990,7 +990,6 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="6" />
-        <Setter Property="Margin" Value="{StaticResource AppMargin}" />
         <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource GroupBoxContentBrush}" />
         <Setter Property="Template">
@@ -1034,6 +1033,7 @@
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
         <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
         <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
         <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
         <!-- Шаблон для ListBox -->
@@ -1165,7 +1165,7 @@
                                           Content="{TemplateBinding Content}"
                                           ContentStringFormat="{TemplateBinding ContentStringFormat}"
                                           ContentTemplate="{TemplateBinding ContentTemplate}"
-                                          RecognizesAccessKey="True" />
+                                          RecognizesAccessKey="False" />
                     </Grid>
 
                     <!-- Триггеры на основе DataTrigger -->
@@ -1274,9 +1274,6 @@
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
     </Style>
 
-    
-  
-
 
     <Style x:Key="BorderFolding" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
@@ -1291,7 +1288,7 @@
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Width" Value="8" />
-        <Setter Property="Margin" Value="0 0 1 0" />
+        <Setter Property="Margin" Value="0" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ScrollBar}">
@@ -1363,7 +1360,7 @@
                                RadiusY="3"
                                Width="6"
                                Opacity="0.6"
-                               MinHeight="30" />
+                               />
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="ThumbRect" Property="Opacity" Value="1.0" />
@@ -1394,7 +1391,7 @@
                                RadiusY="3"
                                Height="6"
                                Opacity="0.6"
-                               MinWidth="30" />
+                               />
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="ThumbRect" Property="Opacity" Value="1.0" />
@@ -1417,7 +1414,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ScrollViewer}">
-                    <Grid>
+                    <Grid Background="{TemplateBinding Background}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
@@ -1427,7 +1424,12 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <ScrollContentPresenter Grid.ColumnSpan="2" Grid.RowSpan="2" />
+                        <ScrollContentPresenter Grid.Column="0" Grid.Row="0"
+                                                Content="{TemplateBinding Content}"
+                                                CanContentScroll="{TemplateBinding CanContentScroll}"
+                                                CanHorizontallyScroll="False"
+                                                CanVerticallyScroll="False"
+                                                ContentTemplate="{TemplateBinding ContentTemplate}" />
 
                         <ScrollBar x:Name="PART_VerticalScrollBar"
                                    Grid.Column="1"
@@ -1437,7 +1439,6 @@
                                    ViewportSize="{TemplateBinding ViewportHeight}"
                                    Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
                                    Style="{StaticResource CustomScrollBarStyle}" />
-
                         <ScrollBar x:Name="PART_HorizontalScrollBar"
                                    Grid.Column="0"
                                    Grid.Row="1"
@@ -1447,44 +1448,20 @@
                                    ViewportSize="{TemplateBinding ViewportWidth}"
                                    Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"
                                    Style="{StaticResource HorizontalScrollBarStyle}" />
+                        <Rectangle Grid.Column="1" Grid.Row="1" Fill="Transparent" />
+
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
 
-
-
-
- 
 
     <Style x:Key="TextBlockStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
     </Style>
-    <Style x:Key="ScrollViewerStyle" TargetType="ScrollViewer">
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="ScrollViewer">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <ScrollContentPresenter />
-                        <ScrollBar Grid.Column="1"
-                                   x:Name="PART_VerticalScrollBar"
-                                   Orientation="Vertical"
-                                   Width="3"
-                                   Value="{TemplateBinding VerticalOffset}"
-                                   Maximum="{TemplateBinding ScrollableHeight}"
-                                   ViewportSize="{TemplateBinding ViewportHeight}"
-                                   Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" />
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
+
     <Style x:Key="ShadowSeparator" TargetType="Separator">
         <Setter Property="Height" Value="5" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
@@ -1533,11 +1510,6 @@
     </Style>
 
 
-   
-  
-
-    
-
     <Style x:Key="CleanDataGridStyle" TargetType="DataGrid">
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Background" Value="White" />
@@ -1550,10 +1522,9 @@
         <Setter Property="VerticalGridLinesBrush" Value="#DEE2E6" />
         <!-- Задаем цвет горизонтальных линий -->
         <Setter Property="HorizontalGridLinesBrush" Value="#DEE2E6" />
-
         <Setter Property="CanUserResizeRows" Value="False" />
         <Setter Property="FontSize" Value="12" />
-        <Setter Property="Margin" Value="0" />
+  
     </Style>
 
     <!-- В стиле заголовка колонки добавляем правую границу -->
@@ -1637,7 +1608,7 @@
         </Style.Triggers>
     </Style>
 
-   
+
     <Style x:Key="InvisibleGridSplitter" TargetType="GridSplitter">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
@@ -1764,5 +1735,4 @@
     </Style>
 
 
-  
 </ResourceDictionary>

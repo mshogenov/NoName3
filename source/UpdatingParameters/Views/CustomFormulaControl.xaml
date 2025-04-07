@@ -21,8 +21,7 @@
     <Border
         Style="{DynamicResource BorderFolding}"
         MaxHeight="350"
-        Margin="0 0 0 5"
-        VerticalAlignment="Top"
+       VerticalAlignment="Top"
         Tag="{Binding ElementName=NameCheckBox}">
         <Grid>
             <Grid.RowDefinitions>
@@ -32,132 +31,131 @@
             <CheckBox
                 Style="{DynamicResource JellyCheckboxStyle}"
                 Name="NameCheckBox"
-                Content="{Binding NameParameter, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+               Content="{Binding NameParameter, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
                 IsChecked="{Binding IsChecked,RelativeSource={RelativeSource AncestorType= UserControl}}">
             </CheckBox>
 
             <Grid Grid.Row="1"
-                  Margin="0 2">
-                <Grid.Visibility>
-                    <Binding Path="IsChecked" ElementName="NameCheckBox"
-                             Converter="{StaticResource BoolToVisibilityConverter}" />
-                </Grid.Visibility>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="5*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="10*" />
-                </Grid.ColumnDefinitions>
+                  Margin="0 5 0 0"
+                  Visibility="{Binding Path=IsChecked, ElementName=NameCheckBox, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <GroupBox
-                    Grid.Row="0" Header="Список параметров"
-                    Grid.Column="0"
-                    Style="{DynamicResource GroupBoxStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="6*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10*" />
+                    </Grid.ColumnDefinitions>
+                    <GroupBox
+                    Header="Список параметров"
+                        Grid.Column="0"
+                        Style="{DynamicResource GroupBoxStyle}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
 
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
+                            <TextBox Grid.Row="0"
+                                     Text="{Binding SearchParametersView, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{DynamicResource SearchTextBoxStyle}">
+                            </TextBox>
+                            <ListBox
+                                Grid.Row="1" Style="{DynamicResource ModernListBoxStyle}"
+                                ItemsSource="{Binding ParametersView,RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                SelectedItem="{Binding SelectParameter,RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock
+                                            Text="{Binding Definition.Name}">
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
 
-                        <TextBox Grid.Row="0"
-                                 Text="{Binding SearchParametersView, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{DynamicResource SearchTextBoxStyle}">
-                        </TextBox>
-
-                        <ListBox Grid.Row="1"
-                                 Style="{DynamicResource ModernListBoxStyle}"
-                                 ItemsSource="{Binding ParametersView,RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                 SelectedItem="{Binding SelectParameter,RelativeSource={RelativeSource AncestorType=UserControl}}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock
-                                        Text="{Binding Definition.Name}">
-
-                                    </TextBlock>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </Grid>
-                </GroupBox>
-                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Vertical"
-                            DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-                    <Button
-                        Style="{DynamicResource ButtonArrowRightStyle}"
-                        Height="24"
-                        Width="24"
-                        Command="{Binding AddParameterFormulaCommand}">
-
-                    </Button>
-                    <Button
-                        Style="{DynamicResource ButtonArrowLeftStyle}"
-                        Command="{Binding RemoveParameterFormulaCommand}">
-                    </Button>
-                </StackPanel>
-                <Grid Grid.Row="0" Grid.Column="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="auto" />
-                    </Grid.RowDefinitions>
-                    <GroupBox Grid.Row="0"
-                              Header="Формула"
-                              Style="{DynamicResource GroupBoxStyle}">
-                        <DataGrid
-                            Style="{DynamicResource CleanDataGridStyle}"
-                            ItemsSource="{Binding Path=AdskFormulas, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            SelectedItem="{Binding SelectFormula,RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            CanUserAddRows="False"
-                            CanUserResizeColumns="True"
-                            CanUserReorderColumns="False"
-                            AutoGenerateColumns="False"
-                            ColumnHeaderStyle="{DynamicResource CleanColumnHeaderStyle}"
-                            CellStyle="{DynamicResource CleanCellStyle}"
-                            RowStyle="{DynamicResource CleanRowStyle}">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Имя параметра"
-                                                    Binding="{Binding ParameterName}"
-                                                    Width="2*"
-                                                    CanUserSort="False"
-                                                    IsReadOnly="True" />
-                                <DataGridTextColumn Header="Префикс"
-                                                    Binding="{Binding Prefix}"
-                                                    Width="*"
-                                                    CanUserSort="False" />
-                                <DataGridTextColumn Header="Значение"
-                                                    Binding="{Binding Significance}"
-                                                    Width="2*"
-                                                    IsReadOnly="True"
-                                                    CanUserSort="False" />
-                                <DataGridTextColumn Header="Суффикс"
-                                                    Binding="{Binding Suffix}"
-                                                    Width="*"
-                                                    CanUserSort="False" />
-                            </DataGrid.Columns>
-                        </DataGrid>
+                        </Grid>
                     </GroupBox>
-                    <StackPanel Orientation="Horizontal"
+                    <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Vertical"
                                 DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                Grid.Row="1"
-                                Margin="12 0">
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
                         <Button
-                            Command="{Binding MoveUpFormulaCommand }"
-                            Style="{DynamicResource ButtonArrowUpStyle}">
-                        </Button>
+                            Style="{DynamicResource ButtonArrowRightStyle}"
+                            Height="24"
+                            Width="24"
+                            Command="{Binding AddParameterFormulaCommand}">
 
+                        </Button>
                         <Button
-                            Style="{DynamicResource ButtonArrowDownStyle}"
-                            Command="{Binding MoveDownFormulaCommand}">
+                            Style="{DynamicResource ButtonArrowLeftStyle}"
+                            Command="{Binding RemoveParameterFormulaCommand}">
                         </Button>
                     </StackPanel>
+                    <Grid Grid.Column="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="auto" />
+                        </Grid.RowDefinitions>
+                        <GroupBox
+                            Header="Формула"
+                            Style="{DynamicResource GroupBoxStyle}">
+                            <DataGrid
+                                Style="{DynamicResource CleanDataGridStyle}"
+                                ItemsSource="{Binding Path=AdskFormulas, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                SelectedItem="{Binding SelectFormula,RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CanUserAddRows="False"
+                                CanUserResizeColumns="True"
+                                CanUserReorderColumns="False"
+                                AutoGenerateColumns="False"
+                                ColumnHeaderStyle="{DynamicResource CleanColumnHeaderStyle}"
+                                CellStyle="{DynamicResource CleanCellStyle}"
+                                RowStyle="{DynamicResource CleanRowStyle}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Имя параметра"
+                                                        Binding="{Binding ParameterName}"
+                                                        Width="2*"
+                                                        CanUserSort="False"
+                                                        IsReadOnly="True" />
+                                    <DataGridTextColumn Header="Префикс"
+                                                        Binding="{Binding Prefix}"
+                                                        Width="*"
+                                                        CanUserSort="False" />
+                                    <DataGridTextColumn Header="Значение"
+                                                        Binding="{Binding Significance}"
+                                                        Width="2*"
+                                                        IsReadOnly="True"
+                                                        CanUserSort="False" />
+                                    <DataGridTextColumn Header="Суффикс"
+                                                        Binding="{Binding Suffix}"
+                                                        Width="*"
+                                                        CanUserSort="False" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </GroupBox>
+                        <StackPanel Orientation="Horizontal"
+                                    DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    Grid.Row="1"
+                                    Margin="12 3">
+                            <Button
+                                Command="{Binding MoveUpFormulaCommand }"
+                                Style="{DynamicResource ButtonArrowUpStyle}">
+                            </Button>
+
+                            <Button
+                                Style="{DynamicResource ButtonArrowDownStyle}"
+                                Command="{Binding MoveDownFormulaCommand}">
+                            </Button>
+                        </StackPanel>
+                    </Grid>
                 </Grid>
-                <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Grid.Column="0"
+
+
+                <TextBlock Grid.Row="1"
                            Style="{DynamicResource TextBlock}"
                            DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
-                           Margin="10 0 10 5 ">
+                           Margin="10 3 10 5 ">
                     <Run Text="Пример: " />
                     <Run Text="{Binding NameParameter, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                     <Run Text=" = " />

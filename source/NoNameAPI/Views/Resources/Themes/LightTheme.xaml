@@ -10,7 +10,7 @@
     <Color x:Key="DarkGrayColor">#757575</Color>
     <Color x:Key="WindowBackgroundColor">#F0F0F0</Color>
     <Color x:Key="PlatinumColor">#E8E8E8</Color>
-    
+    <Color x:Key="SilverGray">#8a9597</Color>
     <SolidColorBrush x:Key="ScrollBarThumbBrush" Color="#808080" /> <!-- Цвет ползунка -->
     <SolidColorBrush x:Key="ScrollBarThumbHoverBrush" Color="#777777" /> <!-- Цвет ползунка при наведении -->
     <SolidColorBrush x:Key="ScrollBarThumbPressedBrush" Color="#5e5e5e" /> <!-- Цвет ползунка при перетаскивании -->
@@ -41,6 +41,7 @@
     <SolidColorBrush x:Key="SelectionIndicatorBrush" Color="{StaticResource DodgerBlue}" />
     <SolidColorBrush x:Key="GridSplitterBrush" Color="#808080" /> 
     <SolidColorBrush x:Key="GridSplitterBorderBrush" Color="#777777" />
+    <SolidColorBrush x:Key="SettingsButtonBrush" Color="{StaticResource SilverGray}" />
     <Style x:Key="DeleteButtonStyle" TargetType="Button">
         <Setter Property="Width" Value="28" />
         <Setter Property="Height" Value="28" />
@@ -223,32 +224,7 @@
 
 
    
-    <!-- Стиль для ScrollBar (полосы прокрутки) -->
-    <Style TargetType="ScrollBar">
-        <Setter Property="Width" Value="4" />
-        <Setter Property="Margin" Value="0,2" />
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="ScrollBar">
-                    <Grid Background="{TemplateBinding Background}">
-                        <Track x:Name="PART_Track" IsDirectionReversed="True">
-                            <Track.DecreaseRepeatButton>
-                                <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" />
-                            </Track.DecreaseRepeatButton>
-                            <Track.Thumb>
-                                <Thumb Style="{DynamicResource ScrollBarThumbStyle}" />
-                            </Track.Thumb>
-                            <Track.IncreaseRepeatButton>
-                                <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" />
-                            </Track.IncreaseRepeatButton>
-                        </Track>
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
+   
     <Style x:Key="DeleteXSvgButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="#757575" />

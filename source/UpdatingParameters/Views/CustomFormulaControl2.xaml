@@ -32,25 +32,14 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0"
-                        Orientation="Horizontal"
-                        Margin="3 2">
-                <TextBlock
-                    Style="{DynamicResource TextBlockStyle}"
-                    Margin="10 2 10 0"
-                    Text="{Binding NameParameter, RelativeSource={RelativeSource AncestorType= UserControl}}">
-
-                </TextBlock>
-                <CheckBox
-                    Style="{DynamicResource JellyCheckboxStyle}"
-                    Name="NameCheckBox"
-                    Content="Заполнять"
-                    IsChecked="{Binding IsChecked,RelativeSource={RelativeSource AncestorType= UserControl}}">
-
-                </CheckBox>
-            </StackPanel>
+            <CheckBox
+                Style="{DynamicResource JellyCheckboxStyle}"
+                Name="NameCheckBox"
+                Content="{Binding NameParameter, RelativeSource={RelativeSource AncestorType= UserControl}}"
+                IsChecked="{Binding IsChecked,RelativeSource={RelativeSource AncestorType= UserControl}}">
+            </CheckBox>
             <Grid Grid.Row="1"
-                  Margin="0 2">
+                  Margin="0 5 0 0">
                 <Grid.Visibility>
                     <Binding Path="IsChecked" ElementName="NameCheckBox"
                              Converter="{StaticResource BoolToVisibilityConverter}" />
@@ -67,7 +56,6 @@
                 <GroupBox Grid.Row="0" Header="Список параметров"
                           Grid.Column="0"
                           Style="{DynamicResource GroupBoxStyle}">
-
                     <Grid>
                         <ListBox Grid.Row="0"
                                  Style="{DynamicResource ModernListBoxStyle}"
@@ -114,7 +102,7 @@
                             AutoGenerateColumns="False" ColumnHeaderStyle="{DynamicResource CleanColumnHeaderStyle}"
                             CellStyle="{DynamicResource CleanCellStyle}"
                             RowStyle="{DynamicResource CleanRowStyle}">
-                         
+
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Имя параметра"
                                                     Binding="{Binding ParameterName}"
@@ -159,7 +147,7 @@
                     <StackPanel Orientation="Horizontal"
                                 DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
                                 Grid.Row="1"
-                                Margin="12 0">
+                                Margin="12 3">
                         <Button
                             Style="{DynamicResource ButtonArrowUpStyle}"
                             Command="{Binding MoveUpFormulaCommand }">
@@ -171,12 +159,12 @@
                         </Button>
                     </StackPanel>
                 </Grid>
-                <TextBlock 
+                <TextBlock
                     Style="{DynamicResource TextBlockStyle}"
                     Grid.Row="1" Grid.ColumnSpan="3" Grid.Column="0"
-                           DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
-                           Margin="10 0 10 5 ">
-                  <Run Text="Пример: " />
+                    DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Margin="10 3 10 5 ">
+                    <Run Text="Пример: " />
                     <Run Text="{Binding NameParameter, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                     <Run Text=" = " />
                     <Run
