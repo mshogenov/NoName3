@@ -12,7 +12,7 @@
             <converter:BoolVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
-                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/LightTheme.xaml" />
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
@@ -63,7 +63,8 @@
                                      Style="{DynamicResource SearchTextBoxStyle}">
                             </TextBox>
                             <ListBox
-                                Grid.Row="1" Style="{DynamicResource ModernListBoxStyle}"
+                                Grid.Row="1" 
+                                Style="{DynamicResource ModernListBoxStyle}"
                                 ItemsSource="{Binding ParametersView,RelativeSource={RelativeSource AncestorType=UserControl}}"
                                 SelectedItem="{Binding SelectParameter,RelativeSource={RelativeSource AncestorType=UserControl}}">
                                 <ListBox.ItemTemplate>
@@ -83,8 +84,7 @@
                                 VerticalAlignment="Center">
                         <Button
                             Style="{DynamicResource ButtonArrowRightStyle}"
-                            Height="24"
-                            Width="24"
+                         
                             Command="{Binding AddParameterFormulaCommand}">
 
                         </Button>
@@ -111,7 +111,8 @@
                                 AutoGenerateColumns="False"
                                 ColumnHeaderStyle="{DynamicResource CleanColumnHeaderStyle}"
                                 CellStyle="{DynamicResource CleanCellStyle}"
-                                RowStyle="{DynamicResource CleanRowStyle}">
+                                RowStyle="{DynamicResource CleanRowStyle}"
+                                RowHeaderStyle="{DynamicResource DataGridRowHeaderStyle}">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Имя параметра"
                                                         Binding="{Binding ParameterName}"
@@ -153,7 +154,7 @@
 
 
                 <TextBlock Grid.Row="1"
-                           Style="{DynamicResource TextBlock}"
+                           Style="{DynamicResource TextBlockStyle}"
                            DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
                            Margin="10 3 10 5 ">
                     <Run Text="Пример: " />

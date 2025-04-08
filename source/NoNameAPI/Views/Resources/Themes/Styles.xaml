@@ -12,14 +12,6 @@
     <system:Double x:Key="AppFontSize">13</system:Double>
     <Thickness x:Key="AppMargin">10</Thickness>
     <FontWeight x:Key="AppFontWeight">Normal</FontWeight>
-    <!-- Создание стиля для кнопок с иконкой -->
-    <Style x:Key="ArrowTextBlockStyle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
-        <Setter Property="Foreground" Value="Black" />
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="HorizontalAlignment" Value="Center" />
-    </Style>
-
     <!-- Шаблон для окна -->
     <ControlTemplate x:Key="CustomWindowTemplate" TargetType="{x:Type Window}">
         <Border
@@ -717,28 +709,93 @@
     </Style>
 
     <Style x:Key="BaseArrowButton" TargetType="Button">
-        <Setter Property="Background" Value="White" />
-        <Setter Property="BorderBrush" Value="White" />
-        <Setter Property="Margin" Value="1" />
-        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Foreground" Value="#505A6B" />
+        <Setter Property="Margin" Value="2" />
+        <Setter Property="Padding" Value="8" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Width" Value="24" />
+        <Setter Property="Height" Value="24" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="ButtonBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1.5"
+                            CornerRadius="20"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter x:Name="ContentPresenter"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Focusable="False" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="#F0F2F5" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#E0E6EC" />
+                            <Setter Property="Foreground" Value="#2C3645" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="#E4E9F0" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#D0D7E0" />
+                            <Setter Property="Foreground" Value="#1A2133" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="#F7F8FA" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#EBEEF2" />
+                            <Setter Property="Foreground" Value="#C0C6D0" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
+    <!-- Улучшенный стиль для TextBlock со стрелкой -->
+    <Style x:Key="ArrowTextBlockStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.5" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <Style x:Key="ButtonArrowRightStyle" TargetType="Button" BasedOn="{StaticResource BaseArrowButton}">
         <Setter Property="ContentTemplate">
             <Setter.Value>
                 <DataTemplate>
                     <TextBlock Text="&#xF0AF;"
-                               Style="{StaticResource ArrowTextBlockStyle}" />
+                               Style="{StaticResource ArrowTextBlockStyle}">
+                        <TextBlock.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform ScaleX="1.2" ScaleY="1.2" />
+                            </TransformGroup>
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
                 </DataTemplate>
             </Setter.Value>
         </Setter>
     </Style>
+
 
     <Style x:Key="ButtonArrowLeftStyle" TargetType="Button" BasedOn="{StaticResource BaseArrowButton}">
         <Setter Property="ContentTemplate">
             <Setter.Value>
                 <DataTemplate>
                     <TextBlock Text="&#xF0B0;"
-                               Style="{StaticResource ArrowTextBlockStyle}" />
+                               Style="{StaticResource ArrowTextBlockStyle}">
+                        <TextBlock.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform ScaleX="1.2" ScaleY="1.2" />
+                            </TransformGroup>
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
                 </DataTemplate>
             </Setter.Value>
         </Setter>
@@ -748,7 +805,13 @@
             <Setter.Value>
                 <DataTemplate>
                     <TextBlock Text="&#xF0AD;"
-                               Style="{StaticResource ArrowTextBlockStyle}" />
+                               Style="{StaticResource ArrowTextBlockStyle}">
+                        <TextBlock.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform ScaleX="1.2" ScaleY="1.2" />
+                            </TransformGroup>
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
                 </DataTemplate>
             </Setter.Value>
         </Setter>
@@ -758,7 +821,13 @@
             <Setter.Value>
                 <DataTemplate>
                     <TextBlock Text="&#xF0AE;"
-                               Style="{StaticResource ArrowTextBlockStyle}" />
+                               Style="{StaticResource ArrowTextBlockStyle}">
+                        <TextBlock.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform ScaleX="1.2" ScaleY="1.2" />
+                            </TransformGroup>
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
                 </DataTemplate>
             </Setter.Value>
         </Setter>
@@ -949,9 +1018,10 @@
 
     <Style TargetType="Button" x:Key="CommonButtonStyle">
         <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
         <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
-        <Setter Property="Padding" Value="5,4" />
-        <Setter Property="Background" Value="White" />
+        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
         <Setter Property="Margin" Value="5 1 5 1" />
         <Setter Property="Template">
             <Setter.Value>
@@ -1033,7 +1103,7 @@
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
         <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
-        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
         <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
         <!-- Шаблон для ListBox -->
@@ -1123,6 +1193,7 @@
 
     <!-- Стиль для анимированного чекбокса -->
     <Style x:Key="JellyCheckboxStyle" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="CheckBox">
@@ -1359,8 +1430,7 @@
                                RadiusX="3"
                                RadiusY="3"
                                Width="6"
-                               Opacity="0.6"
-                               />
+                               Opacity="0.6" />
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="ThumbRect" Property="Opacity" Value="1.0" />
@@ -1390,8 +1460,7 @@
                                RadiusX="3"
                                RadiusY="3"
                                Height="6"
-                               Opacity="0.6"
-                               />
+                               Opacity="0.6" />
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="ThumbRect" Property="Opacity" Value="1.0" />
@@ -1460,6 +1529,7 @@
     <Style x:Key="TextBlockStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
     </Style>
 
     <Style x:Key="ShadowSeparator" TargetType="Separator">
@@ -1470,8 +1540,8 @@
         <Setter Property="Height" Value="auto" />
         <Setter Property="Margin" Value="0,0,0,10" />
         <Setter Property="Padding" Value="3" />
-        <Setter Property="Background" Value="White" />
-        <Setter Property="BorderBrush" Value="#E0E0E0" />
+        <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Template">
             <Setter.Value>
@@ -1509,33 +1579,66 @@
         </Setter>
     </Style>
 
-
     <Style x:Key="CleanDataGridStyle" TargetType="DataGrid">
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Background" Value="White" />
-        <Setter Property="BorderBrush" Value="#DEE2E6" />
+        <Setter Property="Background" Value="{DynamicResource ContentBrush }" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="HeadersVisibility" Value="None"/>
         <Setter Property="RowHeight" Value="30" />
         <!-- Включаем отображение всех линий сетки -->
         <Setter Property="GridLinesVisibility" Value="All" />
         <!-- Задаем цвет вертикальных линий -->
-        <Setter Property="VerticalGridLinesBrush" Value="#DEE2E6" />
+        <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource BorderBrush}" />
         <!-- Задаем цвет горизонтальных линий -->
-        <Setter Property="HorizontalGridLinesBrush" Value="#DEE2E6" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="CanUserResizeRows" Value="False" />
-        <Setter Property="FontSize" Value="12" />
-  
+        <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
+    </Style>
+
+    <Style TargetType="{x:Type DataGridColumnHeadersPresenter}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type DataGridColumnHeadersPresenter}">
+                    <Grid>
+                        <!-- Это и есть верхний левый угол -->
+                        <Rectangle x:Name="TopLeftCorner" Fill="{DynamicResource ContentBrush}"
+                                   HorizontalAlignment="Left"
+                                   Width="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGrid}}, Path=RowHeaderWidth}" />
+                        <ItemsPresenter />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="DataGridRowHeaderStyle" TargetType="DataGridRowHeader">
+        <Setter Property="Background" Value="{DynamicResource IsSelectedBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,1,0" />
+        <Setter Property="Width" Value="Auto" />
+        <Setter Property="SeparatorVisibility" Value="Collapsed" />
+        <Setter Property="MinWidth" Value="5" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridRowHeader">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- В стиле заголовка колонки добавляем правую границу -->
     <Style x:Key="CleanColumnHeaderStyle" TargetType="DataGridColumnHeader">
-        <Setter Property="Background" Value="#F8F9FA" />
-        <Setter Property="Foreground" Value="#212529" />
+        <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Height" Value="32" />
-        <Setter Property="Padding" Value="8,0" />
+      <Setter Property="Padding" Value="8,0" />
         <Setter Property="BorderThickness" Value="0,0,1,1" />
-        <Setter Property="BorderBrush" Value="#DEE2E6" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="DataGridColumnHeader">
@@ -1575,6 +1678,7 @@
     <Style x:Key="CleanCellStyle" TargetType="DataGridCell">
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="8,0" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="DataGridCell">
@@ -1589,21 +1693,21 @@
         </Setter>
         <Style.Triggers>
             <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="#E9ECEF" />
-                <Setter Property="Foreground" Value="Black" />
+                <Setter Property="Background" Value="{DynamicResource IsSelectedBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
             </Trigger>
         </Style.Triggers>
     </Style>
 
     <Style x:Key="CleanRowStyle" TargetType="DataGridRow">
-        <Setter Property="Background" Value="White" />
+        <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="#F8F9FA" />
+                <Setter Property="Background" Value="{DynamicResource IsMouseOverBrush}" />
             </Trigger>
             <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="#E9ECEF" />
+                <Setter Property="Background" Value="{DynamicResource IsSelectedBrush}" />
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -1734,5 +1838,53 @@
         <Setter Property="Padding" Value="5" />
     </Style>
 
+    <Style x:Key="StatusBarStyle" TargetType="StatusBar">
+        <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Height" Value="24" />
+        <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
+        <Setter Property="Padding" Value="10,2" />
+        <Setter Property="Margin" Value="0,4,10,5" /> <!-- Отступы для визуального выделения -->
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="StatusBar">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6"
+                            SnapsToDevicePixels="True">
+                        <ItemsPresenter Margin="{TemplateBinding Padding}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Стиль для StatusBarItem в светлой теме -->
+    <Style x:Key="StatusBarItemStyle" TargetType="StatusBarItem">
+        <Setter Property="Padding" Value="8,0" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+
+    </Style>
+
+    <!-- Стиль для разделителя в StatusBar -->
+    <Style x:Key="StatusBarSeparatorStyle" TargetType="Separator">
+        <Setter Property="Background" Value="#E0E0E0" />
+        <Setter Property="Width" Value="1" />
+        <Setter Property="Margin" Value="4,0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Background="{TemplateBinding Background}"
+                            Width="{TemplateBinding Width}"
+                            Height="14"
+                            SnapsToDevicePixels="True" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
 </ResourceDictionary>

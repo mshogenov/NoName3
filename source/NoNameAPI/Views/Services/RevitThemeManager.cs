@@ -12,7 +12,7 @@ public static  class RevitThemeManager
     private static Dictionary<string, ResourceDictionary> _themeCache = new Dictionary<string, ResourceDictionary>();
 
     // Ключи цветовых ресурсов, используемые в конвертерах
-    public static readonly string DefaultButtonBackgroundKey = "DefaultButtonBackground";
+    public static readonly string DefaultButtonBackgroundKey = "DefaultButtonBrush";
     public static readonly string SelectedButtonBackgroundKey = "IsSelectedBrush";
     /// <summary>
     /// Текущая тема
@@ -102,7 +102,7 @@ public static  class RevitThemeManager
             ResourceDictionary fallbackDictionary = new ResourceDictionary();
 
             // Добавляем базовые ресурсы для светлой темы
-            fallbackDictionary[DefaultButtonBackgroundKey] = Brushes.White;
+            fallbackDictionary[DefaultButtonBackgroundKey] = Brushes.Transparent;
             fallbackDictionary[SelectedButtonBackgroundKey] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#d3d3d3"));
 
             _themeCache[themePath] = fallbackDictionary;

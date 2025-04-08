@@ -19,7 +19,7 @@
                 <ResourceDictionary
                     Source="pack://application:,,,/UpdatingParameters;component/Views/Resources/UpdatingParametersWindowResources.xaml " />
                 <ResourceDictionary
-                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/LightTheme.xaml" />
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
@@ -46,11 +46,8 @@
                 <StackPanel
                     VerticalAlignment="Top">
                     <StackPanel.Resources>
-                        <Style TargetType="Button">
-                            <Style.BasedOn>
-                                <StaticResource ResourceKey="CommonButtonStyle" />
-                            </Style.BasedOn>
-                      </Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource CommonButtonStyle}">
+                        </Style>
                     </StackPanel.Resources>
                     <!--            <Button Content="Главная" -->
                     <!--                    Style="{StaticResource CommonButtonStyle}" -->

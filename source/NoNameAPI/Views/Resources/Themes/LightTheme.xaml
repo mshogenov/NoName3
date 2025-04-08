@@ -35,6 +35,7 @@
     <SolidColorBrush x:Key="ItemsControlBrush2" Color="#f2f3f4" />
     <SolidColorBrush x:Key="IsMouseOverBrush" Color="{StaticResource PlatinumColor}" />
     <SolidColorBrush x:Key="IsSelectedBrush" Color="{StaticResource LightGrayColor}" />
+    <SolidColorBrush x:Key="DefaultButtonBrush" Color="Transparent" />
     <SolidColorBrush x:Key="WindowBorderBrush" Color="#BBBBBB" />
     <SolidColorBrush x:Key="IsMouseOverButtonBrush" Color="{StaticResource DarkBlueColor}" />
     <SolidColorBrush x:Key="IsPressedButtonBrush" Color="{StaticResource DeepBlueColor}" />

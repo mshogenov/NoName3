@@ -26,13 +26,14 @@
     <SolidColorBrush x:Key="TextBlockColorBrush" Color="White" />
     <SolidColorBrush x:Key="GroupBoxHeaderBrush" Color="{StaticResource DiamondBlue}" />
     <SolidColorBrush x:Key="GroupBoxContentBrush" Color="White" />
-    <SolidColorBrush x:Key="Border1Brush" Color="{StaticResource OverColor}" />
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource OverColor}" />
     <SolidColorBrush x:Key="SetupButtonBrush" Color="{StaticResource DiamondBlue}" />
     <SolidColorBrush x:Key="SetupButtonBrush2" Color="{StaticResource DarkDiamondBlue}" />
     <SolidColorBrush x:Key="ItemsControlBrush1" Color="#3B4453" />
     <SolidColorBrush x:Key="ItemsControlBrush2" Color="#414958" />
     <SolidColorBrush x:Key="IsMouseOverBrush" Color="{StaticResource OverColor}" />
     <SolidColorBrush x:Key="IsSelectedBrush" Color="{StaticResource SelectedColor}" />
+    <SolidColorBrush x:Key="DefaultButtonBrush" Color="Transparent" />
     <SolidColorBrush x:Key="WindowBorderBrush" Color="{StaticResource OverColor}" />
     <SolidColorBrush x:Key="IsMouseOverButtonBrush" Color="{StaticResource DarkDiamondBlue}" />
     <SolidColorBrush x:Key="IsPressedButtonBrush" Color="{StaticResource DeepDiamondBlue}" />
