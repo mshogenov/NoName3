@@ -8,6 +8,7 @@
     <Color x:Key="ContentColor">#3B4453</Color>
     <Color x:Key="SelectedColor">#333B49</Color>
     <Color x:Key="OverColor">#4E5A6B</Color>
+ <Color x:Key="LightGrayColor">#d3d3d3</Color>
     <Color x:Key="LightSlateGreyColor">#758599</Color>
     <Color x:Key="CadetGreyColor">#929faf</Color>
     <Color x:Key="LightCadetGreyColor">#b0b9c4</Color>
@@ -38,5 +39,7 @@
     <SolidColorBrush x:Key="IsMouseOverButtonBrush" Color="{StaticResource DarkDiamondBlue}" />
     <SolidColorBrush x:Key="IsPressedButtonBrush" Color="{StaticResource DeepDiamondBlue}" />
    <SolidColorBrush x:Key="SelectionIndicatorBrush" Color="{StaticResource DiamondBlue}" />
+    <SolidColorBrush x:Key="CheckboxBorderBrush" Color="{StaticResource LightGrayColor}" />
+    
     
 </ResourceDictionary>

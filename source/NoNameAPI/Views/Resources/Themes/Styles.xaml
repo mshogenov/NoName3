@@ -1207,7 +1207,7 @@
                         <Border x:Name="CheckboxBorder"
                                 Width="24" Height="24"
                                 BorderThickness="1"
-                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderBrush="{DynamicResource CheckboxBorderBrush}"
                                 Background="Transparent"
                                 CornerRadius="3"
                                 VerticalAlignment="Center"

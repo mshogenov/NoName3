@@ -45,7 +45,7 @@
                              Converter="{StaticResource BoolToVisibilityConverter}" />
                 </Grid.Visibility>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="5*" />
+                    <ColumnDefinition Width="6*" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="10*" />
                 </Grid.ColumnDefinitions>

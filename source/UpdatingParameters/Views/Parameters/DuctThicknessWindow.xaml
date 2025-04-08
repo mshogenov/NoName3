@@ -14,7 +14,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
-                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/LightTheme.xaml" />
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
@@ -29,9 +29,11 @@
         </Grid.RowDefinitions>
 
         <!-- Панель инструментов -->
-        <Border Style="{DynamicResource BorderFolding}">
-            <ToolBar Margin="5" Background="Transparent" BorderThickness="0">
-                <ToolBar.Resources>
+        <Border
+            Style="{DynamicResource BorderContentStyle}"
+            CornerRadius="0">
+            <StackPanel Margin="5" Background="Transparent" Orientation="Horizontal" >
+                <StackPanel.Resources>
                     <Style TargetType="Button">
                         <Setter Property="Margin" Value="3" />
                         <Setter Property="Padding" Value="8,5" />
@@ -64,7 +66,7 @@
                     <Style TargetType="Separator">
                         <Setter Property="Margin" Value="5,0" />
                     </Style>
-                </ToolBar.Resources>
+                </StackPanel.Resources>
 
                 <!-- Кнопка Добавить -->
                 <Button Command="{Binding AddCommand}">
@@ -144,51 +146,47 @@
                         <ToolTip>Сохранить данные</ToolTip>
                     </Button.ToolTip>
                 </Button>
-            </ToolBar>
+            </StackPanel>
         </Border>
 
         <!-- Таблица данных -->
-        <Border Grid.Row="1"
-                Margin="5"
-                Background="White"
-                BorderBrush="#DDDDDD"
-                BorderThickness="1"
-                CornerRadius="4">
-            <DataGrid ItemsSource="{Binding DuctParameters}"
-                      SelectedItem="{Binding SelectedParameter}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      HeadersVisibility="Column"
-                      Style="{DynamicResource CleanDataGridStyle}"
-                      ColumnHeaderStyle="{DynamicResource CleanColumnHeaderStyle}"
-                      CellStyle="{DynamicResource CleanCellStyle}"
-                      RowStyle="{DynamicResource CleanRowStyle}">
+        <DataGrid 
+            Margin="0 5 0 0"
+            Grid.Row="1" 
+            ItemsSource="{Binding DuctParameters}"
+                  SelectedItem="{Binding SelectedParameter}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  HeadersVisibility="Column"
+                  Style="{DynamicResource CleanDataGridStyle}"
+                  ColumnHeaderStyle="{DynamicResource CleanColumnHeaderStyle}"
+                  CellStyle="{DynamicResource CleanCellStyle}"
+                  RowStyle="{DynamicResource CleanRowStyle}">
              
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Материал"
-                                        Binding="{Binding Material}"
-                                        Width="*" />
-                    <DataGridTextColumn Header="Сечение"
-                                        Binding="{Binding Shape}"
-                                        Width="*" />
-                    <DataGridTextColumn Header="Внешняя изоляция"
-                                        Binding="{Binding ExternalInsulation}"
-                                        Width="*" />
-                    <DataGridTextColumn Header="Внутренняя изоляция"
-                                        Binding="{Binding InternalInsulation}"
-                                        Width="*" />
-                    <DataGridTextColumn Width="*" Binding="{Binding Size}">
-                        <DataGridTextColumn.Header>
-                            <TextBlock Text="Размер большей&#x0a;стороны (включительно)"
-                                       TextWrapping="Wrap"
-                                       TextAlignment="Center" />
-                        </DataGridTextColumn.Header>
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="Толщина стенки"
-                                        Binding="{Binding Thickness}"
-                                        Width="*" />
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Материал"
+                                    Binding="{Binding Material}"
+                                    Width="*" />
+                <DataGridTextColumn Header="Сечение"
+                                    Binding="{Binding Shape}"
+                                    Width="*" />
+                <DataGridTextColumn Header="Внешняя изоляция"
+                                    Binding="{Binding ExternalInsulation}"
+                                    Width="*" />
+                <DataGridTextColumn Header="Внутренняя изоляция"
+                                    Binding="{Binding InternalInsulation}"
+                                    Width="*" />
+                <DataGridTextColumn Width="*" Binding="{Binding Size}">
+                    <DataGridTextColumn.Header>
+                        <TextBlock Text="Размер большей&#x0a;стороны (включительно)"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Center" />
+                    </DataGridTextColumn.Header>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Толщина стенки"
+                                    Binding="{Binding Thickness}"
+                                    Width="*" />
+            </DataGrid.Columns>
+        </DataGrid>
     </Grid>
 </views:BaseRevitWindow>
