@@ -18,8 +18,7 @@ public class CopyAnnotationsCommand : ExternalCommand
 
         try
         {
-            
-            IList<Reference> selectedTagRefs = uidoc.Selection.PickObjects(ObjectType.Element,
+            IList<Reference> selectedTagRefs = uidoc.Selection.PickObjects(ObjectType.Element, 
                 new TagSelectionFilter(), "Выберите марки для копирования");
 
             if (selectedTagRefs.Count == 0)
@@ -27,16 +26,29 @@ public class CopyAnnotationsCommand : ExternalCommand
                 return;
             }
 
-           
-            XYZ sourceBasePoint = uidoc.Selection.PickPoint("Укажите базовую точку копирования");
-
-          
-            XYZ targetBasePoint = uidoc.Selection.PickPoint("Укажите точку назначения для копирования марок");
-            // Сохраняем выбранные марки и их данные
+            Reference sourceElementRef = uidoc.Selection.PickObject(ObjectType.Element, 
+                "Выберите исходный опорный элемент");
+            Element sourceElement = doc.GetElement(sourceElementRef);
+            XYZ sourceBasePoint = GetElementPosition(sourceElement);
+            if (sourceBasePoint == null)
+            {
+                TaskDialog.Show("Ошибка", "Не удалось определить положение исходного элемента.");
+                return ;
+            }
+            
+            Reference targetElementRef = uidoc.Selection.PickObject(ObjectType.Element, 
+                "Выберите целевой опорный элемент");
+            Element targetElement = doc.GetElement(targetElementRef);
+            XYZ targetBasePoint = GetElementPosition(targetElement);
+            if (targetBasePoint == null)
+            {
+                TaskDialog.Show("Ошибка", "Не удалось определить положение целевого элемента.");
+                return ;
+            }
+            // Вычисляем вектор перемещения между опорными элементами
+            XYZ translationVector = targetBasePoint - sourceBasePoint;
             // Сохраняем выбранные марки и их данные
             List<TagData> tagsData = new List<TagData>();
-
-
             foreach (Reference tagRef in selectedTagRefs)
             {
                 IndependentTag tag = doc.GetElement(tagRef) as IndependentTag;
@@ -44,52 +56,62 @@ public class CopyAnnotationsCommand : ExternalCommand
                 {
                     // Получаем элемент, к которому привязана марка
                     Element taggedElement = null;
-                    ElementId taggedElementId = null;
                     Reference taggedElementRef = null;
 
-                    // Для Revit 2023 и выше
-                    ICollection<LinkElementId> taggedElementIds = tag.GetTaggedElementIds();
-                    if (taggedElementIds != null && taggedElementIds.Count > 0)
+                    // Для совместимости с разными версиями Revit
+                    try
                     {
-                        taggedElementId = taggedElementIds.First().HostElementId;
-                        taggedElement = doc.GetElement(taggedElementId);
-
-                        if (taggedElement != null)
+                        // Для Revit 2023 и выше
+                        ICollection<LinkElementId> taggedElementIds = tag.GetTaggedElementIds();
+                        if (taggedElementIds != null && taggedElementIds.Count > 0)
                         {
-                            taggedElementRef = new Reference(taggedElement);
+                            taggedElement = doc.GetElement(taggedElementIds.First().HostElementId);
+                            if (taggedElement != null)
+                            {
+                                taggedElementRef = new Reference(taggedElement);
+                            }
                         }
                     }
-
+                    catch
+                    {
+                        // Для более старых версий Revit
+                       
+                    }
                     // Сохраняем категорию элемента, к которому привязана марка
-                    ElementId categoryId = (taggedElement != null) ? taggedElement.Category.Id : null;
+                    ElementId categoryId = (taggedElement != null && taggedElement.Category != null) 
+                        ? taggedElement.Category.Id 
+                        : null;
 
                     // Сохраняем относительное положение от базовой точки
                     XYZ relativePosition = tag.TagHeadPosition - sourceBasePoint;
-
-                    // Получаем данные о выноске
-                    XYZ leaderVector = null;
 
 
                     if (tag.HasLeader && taggedElementRef != null)
                     {
                         try
                         {
-                            // Получаем конец выноски
+                            // Получаем конец выноски и локоть выноски
                             XYZ leaderEnd = tag.GetLeaderEnd(taggedElementRef);
-                            // Сохраняем и относительную позицию конца выноски от базовой точки
-                            XYZ relativeLeaderEnd = leaderEnd - sourceBasePoint;
+                            XYZ leaderElbow = tag.GetLeaderElbow(taggedElementRef);
 
+                            // Сохраняем относительные позиции от базовой точки
+                            XYZ relativeLeaderEnd = leaderEnd - sourceBasePoint;
+                            XYZ relativeLeaderElbow = leaderElbow - sourceBasePoint;
+                            LeaderEndCondition leaderEndCondition = tag.LeaderEndCondition;
                             // И вектор направления выноски относительно позиции марки (для сохранения угла)
-                            leaderVector = leaderEnd - tag.TagHeadPosition;
+                            XYZ leaderVector = leaderEnd - tag.TagHeadPosition;
+
                             TagData tagData = new TagData
                             {
                                 TagType = tag.GetTypeId(),
                                 TaggedElementCategory = categoryId,
                                 RelativePosition = relativePosition,
                                 RelativeLeaderEnd = relativeLeaderEnd, // Относительно базовой точки
+                                RelativeLeaderElbow = relativeLeaderElbow, // Относительно базовой точки
                                 LeaderVector = leaderVector, // Относительно марки 
                                 Orientation = tag.TagOrientation,
-                                Leader = tag.HasLeader
+                                Leader = tag.HasLeader,
+                                LeaderEndCondition = leaderEndCondition
                             };
 
                             tagsData.Add(tagData);
@@ -108,7 +130,7 @@ public class CopyAnnotationsCommand : ExternalCommand
                             TaggedElementCategory = categoryId,
                             RelativePosition = relativePosition,
                             Orientation = tag.TagOrientation,
-                            Leader = false
+                            Leader = tag.HasLeader
                         };
 
                         tagsData.Add(tagData);
@@ -148,39 +170,56 @@ public class CopyAnnotationsCommand : ExternalCommand
                         if (nearestElement != null)
                         {
                             // Создаем новую марку для найденного элемента
-                            IndependentTag newTag = null;
-
-                            // Для Revit 2023+
                             Reference elementRef = new Reference(nearestElement);
-                            newTag = IndependentTag.Create(
+                            
+
+                           
+                         
+                            IndependentTag newTag = IndependentTag.Create(
                                 doc,
-                                tagData.TagType, // symId - ElementId типа марки
-                                doc.ActiveView.Id, // ownerDBViewId - ElementId текущего вида
-                                elementRef, // referenceToTag - ссылка на элемент для маркировки
-                                tagData.Leader, // addLeader - нужна ли выноска
-                                tagData.Orientation, // tagOrientation - ориентация марки
-                                newPosition // pnt - позиция марки
+                                tagData.TagType,     // Тип марки
+                                doc.ActiveView.Id,   // ID текущего вида
+                                elementRef,          // Ссылка на элемент для маркировки
+                                tagData.Leader,      // Нужна ли выноска
+                                tagData.Orientation, // Ориентация марки
+                                newPosition          // Позиция марки
                             );
+
 
                             // Настраиваем положение лидера, если он есть
                             if (newTag != null && tagData.Leader)
                             {
-                                // В Revit 2023+ метод SetLeaderEnd требует ссылку на элемент и точку конца
-                                if (tagData.LeaderVector != null)
+                                try
                                 {
-                                    try
+                                    // Устанавливаем тип условия конца лидера
+                                    if (tagData.LeaderEndCondition != null)
                                     {
-                                        // Вычисляем точку конца выноски, сохраняя тот же вектор
-                                        // направления выноски, что был у оригинальной марки
-                                        XYZ leaderEndPoint = newTag.TagHeadPosition + tagData.LeaderVector;
+                                        newTag.LeaderEndCondition = tagData.LeaderEndCondition;
+                                    }
 
-                                        // Устанавливаем конечную точку лидера
+                                    // Вычисляем новые координаты конца выноски относительно целевой точки
+                                    if (tagData.RelativeLeaderEnd != null)
+                                    {
+                                        XYZ newLeaderEnd = targetBasePoint + tagData.RelativeLeaderEnd;
+                                        newTag.SetLeaderEnd(elementRef, newLeaderEnd);
+                                    }
+                                    else if (tagData.LeaderVector != null)
+                                    {
+                                        // Альтернативный способ: используя вектор направления
+                                        XYZ leaderEndPoint = newTag.TagHeadPosition + tagData.LeaderVector;
                                         newTag.SetLeaderEnd(elementRef, leaderEndPoint);
                                     }
-                                    catch (Exception)
+
+                                    // Устанавливаем локоть лидера относительно целевой точки
+                                    if (tagData.RelativeLeaderElbow != null)
                                     {
-                                        // Игнорируем ошибки при настройке лидера
+                                        XYZ newLeaderElbow = targetBasePoint + tagData.RelativeLeaderElbow;
+                                        newTag.SetLeaderElbow(elementRef, newLeaderElbow);
                                     }
+                                }
+                                catch (Exception ex)
+                                {
+                                    // Игнорируем ошибки при настройке лидера
                                 }
                             }
                         }
