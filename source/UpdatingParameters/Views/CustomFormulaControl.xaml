@@ -106,7 +106,7 @@
                                 ItemsSource="{Binding Path=AdskFormulas, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                 SelectedItem="{Binding SelectFormula,RelativeSource={RelativeSource AncestorType=UserControl}}"
                                 CanUserAddRows="False"
-                                CanUserResizeColumns="True"
+                               CanUserResizeColumns="True"
                                 CanUserReorderColumns="False"
                                 AutoGenerateColumns="False"
                                 ColumnHeaderStyle="{DynamicResource CleanColumnHeaderStyle}"
@@ -151,8 +151,6 @@
                         </StackPanel>
                     </Grid>
                 </Grid>
-
-
                 <TextBlock Grid.Row="1"
                            Style="{DynamicResource TextBlockStyle}"
                            DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"

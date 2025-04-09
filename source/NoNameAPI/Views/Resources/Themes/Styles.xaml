@@ -711,7 +711,7 @@
     <Style x:Key="BaseArrowButton" TargetType="Button">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="Foreground" Value="#505A6B" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
         <Setter Property="Margin" Value="2" />
         <Setter Property="Padding" Value="8" />
         <Setter Property="Cursor" Value="Hand" />
@@ -734,20 +734,13 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="#F0F2F5" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource IsMouseOverBrush}" />
                             <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#E0E6EC" />
-                            <Setter Property="Foreground" Value="#2C3645" />
-                        </Trigger>
+                           </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="#E4E9F0" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource IsSelectedBrush}" />
                             <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#D0D7E0" />
-                            <Setter Property="Foreground" Value="#1A2133" />
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="#F7F8FA" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#EBEEF2" />
-                            <Setter Property="Foreground" Value="#C0C6D0" />
-                        </Trigger>
+                           </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -756,7 +749,7 @@
     <!-- Улучшенный стиль для TextBlock со стрелкой -->
     <Style x:Key="ArrowTextBlockStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
-        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="Normal" />
         <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
         <Style.Triggers>
@@ -871,7 +864,7 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="&#xEA98;"
                                FontFamily="Segoe MDL2 Assets"
-                               Foreground="{DynamicResource BlueBrush}"
+                               Foreground="{DynamicResource SetupButtonBrush}"
                                FontSize="22"
                                VerticalAlignment="Center" />
 
@@ -926,6 +919,7 @@
             </Setter.Value>
         </Setter>
     </Style>
+    
     <Style x:Key="SettingsButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
@@ -996,6 +990,7 @@
             </Setter.Value>
         </Setter>
     </Style>
+    
     <Style x:Key="SettingsButton" TargetType="Button"
            BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="Background" Value="White" />
@@ -1580,12 +1575,12 @@
     </Style>
 
     <Style x:Key="CleanDataGridStyle" TargetType="DataGrid">
+        <Setter Property="HeadersVisibility" Value="Column"/> 
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Background" Value="{DynamicResource ContentBrush }" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="HeadersVisibility" Value="None"/>
-        <Setter Property="RowHeight" Value="30" />
+       <Setter Property="RowHeight" Value="30" />
         <!-- Включаем отображение всех линий сетки -->
         <Setter Property="GridLinesVisibility" Value="All" />
         <!-- Задаем цвет вертикальных линий -->
@@ -1636,7 +1631,7 @@
         <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Height" Value="32" />
-      <Setter Property="Padding" Value="8,0" />
+        <Setter Property="Padding" Value="8,0" />
         <Setter Property="BorderThickness" Value="0,0,1,1" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="Template">
