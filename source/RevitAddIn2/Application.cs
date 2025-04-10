@@ -1,11 +1,19 @@
 ﻿using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
 using Nice3point.Revit.Toolkit.External;
+using RevitAddIn2.Commands.CreatingSchematicsCommands;
+using RevitAddIn2.Commands.CreatingSpecificationsCommands;
+using RevitAddIn2.Commands.Others;
+using RevitAddIn2.Commands.SystemModelingCommands;
+using RevitAddIn2.Services;
 using UpdatingParameters.Services;
 
-namespace RevitAddIn
-{
-    [UsedImplicitly]
+namespace RevitAddIn2;
+
+/// <summary>
+///     Application entry point
+/// </summary>
+ [UsedImplicitly]
     public class Application : ExternalApplication
     {
         public static List<ElementId> SelectionHistory { get; } = [];
@@ -41,7 +49,6 @@ namespace RevitAddIn
             }
         }
 
-
         private void CreateRibbon()
         {
             var panelSystemModeling = Application.CreatePanel("Моделирование", "Фигня");
@@ -52,55 +59,54 @@ namespace RevitAddIn
             #region Bloom
 
             var bloomCommandButton = panelSystemModeling.AddPushButton<BloomCommand>("Вставить трубу")
-                .SetImage("/RevitAddIn;component/Resources/Icons/Bloom16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/Bloom32.png");
+                .SetImage("/RevitAddIn2;component/Resources/Icons/Bloom16.ico")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Bloom32.png");
             ((PushButton)bloomCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
 
             #endregion
 
             #region Tap
-
             var tapCommandButton = panelSystemModeling.AddPushButton<TapCommand>("Врезать")
-                .SetImage("/RevitAddIn;component/Resources/Icons/Tap16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/Tap32.ico");
+                .SetImage("/RevitAddIn2;component/Resources/Icons/Tap16.ico")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Tap32.ico");
             ((PushButton)tapCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
 
             #endregion
 
             #region Elbow
 
-            SplitButtonData splitButtonDataElbow = new("sds", "sdsa");
+            SplitButtonData splitButtonDataElbow = new("splitButtonDataElbow", "Отводы");
             SplitButton? splitButtonElbow = panelSystemModeling.AddItem(splitButtonDataElbow) as SplitButton;
 
             if (splitButtonElbow != null)
             {
                 var elbowDownCommandButton = splitButtonElbow.AddPushButton<ElbowDownCommand>("Поворот вниз")
-                    .SetImage("/RevitAddIn;component/Resources/Icons/ElbowDown16.ico")
-                    .SetLargeImage("/RevitAddIn;component/Resources/Icons/ElbowDown32.png");
+                    .SetImage("/RevitAddIn2;component/Resources/Icons/ElbowDown16.ico")
+                    .SetLargeImage("/RevitAddIn2;component/Resources/Icons/ElbowDown32.png");
                 ((PushButton)elbowDownCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
             }
 
             if (splitButtonElbow != null)
             {
                 var elbowUpCommandButton = splitButtonElbow.AddPushButton<ElbowUpCommand>("Поворот вверх")
-                    .SetImage("/RevitAddIn;component/Resources/Icons/ElbowUp16.ico")
-                    .SetLargeImage("/RevitAddIn;component/Resources/Icons/ElbowUp32.png");
+                    .SetImage("/RevitAddIn2;component/Resources/Icons/ElbowUp16.ico")
+                    .SetLargeImage("/RevitAddIn2;component/Resources/Icons/ElbowUp32.png");
                 ((PushButton)elbowUpCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
             }
 
             if (splitButtonElbow != null)
             {
                 var elbowLeftCommandButton = splitButtonElbow.AddPushButton<ElbowLeftCommand>("Поворот влево")
-                    .SetImage("/RevitAddIn;component/Resources/Icons/ElbowLeft16.ico")
-                    .SetLargeImage("/RevitAddIn;component/Resources/Icons/ElbowLeft32.png");
+                    .SetImage("/RevitAddIn2;component/Resources/Icons/ElbowLeft16.ico")
+                    .SetLargeImage("/RevitAddIn2;component/Resources/Icons/ElbowLeft32.png");
                 ((PushButton)elbowLeftCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
             }
 
             if (splitButtonElbow != null)
             {
                 var elbowRightCommandButton = splitButtonElbow.AddPushButton<ElbowRightCommand>("Поворот вправо")
-                    .SetImage("/RevitAddIn;component/Resources/Icons/ElbowRight16.ico")
-                    .SetLargeImage("/RevitAddIn;component/Resources/Icons/ElbowRight32.png");
+                    .SetImage("/RevitAddIn2;component/Resources/Icons/ElbowRight16.ico")
+                    .SetLargeImage("/RevitAddIn2;component/Resources/Icons/ElbowRight32.png");
                 ((PushButton)elbowRightCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
             }
 
@@ -108,8 +114,8 @@ namespace RevitAddIn
             {
                 var elbowDownFortyFiveCommandButton = splitButtonElbow
                     .AddPushButton<ElbowDownFortyFiveCommand>("Поворот вниз на 45°")
-                    .SetImage("/RevitAddIn;component/Resources/Icons/ElbowDown45 16.ico")
-                    .SetLargeImage("/RevitAddIn;component/Resources/Icons/ElbowDown45 32.png");
+                    .SetImage("/RevitAddIn2;component/Resources/Icons/ElbowDown45 16.ico")
+                    .SetLargeImage("/RevitAddIn2;component/Resources/Icons/ElbowDown45 32.png");
                 ((PushButton)elbowDownFortyFiveCommandButton).AvailabilityClassName =
                     typeof(CommandAvailability).FullName;
             }
@@ -118,8 +124,8 @@ namespace RevitAddIn
             {
                 var elbowUpFortyFiveCommandButton = splitButtonElbow
                     .AddPushButton<ElbowUpFortyFiveCommand>("Поворот вверх на 45°")
-                    .SetImage("/RevitAddIn;component/Resources/Icons/elbowUp45-16.ico")
-                    .SetLargeImage("/RevitAddIn;component/Resources/Icons/elbowUp45-32.ico");
+                    .SetImage("/RevitAddIn2;component/Resources/Icons/elbowUp45-16.ico")
+                    .SetLargeImage("/RevitAddIn2;component/Resources/Icons/elbowUp45-32.ico");
                 ((PushButton)elbowUpFortyFiveCommandButton).AvailabilityClassName =
                     typeof(CommandAvailability).FullName;
             }
@@ -130,8 +136,8 @@ namespace RevitAddIn
 
             var threeDeeBranchAlignLiteCommandButton = panelSystemModeling
                 .AddPushButton<ThreeDeeBranchAlignLiteCommand>("Выровнить оси")
-                .SetImage("/RevitAddIn;component/Resources/Icons/BranchAlignLite16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/BranchAlignLite32.png");
+                .SetImage("/RevitAddIn2;component/Resources/Icons/BranchAlignLite16.ico")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/BranchAlignLite32.png");
             ((PushButton)threeDeeBranchAlignLiteCommandButton).AvailabilityClassName =
                 typeof(CommandAvailability).FullName;
 
@@ -140,8 +146,8 @@ namespace RevitAddIn
             #region Connect
 
             var moveConnectAlignCommandButton = panelSystemModeling.AddPushButton<MoveConnectAlignCommand>("Соединить")
-                .SetImage("/RevitAddIn;component/Resources/Icons/MoveConnectAlign16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/MoveConnectAlign32.png");
+                .SetImage("/RevitAddIn2;component/Resources/Icons/MoveConnectAlign16.ico")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/MoveConnectAlign32.png");
             ((PushButton)moveConnectAlignCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
 
             #endregion
@@ -150,8 +156,8 @@ namespace RevitAddIn
 
             var mepElementsCopyCommandButton = panelSystemModeling
                 .AddPushButton<MepElementsCopyCommand>("Копировать\nэлементы")
-                .SetImage("/RevitAddIn;component/Resources/Icons/dublikat_16.png")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/dublikat_32.png");
+                .SetImage("/RevitAddIn2;component/Resources/Icons/dublikat_16.png")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/dublikat_32.png");
             ((PushButton)mepElementsCopyCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
 
             #endregion
@@ -160,30 +166,30 @@ namespace RevitAddIn
             #region LastAllocation
 
             panelSystemModeling.AddPushButton<LastAllocationCommand>("Последнее\nвыделенное")
-                .SetImage("/RevitAddIn;component/Resources/Icons/Последнее выделенное 16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/Последнее выделенное 32.ico");
+                .SetImage("/RevitAddIn2;component/Resources/Icons/Последнее выделенное 16.ico")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Последнее выделенное 32.ico");
 
             #endregion
 
             #region RoomsInSpaces
 
             panelSystemModeling.AddPushButton<RoomsInSpacesCommand>("Помещения в\nпространства")
-                .SetImage("/RevitAddIn;component/Resources/Icons/Помещения в пространства 16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/Помещения в пространства 32.ico");
+                .SetImage("/RevitAddIn2;component/Resources/Icons/Помещения в пространства 16.ico")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Помещения в пространства 32.ico");
 
             #endregion
 
             #region ViewSystems
 
-            SplitButtonData splitButtonDataViewSystems = new("dgfg", "sуццц");
+            SplitButtonData splitButtonDataViewSystems = new("splitButtonDataViewSystems", "ViewSystems");
             SplitButton? splitButtonViewSystems =
                 panelSystemCreatingSchematics.AddItem(splitButtonDataViewSystems) as SplitButton;
             if (splitButtonViewSystems != null)
             {
                 var viewOfPipeSystemsCommandButton = splitButtonViewSystems
                     .AddPushButton<ViewOfPipeSystemsCommand>("Создать\nвиды систем")
-                    .SetImage("/RevitAddIn;component/Resources/Icons/Pipe systems 16.png")
-                    .SetLargeImage("/RevitAddIn;component/Resources/Icons/Pipe systems 32.png");
+                    .SetImage("/RevitAddIn2;component/Resources/Icons/Pipe systems 16.png")
+                    .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Pipe systems 32.png");
                 ((PushButton)viewOfPipeSystemsCommandButton).AvailabilityClassName =
                     typeof(CommandAvailability).FullName;
             }
@@ -191,8 +197,8 @@ namespace RevitAddIn
             if (splitButtonViewSystems != null)
             {
                 var updateViewsCommandButton = splitButtonViewSystems.AddPushButton<UpdateViewsCommand>("Обновить виды")
-                    .SetImage("/RevitAddIn;component/Resources/Icons/Обновить виды_16.png")
-                    .SetLargeImage("/RevitAddIn;component/Resources/Icons/Обновить виды_32.png");
+                    .SetImage("/RevitAddIn2;component/Resources/Icons/Обновить виды 16.ico")
+                    .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Обновить виды 32.ico");
                 ((PushButton)updateViewsCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
             }
 
@@ -202,8 +208,8 @@ namespace RevitAddIn
 
             // var designationOfRisersCommandButton = panelSystemCreatingSchematics
             //     .AddPushButton<DesignationOfRisersCommand>("Обозначение\nстояков")
-            //     .SetImage("/RevitAddIn;component/Resources/Icons/Обозначение стояка_16.ico")
-            //     .SetLargeImage("/RevitAddIn;component/Resources/Icons/Обозначение стояка_32.ico");
+            //     .SetImage("/RevitAddIn2;component/Resources/Icons/Обозначение стояка_16.ico")
+            //     .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Обозначение стояка_32.ico");
 
             #endregion
 
@@ -211,56 +217,56 @@ namespace RevitAddIn
 
             var makeBreakCommandButton = panelSystemCreatingSchematics
                 .AddPushButton<MakeBreakCommand>("Сделать разрыв")
-                .SetImage("/RevitAddIn;component/Resources/Icons/Разрыв-16.png")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/Разрыв-16.png");
+                .SetImage("/RevitAddIn2;component/Resources/Icons/Разрыв-16.png")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Разрыв-16.png");
 
             #endregion
 
             #region NumberingOfRisers
 
             panelSystemCreatingSchematics.AddPushButton<NumberingOfRisersCommand>("Нумерация\nстояков")
-                .SetImage("/RevitAddIn;component/Resources/Icons/Нумерация стояков 16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/Нумерация стояков 32.ico");
+                .SetImage("/RevitAddIn2;component/Resources/Icons/Нумерация стояков 16.ico")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Нумерация стояков 32.ico");
 
             #endregion
 
             #region UpdatingParameters
 
             panelFormationOfSpecification.AddPushButton<UpdatingParametersCommand>("Обновить\nпараметры")
-                .SetImage("/RevitAddIn;component/Resources/Icons/update 16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/update 32.ico");
+                .SetImage("/RevitAddIn2;component/Resources/Icons/update 16.ico")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/update 32.ico");
 
             #endregion
 
             #region PositionNumberingCommand
 
             panelFormationOfSpecification.AddPushButton<PositionNumberingCommand>("Нумерация\nпо позиции")
-                .SetImage("/RevitAddIn;component/Resources/Icons/Нумерация по позиции 16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/Нумерация по позиции 32.ico");
+                .SetImage("/RevitAddIn2;component/Resources/Icons/Нумерация по позиции 16.ico")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Нумерация по позиции 32.ico");
 
             #endregion
 
             #region Marking
 
             panelSystemCreatingSchematics.AddPushButton<MarkingCommand>("Поставить\nотметки высоты")
-                .SetImage("/RevitAddIn;component/Resources/Icons/Отметка высоты 16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/Отметка высоты 32.ico");
+                .SetImage("/RevitAddIn2;component/Resources/Icons/Отметка высоты 16.ico")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Отметка высоты 32.ico");
 
             #endregion
 
             #region ElementsTypicalFloor
 
             panelFormationOfSpecification.AddPushButton<ElementsTypicalFloorCommand>("Элементы\nтипового этажа")
-                .SetImage("/RevitAddIn;component/Resources/Icons/Элементы типового этажа 16.ico")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/Элементы типового этажа 32.ico");
+                .SetImage("/RevitAddIn2;component/Resources/Icons/Элементы типового этажа 16.ico")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Элементы типового этажа 32.ico");
 
             #endregion
 
             #region SetNearestLevelBelow
 
-            panelOther.AddPushButton<SetNearestLevelBelowCommand>("Установить ближайший\nуровень")
-                .SetImage("/RevitAddIn;component/Resources/Icons/uroven_mauxlwi8s01i_16.png")
-                .SetLargeImage("/RevitAddIn;component/Resources/Icons/uroven_mauxlwi8s01i_32.png");
+            panelOther.AddPushButton<SetNearestLevelBelowCommand>("Установить\nближайший уровень")
+                .SetImage("/RevitAddIn2;component/Resources/Icons/uroven_mauxlwi8s01i_16.png")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/uroven_mauxlwi8s01i_32.png");
 
             #endregion
         }
@@ -286,4 +292,3 @@ namespace RevitAddIn
             UpdaterRegistry.AddTrigger(updaterId, orFilter, Element.GetChangeTypeElementAddition());
         }
     }
-}

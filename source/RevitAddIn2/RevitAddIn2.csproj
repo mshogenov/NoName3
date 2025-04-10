@@ -1,0 +1,129 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <UseWPF>true</UseWPF>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <PlatformTarget>x64</PlatformTarget>
+        <ImplicitUsings>true</ImplicitUsings>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+        <Configurations>Debug R21;Debug R22;Debug R23;Debug R24;Debug R25;Debug R26</Configurations>
+        <Configurations>$(Configurations);Release R24;Release R25;Release R26</Configurations>
+    </PropertyGroup>
+
+    <!-- Revit configuration -->
+   
+    <PropertyGroup Condition="$(Configuration.Contains('R24'))">
+        <RevitVersion>2024</RevitVersion>
+        <TargetFramework>net48</TargetFramework>
+    </PropertyGroup>
+    <PropertyGroup Condition="$(Configuration.Contains('R25'))">
+        <RevitVersion>2025</RevitVersion>
+        <TargetFramework>net8.0-windows</TargetFramework>
+    </PropertyGroup>
+    <PropertyGroup Condition="$(Configuration.Contains('R26'))">
+        <RevitVersion>2026</RevitVersion>
+        <TargetFramework>net8.0-windows</TargetFramework>
+    </PropertyGroup>
+
+    <!-- Launch configuration -->
+    <PropertyGroup>
+        <StartAction>Program</StartAction>
+        <StartProgram>C:\Program Files\Autodesk\Revit $(RevitVersion)\Revit.exe</StartProgram>
+        <StartArguments>/language RUS</StartArguments>
+    </PropertyGroup>
+
+    <!-- Build configuration -->
+    <!-- https://github.com/Nice3point/Revit.Build.Tasks -->
+    <PropertyGroup>
+        <IsRepackable>false</IsRepackable>
+        <DeployRevitAddin>true</DeployRevitAddin>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Revit References -->
+        <PackageReference Include="Nice3point.Revit.Build.Tasks" Version="3.0.1"/>
+        <PackageReference Include="Nice3point.Revit.Toolkit" Version="$(RevitVersion).*"/>
+        <PackageReference Include="Nice3point.Revit.Extensions" Version="$(RevitVersion).*"/>
+        <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="$(RevitVersion).*"/>
+        <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="$(RevitVersion).*"/>
+
+        <!-- MVVM -->
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Resource Include="Resources\Icons\AlignIn3D16.ico" />
+      <Resource Include="Resources\Icons\AlignIn3D32.png" />
+      <Resource Include="Resources\Icons\Bloom16.ico" />
+      <Resource Include="Resources\Icons\Bloom32.png" />
+      <Resource Include="Resources\Icons\BranchAlign16.ico" />
+      <Resource Include="Resources\Icons\BranchAlign32.png" />
+      <Resource Include="Resources\Icons\BranchAlignLite16.ico" />
+      <Resource Include="Resources\Icons\BranchAlignLite32.png" />
+      <Resource Include="Resources\Icons\dublikat_16.png" />
+      <Resource Include="Resources\Icons\dublikat_32.png" />
+      <Resource Include="Resources\Icons\ElbowDown16.ico" />
+      <Resource Include="Resources\Icons\ElbowDown32.png" />
+      <Resource Include="Resources\Icons\ElbowDown45 16.ico" />
+      <Resource Include="Resources\Icons\ElbowDown45 32.png" />
+      <Resource Include="Resources\Icons\ElbowLeft16.ico" />
+      <Resource Include="Resources\Icons\ElbowLeft32.png" />
+      <Resource Include="Resources\Icons\ElbowRight16.ico" />
+      <Resource Include="Resources\Icons\ElbowRight32.png" />
+      <Resource Include="Resources\Icons\ElbowUp16.ico" />
+      <Resource Include="Resources\Icons\ElbowUp32.png" />
+      <Resource Include="Resources\Icons\elbowUp45-16.ico" />
+      <Resource Include="Resources\Icons\elbowUp45-32.ico" />
+      <Resource Include="Resources\Icons\MoveConnect16.ico" />
+      <Resource Include="Resources\Icons\MoveConnect32.png" />
+      <Resource Include="Resources\Icons\MoveConnectAlign16.ico" />
+      <Resource Include="Resources\Icons\MoveConnectAlign32.png" />
+      <Resource Include="Resources\Icons\Pipe systems 16.png" />
+      <Resource Include="Resources\Icons\Pipe systems 32.png" />
+      <Resource Include="Resources\Icons\Tap16.ico" />
+      <Resource Include="Resources\Icons\Tap32.ico" />
+      <Resource Include="Resources\Icons\update 16.ico" />
+      <Resource Include="Resources\Icons\update 32.ico" />
+      <Resource Include="Resources\Icons\uroven_mauxlwi8s01i_16.png" />
+      <Resource Include="Resources\Icons\uroven_mauxlwi8s01i_32.png" />
+      <Resource Include="Resources\Icons\Выравнить стояки_16.png" />
+      <Resource Include="Resources\Icons\Выравнить стояки_32.png" />
+      <Resource Include="Resources\Icons\Нумерация по позиции 16.ico" />
+      <Resource Include="Resources\Icons\Нумерация по позиции 32.ico" />
+      <Resource Include="Resources\Icons\Нумерация стояков 16.ico" />
+      <Resource Include="Resources\Icons\Нумерация стояков 32.ico" />
+      <Resource Include="Resources\Icons\Обозначение стояка_16.ico" />
+      <Resource Include="Resources\Icons\Обозначение стояка_32.ico" />
+      <Resource Include="Resources\Icons\Отметка высоты 16.ico" />
+      <Resource Include="Resources\Icons\Отметка высоты 32.ico" />
+      <Resource Include="Resources\Icons\Помещения в пространства 16.ico" />
+      <Resource Include="Resources\Icons\Помещения в пространства 32.ico" />
+      <Resource Include="Resources\Icons\Последнее выделенное 16.ico" />
+      <Resource Include="Resources\Icons\Последнее выделенное 32.ico" />
+      <Resource Include="Resources\Icons\Разрыв-16.png" />
+      <Resource Include="Resources\Icons\Разрыв-32.png" />
+      <Resource Include="Resources\Icons\Элементы типового этажа 16.ico" />
+      <Resource Include="Resources\Icons\Элементы типового этажа 32.ico" />
+      <None Remove="Resources\Icons\Обновить виды 32.ico" />
+      <Resource Include="Resources\Icons\Обновить виды 32.ico" />
+      <None Remove="Resources\Icons\Обновить виды 16.ico" />
+      <Resource Include="Resources\Icons\Обновить виды 16.ico" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\DesignationOfRisers\DesignationOfRisers.csproj" />
+      <ProjectReference Include="..\ElementsTypicalFloor\ElementsTypicalFloor.csproj" />
+      <ProjectReference Include="..\MakeBreak\MakeBreak.csproj" />
+      <ProjectReference Include="..\Marking\Marking.csproj" />
+      <ProjectReference Include="..\MepElementsCopy\MepElementsCopy.csproj" />
+      <ProjectReference Include="..\NumberingOfRisers\NumberingOfRisers.csproj" />
+      <ProjectReference Include="..\PositionNumbering\PositionNumbering.csproj" />
+      <ProjectReference Include="..\RoomsInSpace\RoomsInSpaces.csproj" />
+      <ProjectReference Include="..\SetNearestLevelBelow\SetNearestLevelBelow.csproj" />
+      <ProjectReference Include="..\SystemModelingComands\SystemModelingCommands.csproj" />
+      <ProjectReference Include="..\UpdatingParameters\UpdatingParameters.csproj" />
+      <ProjectReference Include="..\ViewOfPipeSystems\ViewOfPipeSystems.csproj" />
+    </ItemGroup>
+
+</Project>
