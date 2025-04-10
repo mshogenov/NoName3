@@ -333,6 +333,7 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
 
     private void UpdateSignificance(Formula formula)
     {
+        if (formula == null) return;
         Parameter parameter = _element.FindParameter(formula.ParameterName);
         formula.Significance = formula.MeasurementUnit switch
         {
@@ -474,7 +475,7 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
             {
                 tr.RollBack();
                 TaskDialog.Show("Ошибка", "Нет труб для обновления.");
-              UpdaterParametersService.ReturnWindowState(view);
+                UpdaterParametersService.ReturnWindowState(view);
                 return;
             }
 
@@ -506,11 +507,10 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
         {
             tr.RollBack();
             TaskDialog.Show("Ошибка", ex.Message);
-          UpdaterParametersService.ReturnWindowState(view);
+            UpdaterParametersService.ReturnWindowState(view);
         }
     }
 
-    
 
     [RelayCommand]
     private void SaveSettings()
