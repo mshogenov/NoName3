@@ -43,7 +43,7 @@
 
     <ItemGroup>
       <Compile Update="Utils\Helpers.cs">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       </Compile>
     </ItemGroup>
 

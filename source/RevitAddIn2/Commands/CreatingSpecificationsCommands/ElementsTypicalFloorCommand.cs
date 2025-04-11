@@ -1,15 +1,15 @@
 ﻿using Autodesk.Revit.Attributes;
-using ElementsTypicalFloor.Services;
 using ElementsTypicalFloor.ViewModels;
 using ElementsTypicalFloor.Views;
+
 using Nice3point.Revit.Toolkit.External;
+using NoNameApi.Services;
 
-
-namespace ElementsTypicalFloor.Commands;
+namespace RevitAddIn2.Commands.CreatingSpecificationsCommands;
 
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
-public class ElementsTypicalFloor : ExternalCommand
+public class ElementsTypicalFloorCommand : ExternalCommand
 {
     public override void Execute()
     {
