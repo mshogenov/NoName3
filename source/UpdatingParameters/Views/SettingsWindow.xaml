@@ -27,14 +27,14 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
-        <CheckBox x:Name="UpdaterCheckBox"
+        <CheckBox x:Name="UpdaterCheckBox" Margin="0 5 0 0"
                   Style="{DynamicResource JellyCheckboxStyle}"
                   Content="Обновление параметров"
-                  Margin="5 5 0 0" IsChecked="{Binding UpdaterIsChecked}">
+                   IsChecked="{Binding UpdaterIsChecked}">
       </CheckBox>
 
         <GroupBox Grid.Row="1" Header="Категории"
-                  Margin="5 5 10 5"
+                  Margin="0 5 "
                   Style="{DynamicResource GroupBoxStyle}"
                   Visibility="{Binding Path=IsChecked, ElementName=UpdaterCheckBox, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Grid>
@@ -132,7 +132,7 @@
         </GroupBox>
 
         <DockPanel Grid.Row="2" HorizontalAlignment="Right"
-                   Margin="0,5,10,5"   >
+                   Margin="0,5"   >
             <Button Content="Восстановить настройки по умолчанию"
                     Command="{Binding ResetSettingsCommand}"
                    Style="{DynamicResource CommonButtonStyle2}">

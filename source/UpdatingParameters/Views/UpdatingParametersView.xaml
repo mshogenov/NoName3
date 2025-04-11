@@ -42,12 +42,10 @@
                 Style="{DynamicResource ScrollViewerStyle}"
                 VerticalScrollBarVisibility="Auto"
                 HorizontalScrollBarVisibility="Disabled">
-
                 <StackPanel
                     VerticalAlignment="Top">
                     <StackPanel.Resources>
-                        <Style TargetType="Button" BasedOn="{StaticResource CommonButtonStyle}">
-                        </Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource CommonButtonStyle}" />
                     </StackPanel.Resources>
                     <!--            <Button Content="Главная" -->
                     <!--                    Style="{StaticResource CommonButtonStyle}" -->
@@ -57,13 +55,11 @@
                     <!--                    Command="{Binding MainCommand}" -->
                     <!--                    Visibility="{Binding Path=MainIsVisible, Converter={StaticResource BoolVisibilityConverter}}" /> -->
                     <Button Content="Трубы:Без типа"
-
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.PipesWithout}}"
                             Command="{Binding PipesWithoutCommand}"
                             Visibility="{Binding Path=PipesWithoutButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
-
                     </Button>
 
                     <Button Content="Трубы:Днар х Стенка"
@@ -72,7 +68,6 @@
                         ConverterParameter={x:Static model:ButtonType.PipesOuterDiameter}}"
                             Command="{Binding PipesOuterDiameterCommand}"
                             Visibility="{Binding Path=PipesOuterDiameterButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
-
                     </Button>
 
                     <Button Content="Трубы:Ду х Стенка"
@@ -81,7 +76,6 @@
                         ConverterParameter={x:Static model:ButtonType.PipesInternalDiameter}}"
                             Command="{Binding PipesInternalDiameterCommand}"
                             Visibility="{Binding Path=PipesInternalDiameterButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
-
                     </Button>
                     <Button Content="Гибкие трубы: Без типа"
                             Background="{Binding SelectedButton, 
@@ -229,7 +223,7 @@
                 </StackPanel>
             </ScrollViewer>
         </Border>
-        <Grid Grid.Column="2">
+        <Grid Grid.Column="2" Margin="5 5">
             <ContentControl Content="{Binding SelectedContent}" />
         </Grid>
     </Grid>

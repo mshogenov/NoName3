@@ -21,7 +21,7 @@
     <Border
         Style="{DynamicResource BorderFolding}"
         MaxHeight="350"
-       VerticalAlignment="Top"
+        VerticalAlignment="Top"
         Tag="{Binding ElementName=NameCheckBox}">
         <Grid>
             <Grid.RowDefinitions>
@@ -31,12 +31,11 @@
             <CheckBox
                 Style="{DynamicResource JellyCheckboxStyle}"
                 Name="NameCheckBox"
-               Content="{Binding NameParameter, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                Content="{Binding NameParameter, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
                 IsChecked="{Binding IsChecked,RelativeSource={RelativeSource AncestorType= UserControl}}">
             </CheckBox>
 
             <Grid Grid.Row="1"
-                  Margin="0 5 0 0"
                   Visibility="{Binding Path=IsChecked, ElementName=NameCheckBox, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
@@ -49,7 +48,7 @@
                         <ColumnDefinition Width="10*" />
                     </Grid.ColumnDefinitions>
                     <GroupBox
-                    Header="Список параметров"
+                        Header="Список параметров"
                         Grid.Column="0"
                         Style="{DynamicResource GroupBoxStyle}">
                         <Grid>
@@ -63,7 +62,7 @@
                                      Style="{DynamicResource SearchTextBoxStyle}">
                             </TextBox>
                             <ListBox
-                                Grid.Row="1" 
+                                Grid.Row="1"
                                 Style="{DynamicResource ModernListBoxStyle}"
                                 ItemsSource="{Binding ParametersView,RelativeSource={RelativeSource AncestorType=UserControl}}"
                                 SelectedItem="{Binding SelectParameter,RelativeSource={RelativeSource AncestorType=UserControl}}">
@@ -84,7 +83,7 @@
                                 VerticalAlignment="Center">
                         <Button
                             Style="{DynamicResource ButtonArrowRightStyle}"
-                         
+
                             Command="{Binding AddParameterFormulaCommand}">
 
                         </Button>
@@ -106,7 +105,7 @@
                                 ItemsSource="{Binding Path=AdskFormulas, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                 SelectedItem="{Binding SelectFormula,RelativeSource={RelativeSource AncestorType=UserControl}}"
                                 CanUserAddRows="False"
-                               CanUserResizeColumns="True"
+                                CanUserResizeColumns="True"
                                 CanUserReorderColumns="False"
                                 AutoGenerateColumns="False"
                                 ColumnHeaderStyle="{DynamicResource CleanColumnHeaderStyle}"

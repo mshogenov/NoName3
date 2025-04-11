@@ -29,8 +29,8 @@
         <!-- Основной контент -->
         <Border 
             Style="{DynamicResource BorderFolding}"
-            Margin="5 5 10 5">
-            <Grid Margin="15">
+           >
+            <Grid Margin="5">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />

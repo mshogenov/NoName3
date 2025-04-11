@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using NoNameApi.Views.Services;
@@ -26,6 +27,15 @@ public class ButtonSelectedConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        // Проверяем, что value - это Brush
+        var brush = value as Brush;
+        if (brush == null)
+            return DependencyProperty.UnsetValue;
+
+        // Сравниваем с кистью выбранной кнопки
+        if (brush.Equals(RevitThemeManager.GetBrush(RevitThemeManager.SelectedButtonBackgroundKey)))
+            return parameter;
+        else
+            return DependencyProperty.UnsetValue;
     }
 }

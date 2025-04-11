@@ -19,17 +19,15 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
-    <Grid 
-        Style="{DynamicResource Grid}"
-        >
+    <Grid
+        Style="{DynamicResource Grid}">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ScrollViewer Style="{DynamicResource CustomScrollViewerStyle}"
-                     >
+        <ScrollViewer Style="{DynamicResource CustomScrollViewerStyle}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="AUTO" />
@@ -49,8 +47,7 @@
                                             SelectFormula="{Binding SelectFormulaName}"
                                             MoveUpFormulaCommand="{Binding MoveUpToNameFormulaCommand}"
                                             MoveDownFormulaCommand="{Binding MoveDownToNameFormulaCommand}"
-                                            CombinedValues="{Binding CombinedNameValues}"
-                                            Margin="0 5" />
+                                            CombinedValues="{Binding CombinedNameValues}" />
                 <local:CustomFormulaControl Grid.Row="1"
                                             NameParameter="ADSK_Примечание"
                                             AdskFormulas="{Binding AdskNoteFormulas}"
@@ -63,7 +60,7 @@
                                             SelectFormula="{Binding SelectFormulaNote}"
                                             MoveUpFormulaCommand="{Binding MoveUpToNoteFormulaCommand}"
                                             MoveDownFormulaCommand="{Binding MoveDownToNoteFormulaCommand}"
-                                            Margin="0 5"
+                                            Margin="0 10 "
                                             CombinedValues="{Binding CombinedNoteValues}" />
                 <local:CustomFormulaControl2 Grid.Row="2"
                                              NameParameter="ADSK_Количество"
@@ -76,7 +73,6 @@
                                              SelectFormula="{Binding SelectFormulaQuantity}"
                                              MoveUpFormulaCommand="{Binding MoveUpToQuantityFormulaCommand}"
                                              MoveDownFormulaCommand="{Binding MoveDownToQuantityFormulaCommand}"
-                                             Margin="0 5"
                                              CombinedValues="{Binding CombinedQuantityValues}" />
             </Grid>
         </ScrollViewer>

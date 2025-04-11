@@ -37,79 +37,73 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Общие стили -->
-        <Grid.Resources>
-
-            <Style TargetType="TextBox">
-                <Setter Property="Padding" Value="8,6" />
-                <Setter Property="Height" Value="32" />
-                <Setter Property="VerticalContentAlignment" Value="Center" />
-                <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="Background" Value="#FFFFFF" />
-                <Setter Property="Margin" Value="0,5" />
-                <Style.Triggers>
-                    <Trigger Property="Validation.HasError" Value="True">
-                        <Setter Property="ToolTip"
-                                Value="{Binding RelativeSource={RelativeSource Self}, 
-                            Path=(Validation.Errors)[0].ErrorContent}" />
-                        <Setter Property="BorderBrush" Value="#E74C3C" />
-                    </Trigger>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="BorderBrush" Value="#3498DB" />
-                    </Trigger>
-                    <Trigger Property="IsFocused" Value="True">
-                        <Setter Property="BorderBrush" Value="#2980B9" />
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
-
-        </Grid.Resources>
 
         <!-- Поля ввода -->
         <TextBlock
+            VerticalAlignment="Center"
             Style="{DynamicResource TextBlockStyle}"
             Text="Материал:"
             Grid.Row="0" />
         <TextBox Grid.Row="0"
+                
+                 Style="{DynamicResource ModernTextBoxStyle}"
+                 Tag="Обязательное поле"
                  Grid.Column="1"
                  Text="{Binding Material, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
 
         <TextBlock Text="Сечение:"
+                   VerticalAlignment="Center"
                    Grid.Row="1"
                    Grid.Column="0"
                    Style="{DynamicResource TextBlockStyle}" />
         <TextBox Grid.Row="1" Grid.Column="1"
+                 Margin="0 5 0 5"
+                 Tag="Обязательное поле"
+                 Style="{DynamicResource ModernTextBoxStyle}"
                  Text="{Binding Shape, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
 
         <TextBlock
+            VerticalAlignment="Center"
             Text="Внешняя изоляция:"
             Grid.Row="2"
             Grid.Column="0"
             Style="{DynamicResource TextBlockStyle}" />
         <TextBox Grid.Row="2" Grid.Column="1"
+                 Style="{DynamicResource ModernTextBoxStyle}"
                  Text="{Binding ExternalInsulation}" />
 
         <TextBlock
+            VerticalAlignment="Center"
             Text="Внутренняя изоляция:"
             Grid.Row="3"
             Grid.Column="0"
             Style="{DynamicResource TextBlockStyle}" />
         <TextBox Grid.Row="3" Grid.Column="1"
-                 Text="{Binding InternalInsulation}" />
+                 Style="{DynamicResource ModernTextBoxStyle}"
+                 Text="{Binding InternalInsulation}" 
+                 Margin="0 5 0 5"/>
 
         <TextBlock Text="Размер:"
+                   VerticalAlignment="Center"
                    Grid.Row="4"
                    Grid.Column="0"
                    Style="{DynamicResource TextBlockStyle}" />
         <TextBox Grid.Row="4" Grid.Column="1"
+                 Tag="Обязательное поле"
+                 Style="{DynamicResource ModernTextBoxStyle}"
                  Text="{Binding Size, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
 
         <TextBlock
             Text="Толщина стенки:"
+            VerticalAlignment="Center"
             Grid.Row="5"
             Grid.Column="0"
             Style="{DynamicResource TextBlockStyle}" />
-        <TextBox Grid.Row="5" Grid.Column="1"
+        <TextBox Grid.Row="5" 
+                 Grid.Column="1"
+                 Tag="Обязательное поле"
+                 Margin="0 5 0 5"
+                 Style="{DynamicResource ModernTextBoxStyle}"
                  Text="{Binding Thickness, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
 
         <!-- Кнопки -->

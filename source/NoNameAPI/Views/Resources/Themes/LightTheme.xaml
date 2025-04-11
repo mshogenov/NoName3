@@ -2,7 +2,6 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:system="clr-namespace:System;assembly=mscorlib">
 
-   
     <Color x:Key="DodgerBlue">#1e90ff</Color>
     <Color x:Key="DarkBlueColor">#1976D2</Color>
     <Color x:Key="DeepBlueColor">#0A58CA</Color>
@@ -43,6 +42,7 @@
     <SolidColorBrush x:Key="GridSplitterBrush" Color="#808080" /> 
     <SolidColorBrush x:Key="GridSplitterBorderBrush" Color="#777777" />
     <SolidColorBrush x:Key="SettingsButtonBrush" Color="{StaticResource SilverGray}" />
+    <SolidColorBrush x:Key="SelectButtonForegroundBrush" Color="{StaticResource DodgerBlue}" />
     <Style x:Key="DeleteButtonStyle" TargetType="Button">
         <Setter Property="Width" Value="28" />
         <Setter Property="Height" Value="28" />

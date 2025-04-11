@@ -734,13 +734,15 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource IsMouseOverBrush}" />
+                            <Setter TargetName="ButtonBorder" Property="Background"
+                                    Value="{DynamicResource IsMouseOverBrush}" />
                             <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#E0E6EC" />
-                           </Trigger>
+                        </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource IsSelectedBrush}" />
+                            <Setter TargetName="ButtonBorder" Property="Background"
+                                    Value="{DynamicResource IsSelectedBrush}" />
                             <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#D0D7E0" />
-                           </Trigger>
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -849,11 +851,12 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#E8E8E8" TargetName="border" />
-                            <Setter Property="BorderBrush" Value="#CCCCCC" TargetName="border" />
+                            <Setter Property="Background" Value="{DynamicResource IsMouseOverBrush}"
+                                    TargetName="border" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" TargetName="border" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="#D5D5D5" TargetName="border" />
+                            <Setter Property="Background" Value="{DynamicResource IsSelectedBrush}" TargetName="border" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -864,7 +867,7 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="&#xEA98;"
                                FontFamily="Segoe MDL2 Assets"
-                               Foreground="{DynamicResource SetupButtonBrush}"
+                               Foreground="{DynamicResource SelectButtonForegroundBrush}"
                                FontSize="22"
                                VerticalAlignment="Center" />
 
@@ -896,11 +899,12 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#E8E8E8" TargetName="border" />
-                            <Setter Property="BorderBrush" Value="#CCCCCC" TargetName="border" />
+                            <Setter Property="Background" Value="{DynamicResource IsMouseOverBrush}"
+                                    TargetName="border" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" TargetName="border" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="#D5D5D5" TargetName="border" />
+                            <Setter Property="Background" Value="{DynamicResource IsSelectedBrush}" TargetName="border" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -911,7 +915,7 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="&#xE8E6;"
                                FontFamily="Segoe MDL2 Assets"
-                               Foreground="{DynamicResource BlueBrush}"
+                               Foreground="{DynamicResource SelectButtonForegroundBrush}"
                                FontSize="22"
                                VerticalAlignment="Center" />
 
@@ -919,7 +923,7 @@
             </Setter.Value>
         </Setter>
     </Style>
-    
+
     <Style x:Key="SettingsButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
@@ -990,7 +994,7 @@
             </Setter.Value>
         </Setter>
     </Style>
-    
+
     <Style x:Key="SettingsButton" TargetType="Button"
            BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="Background" Value="White" />
@@ -1575,12 +1579,12 @@
     </Style>
 
     <Style x:Key="CleanDataGridStyle" TargetType="DataGrid">
-        <Setter Property="HeadersVisibility" Value="Column"/> 
+        <Setter Property="HeadersVisibility" Value="Column" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Background" Value="{DynamicResource ContentBrush }" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-       <Setter Property="RowHeight" Value="30" />
+        <Setter Property="RowHeight" Value="30" />
         <!-- Включаем отображение всех линий сетки -->
         <Setter Property="GridLinesVisibility" Value="All" />
         <!-- Задаем цвет вертикальных линий -->
@@ -1589,6 +1593,12 @@
         <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="CanUserResizeRows" Value="False" />
         <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
+
+        <Style.Resources>
+            <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource CustomScrollBarStyle}" />
+        </Style.Resources>
     </Style>
 
     <Style TargetType="{x:Type DataGridColumnHeadersPresenter}">
@@ -1881,5 +1891,90 @@
             </Setter.Value>
         </Setter>
     </Style>
+<Style x:Key="ModernTextBoxStyle" TargetType="{x:Type TextBox}">
+    <Setter Property="FontFamily" Value="Segoe UI"/>
+    <Setter Property="FontSize" Value="14"/>
+    <Setter Property="Foreground" Value="#333333"/>
+    <Setter Property="Background" Value="#FFFFFF"/>
+    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+    <Setter Property="BorderBrush" Value="#CCCCCC"/>
+    <Setter Property="Padding" Value="2"/>
+    <Setter Property="Height" Value="36"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="CaretBrush" Value="#2196F3"/>
+    <Setter Property="SelectionBrush" Value="#B3E5FC"/>
+    <Setter Property="Template">
+        <Setter.Value>
+            <ControlTemplate TargetType="{x:Type TextBox}">
+                <Grid>
+                    <Border x:Name="border" 
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="2"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                         Focusable="False" 
+                                         HorizontalScrollBarVisibility="Hidden" 
+                                         VerticalScrollBarVisibility="Hidden"
+                                         Margin="{TemplateBinding Padding}"/>
+                            <TextBlock x:Name="Placeholder"
+                                      Text="{TemplateBinding Tag}" 
+                                      Foreground="#AAAAAA"
+                                      Visibility="Collapsed"
+                                      IsHitTestVisible="False"
+                                      Margin="{TemplateBinding Padding}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        </Grid>
+                    </Border>
+                    <Border x:Name="FocusBorder"
+                           BorderThickness="0,0,0,2"
+                           BorderBrush="#2196F3"
+                           Opacity="0"
+                           CornerRadius="2"
+                           SnapsToDevicePixels="True"/>
+                </Grid>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Opacity" TargetName="border" Value="0.56"/>
+                        <Setter Property="Foreground" Value="#999999"/>
+                    </Trigger>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="BorderBrush" TargetName="border" Value="#AAAAAA"/>
+                    </Trigger>
+                    <Trigger Property="IsFocused" Value="True">
+                        <Trigger.EnterActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="FocusBorder" 
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1" Duration="0:0:0.2"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.EnterActions>
+                        <Trigger.ExitActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="FocusBorder" 
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0" Duration="0:0:0.2"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.ExitActions>
+                    </Trigger>
 
+                    <!-- Показываем плейсхолдер, когда текст пуст и контрол не в фокусе -->
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="Text" Value=""/>
+                            <Condition Property="IsFocused" Value="False"/>
+                        </MultiTrigger.Conditions>
+                        <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
+                    </MultiTrigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </Setter.Value>
+    </Setter>
+</Style>
 </ResourceDictionary>

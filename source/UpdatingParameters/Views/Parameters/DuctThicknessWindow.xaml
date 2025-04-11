@@ -29,10 +29,10 @@
         </Grid.RowDefinitions>
 
         <!-- Панель инструментов -->
-        <Border
-            Style="{DynamicResource BorderContentStyle}"
-            CornerRadius="0">
-            <StackPanel Margin="5" Background="Transparent" Orientation="Horizontal" >
+        <Border Margin="5"
+                Style="{DynamicResource BorderContentStyle}"
+                CornerRadius="5">
+            <StackPanel Margin="5" Background="Transparent" Orientation="Horizontal">
                 <StackPanel.Resources>
                     <Style TargetType="Button">
                         <Setter Property="Margin" Value="3" />
@@ -150,19 +150,18 @@
         </Border>
 
         <!-- Таблица данных -->
-        <DataGrid 
-            Margin="0 5 0 0"
-            Grid.Row="1" 
+        <DataGrid
+            Margin="5"
+            Grid.Row="1"
             ItemsSource="{Binding DuctParameters}"
-                  SelectedItem="{Binding SelectedParameter}"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  HeadersVisibility="Column"
-                  Style="{DynamicResource CleanDataGridStyle}"
-                  ColumnHeaderStyle="{DynamicResource CleanColumnHeaderStyle}"
-                  CellStyle="{DynamicResource CleanCellStyle}"
-                  RowStyle="{DynamicResource CleanRowStyle}">
-             
+            SelectedItem="{Binding SelectedParameter}"
+            AutoGenerateColumns="False"
+            IsReadOnly="True"
+            Style="{DynamicResource CleanDataGridStyle}"
+            ColumnHeaderStyle="{DynamicResource CleanColumnHeaderStyle}"
+            CellStyle="{DynamicResource CleanCellStyle}"
+            RowStyle="{DynamicResource CleanRowStyle}">
+
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Материал"
                                     Binding="{Binding Material}"
