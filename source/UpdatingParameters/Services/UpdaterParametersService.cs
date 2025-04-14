@@ -318,6 +318,7 @@ public static class UpdaterParametersService
 
     public static void CopyParameter(Document doc, Element element, string getParamName, string setParamName)
     {
+        if (getParamName == null || setParamName == null) return;
         try
         {
             Parameter getParam = element.FindParameter(getParamName);
@@ -810,6 +811,7 @@ public static class UpdaterParametersService
             hermeticСlass?.Set(formattedValue);
         }
     }
+
     public static void ReturnWindowState(Window window)
     {
         if (window == null || window.WindowState == WindowState.Minimized) return;
