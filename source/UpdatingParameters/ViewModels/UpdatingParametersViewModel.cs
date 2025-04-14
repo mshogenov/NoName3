@@ -603,6 +603,10 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
                 tr.RollBack();
                 throw;
             }
+            finally
+            {
+                _actionEventHandler.Cancel();
+            }
         });
     }
 

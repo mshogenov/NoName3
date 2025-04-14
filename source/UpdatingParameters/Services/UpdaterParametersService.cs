@@ -318,7 +318,7 @@ public static class UpdaterParametersService
 
     public static void CopyParameter(Document doc, Element element, string getParamName, string setParamName)
     {
-        if (getParamName == null || setParamName == null) return;
+        if (getParamName == null || setParamName == null || element==null) return;
         try
         {
             Parameter getParam = element.FindParameter(getParamName);
