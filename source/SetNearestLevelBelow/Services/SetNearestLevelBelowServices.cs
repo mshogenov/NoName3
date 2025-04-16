@@ -140,7 +140,7 @@ public class SetNearestLevelBelowServices
 
         foreach (Level level in sortedLevels)
         {
-            if (level.Elevation >= elementZ)
+            if (level.Elevation <= elementZ)
             {
                 nearestLevelBelow = level;
             }
