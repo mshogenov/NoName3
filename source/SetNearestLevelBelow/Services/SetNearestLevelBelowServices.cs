@@ -125,6 +125,20 @@ public class SetNearestLevelBelowServices
                 .ToElements());
         }
 
+        // Исключаем вложенные семейства
+        mepElements = mepElements.Where(e => 
+        {
+            // Если элемент - это экземпляр семейства
+            if (e is FamilyInstance familyInstance)
+            {
+                // Убедимся, что у него нет хозяина, если он имеет хост, это вложенное семейство
+                return familyInstance.Host == null;
+            }
+
+            // Если элемент не экземпляр семейства, оставить его
+            return true; 
+        }).ToList();
+
         return mepElements;
     }
 
