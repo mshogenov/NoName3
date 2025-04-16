@@ -10,6 +10,7 @@
     mc:Ignorable="d"
     Width="500"
     SizeToContent="Height"
+    MaxHeight="800"
     WindowStartupLocation="Manual"
     Left="400"
     Top="100"
