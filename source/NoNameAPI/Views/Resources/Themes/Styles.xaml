@@ -17,7 +17,7 @@
         <Border
             BorderBrush="{DynamicResource WindowBorderBrush}"
             BorderThickness="1"
-            Background="{TemplateBinding Background}">
+          Background="{TemplateBinding Background}">
             <Grid Margin="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -1538,7 +1538,10 @@
     <Style x:Key="SearchTextBoxStyle" TargetType="TextBox">
         <Setter Property="Height" Value="auto" />
         <Setter Property="Margin" Value="0,0,0,10" />
+        <Setter Property="FontSize" Value="{StaticResource AppFontSize}"/>
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
         <Setter Property="Padding" Value="3" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush }"/>
         <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
@@ -1559,6 +1562,8 @@
                         </Border>
                         <TextBlock x:Name="Watermark"
                                    Text="Поиск"
+                                   FontSize="{StaticResource AppFontSize}"
+                                   FontFamily="{StaticResource AppFontFamily}"
                                    VerticalAlignment="Center"
                                    HorizontalAlignment="Left"
                                    Margin="5,0,5,0"
@@ -1570,7 +1575,7 @@
                             <Setter TargetName="Watermark" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsKeyboardFocused" Value="True">
-                            <Setter TargetName="Border" Property="BorderBrush" Value="LightSkyBlue" />
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -1977,4 +1982,30 @@
         </Setter.Value>
     </Setter>
 </Style>
+    <!-- Стиль для ProgressBar -->
+    <Style x:Key="ModernProgressBar" TargetType="ProgressBar">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Border BorderBrush="#E0E0E0"
+                            BorderThickness="1"
+                            CornerRadius="5"
+                            Background="#FFFFFF">
+                        <Grid x:Name="PART_Track">
+                            <Rectangle x:Name="PART_Indicator"
+                                       HorizontalAlignment="Left"
+                                       Fill="#2196F3">
+                                <Rectangle.Effect>
+                                    <DropShadowEffect ShadowDepth="0"
+                                                      BlurRadius="4"
+                                                      Color="#2196F3"
+                                                      Opacity="0.3" />
+                                </Rectangle.Effect>
+                            </Rectangle>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

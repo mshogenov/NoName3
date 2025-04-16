@@ -262,7 +262,7 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
                 trans.Start();
                 if (count > 50)
                 {
-                    using var progressBar = new ProgressWindow(selectLevels.Count);
+                    var progressBar = new ProgressWindow(selectLevels.Count);
                     progressBar.Show();
                     for (int i = 0; i < selectLevels.Count; i++)
                     {

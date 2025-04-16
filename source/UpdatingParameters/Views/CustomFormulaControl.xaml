@@ -10,12 +10,12 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <converter:BoolVisibilityConverter x:Key="BoolToVisibilityConverter" />
-            <ResourceDictionary.MergedDictionaries>
+            <d:ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
-            </ResourceDictionary.MergedDictionaries>
+            </d:ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
     <Border
@@ -48,6 +48,7 @@
                         <ColumnDefinition Width="10*" />
                     </Grid.ColumnDefinitions>
                     <GroupBox
+                        Margin="0 5"
                         Header="Список параметров"
                         Grid.Column="0"
                         Style="{DynamicResource GroupBoxStyle}">
@@ -58,14 +59,14 @@
                             </Grid.RowDefinitions>
 
                             <TextBox Grid.Row="0"
-                                     Text="{Binding SearchParametersView, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Text="{Binding SearchParametersView, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{DynamicResource SearchTextBoxStyle}">
                             </TextBox>
                             <ListBox
                                 Grid.Row="1"
                                 Style="{DynamicResource ModernListBoxStyle}"
-                                ItemsSource="{Binding ParametersView,RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                SelectedItem="{Binding SelectParameter,RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                ItemsSource="{Binding ParametersView, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                SelectedItem="{Binding SelectParameter, RelativeSource={RelativeSource AncestorType=UserControl}}">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <TextBlock

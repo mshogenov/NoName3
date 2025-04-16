@@ -18,11 +18,13 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
                     Source="pack://application:,,,/UpdatingParameters;component/Views/Resources/UpdatingParametersWindowResources.xaml " />
+            </ResourceDictionary.MergedDictionaries>
+            <d:ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
-            </ResourceDictionary.MergedDictionaries>
+            </d:ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </views:BaseRevitWindow.Resources>
 
@@ -44,9 +46,7 @@
                 HorizontalScrollBarVisibility="Disabled">
                 <StackPanel
                     VerticalAlignment="Top">
-                    <StackPanel.Resources>
-                        <Style TargetType="Button" BasedOn="{StaticResource CommonButtonStyle}" />
-                    </StackPanel.Resources>
+                 
                     <!--            <Button Content="Главная" -->
                     <!--                    Style="{StaticResource CommonButtonStyle}" -->
                     <!--                    Background="{Binding SelectedButton,  -->
@@ -59,10 +59,12 @@
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.PipesWithout}}"
                             Command="{Binding PipesWithoutCommand}"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Visibility="{Binding Path=PipesWithoutButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
                     </Button>
 
                     <Button Content="Трубы:Днар х Стенка"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.PipesOuterDiameter}}"
@@ -71,6 +73,7 @@
                     </Button>
 
                     <Button Content="Трубы:Ду х Стенка"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.PipesInternalDiameter}}"
@@ -78,6 +81,7 @@
                             Visibility="{Binding Path=PipesInternalDiameterButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
                     </Button>
                     <Button Content="Гибкие трубы: Без типа"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.FlexiblePipesWithoutType}}"
@@ -86,6 +90,7 @@
 
                     </Button>
                     <Button Content="Гибкие трубы: Подводки"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.FlexiblePipesConnections}}"
@@ -94,6 +99,7 @@
 
                     </Button>
                     <Button Content="Гибкие трубы: Гофры"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Command="{Binding FlexPipesCorrugationsCommand}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
@@ -102,6 +108,7 @@
 
                     </Button>
                     <Button Content="Материал изоляции трубы: Трубки"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.PipeInsulationTubes}}"
@@ -110,6 +117,7 @@
 
                     </Button>
                     <Button Content="Материал изоляции трубы: Цилиндры"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.PipeInsulationCylinders}}"
@@ -118,6 +126,7 @@
 
                     </Button>
                     <Button Content="Материал изоляции трубы: Трубки цветные"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Command="{Binding PipeInsulationColouredTubesCommand}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
@@ -126,6 +135,7 @@
 
                     </Button>
                     <Button Content="Воздуховоды: Без типа"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Command="{Binding DuctWithoutCommand}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
@@ -134,6 +144,7 @@
 
                     </Button>
                     <Button Content="Воздуховоды: Круглые"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.DuctRound}}"
@@ -142,6 +153,7 @@
 
                     </Button>
                     <Button Content="Воздуховоды: Пластик"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.DuctPlastic}}"
@@ -150,6 +162,7 @@
 
                     </Button>
                     <Button Content="Воздуховоды: Прямоугольные"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.DuctRectangular}}"
@@ -158,6 +171,7 @@
 
                     </Button>
                     <Button Content="Гибкие воздуховоды: Круглые"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.FlexibleDuctsRound}}"
@@ -166,6 +180,7 @@
 
                     </Button>
                     <Button Content="Материал изоляции воздуховодов: Огнезащита"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.DuctInsulationFireproofing}}"
@@ -174,6 +189,7 @@
 
                     </Button>
                     <Button Content="Материал изоляции воздуховодов: Теплоизоляция"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.DuctInsulationThermalInsulation}}"
@@ -182,6 +198,7 @@
 
                     </Button>
                     <Button Content="Соединительные детали воздуховодов"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.DuctConnectionParts}}"
@@ -190,32 +207,37 @@
 
                     </Button>
                     <Button Content="Параметры"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Command="{Binding ParametersCommand}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.AllCategories}}">
 
                     </Button>
-                    <Separator Style="{DynamicResource ShadowSeparator}"/>
+                    <Separator Style="{DynamicResource ShadowSeparator}" />
                     <Button
                         Content="Обновить все типы"
+                        Style="{DynamicResource CommonButtonStyle}"
                         Command="{Binding UpdateAllTypesCommand}"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}">
                     </Button>
-                    <Separator Style="{DynamicResource ShadowSeparator}"/>
+                    <Separator Style="{DynamicResource ShadowSeparator}" />
 
 
                     <Button Content="Настройки"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Command="{Binding SettingsCommand}"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.Settings}}">
                     </Button>
                     <Button Content="Сохранить все настройки"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Command="{Binding SaveSettingsCommand}">
                     </Button>
-                    <Separator Style="{DynamicResource ShadowSeparator}"/>
+                    <Separator Style="{DynamicResource ShadowSeparator}" />
                     <Button Content="Закрыть"
+                            Style="{DynamicResource CommonButtonStyle}"
                             Command="{Binding CloseWindowCommand}"
                             CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}">
 

@@ -12,12 +12,12 @@
             <converter:BoolVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <converter:MeasurementUnitFilterConverter x:Key="MeasurementUnitFilterConverter" />
             <converter:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
-            <ResourceDictionary.MergedDictionaries>
+            <d:ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
-            </ResourceDictionary.MergedDictionaries>
+            </d:ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
     <Border
@@ -39,7 +39,7 @@
                 IsChecked="{Binding IsChecked,RelativeSource={RelativeSource AncestorType= UserControl}}">
             </CheckBox>
             <Grid Grid.Row="1"
-                  Margin="0 5 0 0">
+               >
                 <Grid.Visibility>
                     <Binding Path="IsChecked" ElementName="NameCheckBox"
                              Converter="{StaticResource BoolToVisibilityConverter}" />
@@ -54,6 +54,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <GroupBox Grid.Row="0" Header="Список параметров"
+                          Margin="0 5"
                           Grid.Column="0"
                           Style="{DynamicResource GroupBoxStyle}">
                     <Grid>

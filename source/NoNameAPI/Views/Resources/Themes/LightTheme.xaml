@@ -40,6 +40,7 @@
     <SolidColorBrush x:Key="IsPressedButtonBrush" Color="{StaticResource DeepBlueColor}" />
     <SolidColorBrush x:Key="SelectionIndicatorBrush" Color="{StaticResource DodgerBlue}" />
     <SolidColorBrush x:Key="GridSplitterBrush" Color="#808080" /> 
+    <SolidColorBrush x:Key="CheckboxBorderBrush" Color="#bbbbbb" />
     <SolidColorBrush x:Key="GridSplitterBorderBrush" Color="#777777" />
     <SolidColorBrush x:Key="SettingsButtonBrush" Color="{StaticResource SilverGray}" />
     <SolidColorBrush x:Key="SelectButtonForegroundBrush" Color="{StaticResource DodgerBlue}" />

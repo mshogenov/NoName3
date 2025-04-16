@@ -11,12 +11,12 @@
              Height="auto" Width="auto">
     <UserControl.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
+            <d:ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
-            </ResourceDictionary.MergedDictionaries>
+            </d:ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         </ResourceDictionary>
 
@@ -47,71 +47,71 @@
                      <StackPanel>
                     <StackPanel.Resources>
                         <Style TargetType="CheckBox">
-                            <Style.BasedOn>
-                                <StaticResource ResourceKey="JellyCheckboxStyle" />
-                            </Style.BasedOn>
-                            <Setter Property="Margin" Value="0 3" />
+                          <Setter Property="Margin" Value="0 3" />
                         </Style>
                     </StackPanel.Resources>
                     <CheckBox Content="Трубы:Без типа"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding PipesWithoutIsChecked}" />
                     <CheckBox Content="Трубы:Днар х Стенка"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding PipesOuterDiameterIsChecked}" />
                     <CheckBox Content="Трубы:Ду х Стенка"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                              IsChecked="{Binding PipesInternalDiameterIsChecked}" />
                     <CheckBox Content="Гибкие трубы: Без типа"
-                           
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding FlexPipesWithoutIsChecked}" />
                     <CheckBox Content="Гибкие трубы: Подводки"
-                          
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding FlexPipesConnectionsIsChecked}" />
                     <CheckBox Content="Гибкие трубы: Гофры"
-                             
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding FlexPipesCorrugationsIsChecked}" />
                     <CheckBox Content="Материал изоляции трубы: Трубки"
-                           
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding PipeInsulationTubesIsChecked}" />
                     <CheckBox Content="Материал изоляции трубы: Цилиндры"
-                            
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding PipeInsulationCylindersIsChecked}" />
                     <CheckBox Content="Материал изоляции трубы: Трубки цветные"
-                             
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding PipeInsulationColouredTubesIsChecked}" />
                     <CheckBox Content="Воздуховоды: Без типа"
-                             
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding DuctWithoutIsChecked}" />
                     <CheckBox Content="Воздуховоды: Круглые"
-                             
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding DuctRoundIsChecked}" />
                     <CheckBox Content="Воздуховоды: Пластик"
-                            
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding DuctPlasticIsChecked}" />
                     <CheckBox Content="Воздуховоды: Прямоугольные"
-                             
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding DuctRectangularIsChecked}" />
                     <CheckBox Content="Гибкие воздуховоды: Круглые"
-                            
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding FlexibleDuctsRoundIsChecked}" />
                     <CheckBox Content="Материал изоляции воздуховодов: Огнезащита"
-                              
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding DuctInsulationFireproofingIsChecked}" />
                     <CheckBox Content="Материал изоляции воздуховодов: Теплоизоляция"
-                             
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding DuctInsulationThermalInsulationIsChecked}" />
                     <CheckBox Content="Соединительные детали воздуховодов"
-                             
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding DuctConnectionPartsIsChecked}" />
                     <CheckBox Content="Параметр: ADSK__Система__Имя"
-                            
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding AdskSystemNameIsChecked}" />
                     <CheckBox Content="Параметр: ADSK__Система__Сокращение"
-                            
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding AdskSystemAbbreviationIsChecked}" />
                     <CheckBox Content="Параметр: ADSK__Толщина стенки"
-                             
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding AdskWallThicknessIsChecked}" />
                     <CheckBox Content="Параметр: Класс герметичности"
-                            
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding HermeticClassIsChecked}" />
                 </StackPanel>
                 </ScrollViewer>

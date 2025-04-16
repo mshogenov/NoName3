@@ -9,7 +9,7 @@
                     xmlns:settings="clr-namespace:UpdatingParameters.ViewModels.Settings"
                     xmlns:allCategories="clr-namespace:UpdatingParameters.ViewModels.Parameters"
                     xmlns:allCategories1="clr-namespace:UpdatingParameters.Views.Parameters"
-                    xmlns:converter="clr-namespace:NoNameApi.Views.Converters;assembly=NoNameAPI"
+                    xmlns:converter="clr-namespace:UpdatingParameters.Views.Converters"
                     xmlns:model="clr-namespace:UpdatingParameters.Models"
                     xmlns:parameters="clr-namespace:UpdatingParameters.ViewModels.Parameters">
     <converter:ButtonSelectedConverter x:Key="ButtonSelectedConverter" />
