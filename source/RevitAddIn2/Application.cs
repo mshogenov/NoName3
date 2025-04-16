@@ -264,9 +264,9 @@ namespace RevitAddIn2;
 
             #region SetNearestLevelBelow
 
-            panelOther.AddPushButton<SetNearestLevelBelowCommand>("Установить\nближайший уровень")
-                .SetImage("/RevitAddIn2;component/Resources/Icons/uroven_mauxlwi8s01i_16.png")
-                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/uroven_mauxlwi8s01i_32.png");
+            // panelOther.AddPushButton<SetNearestLevelBelowCommand>("Установить\nбазовый уровень")
+            //     .SetImage("/RevitAddIn2;component/Resources/Icons/uroven_mauxlwi8s01i_16.png")
+            //     .SetLargeImage("/RevitAddIn2;component/Resources/Icons/uroven_mauxlwi8s01i_32.png");
 
             #endregion
         }
