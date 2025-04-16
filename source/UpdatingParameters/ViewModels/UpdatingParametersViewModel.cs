@@ -568,40 +568,46 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
     private void ExecuteLongUpdateWithProgress(Window modalWindow,
         List<(string TypeName, Func<int> UpdateAction)> updateActions, List<UpdateResult> results)
     {
-        using var tr = new Transaction(_doc, "Обновление параметров");
-        try
+        _actionEventHandler.Raise(app =>
         {
-            tr.Start();
-            UpdateParameters();
-            int currentIndex = 0;
-            foreach (var (typeName, updateAction) in updateActions)
+            using var tr = new Transaction(app.ActiveUIDocument.Document, "Обновление параметров");
+            try
             {
-                _progressWindow.Dispatcher.Invoke(() =>
+                tr.Start();
+                UpdateParameters();
+                int currentIndex = 0;
+                foreach (var (typeName, updateAction) in updateActions)
                 {
-                    _progressWindow.UpdateCurrentTask($"Обработка: {typeName}");
-                });
-                if (CheckForCancellation(modalWindow))
-                {
-                    tr.RollBack();
-                    return;
+                    _progressWindow.Dispatcher.Invoke(() =>
+                    {
+                        _progressWindow.UpdateCurrentTask($"Обработка: {typeName}");
+                    });
+                    if (CheckForCancellation(modalWindow))
+                    {
+                        tr.RollBack();
+                        return;
+                    }
+
+                    ExecuteUpdateAction(typeName, updateAction, results);
+                    currentIndex++;
+                    var index = currentIndex;
+                    _progressWindow.Dispatcher.Invoke(() => { _progressWindow.UpdateProgress(index); });
+                    _progressWindow.Dispatcher.Invoke(DispatcherPriority.Background, new Action(() => { }));
                 }
 
-                ExecuteUpdateAction(typeName, updateAction, results);
-                currentIndex++;
-                var index = currentIndex;
-                _progressWindow.Dispatcher.Invoke(() => { _progressWindow.UpdateProgress(index); });
-                _progressWindow.Dispatcher.Invoke(DispatcherPriority.Background, new Action(() => { }));
+                tr.Commit();
+                FinalizeProgressWorkflow(modalWindow, results);
             }
-
-            FinalizeProgressWorkflow(modalWindow, results);
-            tr.Commit();
-        }
-        catch
-        {
-            tr.RollBack();
-            throw;
-        }
-     
+            catch
+            {
+                tr.RollBack();
+                throw;
+            }
+            finally
+            {
+                _actionEventHandler.Cancel();
+            }
+        });
     }
 
 // Прямое выполнение без прогресс-бара
