@@ -1193,6 +1193,8 @@
     <!-- Стиль для анимированного чекбокса -->
     <Style x:Key="JellyCheckboxStyle" TargetType="CheckBox">
         <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
+        <Setter Property="FontSize" Value="{StaticResource AppFontSize}"/>
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="CheckBox">
@@ -1479,6 +1481,7 @@
 
     <!-- Стиль для ScrollViewer -->
     <Style x:Key="CustomScrollViewerStyle" TargetType="{x:Type ScrollViewer}">
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ScrollViewer}">
@@ -1856,7 +1859,6 @@
         <Setter Property="Height" Value="24" />
         <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
         <Setter Property="Padding" Value="10,2" />
-        <Setter Property="Margin" Value="0,4,10,5" /> <!-- Отступы для визуального выделения -->
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="StatusBar">

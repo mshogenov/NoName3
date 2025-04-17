@@ -22,65 +22,59 @@
     <Grid
         Style="{DynamicResource Grid}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
+            <RowDefinition />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ScrollViewer 
+        <ScrollViewer
             Style="{DynamicResource CustomScrollViewerStyle}">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="AUTO" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-
-                <local:CustomFormulaControl Grid.Row="0"
-                                            NameParameter="ADSK_Наименование"
-                                            AdskFormulas="{Binding AdskNameFormulas}"
-                                            IsChecked="{Binding Path=NameIsChecked}"
-                                            SearchParametersView="{Binding SearchParametersViewForName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                            ParametersView="{Binding  Path=ParametersViewForName}"
-                                            SelectParameter="{Binding SelectParameterName, Mode=TwoWay}"
-                                            AddParameterFormulaCommand="{Binding AddParameterToNameFormulaCommand}"
-                                            RemoveParameterFormulaCommand="{Binding RemoveParameterToNameFormulaCommand}"
-                                            SelectFormula="{Binding SelectFormulaName}"
-                                            MoveUpFormulaCommand="{Binding MoveUpToNameFormulaCommand}"
-                                            MoveDownFormulaCommand="{Binding MoveDownToNameFormulaCommand}"
-                                            CombinedValues="{Binding CombinedNameValues}" />
-                <local:CustomFormulaControl Grid.Row="1"
-                                            NameParameter="ADSK_Примечание"
-                                            AdskFormulas="{Binding AdskNoteFormulas}"
-                                            IsChecked="{Binding Path=NoteIsChecked}"
-                                            SearchParametersView="{Binding SearchParametersViewForNote, Mode=TwoWay}"
-                                            ParametersView="{Binding  Path=ParametersForNote}"
-                                            SelectParameter="{Binding SelectParameterNote, Mode=TwoWay}"
-                                            AddParameterFormulaCommand="{Binding AddParameterToNoteFormulaCommand}"
-                                            RemoveParameterFormulaCommand="{Binding RemoveParameterToNoteFormulaCommand}"
-                                            SelectFormula="{Binding SelectFormulaNote}"
-                                            MoveUpFormulaCommand="{Binding MoveUpToNoteFormulaCommand}"
-                                            MoveDownFormulaCommand="{Binding MoveDownToNoteFormulaCommand}"
-                                            Margin="0 10 "
-                                            CombinedValues="{Binding CombinedNoteValues}" />
-                <local:CustomFormulaControl2 Grid.Row="2"
-                                             NameParameter="ADSK_Количество"
-                                             AdskFormulas="{Binding AdskQuantityFormulas}"
-                                             IsChecked="{Binding Path=QuantityIsChecked}"
-                                             Parameters="{Binding Path=ParametersForQuantity}"
-                                             SelectParameter="{Binding SelectParameterQuantity,Mode=TwoWay}"
-                                             AddParameterFormulaCommand="{Binding AddParameterToQuantityFormulaCommand}"
-                                             RemoveParameterFormulaCommand="{Binding RemoveParameterToQuantityFormulaCommand}"
-                                             SelectFormula="{Binding SelectFormulaQuantity}"
-                                             MoveUpFormulaCommand="{Binding MoveUpToQuantityFormulaCommand}"
-                                             MoveDownFormulaCommand="{Binding MoveDownToQuantityFormulaCommand}"
-                                             CombinedValues="{Binding CombinedQuantityValues}" />
-            </Grid>
+            <StackPanel>
+                <local:CustomFormulaControl
+                    NameParameter="ADSK_Наименование"
+                    AdskFormulas="{Binding AdskNameFormulas}"
+                    IsChecked="{Binding Path=NameIsChecked}"
+                    SearchParametersView="{Binding SearchParametersViewForName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    ParametersView="{Binding  Path=ParametersViewForName}"
+                    SelectParameter="{Binding SelectParameterName, Mode=TwoWay}"
+                    AddParameterFormulaCommand="{Binding AddParameterToNameFormulaCommand}"
+                    RemoveParameterFormulaCommand="{Binding RemoveParameterToNameFormulaCommand}"
+                    SelectFormula="{Binding SelectFormulaName}"
+                    MoveUpFormulaCommand="{Binding MoveUpToNameFormulaCommand}"
+                    MoveDownFormulaCommand="{Binding MoveDownToNameFormulaCommand}"
+                    CombinedValues="{Binding CombinedNameValues}" />
+                <local:CustomFormulaControl
+                    NameParameter="ADSK_Примечание"
+                    AdskFormulas="{Binding AdskNoteFormulas}"
+                    IsChecked="{Binding Path=NoteIsChecked}"
+                    SearchParametersView="{Binding SearchParametersViewForNote, Mode=TwoWay}"
+                    ParametersView="{Binding  Path=ParametersForNote}"
+                    SelectParameter="{Binding SelectParameterNote, Mode=TwoWay}"
+                    AddParameterFormulaCommand="{Binding AddParameterToNoteFormulaCommand}"
+                    RemoveParameterFormulaCommand="{Binding RemoveParameterToNoteFormulaCommand}"
+                    SelectFormula="{Binding SelectFormulaNote}"
+                    MoveUpFormulaCommand="{Binding MoveUpToNoteFormulaCommand}"
+                    MoveDownFormulaCommand="{Binding MoveDownToNoteFormulaCommand}"
+                    Margin="0 10 "
+                    CombinedValues="{Binding CombinedNoteValues}" />
+                <local:CustomFormulaControl2
+                    NameParameter="ADSK_Количество"
+                    AdskFormulas="{Binding AdskQuantityFormulas}"
+                    IsChecked="{Binding Path=QuantityIsChecked}"
+                    Parameters="{Binding Path=ParametersForQuantity}"
+                    SelectParameter="{Binding SelectParameterQuantity,Mode=TwoWay}"
+                    AddParameterFormulaCommand="{Binding AddParameterToQuantityFormulaCommand}"
+                    RemoveParameterFormulaCommand="{Binding RemoveParameterToQuantityFormulaCommand}"
+                    SelectFormula="{Binding SelectFormulaQuantity}"
+                    MoveUpFormulaCommand="{Binding MoveUpToQuantityFormulaCommand}"
+                    MoveDownFormulaCommand="{Binding MoveDownToQuantityFormulaCommand}"
+                    CombinedValues="{Binding CombinedQuantityValues}" />
+            </StackPanel>
         </ScrollViewer>
 
         <DockPanel Grid.Row="1"
                    HorizontalAlignment="Right"
-                   Margin="5 5 10 5 ">
+                   Margin="5 5 0 5 ">
             <Button
                 Style="{DynamicResource CommonButtonStyle2}"
                 Content="Сохранить настройки"

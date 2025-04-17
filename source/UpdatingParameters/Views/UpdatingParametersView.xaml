@@ -13,7 +13,7 @@
     mc:Ignorable="d"
     Width="1300" Height="800"
     Title="Обновление параметров">
-    <views:BaseRevitWindow.Resources>
+    <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
@@ -26,7 +26,7 @@
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
             </d:ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-    </views:BaseRevitWindow.Resources>
+    </Window.Resources>
 
     <Grid Style="{DynamicResource Grid}">
         <Grid.ColumnDefinitions>
@@ -46,7 +46,7 @@
                 HorizontalScrollBarVisibility="Disabled">
                 <StackPanel
                     VerticalAlignment="Top">
-                 
+
                     <!--            <Button Content="Главная" -->
                     <!--                    Style="{StaticResource CommonButtonStyle}" -->
                     <!--                    Background="{Binding SelectedButton,  -->
@@ -245,7 +245,7 @@
                 </StackPanel>
             </ScrollViewer>
         </Border>
-        <Grid Grid.Column="2" Margin="5 5">
+        <Grid Grid.Column="2" Margin="5 5 10 5">
             <ContentControl Content="{Binding SelectedContent}" />
         </Grid>
     </Grid>

@@ -27,75 +27,69 @@
 
         <!-- Основной контент -->
         <Border
+            Padding="5"
             Style="{DynamicResource BorderFolding}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition MinHeight="40" />
-                    <RowDefinition MinHeight="40" />
-                    <RowDefinition MinHeight="40" />
-                    <RowDefinition MinHeight="40" />
-                </Grid.RowDefinitions>
 
-                <!-- Строка 1 -->
-                <CheckBox
-                    Style="{DynamicResource JellyCheckboxStyle}"
-                    Content="ADSK_Система_Сокращение"
-                    Grid.Row="0"
-                    Grid.Column="0"
-                    IsChecked="{Binding SystemAbbreviationIsChecked}">
-                </CheckBox>
+                <StackPanel>
 
-                <!-- Строка 2 -->
-                <CheckBox
-                    Style="{DynamicResource JellyCheckboxStyle}"
-                    Grid.Row="1"
-                    Grid.Column="0"
-                    Content="ADSK_Система_Имя"
-                    IsChecked="{Binding SystemNameIsChecked}">
-
-                </CheckBox>
-
-                <!-- Строка 3 -->
-                <Grid Grid.Row="2"
-                      Grid.Column="0"
-                      Grid.ColumnSpan="2">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
                     <CheckBox
                         Style="{DynamicResource JellyCheckboxStyle}"
-                        Grid.Column="0"
-                        IsChecked="{Binding WallThicknessIsChecked}"
-                        Content="ADSK_Толщина стенки">
+                        Content="ADSK_Система_Сокращение"
+                        Margin="0 0 0 3"
+                        IsChecked="{Binding SystemAbbreviationIsChecked}">
                     </CheckBox>
 
-                    <Button
-                        Margin="10 0"
-                        Grid.Column="2"
-                        Style="{DynamicResource SettingsButtonStyle}"
-                        Command="{Binding Path=AdjustWallThicknessCommand}">
-                        <Button.ToolTip>
-                            <ToolTip>Настроить параметры воздуховодов</ToolTip>
-                        </Button.ToolTip>
-                    </Button>
-                </Grid>
+                    <!-- Строка 2 -->
+                    <CheckBox
+                        Style="{DynamicResource JellyCheckboxStyle}"
+                        Content="ADSK_Система_Имя"
+                        Margin="0 0 0 3"
+                        IsChecked="{Binding SystemNameIsChecked}">
+
+                    </CheckBox>
+
+                    <!-- Строка 3 -->
+                    <Grid
+                        Margin="0 0 0 3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <CheckBox
+                            Style="{DynamicResource JellyCheckboxStyle}"
+                            Grid.Column="0"
+                            IsChecked="{Binding WallThicknessIsChecked}"
+                            Content="ADSK_Толщина стенки">
+                        </CheckBox>
+
+                        <Button
+                            Margin="10 0"
+                            Grid.Column="2"
+                            Style="{DynamicResource SettingsButtonStyle}"
+                            Command="{Binding Path=AdjustWallThicknessCommand}">
+                            <Button.ToolTip>
+                                <ToolTip>Настроить параметры воздуховодов</ToolTip>
+                            </Button.ToolTip>
+                        </Button>
+                    </Grid>
 
 
-                <!-- Строка 4 -->
-                <CheckBox
-                    Style="{DynamicResource JellyCheckboxStyle}"
-                    Grid.Row="3"
-                    Grid.Column="0"
+                    <!-- Строка 4 -->
+                    <CheckBox
+                        Style="{DynamicResource JellyCheckboxStyle}"
                     IsChecked="{Binding HermeticClassIsChecked}"
-                    Content="Класс герметичности">
+                        Content="Класс герметичности">
 
-                </CheckBox>
+                    </CheckBox>
+                </StackPanel>
+                <!-- Строка 1 -->
+
             </Grid>
         </Border>
 
