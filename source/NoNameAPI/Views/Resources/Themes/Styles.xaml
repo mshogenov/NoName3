@@ -1063,8 +1063,8 @@
     <Style x:Key="GroupBoxStyle" TargetType="{x:Type GroupBox}">
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
-        <Setter Property="FontSize" Value="{StaticResource AppFontSize}"/>
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
         <Setter Property="Padding" Value="6" />
         <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource GroupBoxContentBrush}" />
@@ -2018,68 +2018,68 @@
             </Setter.Value>
         </Setter>
     </Style>
-   <Style x:Key="DeleteButtonStyle" TargetType="Button">
-    <Setter Property="Width" Value="28"/>
-    <Setter Property="Height" Value="28"/>
-    <Setter Property="Background" Value="Transparent"/>
-    <Setter Property="BorderThickness" Value="0"/>
-    <Setter Property="Cursor" Value="Hand"/>
-    <Setter Property="Template">
-        <Setter.Value>
-            <ControlTemplate TargetType="Button">
-                <Grid>
-                    <Border x:Name="buttonBorder" 
-                            Background="{TemplateBinding Background}" 
-                            CornerRadius="4">
-                        <Viewbox Width="18" Height="18">
-                            <Canvas Width="50" Height="59">
-                                <Path x:Name="BinPath1" Fill="#B5BAC1">
-                                    <Path.Data>
-                                        <PathGeometry>M0,7.5 C0,5.01472 2.01472,3 4.5,3 H45.5 C47.9853,3 50,5.01472 50,7.5 V7.5 C50,8.32843 49.3284,9 48.5,9 H1.5 C0.671571,9 0,8.32843 0,7.5 V7.5 Z</PathGeometry>
-                                    </Path.Data>
-                                </Path>
-                                <Path x:Name="BinPath2" Fill="#B5BAC1">
-                                    <Path.Data>
-                                        <PathGeometry>M17,3 C17,1.34315 18.3431,0 20,0 H29.3125 C30.9694,0 32.3125,1.34315 32.3125,3 V3 H17 V3 Z</PathGeometry>
-                                    </Path.Data>
-                                </Path>
-                                <Path x:Name="BinPath3" Fill="#B5BAC1">
-                                    <Path.Data>
-                                        <PathGeometry>M2.18565,18.0974 C2.08466,15.821 3.903,13.9202 6.18172,13.9202 H43.8189 C46.0976,13.9202 47.916,15.821 47.815,18.0975 L46.1699,55.1775 C46.0751,57.3155 44.314,59.0002 42.1739,59.0002 H7.8268 C5.68661,59.0002 3.92559,57.3155 3.83073,55.1775 L2.18565,18.0974 Z M18.0003,49.5402 C16.6196,49.5402 15.5003,48.4209 15.5003,47.0402 V24.9602 C15.5003,23.5795 16.6196,22.4602 18.0003,22.4602 C19.381,22.4602 20.5003,23.5795 20.5003,24.9602 V47.0402 C20.5003,48.4209 19.381,49.5402 18.0003,49.5402 Z M29.5003,47.0402 C29.5003,48.4209 30.6196,49.5402 32.0003,49.5402 C33.381,49.5402 34.5003,48.4209 34.5003,47.0402 V24.9602 C34.5003,23.5795 33.381,22.4602 32.0003,22.4602 C30.6196,22.4602 29.5003,23.5795 29.5003,24.9602 V47.0402 Z</PathGeometry>
-                                    </Path.Data>
-                                </Path>
-                                <Path x:Name="BinPath4" Fill="#B5BAC1">
-                                    <Path.Data>
-                                        <PathGeometry>M2,13 H48 L47.6742,21.28 H2.32031 L2,13 Z</PathGeometry>
-                                    </Path.Data>
-                                </Path>
-                            </Canvas>
-                        </Viewbox>
-                    </Border>
-                </Grid>
+    <Style x:Key="DeleteButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="28" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border x:Name="buttonBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="4">
+                            <Viewbox Width="18" Height="18">
+                                <Canvas Width="50" Height="59">
+                                    <Path x:Name="BinPath1" Fill="#B5BAC1">
+                                        <Path.Data>
+                                            <PathGeometry>M0,7.5 C0,5.01472 2.01472,3 4.5,3 H45.5 C47.9853,3 50,5.01472 50,7.5 V7.5 C50,8.32843 49.3284,9 48.5,9 H1.5 C0.671571,9 0,8.32843 0,7.5 V7.5 Z</PathGeometry>
+                                        </Path.Data>
+                                    </Path>
+                                    <Path x:Name="BinPath2" Fill="#B5BAC1">
+                                        <Path.Data>
+                                            <PathGeometry>M17,3 C17,1.34315 18.3431,0 20,0 H29.3125 C30.9694,0 32.3125,1.34315 32.3125,3 V3 H17 V3 Z</PathGeometry>
+                                        </Path.Data>
+                                    </Path>
+                                    <Path x:Name="BinPath3" Fill="#B5BAC1">
+                                        <Path.Data>
+                                            <PathGeometry>M2.18565,18.0974 C2.08466,15.821 3.903,13.9202 6.18172,13.9202 H43.8189 C46.0976,13.9202 47.916,15.821 47.815,18.0975 L46.1699,55.1775 C46.0751,57.3155 44.314,59.0002 42.1739,59.0002 H7.8268 C5.68661,59.0002 3.92559,57.3155 3.83073,55.1775 L2.18565,18.0974 Z M18.0003,49.5402 C16.6196,49.5402 15.5003,48.4209 15.5003,47.0402 V24.9602 C15.5003,23.5795 16.6196,22.4602 18.0003,22.4602 C19.381,22.4602 20.5003,23.5795 20.5003,24.9602 V47.0402 C20.5003,48.4209 19.381,49.5402 18.0003,49.5402 Z M29.5003,47.0402 C29.5003,48.4209 30.6196,49.5402 32.0003,49.5402 C33.381,49.5402 34.5003,48.4209 34.5003,47.0402 V24.9602 C34.5003,23.5795 33.381,22.4602 32.0003,22.4602 C30.6196,22.4602 29.5003,23.5795 29.5003,24.9602 V47.0402 Z</PathGeometry>
+                                        </Path.Data>
+                                    </Path>
+                                    <Path x:Name="BinPath4" Fill="#B5BAC1">
+                                        <Path.Data>
+                                            <PathGeometry>M2,13 H48 L47.6742,21.28 H2.32031 L2,13 Z</PathGeometry>
+                                        </Path.Data>
+                                    </Path>
+                                </Canvas>
+                            </Viewbox>
+                        </Border>
+                    </Grid>
 
-                <ControlTemplate.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter TargetName="buttonBorder" Property="Background" Value="#ED3838"/>
-                        <Setter TargetName="BinPath1" Property="Fill" Value="White"/>
-                        <Setter TargetName="BinPath2" Property="Fill" Value="White"/>
-                        <Setter TargetName="BinPath3" Property="Fill" Value="White"/>
-                        <Setter TargetName="BinPath4" Property="Fill" Value="White"/>
-                       
-                    </Trigger>
-                    <Trigger Property="IsPressed" Value="True">
-                        <Setter Property="RenderTransform">
-                            <Setter.Value>
-                                <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
-                            </Setter.Value>
-                        </Setter>
-                        <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
-                    </Trigger>
-                </ControlTemplate.Triggers>
-            </ControlTemplate>
-        </Setter.Value>
-    </Setter>
-</Style>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="buttonBorder" Property="Background" Value="#ED3838" />
+                            <Setter TargetName="BinPath1" Property="Fill" Value="White" />
+                            <Setter TargetName="BinPath2" Property="Fill" Value="White" />
+                            <Setter TargetName="BinPath3" Property="Fill" Value="White" />
+                            <Setter TargetName="BinPath4" Property="Fill" Value="White" />
+
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                                </Setter.Value>
+                            </Setter>
+                            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
     <!-- Стиль для кнопки "Добавить группу" -->
     <Style x:Key="AddButtonStyle2" TargetType="Button">
@@ -2116,7 +2116,7 @@
                         <Trigger Property="IsPressed" Value="True">
                             <Setter Property="Background" Value="{DynamicResource IsPressedButtonBrush}" />
                         </Trigger>
-                      </ControlTemplate.Triggers>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -2451,5 +2451,16 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <!-- TabControl -->
+    <Style x:Key="ModernTabControl" TargetType="TabControl">
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
 
+    <!-- ComboBox -->
+    <Style x:Key="ModernComboBox" TargetType="ComboBox">
+        <Setter Property="Height" Value="32" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Background" Value="White" />
+    </Style>
 </ResourceDictionary>
