@@ -20,7 +20,7 @@
     </UserControl.Resources>
     <Grid
         Margin="5"
-        Style="{DynamicResource Grid}">
+       >
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -59,7 +59,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0"
-                               Text="Расстояние:"
+                               Text="Расстояние, мм:"
                                Style="{DynamicResource TextBlockStyle}"
                                VerticalAlignment="Center" />
                     <TextBox
@@ -104,7 +104,7 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0"
-                               Text="Расстояние:"
+                               Text="Расстояние, мм:"
                                Style="{DynamicResource TextBlockStyle}"
                                VerticalAlignment="Center" />
                     <TextBox
@@ -149,7 +149,7 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0"
-                               Text="Расстояние:"
+                               Text="Расстояние, мм:"
                                Style="{DynamicResource TextBlockStyle}"
                                VerticalAlignment="Center" />
                     <TextBox

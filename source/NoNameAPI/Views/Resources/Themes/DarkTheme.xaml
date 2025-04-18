@@ -6,7 +6,7 @@
     <Color x:Key="LightDiamondBlue2"> #5b82b5</Color>
     <Color x:Key="DarkDiamondBlue">#2f496a</Color>
     <Color x:Key="DeepDiamondBlue">#2a415e</Color>
-    <Color x:Key="WindowBackgroundColor">#222933</Color>
+    <Color x:Key="WindowColor">#222933</Color>
     <Color x:Key="ContentColor">#3B4453</Color>
     <Color x:Key="SelectedColor">#333B49</Color>
     <Color x:Key="OverColor">#4E5A6B</Color>
@@ -15,14 +15,15 @@
     <Color x:Key="CadetGreyColor">#929faf</Color>
     <Color x:Key="LightCadetGreyColor">#b0b9c4</Color>
     <Color x:Key="SilverGray">#8a9597</Color>
-
+    <Color x:Key="LightWindowColor">#303947</Color>
     <SolidColorBrush x:Key="ScrollBarThumbBrush" Color="{StaticResource LightSlateGreyColor}" /> <!-- Цвет ползунка -->
     <SolidColorBrush x:Key="ScrollBarThumbHoverBrush" Color="{StaticResource CadetGreyColor}" />
     <!-- Цвет ползунка при наведении -->
     <SolidColorBrush x:Key="ScrollBarThumbPressedBrush" Color="{StaticResource LightCadetGreyColor}" />
     <!-- Цвет ползунка при перетаскивании -->
-    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{StaticResource WindowBackgroundColor}" />
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{StaticResource WindowColor}" />
     <SolidColorBrush x:Key="ContentBrush" Color="{StaticResource ContentColor}" />
+    <SolidColorBrush x:Key="LightWindowBrush" Color="{StaticResource LightWindowColor}" />
     <SolidColorBrush x:Key="CloseButtonTextBrush" Color="White" />
     <SolidColorBrush x:Key="TitleWindowBrush" Color="White" />
     <SolidColorBrush x:Key="TitleButtonContentBrush" Color="White" />
@@ -46,4 +47,16 @@
     <SolidColorBrush x:Key="CheckboxBorderBrush" Color="#bbbbbb" />
     <SolidColorBrush x:Key="SettingsButtonBrush" Color="{StaticResource SilverGray}" />
     <SolidColorBrush x:Key="SelectButtonForegroundBrush" Color="White" />
+    
+   
+ 
+    <SolidColorBrush x:Key="ComboBoxMouseOverBackground" Color="#F0F0F0"/>
+    <SolidColorBrush x:Key="ComboBoxPressedBackground" Color="#E0E0E0"/>
+    <SolidColorBrush x:Key="ComboBoxDisabledBackground" Color="#F5F5F5"/>
+    <SolidColorBrush x:Key="ComboBoxDisabledBorderBrush" Color="#E0E0E0"/>
+    <SolidColorBrush x:Key="ComboBoxDisabledForeground" Color="#888888"/>
+    <SolidColorBrush x:Key="ComboBoxArrowFill" Color="{StaticResource LightGrayColor}"/>
+    <SolidColorBrush x:Key="ComboBoxDisabledArrowFill" Color="#AAAAAA"/>
+    <SolidColorBrush x:Key="ComboBoxPopupBackground" Color="{StaticResource WindowColor}"/>
+    <SolidColorBrush x:Key="ComboBoxPopupBorderBrush" Color="#CCCCCC"/>
 </ResourceDictionary>

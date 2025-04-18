@@ -9,6 +9,7 @@
     mc:Ignorable="d"
     xmlns:converter="clr-namespace:MepElementsCopy.Views.Converters"
     xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
+    xmlns:controls="clr-namespace:NoNameApi.Views.Controls;assembly=NoNameAPI"
     Height="600" Width="400"
     d:DataContext="{d:DesignInstance viewModel:MepElementsCopyLevelsViewModel}"
     WindowStartupLocation="CenterScreen"
@@ -34,12 +35,15 @@
             </d:ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-    <Grid Style="{DynamicResource Grid}">
+    <Grid Style="{DynamicResource Grid}"
+        >
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TabControl Style="{DynamicResource TabControlStyle}">
+        <TabControl 
+            Margin="5"
+            Style="{DynamicResource TabControlStyle}">
             <TabItem Header="Копировать по уровням"
                      Style="{DynamicResource TabItemStyle}">
                 <Grid>
@@ -94,7 +98,7 @@
                             Command="{Binding MepElementsCopyElevationCommand}"
                             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                             Style="{DynamicResource CommonButtonStyle2}"
-                            Margin="0 0 5 0"
+                            Margin="0 0 5 5"
                             HorizontalAlignment="Right"
                             Width="120"
                             Height="35" />
