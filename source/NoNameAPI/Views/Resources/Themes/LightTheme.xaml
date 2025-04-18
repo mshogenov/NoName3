@@ -12,8 +12,6 @@
     <Color x:Key="SilverGray">#8a9597</Color>
     <Color x:Key="BtnNormalColor">#FFFFFFFF</Color>
          <!-- лёгкий серый -->
-    
-    
     <Color x:Key="BinNormalColor">#FFFF5F5F</Color>   <!-- rgb(255,95,95) -->
          <Color x:Key="BinHoverColor">#FFFF0000</Color>    <!-- rgb(255,0,0)  -->
          <Color x:Key="BinBorderColor">#FFFFC9C9</Color>   <!-- rgb(255,201,201) -->
@@ -56,4 +54,15 @@
     <SolidColorBrush x:Key="SettingsButtonBrush" Color="{StaticResource SilverGray}" />
     <SolidColorBrush x:Key="SelectButtonForegroundBrush" Color="{StaticResource DodgerBlue}" />
    
+         <SolidColorBrush x:Key="ComboBoxNormalBackground" Color="#FFFFFF"/>
+         <SolidColorBrush x:Key="ComboBoxNormalBorderBrush" Color="#CCCCCC"/>
+         <SolidColorBrush x:Key="ComboBoxMouseOverBackground" Color="#F0F0F0"/>
+         <SolidColorBrush x:Key="ComboBoxPressedBackground" Color="#E0E0E0"/>
+         <SolidColorBrush x:Key="ComboBoxDisabledBackground" Color="#F5F5F5"/>
+         <SolidColorBrush x:Key="ComboBoxDisabledBorderBrush" Color="#E0E0E0"/>
+         <SolidColorBrush x:Key="ComboBoxDisabledForeground" Color="#888888"/>
+         <SolidColorBrush x:Key="ComboBoxArrowFill" Color="#333333"/>
+         <SolidColorBrush x:Key="ComboBoxDisabledArrowFill" Color="#AAAAAA"/>
+         <SolidColorBrush x:Key="ComboBoxPopupBackground" Color="#FFFFFF"/>
+         <SolidColorBrush x:Key="ComboBoxPopupBorderBrush" Color="#CCCCCC"/>
 </ResourceDictionary>
