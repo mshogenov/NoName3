@@ -99,8 +99,7 @@
                             Command="{Binding MepElementsCopyElevationCommand}"
                             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                             Style="{DynamicResource CommonButtonStyle2}"
-                        HorizontalAlignment="Right"
-                            />
+                            HorizontalAlignment="Right" />
                         <Button Content="Закрыть"
                                 HorizontalAlignment="Right"
                                 Command="{Binding CloseCommand}"
