@@ -55,6 +55,7 @@ namespace SystemModelingCommands.Services
                     return; // Пользователь отменил выбор
                 }
             }
+
             MEPCurveType pipeType = DeterminingTypeOfPipeByFitting(_doc, selectedElement);
             if (pipeType == null)
             {
@@ -584,26 +585,35 @@ namespace SystemModelingCommands.Services
                     }
                     else
                     {
-                        // Показываем диалог выбора действия
-                        TaskDialog dialog = new TaskDialog("Соединить");
-                        dialog.MainInstruction = "Выберите действие";
-                        dialog.MainIcon = TaskDialogIcon.TaskDialogIconNone;
-                        dialog.CommonButtons = TaskDialogCommonButtons.Cancel;
-                        dialog.AddCommandLink(TaskDialogCommandLinkId.CommandLink1, "Переместить выбранный элемент");
-                        dialog.AddCommandLink(TaskDialogCommandLinkId.CommandLink2, "Переместить все элементы");
-                        TaskDialogResult tdResult = dialog.Show();
-                        switch (tdResult)
+                        if (GetConnectedConnectors(attachingElement.ConnectorManager).Count > 1)
                         {
-                            case TaskDialogResult.Cancel:
-                                return;
-                            case TaskDialogResult.CommandLink1:
-                                LengthenCurve(attachingElement, targetElement);
-                                ElementTransformUtils.MoveElement(_doc, attachingElement.Id, translationVector);
-                                // 3. Соединяем элементы
-                                attachingElement.ClosestConnector.ConnectTo(targetElement.ClosestConnector);
-                                transaction.Commit();
-                                return;
+                            // Показываем диалог выбора действия
+                            TaskDialog dialog = new TaskDialog("Соединить");
+                            dialog.MainInstruction = "Выберите действие";
+                            dialog.MainIcon = TaskDialogIcon.TaskDialogIconNone;
+                            dialog.CommonButtons = TaskDialogCommonButtons.Cancel;
+                            dialog.AddCommandLink(TaskDialogCommandLinkId.CommandLink1,
+                                "Переместить выбранный элемент");
+                            dialog.AddCommandLink(TaskDialogCommandLinkId.CommandLink2, "Переместить все элементы");
+                            TaskDialogResult tdResult = dialog.Show();
+                            switch (tdResult)
+                            {
+                                case TaskDialogResult.Cancel:
+                                    return;
+                                case TaskDialogResult.CommandLink1:
+                                    ElementTransformUtils.MoveElement(_doc, attachingElement.Id, translationVector);
+                                    // 3. Соединяем элементы
+                                    attachingElement.ClosestConnector.ConnectTo(targetElement.ClosestConnector);
+                                    transaction.Commit();
+                                    return;
+                            }
                         }
+
+                        ElementTransformUtils.MoveElement(_doc, attachingElement.Id, translationVector);
+                        // 3. Соединяем элементы
+                        attachingElement.ClosestConnector.ConnectTo(targetElement.ClosestConnector);
+                        transaction.Commit();
+                        return;
                     }
                 }
 
@@ -765,6 +775,26 @@ namespace SystemModelingCommands.Services
             }
 
             return connections;
+        }
+
+        private List<Connector> GetConnectedConnectors(ConnectorManager connectorManager)
+        {
+            // Собираем подключенные коннекторы перед отключением
+            var connectedConnectors = new List<Connector>();
+
+            foreach (Connector connector in connectorManager.Connectors)
+            {
+                foreach (Connector connectedConnector in connector.AllRefs)
+                {
+                    if (!IsPhysicalDomain(connectedConnector.Domain))
+                        continue;
+                    if (!connectedConnector.IsConnected) continue;
+
+                    connectedConnectors.Add(connectedConnector);
+                }
+            }
+
+            return connectedConnectors;
         }
 
         private bool IsPhysicalDomain(Domain domain)
