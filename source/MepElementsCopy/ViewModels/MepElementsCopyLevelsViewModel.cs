@@ -351,7 +351,14 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
 
         return true;
     }
-
+    [RelayCommand]
+    private void Close(object parameter)
+    {
+        if (parameter is Window window)
+        {
+            window.Close();
+        }
+    }
     [RelayCommand]
     private void SetDirection()
     {

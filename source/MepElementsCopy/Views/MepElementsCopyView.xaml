@@ -29,19 +29,19 @@
             <!-- Затем блок MergedDictionaries должен быть полностью отдельным -->
             <d:ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
-                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/LightTheme.xaml" />
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
             </d:ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-    <Grid Style="{DynamicResource Grid}"
-        >
+    <Grid Style="{DynamicResource Grid}">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TabControl 
+        <TabControl
+
             Margin="5"
             Style="{DynamicResource TabControlStyle}">
             <TabItem Header="Копировать по уровням"
@@ -61,7 +61,7 @@
                             <ComboBox ItemsSource="{Binding LevelModels}"
                                       SelectedItem="{Binding SelectedLevelModel, UpdateSourceTrigger=PropertyChanged,Mode=TwoWay}"
                                       Style="{DynamicResource ModernComboBoxStyle}"
-                                      Margin="0,0,0,10">
+                                      Margin="0,0,0,5">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Name}" />
@@ -76,7 +76,7 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <GroupBox Grid.Row="1" 
+                    <GroupBox Grid.Row="1"
                               Header="Уровни"
                               Margin="5 0 5 5"
                               Style="{DynamicResource GroupBoxStyle}">
@@ -92,16 +92,23 @@
                             </ListView.ItemTemplate>
                         </ListView>
                     </GroupBox>
-
-                    <Button Grid.Row="2"
+                    <DockPanel Grid.Row="2"
+                               HorizontalAlignment="Right">
+                        <Button
                             Content="Копировать"
                             Command="{Binding MepElementsCopyElevationCommand}"
                             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                             Style="{DynamicResource CommonButtonStyle2}"
-                            Margin="0 0 5 5"
-                            HorizontalAlignment="Right"
-                            Width="120"
-                            Height="35" />
+                        HorizontalAlignment="Right"
+                            />
+                        <Button Content="Закрыть"
+                                HorizontalAlignment="Right"
+                                Command="{Binding CloseCommand}"
+                                CommandParameter="{Binding  RelativeSource={RelativeSource AncestorType=Window}}"
+                                Style="{DynamicResource OutlineCloseButtonStyle}"
+                                Margin="10,0,5,0" />
+                    </DockPanel>
+
                 </Grid>
             </TabItem>
 
@@ -112,10 +119,11 @@
         </TabControl>
         <StatusBar Grid.Row="1"
                    Margin="5"
-                   Padding="3"
-                   Style="{DynamicResource StatusBarStyle}"
-                  >
-            <TextBlock Text="{Binding StatusMessage}" Margin="10,2" Foreground="#333333" />
+                   Style="{DynamicResource StatusBarStyle}">
+            <TextBlock
+                Style="{DynamicResource TextBlockStyle}"
+                Text="{Binding StatusMessage}"
+                Visibility="{Binding Path= IsStatusVisible, Converter={StaticResource BoolVisibilityConverter}}" />
         </StatusBar>
     </Grid>
 

@@ -7,7 +7,9 @@
     <Color x:Key="DeepBlueColor">#0A58CA</Color>
     <Color x:Key="LightGrayColor">#d3d3d3</Color>
     <Color x:Key="DarkGrayColor">#757575</Color>
-    <Color x:Key="WindowBackgroundColor">#F0F0F0</Color>
+    <Color x:Key="WindowColor">#F0F0F0</Color>
+     <Color x:Key="LightWindowColor">White</Color>
+     <Color x:Key="TabItemColor">#EEEEEE</Color>
     <Color x:Key="PlatinumColor">#E8E8E8</Color>
     <Color x:Key="SilverGray">#8a9597</Color>
     <Color x:Key="BtnNormalColor">#FFFFFFFF</Color>
@@ -25,7 +27,8 @@
     <SolidColorBrush x:Key="BlueBrush" Color="{StaticResource DodgerBlue}" />
     <SolidColorBrush x:Key="DarkBlueBrush" Color="{StaticResource DarkBlueColor}" />
     <SolidColorBrush x:Key="DeepBlueBrush" Color="{StaticResource DeepBlueColor}" />
-    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{StaticResource WindowBackgroundColor}" />
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{StaticResource WindowColor}" />
+         <SolidColorBrush x:Key="LightWindowBrush" Color="{StaticResource LightWindowColor}" />
     <SolidColorBrush x:Key="ContentBrush" Color="White" />
     <SolidColorBrush x:Key="CloseButtonTextBrush" Color="{StaticResource DarkGrayColor}" />
     <SolidColorBrush x:Key="TitleWindowBrush" Color="Black" />
@@ -54,10 +57,10 @@
     <SolidColorBrush x:Key="SettingsButtonBrush" Color="{StaticResource SilverGray}" />
     <SolidColorBrush x:Key="SelectButtonForegroundBrush" Color="{StaticResource DodgerBlue}" />
    
-         <SolidColorBrush x:Key="ComboBoxNormalBackground" Color="#FFFFFF"/>
-         <SolidColorBrush x:Key="ComboBoxNormalBorderBrush" Color="#CCCCCC"/>
-         <SolidColorBrush x:Key="ComboBoxMouseOverBackground" Color="#F0F0F0"/>
-         <SolidColorBrush x:Key="ComboBoxPressedBackground" Color="#E0E0E0"/>
+        
+       
+      
+       
          <SolidColorBrush x:Key="ComboBoxDisabledBackground" Color="#F5F5F5"/>
          <SolidColorBrush x:Key="ComboBoxDisabledBorderBrush" Color="#E0E0E0"/>
          <SolidColorBrush x:Key="ComboBoxDisabledForeground" Color="#888888"/>

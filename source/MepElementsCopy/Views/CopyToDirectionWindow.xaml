@@ -158,7 +158,8 @@
                         Text="{Binding DistanceByDirection}"
                         Style="{DynamicResource ModernTextBoxStyle}" />
                 </Grid>
-                <Grid Grid.Row="2">
+                <Grid Grid.Row="2"
+                      Margin="5">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="120" />
                         <ColumnDefinition Width="*" />
@@ -167,7 +168,8 @@
                     <TextBlock Grid.Column="0"
                                Text="Направление:"
                                Style="{DynamicResource TextBlockStyle}"
-                               VerticalAlignment="Center" />
+                               VerticalAlignment="Center" 
+                               HorizontalAlignment="Left"/>
                     <Button
                         Grid.Column="1"
                         Padding="3"
@@ -178,13 +180,21 @@
 
             </Grid>
         </GroupBox>
-
-        <!-- Кнопка Копировать -->
-        <Button Grid.Row="3"
-                Content="Копировать"
-                Command="{Binding CopyByDirectionsCommand}"
-                Style="{DynamicResource CommonButtonStyle2}"
-                HorizontalAlignment="Right"
-               />
-    </Grid>
+<DockPanel Grid.Row="3"
+           HorizontalAlignment="Right">
+    <!-- Кнопка Копировать -->
+    <Button 
+        Content="Копировать"
+        Command="{Binding CopyByDirectionsCommand}"
+        Style="{DynamicResource CommonButtonStyle2}"
+        HorizontalAlignment="Right"
+    />
+    <Button Content="Закрыть"
+            HorizontalAlignment="Right"
+            Command="{Binding CloseCommand}"
+            CommandParameter="{Binding  RelativeSource={RelativeSource AncestorType=Window}}"
+            Style="{DynamicResource OutlineCloseButtonStyle}"
+            Margin="10,0,0,0" />
+</DockPanel>
+      </Grid>
 </UserControl>

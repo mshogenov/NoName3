@@ -50,8 +50,8 @@
     
    
  
-    <SolidColorBrush x:Key="ComboBoxMouseOverBackground" Color="#F0F0F0"/>
-    <SolidColorBrush x:Key="ComboBoxPressedBackground" Color="#E0E0E0"/>
+    
+    
     <SolidColorBrush x:Key="ComboBoxDisabledBackground" Color="#F5F5F5"/>
     <SolidColorBrush x:Key="ComboBoxDisabledBorderBrush" Color="#E0E0E0"/>
     <SolidColorBrush x:Key="ComboBoxDisabledForeground" Color="#888888"/>

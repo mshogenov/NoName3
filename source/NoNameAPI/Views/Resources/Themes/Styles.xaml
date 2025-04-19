@@ -1068,7 +1068,8 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
-        <Setter Property="Padding" Value="6" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource GroupBoxContentBrush}" />
         <Setter Property="Template">
@@ -1867,7 +1868,7 @@
         <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Height" Value="24" />
+        <Setter Property="Height" Value="28" />
         <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
         <Setter Property="Padding" Value="10,2" />
         <Setter Property="Template">
@@ -2511,7 +2512,7 @@
                                 BorderThickness="{TemplateBinding BorderThickness}">
                             <ContentPresenter x:Name="PART_SelectedContentHost"
                                               ContentSource="SelectedContent"
-                                              Margin="10" />
+                                              Margin="5" />
                         </Border>
                     </Grid>
                 </ControlTemplate>
@@ -2530,7 +2531,7 @@
                     <Border x:Name="HeaderBorder"
                             Background="Transparent"
                             BorderBrush="{TemplateBinding BorderBrush}"
-                           CornerRadius="4,4,0,0"
+                            CornerRadius="4,4,0,0"
                             Margin="0,0,2,0">
                         <ContentPresenter x:Name="ContentSite"
                                           VerticalAlignment="Center"
@@ -2559,6 +2560,7 @@
     <!-- ComboBox -->
     <Style x:Key="ModernComboBoxStyle" TargetType="{x:Type ComboBox}">
         <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="ItemContainerStyle" Value="{DynamicResource ModernComboBoxItemStyle}" />
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
@@ -2586,7 +2588,7 @@
                             Content="{TemplateBinding SelectionBoxItem}"
                             ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
                             ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
-                            Margin="3,3,23,3"
+                            Margin="10,3,23,3"
                             VerticalAlignment="Center"
                             HorizontalAlignment="Left" />
                         <TextBox x:Name="PART_EditableTextBox"
@@ -2594,7 +2596,7 @@
                                  Foreground="{DynamicResource TextBlockColorBrush}"
                                  HorizontalAlignment="Left"
                                  VerticalAlignment="Center"
-                                 Margin="3,3,23,3"
+                                 Margin="10,3,23,3"
                                  Focusable="True"
                                  Background="Transparent"
                                  Visibility="Hidden"
@@ -2615,9 +2617,11 @@
                                     x:Name="DropDownBorder"
                                     Background="{DynamicResource ComboBoxPopupBackground}"
                                     BorderThickness="1"
-                                    BorderBrush="{DynamicResource ComboBoxPopupBorderBrush}" />
+                                    BorderBrush="{DynamicResource ComboBoxPopupBorderBrush}" 
+                                    Margin="2 0"/>
                                 <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
-                                    <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                                    <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" 
+                                                Margin="5 2"/>
                                 </ScrollViewer>
                             </Grid>
                         </Popup>
@@ -2689,6 +2693,46 @@
             </Trigger>
         </ControlTemplate.Triggers>
     </ControlTemplate>
+
+    <Style x:Key="ModernComboBoxItemStyle" TargetType="{x:Type ComboBoxItem}">
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
+        <Setter Property="Padding" Value="5,2" /> 
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                    <Border x:Name="ItemBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            Padding="{TemplateBinding Padding}"
+                            BorderThickness="1"
+                            >
+                        <ContentPresenter Margin="5,2"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- Стиль для выбранного элемента -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="ItemBorder" Property="Background"
+                                    Value="{DynamicResource IsSelectedBrush}" />
+                        </Trigger>
+                        <!-- Стиль при наведении мыши -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ItemBorder" Property="Background"
+                                    Value="{DynamicResource IsMouseOverBrush}" />
+                        </Trigger>
+                        <!-- Стиль для отключенного состояния -->
+                        <!-- <Trigger Property="IsEnabled" Value="False"> -->
+                        <!--     <Setter Property="Foreground" Value="{DynamicResource ComboBoxDisabledForeground}" /> -->
+                        <!-- </Trigger> -->
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
     <ControlTemplate x:Key="ComboBoxTextBox" TargetType="{x:Type TextBox}">
         <Border x:Name="PART_ContentHost"
