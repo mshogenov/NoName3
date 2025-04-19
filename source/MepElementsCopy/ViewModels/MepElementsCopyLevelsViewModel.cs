@@ -385,7 +385,7 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
             try
             {
                 trans.Start();
-                if (GetElementsCopy(out var mepCurveModels, out var mepElementModels)) return;
+                if (!GetElementsCopy(out var mepCurveModels, out var mepElementModels)) return;
                 if (NumberOfElementsUpwards > 0 && DistanceUp > 0)
                 {
                     _mepElementsCopyServices.CopyMepElementsToDistance(DistanceUp, NumberOfElementsUpwards,
