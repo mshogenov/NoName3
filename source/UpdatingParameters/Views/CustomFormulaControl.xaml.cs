@@ -34,12 +34,21 @@ public partial class CustomFormulaControl : UserControl
             nameof(SearchParametersView),
             typeof(string),
             typeof(CustomFormulaControl),
-            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+            new FrameworkPropertyMetadata(
+                string.Empty, 
+                FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+                OnSearchParametersViewChanged)); // Добавлен обратный вызов
+
+    private static void OnSearchParametersViewChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        // Этот метод вызывается при изменении свойства
+        // Можно добавить здесь логику, если необходимо
+    }
 
     public string SearchParametersView
     {
-        get => (string)GetValue(SearchParametersViewProperty);
-        set => SetValue(SearchParametersViewProperty, value);
+        get { return (string)GetValue(SearchParametersViewProperty); }
+        set { SetValue(SearchParametersViewProperty, value); }
     }
 
     public static readonly DependencyProperty ParametersViewProperty = DependencyProperty.Register(

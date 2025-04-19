@@ -262,7 +262,7 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
                 trans.Start();
                 if (count > 50)
                 {
-                    using var progressBar = new ProgressWindow(selectLevels.Count);
+                    var progressBar = new ProgressWindow(selectLevels.Count);
                     progressBar.Show();
                     for (int i = 0; i < selectLevels.Count; i++)
                     {
@@ -351,7 +351,14 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
 
         return true;
     }
-
+    [RelayCommand]
+    private void Close(object parameter)
+    {
+        if (parameter is Window window)
+        {
+            window.Close();
+        }
+    }
     [RelayCommand]
     private void SetDirection()
     {

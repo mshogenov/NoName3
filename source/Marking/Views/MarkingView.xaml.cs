@@ -1,16 +1,14 @@
 ﻿using Marking.ViewModels;
 
-namespace Marking.Views
+namespace Marking.Views;
+
+public sealed partial class MarkingView
 {
-    public sealed partial class MarkingView
+
+    public MarkingView(MarkingVM viewModel)
     {
-
-        public MarkingView(MarkingVM viewModel)
-        {
-            DataContext = viewModel;
-            InitializeComponent();
-        }
-
-
+        DataContext = viewModel;
+        InitializeComponent();
+        LoadWindowTemplate();
     }
 }

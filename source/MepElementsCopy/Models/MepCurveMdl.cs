@@ -2,8 +2,7 @@ namespace MepElementsCopy.Models;
 
 public class MepCurveMdl
 {
-   
-    public ElementId Id { get; }
+   public ElementId Id { get; }
 
     public Connector FirstConnector { get; }
 

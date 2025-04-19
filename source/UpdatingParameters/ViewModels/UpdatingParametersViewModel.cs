@@ -603,6 +603,10 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
                 tr.RollBack();
                 throw;
             }
+            finally
+            {
+                _actionEventHandler.Cancel();
+            }
         });
     }
 
@@ -730,31 +734,65 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
     private void UpdateParameters()
     {
         ParametersDataStorage dataStorage = DataStorageFactory.Instance.GetStorage<ParametersDataStorage>();
-        var elements = dataStorage.GetElements();
-        var nestedFamilies = elements.OfType<FamilyInstance>()
-            .SelectMany(fi => fi.GetSubComponentIds()).Where(subId => subId != null).ToList();
-        //Отделение от всех семейств вложенных семейств
-        var elementsIdNotNestedFamilies = elements.Select(x => x.Id).Except(nestedFamilies)
-            .Select(x => x.ToElement(Context.ActiveDocument)).ToList();
-        if (dataStorage.SystemAbbreviationIsChecked)
-        {
-            UpdaterParametersService.UpdateParamSystemAbbreviation(_doc, elementsIdNotNestedFamilies);
-        }
 
-        if (dataStorage.SystemNameIsChecked)
-        {
-            UpdaterParametersService.UpdateParamSystemName(_doc, elementsIdNotNestedFamilies);
-        }
+        // Получаем элементы и отфильтровываем недействительные
+        var elements = dataStorage.GetElements()
+            .Where(x => x != null && x.IsValidObject)
+            .ToList();
 
-        if (dataStorage.HermeticClassIsChecked)
+        try
         {
-            UpdaterParametersService.UpdateParamHermeticСlass(_doc, elements);
-        }
+            var nestedFamilies = elements.OfType<FamilyInstance>()
+                .Where(fi => fi != null && fi.IsValidObject)
+                .SelectMany(fi =>
+                {
+                    try
+                    {
+                        return fi.GetSubComponentIds().Where(subId => subId != null);
+                    }
+                    catch (Exception)
+                    {
+                        // Если возникла ошибка при получении подкомпонентов, возвращаем пустой список
+                        return Enumerable.Empty<ElementId>();
+                    }
+                })
+                .ToList();
 
-        if (dataStorage.WallThicknessIsChecked)
+            // Отделение от всех семейств вложенных семейств
+            var elementsIdNotNestedFamilies = elements
+                .Where(x => x != null && x.IsValidObject)
+                .Select(x => x.Id)
+                .Except(nestedFamilies)
+                .Select(x => x.ToElement(Context.ActiveDocument))
+                .Where(x => x != null)
+                .ToList();
+
+            // Дальнейший код остается без изменений
+            if (dataStorage.SystemAbbreviationIsChecked)
+            {
+                UpdaterParametersService.UpdateParamSystemAbbreviation(_doc, elementsIdNotNestedFamilies);
+            }
+
+            if (dataStorage.SystemNameIsChecked)
+            {
+                UpdaterParametersService.UpdateParamSystemName(_doc, elementsIdNotNestedFamilies);
+            }
+
+            if (dataStorage.HermeticClassIsChecked)
+            {
+                UpdaterParametersService.UpdateParamHermeticСlass(_doc, elements);
+            }
+
+            if (dataStorage.WallThicknessIsChecked)
+            {
+                UpdaterParametersService.UpdateParamWallThickness(_doc, elements,
+                    _ductParametersDataStorage.DuctParameters);
+            }
+        }
+        catch (Exception ex)
         {
-            UpdaterParametersService.UpdateParamWallThickness(_doc, elements,
-                _ductParametersDataStorage.DuctParameters);
+            // Здесь вы можете добавить логирование или показать пользователю сообщение об ошибке
+            // TaskDialog.Show("Ошибка", "Произошла ошибка при обновлении параметров: " + ex.Message);
         }
     }
 

@@ -10,12 +10,17 @@
              d:DesignHeight="600" d:DesignWidth="300">
     <UserControl.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/MepElementsCopy;component/Views/sdd.xaml" />
-            </ResourceDictionary.MergedDictionaries>
+            <d:ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
+            </d:ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
-    <Grid Margin="20">
+    <Grid
+        Margin="5"
+       >
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -25,130 +30,171 @@
 
         <!-- Группа Вверх -->
         <GroupBox Header="Вверх"
-                  Style="{StaticResource ModernGroupBox}"
-                  Margin="0,0,0,15">
-            <Grid Margin="10">
+                  Style="{DynamicResource GroupBoxStyle }"
+                  Margin="0,0,0,10">
+            <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="120" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="Количество:"
-                           Style="{StaticResource ModernTextBlock}" />
-                <TextBox Grid.Row="0" Grid.Column="1"
-                         LostFocus="UIElement_OnLostFocus"
-                         Text="{Binding NumberOfElementsUpwards}"
-                         Style="{StaticResource ModernTextBox}"
-                         Margin="0,0,0,10" />
-
-                <TextBlock Grid.Row="1" Grid.Column="0"
-                           Text="Расстояние:"
-                           Style="{StaticResource ModernTextBlock}"
-                           VerticalAlignment="Center" />
-                <TextBox Grid.Row="1"
-                         Grid.Column="1"
-                         LostFocus="UIElement_OnLostFocus"
-                         Text="{Binding DistanceUp}"
-                         Style="{StaticResource ModernTextBox}" />
+                <Grid Margin="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition  Width="120" />
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Text="Количество:"
+                        VerticalAlignment="Center"
+                        Style="{DynamicResource TextBlockStyle}" />
+                    <TextBox Grid.Column="1"
+                             LostFocus="UIElement_OnLostFocus"
+                             Text="{Binding NumberOfElementsUpwards}"
+                             Style="{DynamicResource ModernTextBoxStyle}"
+                             VerticalAlignment="Center" />
+                </Grid>
+                <Grid Grid.Row="1"
+                      Margin="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="Расстояние, мм:"
+                               Style="{DynamicResource TextBlockStyle}"
+                               VerticalAlignment="Center" />
+                    <TextBox
+                        Grid.Column="1"
+                        LostFocus="UIElement_OnLostFocus"
+                        Text="{Binding DistanceUp}"
+                        Style="{DynamicResource ModernTextBoxStyle}" />
+                </Grid>
             </Grid>
         </GroupBox>
 
         <!-- Группа Вниз -->
         <GroupBox Grid.Row="1"
                   Header="Вниз"
-                  Style="{StaticResource ModernGroupBox}"
-                  Margin="0,0,0,15">
-            <Grid Margin="10">
+                  Style="{DynamicResource GroupBoxStyle}"
+                  Margin="0,0,0,10">
+            <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="120" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Количество:"
-                           Style="{StaticResource ModernTextBlock}"
-                           VerticalAlignment="Center" />
-                <TextBox Grid.Row="0" Grid.Column="1"
-                         LostFocus="UIElement_OnLostFocus"
-                         Text="{Binding NumberOfElementsDown}"
-                         Style="{StaticResource ModernTextBox}"
-                         Margin="0,0,0,10" />
+                <Grid Margin="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Количество:"
+                               Style="{DynamicResource TextBlockStyle}"
+                               VerticalAlignment="Center" />
+                    <TextBox Grid.Column="1"
+                             LostFocus="UIElement_OnLostFocus"
+                             Text="{Binding NumberOfElementsDown}"
+                             Style="{DynamicResource ModernTextBoxStyle}" />
+                </Grid>
 
-                <TextBlock Grid.Row="1" Grid.Column="0"
-                           Text="Расстояние:"
-                           Style="{StaticResource ModernTextBlock}"
-                           VerticalAlignment="Center" />
-                <TextBox Grid.Row="1"
-                         Grid.Column="1"
-                         LostFocus="UIElement_OnLostFocus"
-                         Text="{Binding DistanceDown}"
-                         Style="{StaticResource ModernTextBox}" />
+                <Grid
+                    Margin="5"
+                    Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="Расстояние, мм:"
+                               Style="{DynamicResource TextBlockStyle}"
+                               VerticalAlignment="Center" />
+                    <TextBox
+                        Grid.Column="1"
+                        LostFocus="UIElement_OnLostFocus"
+                        Text="{Binding DistanceDown}"
+                        Style="{DynamicResource ModernTextBoxStyle}" />
+                </Grid>
+
             </Grid>
         </GroupBox>
 
         <!-- Группа Влево/вправо -->
         <GroupBox Grid.Row="2"
                   Header="Влево / вправо"
-                  Style="{StaticResource ModernGroupBox}"
-                  Margin="0,0,0,15">
-            <Grid Margin="10">
+                  Style="{DynamicResource GroupBoxStyle}"
+                  Margin="0,0,0,5">
+            <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="120" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Количество:"
-                           Style="{StaticResource ModernTextBlock}"
-                           VerticalAlignment="Center" />
-                <TextBox Grid.Row="0" Grid.Column="1"
-                         LostFocus="UIElement_OnLostFocus"
-                         Text="{Binding NumberByDirection}"
-                         Style="{StaticResource ModernTextBox}"
-                         Margin="0,0,0,10" />
-
-                <TextBlock Grid.Row="1" Grid.Column="0"
-                           Text="Расстояние:"
-                           Style="{StaticResource ModernTextBlock}"
-                           VerticalAlignment="Center" />
-                <TextBox Grid.Row="1"
-                         Grid.Column="1"
-                         LostFocus="UIElement_OnLostFocus"
-                         Text="{Binding DistanceByDirection}"
-                         Style="{StaticResource ModernTextBox}"
-                         Margin="0,0,0,10" />
-
-                <TextBlock Grid.Row="2" Grid.Column="0"
-                           Text="Направление:"
-                           Style="{StaticResource ModernTextBlock}"
-                           VerticalAlignment="Center" />
-                <Button Grid.Row="2"
+                <Grid Margin="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Количество:"
+                               Style="{DynamicResource TextBlockStyle}"
+                               VerticalAlignment="Center" />
+                    <TextBox Grid.Column="1"
+                             LostFocus="UIElement_OnLostFocus"
+                             Text="{Binding NumberByDirection}"
+                             Style="{DynamicResource ModernTextBoxStyle}" />
+                </Grid>
+                <Grid Grid.Row="1"
+                      Margin="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="Расстояние, мм:"
+                               Style="{DynamicResource TextBlockStyle}"
+                               VerticalAlignment="Center" />
+                    <TextBox
                         Grid.Column="1"
+                        LostFocus="UIElement_OnLostFocus"
+                        Text="{Binding DistanceByDirection}"
+                        Style="{DynamicResource ModernTextBoxStyle}" />
+                </Grid>
+                <Grid Grid.Row="2"
+                      Margin="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="Направление:"
+                               Style="{DynamicResource TextBlockStyle}"
+                               VerticalAlignment="Center" 
+                               HorizontalAlignment="Left"/>
+                    <Button
+                        Grid.Column="1"
+                        Padding="3"
                         Content="Задать направление"
                         Command="{Binding SetDirectionCommand}"
-                        Style="{StaticResource ModernButton}" />
+                        Style="{DynamicResource CommonButtonStyle2}" />
+                </Grid>
+
             </Grid>
         </GroupBox>
-
-        <!-- Кнопка Копировать -->
-        <Button Grid.Row="3"
-                Content="Копировать"
-                Command="{Binding CopyByDirectionsCommand}"
-                Style="{StaticResource ModernAccentButton}"
-                HorizontalAlignment="Right"
-                Margin="0,10,0,0"
-                Width="120"
-                Height="35" />
-    </Grid>
+<DockPanel Grid.Row="3"
+           HorizontalAlignment="Right">
+    <!-- Кнопка Копировать -->
+    <Button 
+        Content="Копировать"
+        Command="{Binding CopyByDirectionsCommand}"
+        Style="{DynamicResource CommonButtonStyle2}"
+        HorizontalAlignment="Right"
+    />
+    <Button Content="Закрыть"
+            HorizontalAlignment="Right"
+            Command="{Binding CloseCommand}"
+            CommandParameter="{Binding  RelativeSource={RelativeSource AncestorType=Window}}"
+            Style="{DynamicResource OutlineCloseButtonStyle}"
+            Margin="10,0,0,0" />
+</DockPanel>
+      </Grid>
 </UserControl>

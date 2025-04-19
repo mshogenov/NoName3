@@ -6,8 +6,8 @@ public sealed partial class UpdatingParametersView
 {
     public UpdatingParametersView(UpdatingParametersViewModel viewModel)
     {
-        DataContext = viewModel;
         InitializeComponent();
-       
+        LoadWindowTemplate();
+        DataContext = viewModel;
     }
 }

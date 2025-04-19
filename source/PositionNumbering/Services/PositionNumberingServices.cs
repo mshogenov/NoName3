@@ -17,7 +17,7 @@ public class PositionNumberingServices
 
         using var transaction = new Transaction(_doc, "Нумерация позиций");
         transaction.Start();
-        using var progressBar = new ProgressWindow(numberingGroups.Count);
+         var progressBar = new ProgressWindow(numberingGroups.Count);
         progressBar.Show();
         try
         {

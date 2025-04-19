@@ -4,12 +4,13 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
 using Autodesk.Revit.UI;
+using NoNameApi.Views.Services;
 
 namespace NoNameApi.Views;
 
 public class BaseRevitWindow : Window
 {
-    protected BaseRevitWindow()
+   protected BaseRevitWindow()
     {
         try
         {
@@ -47,24 +48,17 @@ public class BaseRevitWindow : Window
     }
 
 
+    private bool _stylesLoaded;
+
     protected void LoadWindowTemplate()
     {
-        // Очищаем текущие словари ресурсов
-        Resources.MergedDictionaries.Clear();
+        if (_stylesLoaded) return;
 
-        // Определяем тему
-        bool isDark = IsDarkTheme();
-        
-        // Загружаем нужную тему напрямую
-        string themePath = isDark
-            ? "pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml"
-            : "pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/LightTheme.xaml";
+        // Обновляем текущую тему в менеджере
+        RevitThemeManager.UpdateCurrentTheme();
 
-        // Сначала добавляем тему
-        ResourceDictionary themeDictionary = new ResourceDictionary
-        {
-            Source = new Uri(themePath, UriKind.Absolute)
-        };
+        // Получаем словарь ресурсов текущей темы
+        ResourceDictionary themeDictionary = RevitThemeManager.GetCurrentThemeDictionary();
         Resources.MergedDictionaries.Add(themeDictionary);
 
         // Затем добавляем стили
@@ -74,51 +68,14 @@ public class BaseRevitWindow : Window
                 UriKind.Absolute)
         };
         Resources.MergedDictionaries.Add(stylesDictionary);
-        // Применяем шаблон окна, если он определен
+
+        // Применяем шаблон окна если он определен
         if (Resources.Contains("CustomWindowTemplate"))
         {
             Template = Resources["CustomWindowTemplate"] as ControlTemplate;
         }
-    }
 
-    public void UpdateTheme()
-    {
-        // Находим и обновляем тему в ресурсах окна
-        ResourceDictionary themeDictionary = null;
-
-        foreach (ResourceDictionary dict in Resources.MergedDictionaries)
-        {
-            if (dict.Source != null &&
-                (dict.Source.ToString().Contains("DarkTheme.xaml") ||
-                 dict.Source.ToString().Contains("LightTheme.xaml")))
-            {
-                themeDictionary = dict;
-                break;
-            }
-        }
-
-        // Если нашли словарь темы, заменяем его
-        if (themeDictionary != null)
-        {
-            int index = Resources.MergedDictionaries.IndexOf(themeDictionary);
-
-            // Создаем новый словарь с нужной темой
-            ResourceDictionary newThemeDictionary = new ResourceDictionary
-            {
-                Source = new Uri(IsDarkTheme()
-                        ? "pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml"
-                        : "pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/LightTheme.xaml",
-                    UriKind.Absolute)
-            };
-
-            // Заменяем словарь в коллекции
-            Resources.MergedDictionaries[index] = newThemeDictionary;
-        }
-        else
-        {
-            // Если по какой-то причине словарь не найден, перезагружаем весь шаблон
-            LoadWindowTemplate();
-        }
+        _stylesLoaded = true;
     }
 
     private void BaseRevitWindow_Loaded(object sender, RoutedEventArgs e)
@@ -147,195 +104,117 @@ public class BaseRevitWindow : Window
         source?.AddHook(WndProc);
     }
 
-    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+   private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+{
+    const int WM_NCHITTEST = 0x0084;
+    const int HTLEFT = 10;
+    const int HTRIGHT = 11;
+    const int HTTOP = 12;
+    const int HTTOPLEFT = 13;
+    const int HTTOPRIGHT = 14;
+    const int HTBOTTOM = 15;
+    const int HTBOTTOMLEFT = 16;
+    const int HTBOTTOMRIGHT = 17;
+
+    // Ширина невидимой рамки для изменения размера
+    const int borderWidth = 8;
+    // Смещение области изменения размера (отрицательное значение смещает наружу)
+    const int offsetBorder = -4; 
+
+    if (msg != WM_NCHITTEST) return IntPtr.Zero;
+    Point ptScreen = new Point(
+        (int)(lParam) & 0xFFFF,
+        (int)(lParam) >> 16
+    );
+
+    Point ptClient = PointFromScreen(ptScreen);
+
+    // Проверяем, находится ли курсор в области изменения размера
+    // Используем смещение, чтобы сдвинуть область ближе к границе
+    if (ptClient.X <= borderWidth + offsetBorder)
     {
-        const int WM_NCHITTEST = 0x0084;
-        const int HTLEFT = 10;
-        const int HTRIGHT = 11;
-        const int HTTOP = 12;
-        const int HTTOPLEFT = 13;
-        const int HTTOPRIGHT = 14;
-        const int HTBOTTOM = 15;
-        const int HTBOTTOMLEFT = 16;
-        const int HTBOTTOMRIGHT = 17;
-
-        // Ширина невидимой рамки для изменения размера
-        const int borderWidth = 8;
-
-        if (msg != WM_NCHITTEST) return IntPtr.Zero;
-        Point ptScreen = new Point(
-            (int)(lParam) & 0xFFFF,
-            (int)(lParam) >> 16
-        );
-
-        Point ptClient = PointFromScreen(ptScreen);
-
-        // Проверяем, находится ли курсор в области изменения размера
-        if (ptClient.X <= borderWidth)
-        {
-            if (ptClient.Y <= borderWidth)
-            {
-                handled = true;
-                return (IntPtr)HTTOPLEFT;
-            }
-
-            if (ptClient.Y >= ActualHeight - borderWidth)
-            {
-                handled = true;
-                return (IntPtr)HTBOTTOMLEFT;
-            }
-
-            handled = true;
-            return (IntPtr)HTLEFT;
-        }
-
-        if (ptClient.X >= ActualWidth - borderWidth)
-        {
-            if (ptClient.Y <= borderWidth)
-            {
-                handled = true;
-                return (IntPtr)HTTOPRIGHT;
-            }
-
-            if (ptClient.Y >= ActualHeight - borderWidth)
-            {
-                handled = true;
-                return (IntPtr)HTBOTTOMRIGHT;
-            }
-
-            handled = true;
-            return (IntPtr)HTRIGHT;
-        }
-
-        if (ptClient.Y <= borderWidth)
+        if (ptClient.Y <= borderWidth + offsetBorder)
         {
             handled = true;
-            return (IntPtr)HTTOP;
+            return (IntPtr)HTTOPLEFT;
         }
 
-        if (!(ptClient.Y >= ActualHeight - borderWidth)) return IntPtr.Zero;
+        if (ptClient.Y >= ActualHeight - (borderWidth + offsetBorder))
+        {
+            handled = true;
+            return (IntPtr)HTBOTTOMLEFT;
+        }
+
         handled = true;
-        return (IntPtr)HTBOTTOM;
+        return (IntPtr)HTLEFT;
     }
+
+    if (ptClient.X >= ActualWidth - (borderWidth + offsetBorder))
+    {
+        if (ptClient.Y <= borderWidth + offsetBorder)
+        {
+            handled = true;
+            return (IntPtr)HTTOPRIGHT;
+        }
+
+        if (ptClient.Y >= ActualHeight - (borderWidth + offsetBorder))
+        {
+            handled = true;
+            return (IntPtr)HTBOTTOMRIGHT;
+        }
+
+        handled = true;
+        return (IntPtr)HTRIGHT;
+    }
+
+    if (ptClient.Y <= borderWidth + offsetBorder)
+    {
+        handled = true;
+        return (IntPtr)HTTOP;
+    }
+
+    if (!(ptClient.Y >= ActualHeight - (borderWidth + offsetBorder))) return IntPtr.Zero;
+    handled = true;
+    return (IntPtr)HTBOTTOM;
+}
 
     public override void OnApplyTemplate()
-{
-    base.OnApplyTemplate();
-
-    // Получаем визуальное дерево
-    if (Template == null) return;
-
-    var templateRoot = (FrameworkElement)Template.LoadContent();
-
-    // Проверяем, есть ли ресурсы в корне шаблона
-    if (templateRoot.Resources != null)
     {
-        // Замораживаем ресурсы в корне шаблона
-        foreach (var resource in templateRoot.Resources.Values)
+        base.OnApplyTemplate();
+        // Привязываем обработчики к кнопкам управления окном
+        if (GetTemplateChild("MinimizeButton") is Button minimizeButton)
         {
-            FreezeResourceIfPossible(resource);
+            minimizeButton.Click += (_, _) => WindowState = WindowState.Minimized;
         }
-    }
 
-    // Проверяем и замораживаем Storyboard в триггерах шаблона
-    FreezeStoryboardsInTemplate(Template);
-
-    // Привязываем обработчики к кнопкам управления окном
-    if (GetTemplateChild("MinimizeButton") is Button minimizeButton)
-    {
-        minimizeButton.Click += (_, _) => WindowState = WindowState.Minimized;
-    }
-
-    if (GetTemplateChild("MaximizeButton") is Button maximizeButton)
-    {
-        maximizeButton.Click += (_, _) =>
+        if (GetTemplateChild("MaximizeButton") is Button maximizeButton)
         {
-            WindowState = (WindowState == WindowState.Maximized)
-                ? WindowState.Normal
-                : WindowState.Maximized;
-
-            // Обновляем иконку кнопки
-            maximizeButton.Content = (WindowState == WindowState.Maximized) ? "\uE923" : "\uE922";
-        };
-    }
-
-    if (GetTemplateChild("CloseButton") is Button closeButton)
-    {
-        closeButton.Click += (_, _) => Close();
-    }
-
-    // Добавляем перетаскивание окна через заголовок
-    if (GetTemplateChild("PART_HeaderGrid") is Grid headerGrid)
-    {
-        headerGrid.MouseLeftButtonDown += (_, e) =>
-        {
-            if (e.ButtonState == MouseButtonState.Pressed)
+            maximizeButton.Click += (_, _) =>
             {
-                DragMove();
-            }
-        };
-    }
-}
+                WindowState = (WindowState == WindowState.Maximized)
+                    ? WindowState.Normal
+                    : WindowState.Maximized;
 
-// Вспомогательный метод для замораживания ресурса
-private void FreezeResourceIfPossible(object resource)
-{
-    if (resource is Freezable freezable && !freezable.IsFrozen && freezable.CanFreeze)
-    {
-        try
-        {
-            freezable.Freeze();
+                // Обновляем иконку кнопки
+                maximizeButton.Content = (WindowState == WindowState.Maximized) ? "\uE923" : "\uE922";
+            };
         }
-        catch (Exception ex)
+
+        if (GetTemplateChild("CloseButton") is Button closeButton)
         {
-        
+            closeButton.Click += (_, _) => Close();
         }
-    }
-}
 
-// Метод для поиска и замораживания Storyboard в триггерах ControlTemplate
-private void FreezeStoryboardsInTemplate(ControlTemplate template)
-{
-    if (template == null) return;
-
-    // Получаем все триггеры из шаблона
-    if (template.Triggers != null)
-    {
-        foreach (var trigger in template.Triggers)
+        // Добавляем перетаскивание окна через заголовок
+        if (GetTemplateChild("PART_HeaderGrid") is Grid headerGrid)
         {
-            // EventTrigger содержит BeginStoryboard
-            if (trigger is EventTrigger eventTrigger)
+            headerGrid.MouseLeftButtonDown += (_, e) =>
             {
-                foreach (var action in eventTrigger.Actions)
+                if (e.ButtonState == MouseButtonState.Pressed)
                 {
-                    if (action is BeginStoryboard beginStoryboard && beginStoryboard.Storyboard != null)
-                    {
-                        FreezeResourceIfPossible(beginStoryboard.Storyboard);
-                    }
+                    DragMove();
                 }
-            }
-            // Trigger может содержать EnterActions и ExitActions
-            else if (trigger is Trigger regularTrigger)
-            {
-                // Проверяем EnterActions
-                foreach (var action in regularTrigger.EnterActions)
-                {
-                    if (action is BeginStoryboard beginStoryboard && beginStoryboard.Storyboard != null)
-                    {
-                        FreezeResourceIfPossible(beginStoryboard.Storyboard);
-                    }
-                }
-
-                // Проверяем ExitActions
-                foreach (var action in regularTrigger.ExitActions)
-                {
-                    if (action is BeginStoryboard beginStoryboard && beginStoryboard.Storyboard != null)
-                    {
-                        FreezeResourceIfPossible(beginStoryboard.Storyboard);
-                    }
-                }
-            }
+            };
         }
     }
-}
 }
