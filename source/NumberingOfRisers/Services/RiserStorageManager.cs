@@ -47,34 +47,51 @@ public class RiserStorageManager
         {
             // Получаем схему хранения
             Schema schema = GetSchema();
-            // Создаем список данных стояков для сериализации
-            var riserDates = new List<RiserData>();
+
+            // Получаем ProjectInfo
+            ProjectInfo projectInfo = doc.ProjectInformation;
+            if (projectInfo == null)
+            {
+                throw new Exception("ProjectInfo не найден");
+            }
+
+            // Получаем существующие данные
+            List<RiserData> existingRiserData = new List<RiserData>();
+            Entity existingEntity = projectInfo.GetEntity(schema);
+            if (existingEntity != null && existingEntity.IsValid())
+            {
+                string existingJsonData = existingEntity.Get<string>(FieldName);
+                if (!string.IsNullOrEmpty(existingJsonData))
+                {
+                    existingRiserData = JsonConvert.DeserializeObject<List<RiserData>>(existingJsonData);
+                }
+            }
+
+            // Создаем список новых данных стояков для сериализации
+            var newRiserData = new List<RiserData>();
             foreach (var riser in riserDataStorage.Risers)
             {
                 var riserData = new RiserData()
                 {
-                    // Id = r.Id,
                     Number = riser.Number,
                     ElementIds = riser.ElementIds.Select(id => id.Value).ToList(),
                     Ignored = riser.Ignored
                 };
-                riserDates.Add(riserData);
+                newRiserData.Add(riserData);
             }
 
+            // Объединяем существующие и новые данные
+            var mergedRiserData = MergeRiserData(existingRiserData, newRiserData);
 
-            // Сериализуем данные в JSON
-            string jsonData = JsonConvert.SerializeObject(riserDates, Formatting.None);
+            // Сериализуем объединенные данные в JSON
+            string jsonData = JsonConvert.SerializeObject(mergedRiserData, Formatting.None);
 
             // Создаем Entity для хранения данных
             Entity entity = new Entity(schema);
             entity.Set(FieldName, jsonData);
 
-            // Сохраняем данные в ProjectInfo (можно использовать другой элемент)
-            ProjectInfo projectInfo = doc.ProjectInformation;
-            if (projectInfo != null)
-            {
-                projectInfo.SetEntity(entity);
-            }
+            // Сохраняем данные в ProjectInfo
+            projectInfo.SetEntity(entity);
 
             tx.Commit();
         }
@@ -85,12 +102,49 @@ public class RiserStorageManager
         }
     }
 
+    private static List<RiserData> MergeRiserData(List<RiserData> existingData, List<RiserData> newData)
+    {
+        var mergedData = new List<RiserData>(existingData);
+
+        foreach (var newRiser in newData)
+        {
+            var existingRiser = mergedData.FirstOrDefault(r => IsIdenticalRiser(r, newRiser));
+            if (existingRiser != null)
+            {
+                // Обновляем существующий стояк
+                existingRiser.Number = newRiser.Number;
+                existingRiser.ElementIds = newRiser.ElementIds;
+                existingRiser.Ignored = newRiser.Ignored;
+            }
+            else
+            {
+                // Добавляем новый стояк
+                mergedData.Add(newRiser);
+            }
+        }
+
+        return mergedData;
+    }
+
+    private static bool IsIdenticalRiser(RiserData riser1, RiserData riser2, double minMatchPercentage = 50.0)
+    {
+        if (riser1 == null || riser2 == null ||
+            riser1.ElementIds.Count == 0 || riser2.ElementIds.Count == 0)
+            return false;
+
+        int matchCount = riser1.ElementIds.Count(id => riser2.ElementIds.Contains(id));
+        int minElementCount = Math.Min(riser1.ElementIds.Count, riser2.ElementIds.Count);
+        double matchPercentage = (matchCount * 100.0) / minElementCount;
+
+        return matchPercentage >= minMatchPercentage;
+    }
+
     /// <summary>
     /// Загружает стояки из ExtensibleStorage проекта
     /// </summary>
     public static List<RiserData> LoadRisers(Document doc)
     {
-        List<RiserData> riserDates = [];
+        List<RiserData> riserDates;
         // Получаем схему хранения
         Schema schema = GetSchema();
         if (schema == null)
@@ -127,40 +181,6 @@ public class RiserStorageManager
             {
                 return new List<RiserData>();
             }
-
-            // var risers = new List<Riser>();
-            // foreach (var riserData in riserDataList)
-            // {
-            //   
-            //     // Восстанавливаем ElementIds и получаем трубы
-            //     var elementIds = new List<ElementId>();
-            //     var pipes = new List<Pipe>();
-            //
-            //     foreach (long idValue in riserData.ElementIds)
-            //     {
-            //         ElementId elementId = new ElementId(idValue);
-            //         elementIds.Add(elementId);
-            //
-            //         // Получаем трубу по ID
-            //         Element element = doc.GetElement(elementId);
-            //         if (element is Pipe pipe)
-            //         {
-            //             pipes.Add(pipe);
-            //         }
-            //     }
-            //
-            //     // Создаем стояк, используя конструктор с коллекцией труб
-            //     var riser = new Riser(pipes);
-            //
-            //     // Устанавливаем сохраненные значения
-            //     // riser.Id = riserData.Id;
-            //     riser.Number = riserData.Number;
-            //     riser.ElementIds = elementIds;
-            //     riser.Ignored = riserData.Ignored;
-            //     
-            //     risers.Add(riser);
-            // }
-            // return risers;
         }
         catch (Exception ex)
         {

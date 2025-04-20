@@ -175,38 +175,72 @@ public partial class NumberingOfRisersViewModel : ObservableObject
         try
         {
             List<RiserData> loadRisersDataShema = RiserStorageManager.LoadRisers(_doc);
-
-            List<RiserData> ignoredRisers = loadRisersDataShema.Where(x => x.Ignored).ToList();
-
-// Создаем новый список для хранения стояков, которые нужно оставить
-            List<Riser> risersToKeep = new List<Riser>();
-
+            // Список для хранения стояков, которые нужно удалить
+            var risersToRemove = new List<Riser>();
+            // Список для хранения новых стояков, которые нужно добавить
+            var risersToAdd = new List<Riser>();
+            // Сначала проверяем существующие стояки на совпадение с игнорируемыми
             foreach (Riser riser in _riserDataStorage.Risers)
             {
-                bool shouldKeep = true;
-
-                foreach (RiserData ignoredRiser in ignoredRisers)
+                bool shouldBeRemoved = false;
+                foreach (RiserData loadRiserData in loadRisersDataShema)
                 {
-                    // Подсчитываем количество совпадающих ElementId
-                    int matchCount = riser.ElementIds.Count(elementId =>
-                        ignoredRiser.ElementIds.Contains(elementId.Value));
-
-                    // Если количество совпадений равно количеству ElementId в игнорируемом стояке,
-                    // считаем, что это тот же самый стояк и его нужно удалить
-                    if (matchCount > 1)
+                    // Если найден идентичный игнорируемый стояк, отмечаем его на удаление
+                    if (IsIdenticalRisers(riser, loadRiserData) && loadRiserData.Ignored)
                     {
-                        shouldKeep = false;
+                        shouldBeRemoved = true;
                         break;
                     }
                 }
-
-                if (shouldKeep)
+                if (shouldBeRemoved)
                 {
-                    risersToKeep.Add(riser);
+                    risersToRemove.Add(riser);
                 }
             }
+            // Удаляем отмеченные стояки из хранилища
+            foreach (var riser in risersToRemove)
+            {
+                _riserDataStorage.Risers.Remove(riser);
+            }
+            // Теперь добавляем новые неигнорируемые стояки
+            foreach (RiserData loadRiserData in loadRisersDataShema)
+            {
+                // Пропускаем игнорируемые стояки
+                if (loadRiserData.Ignored)
+                    continue;
 
-            RiserSystemTypes = new ObservableCollection<RiserSystemType>(risersToKeep
+                // Проверяем, есть ли уже такой стояк в хранилище
+                bool riserExists = _riserDataStorage.Risers.Any(r => IsIdenticalRisers(r, loadRiserData));
+
+                // Если стояка нет, создаем новый и добавляем
+                if (!riserExists)
+                {
+                    // Восстанавливаем ElementIds и получаем трубы
+                    var pipes = new List<Pipe>();
+                    foreach (long idValue in loadRiserData.ElementIds)
+                    {
+                        ElementId elementId = new ElementId(idValue);
+                        // Получаем трубу по ID
+                        Element element = _doc.GetElement(elementId);
+                        if (element is Pipe pipe)
+                        {
+                            pipes.Add(pipe);
+                        }
+                    }
+
+                    if (pipes.Count > 0)
+                    {
+                        risersToAdd.Add(new Riser(pipes));
+                    }
+                }
+            }
+            // Добавляем новые стояки в хранилище
+            foreach (var riser in risersToAdd)
+            {
+                _riserDataStorage.Risers.Add(riser);
+            }
+            
+            RiserSystemTypes = new ObservableCollection<RiserSystemType>(_riserDataStorage.Risers
                 .GroupBy(r => r.MepSystemType?.Name ?? "Без системы")
                 .Select(group => new RiserSystemType(group.ToList()))
                 .ToList());
@@ -217,6 +251,74 @@ public partial class NumberingOfRisersViewModel : ObservableObject
             MessageBox.Show($"Ошибка при инициализации данных: {ex.Message}",
                 "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    /// <summary>
+    /// Проверяет, идентичны ли два стояка на основе процента совпадающих ElementIds.
+    /// </summary>
+    /// <param name="riser1">Первый стояк для сравнения</param>
+    /// <param name="riser2">Второй стояк для сравнения</param>
+    /// <param name="minMatchPercentage">Минимальный процент совпадающих ElementIds для признания идентичности (по умолчанию 50%)</param>
+    /// <returns>True, если стояки считаются идентичными</returns>
+    public bool IsIdenticalRisers(Riser riser1, Riser riser2, double minMatchPercentage = 50.0)
+    {
+        if (riser1 == null || riser2 == null ||
+            riser1.ElementIds.Count == 0 || riser2.ElementIds.Count == 0)
+            return false;
+
+        // Подсчитываем количество совпадающих ElementIds
+        int matchCount = riser1.ElementIds.Count(elementId =>
+            riser2.ElementIds.Any(otherElementId =>
+                otherElementId.Value == elementId.Value));
+
+        // Находим меньшее из количеств ElementIds двух стояков
+        int minElementCount = Math.Min(riser1.ElementIds.Count, riser2.ElementIds.Count);
+
+        // Вычисляем процент совпадений относительно меньшего количества ElementIds
+        double matchPercentage = (matchCount * 100.0) / minElementCount;
+
+        return matchPercentage >= minMatchPercentage;
+    }
+
+    public bool IsIdenticalRisers(Riser riser1, RiserData riserData, double minMatchPercentage = 50.0)
+    {
+        if (riser1 == null || riserData == null ||
+            riser1.ElementIds.Count == 0 || riserData.ElementIds.Count == 0)
+            return false;
+
+        // Подсчитываем количество совпадающих ElementIds
+        int matchCount = riser1.ElementIds.Count(elementId =>
+            riserData.ElementIds.Any(otherElementId =>
+                otherElementId == elementId.Value));
+
+        // Находим меньшее из количеств ElementIds двух стояков
+        int minElementCount = Math.Min(riser1.ElementIds.Count, riserData.ElementIds.Count);
+
+        // Вычисляем процент совпадений относительно меньшего количества ElementIds
+        double matchPercentage = (matchCount * 100.0) / minElementCount;
+
+        return matchPercentage >= minMatchPercentage;
+    }
+
+    /// <summary>
+    /// Получает процент совпадающих ElementIds между двумя стояками.
+    /// </summary>
+    /// <param name="riser1">Первый стояк для сравнения</param>
+    /// <param name="riser2">Второй стояк для сравнения</param>
+    /// <returns>Процент совпадающих ElementIds относительно меньшего количества ElementIds</returns>
+    public double GetMatchPercentage(Riser riser1, Riser riser2)
+    {
+        if (riser1 == null || riser2 == null ||
+            riser1.ElementIds.Count == 0 || riser2.ElementIds.Count == 0)
+            return 0;
+
+        int matchCount = riser1.ElementIds.Count(elementId =>
+            riser2.ElementIds.Any(otherElementId =>
+                otherElementId.Value == elementId.Value));
+
+        int minElementCount = Math.Min(riser1.ElementIds.Count, riser2.ElementIds.Count);
+
+        return (matchCount * 100.0) / minElementCount;
     }
 
     [RelayCommand]
