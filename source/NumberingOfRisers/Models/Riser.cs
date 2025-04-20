@@ -10,10 +10,11 @@ public partial class Riser : ObservableObject
     public XYZ Location { get; set; }
     [ObservableProperty] private string _newNumberRiser;
     public MEPSystemType MepSystemType { get; set; }
-    public ICollection<ElementId> ElementIds { get; set; } = [];
+    public List<ElementId> ElementIds { get; set; } = [];
     public double? TotalLength { get; set; }
 
     public List<Pipe> Pipes { get; set; } = [];
+    public bool Ignored { get; set; }
 
     public Riser(IGrouping<Element, Pipe> pipesGroups)
     {
@@ -34,6 +35,7 @@ public partial class Riser : ObservableObject
         CountPipes = pipesGroups.Count();
         Number = GetNumberRiser();
         CountPipes = Pipes.Count;
+        Ignored = false;
     }
 
 // Конструктор для ручного добавления стояка
@@ -52,6 +54,7 @@ public partial class Riser : ObservableObject
         MepSystemType = GetPipingSystemType(Pipes.FirstOrDefault());
         CountPipes = Pipes.Count;
         Number = GetNumberRiser();
+        Ignored = false;
     }
 
     /// <summary>
@@ -61,14 +64,12 @@ public partial class Riser : ObservableObject
     public int GetNumberRiser()
     {
         if (Pipes.Count <= 0) return 0;
-
         // Группировка с отфильтрованными null значениями
         var groups = Pipes
             .Where(p => p.FindParameter("ADSK_Номер стояка") != null &&
                         !string.IsNullOrEmpty(p.FindParameter("ADSK_Номер стояка")?.AsValueString()))
             .GroupBy(p => p.FindParameter("ADSK_Номер стояка")?.AsValueString())
             .ToList();
-
         if (groups.Count == 0)
             return 0;
 

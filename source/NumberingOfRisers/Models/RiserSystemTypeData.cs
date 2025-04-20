@@ -7,5 +7,5 @@ namespace NumberingOfRisers.Models;
 public class RiserSystemTypeData
 {
     public string MepSystemTypeName { get; set; }
-    public List<RiserData> Risers { get; set; } = new List<RiserData>();
+    public List<RiserData> Risers { get; set; } = new();
 }

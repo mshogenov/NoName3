@@ -6,7 +6,8 @@ namespace NumberingOfRisers.Models;
 [Serializable]
 public class RiserData
 {
-    public Guid Id { get; set; }
+    // public Guid Id { get; set; }
     public int Number { get; set; }
     public List<long> ElementIds { get; set; } = [];
+    public bool Ignored { get; set; }
 }

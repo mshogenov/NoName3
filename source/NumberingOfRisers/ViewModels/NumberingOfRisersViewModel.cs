@@ -11,6 +11,7 @@ using Nice3point.Revit.Toolkit.External.Handlers;
 using NoNameApi.Utils;
 using NumberingOfRisers.Filters;
 using Transaction = Autodesk.Revit.DB.Transaction;
+using Visibility = System.Windows.Visibility;
 
 namespace NumberingOfRisers.ViewModels;
 
@@ -19,7 +20,6 @@ public partial class NumberingOfRisersViewModel : ObservableObject
     private readonly Document _doc = Context.ActiveDocument;
     private readonly ActionEventHandler _actionEvent = new();
     private readonly UIDocument _uiDoc = Context.ActiveUiDocument;
-    private readonly string _paramRiserId = "msh_Идентификатор стояка";
     private readonly SettingsDataStorage _settingsDataStorage;
     private UserControl _settingsWindow;
     [ObservableProperty] private NumberingStrategy _selectedStrategy;
@@ -103,27 +103,33 @@ public partial class NumberingOfRisersViewModel : ObservableObject
     private readonly DataLoader _dataLoader = new(fileName: "DataNumberingOfRisers");
     [ObservableProperty] private bool _isVisibilityMissingParameterParamRiserId;
     [ObservableProperty] private bool _isVisibilityMissingParameters;
+    private readonly RiserDataStorage _riserDataStorage;
 
     public NumberingOfRisersViewModel()
     {
         _numberingOfRisersServices = new NumberingOfRisersServices();
-        InitializeFromStorage();
+        _riserDataStorage = new RiserDataStorage(_doc);
 
         // Загружаем данные из ExtensibleStorage
+        InitializeFromStorage();
 
         // Инициализация списка стратегий нумерации
+        InitializeStrategies();
+
+        // Установка стратегии по умолчанию
+        SelectedStrategy = NumberingStrategies[0];
+    }
+
+    private void InitializeStrategies()
+    {
         NumberingStrategies.Add(new NumberingStrategy("Снизу вверх, слева направо",
             NumberingDirection.LeftToRight, NumberingDirection.BottomToTop, SortDirection.Y));
-
         NumberingStrategies.Add(new NumberingStrategy("Снизу вверх, справа налево",
             NumberingDirection.RightToLeft, NumberingDirection.BottomToTop, SortDirection.Y));
-
         NumberingStrategies.Add(new NumberingStrategy("Сверху вниз, слева направо",
             NumberingDirection.LeftToRight, NumberingDirection.TopToBottom, SortDirection.Y));
-
         NumberingStrategies.Add(new NumberingStrategy("Сверху вниз, справа налево",
             NumberingDirection.RightToLeft, NumberingDirection.TopToBottom, SortDirection.Y));
-
         NumberingStrategies.Add(new NumberingStrategy("Слева направо, снизу вверх",
             NumberingDirection.LeftToRight, NumberingDirection.BottomToTop, SortDirection.X));
         NumberingStrategies.Add(new NumberingStrategy("Слева направо, сверху вниз",
@@ -132,48 +138,8 @@ public partial class NumberingOfRisersViewModel : ObservableObject
             NumberingDirection.RightToLeft, NumberingDirection.BottomToTop, SortDirection.X));
         NumberingStrategies.Add(new NumberingStrategy("Справа налево, сверху вниз",
             NumberingDirection.RightToLeft, NumberingDirection.TopToBottom, SortDirection.X));
-
-        // Установка стратегии по умолчанию
-        SelectedStrategy = NumberingStrategies[0];
-        _isVisibilityMissingParameterParamRiserId =
-            !Helpers.CheckParameterExists(_doc, _paramRiserId);
-
-        if (_isVisibilityMissingParameterParamRiserId)
-        {
-            _isVisibilityMissingParameters = true;
-        }
     }
 
-    [RelayCommand]
-    private void AddParameter()
-    {
-        _actionEvent.Raise(_ =>
-        {
-            using Transaction tr = new Transaction(_doc, "Добавить общий параметр");
-            tr.Start();
-            try
-            {
-                var isCreate = Helpers.CreateSharedParameter(_doc, _paramRiserId,
-                    SpecTypeId.String.Text, GroupTypeId.IdentityData, true, [BuiltInCategory.OST_PipeCurves]);
-                if (isCreate)
-                {
-                    IsVisibilityMissingParameterParamRiserId = false;
-                }
-
-                if (!IsVisibilityMissingParameterParamRiserId)
-                {
-                    IsVisibilityMissingParameters = false;
-                }
-
-                tr.Commit();
-            }
-            catch (Exception e)
-            {
-                tr.RollBack();
-                MessageBox.Show(e.Message, "Ошибка");
-            }
-        });
-    }
 
     /// <summary>
     /// Сохраняет данные стояков в ExtensibleStorage
@@ -185,7 +151,7 @@ public partial class NumberingOfRisersViewModel : ObservableObject
         {
             try
             {
-                RiserStorageManager.SaveRisers(_doc, RiserSystemTypes.ToList());
+                RiserStorageManager.SaveRisers(_doc, _riserDataStorage);
                 MessageBox.Show("Данные стояков успешно сохранены в файле Revit.",
                     "Сохранение данных", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -208,109 +174,47 @@ public partial class NumberingOfRisersViewModel : ObservableObject
     {
         try
         {
-            var loadedSystemTypes = RiserStorageManager.LoadRisers(_doc);
+            List<RiserData> loadRisersDataShema = RiserStorageManager.LoadRisers(_doc);
 
-            if (loadedSystemTypes.Count > 0)
+            List<RiserData> ignoredRisers = loadRisersDataShema.Where(x => x.Ignored).ToList();
+
+// Создаем новый список для хранения стояков, которые нужно оставить
+            List<Riser> risersToKeep = new List<Riser>();
+
+            foreach (Riser riser in _riserDataStorage.Risers)
             {
-                foreach (var systemType in loadedSystemTypes)
+                bool shouldKeep = true;
+
+                foreach (RiserData ignoredRiser in ignoredRisers)
                 {
-                    RiserSystemTypes.Add(systemType);
+                    // Подсчитываем количество совпадающих ElementId
+                    int matchCount = riser.ElementIds.Count(elementId =>
+                        ignoredRiser.ElementIds.Contains(elementId.Value));
+
+                    // Если количество совпадений равно количеству ElementId в игнорируемом стояке,
+                    // считаем, что это тот же самый стояк и его нужно удалить
+                    if (matchCount > 1)
+                    {
+                        shouldKeep = false;
+                        break;
+                    }
                 }
 
-                OnPropertyChanged(nameof(RiserSystemTypes));
+                if (shouldKeep)
+                {
+                    risersToKeep.Add(riser);
+                }
             }
-            else
-            {
-                List<Pipe> verticalPipes = _numberingOfRisersServices.GetVerticalPipes(_doc).ToList();
 
-                var verticalPipesAlongLocations = verticalPipes.GroupBy(p => p, new PipeIEqualityComparer()).ToList();
-                var risers = verticalPipesAlongLocations
-                    .Select(verticalPipesAlongLocation => new Riser(verticalPipesAlongLocation))
-                    .Where(x => x.TotalLength > 2500).ToList().OrderBy(x=>x.Number);
-                RiserSystemTypes = new ObservableCollection<RiserSystemType>(risers
-                    .GroupBy(r => r.MepSystemType?.Name ?? "Без системы")
-                    .Select(group => new RiserSystemType(group.ToList()))
-                    .ToList());
-            }
+            RiserSystemTypes = new ObservableCollection<RiserSystemType>(risersToKeep
+                .GroupBy(r => r.MepSystemType?.Name ?? "Без системы")
+                .Select(group => new RiserSystemType(group.ToList()))
+                .ToList());
+            OnPropertyChanged(nameof(RiserSystemTypes));
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Ошибка при инициализации данных: {ex.Message}",
-                "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
-    }
-
-    private void LoadRisersData()
-    {
-        try
-        {
-            var loadedSystemTypes = RiserStorageManager.LoadRisers(_doc);
-
-            if (loadedSystemTypes.Count > 0)
-            {
-                // Спрашиваем пользователя: заменить текущие данные или объединить
-                var result = MessageBox.Show("Заменить текущие данные стояков загруженными?",
-                    "Загрузка данных", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
-
-                if (result == MessageBoxResult.Cancel)
-                {
-                    return;
-                }
-
-                if (result == MessageBoxResult.Yes)
-                {
-                    // Заменяем существующие данные
-                    RiserSystemTypes.Clear();
-                    foreach (var systemType in loadedSystemTypes)
-                    {
-                        RiserSystemTypes.Add(systemType);
-                    }
-                }
-                else
-                {
-                    // Объединяем данные
-                    foreach (var loadedSystemType in loadedSystemTypes)
-                    {
-                        var existingSystemType = RiserSystemTypes.FirstOrDefault(
-                            st => st.MepSystemTypeName == loadedSystemType.MepSystemTypeName);
-
-                        if (existingSystemType != null)
-                        {
-                            // Объединяем стояки в существующей системе
-                            foreach (var loadedRiser in loadedSystemType.Risers)
-                            {
-                                var existingRiser = existingSystemType.Risers.FirstOrDefault(
-                                    r => r.Id == loadedRiser.Id);
-
-                                if (existingRiser == null)
-                                {
-                                    existingSystemType.Risers.Add(loadedRiser);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // Добавляем новую систему
-                            RiserSystemTypes.Add(loadedSystemType);
-                        }
-                    }
-                }
-
-                // Обновляем UI
-                OnPropertyChanged(nameof(RiserSystemTypes));
-
-                MessageBox.Show("Данные стояков успешно загружены.",
-                    "Загрузка данных", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            else
-            {
-                MessageBox.Show("В проекте не найдены сохраненные данные стояков.",
-                    "Загрузка данных", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Ошибка при загрузке данных: {ex.Message}",
                 "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -363,144 +267,118 @@ public partial class NumberingOfRisersViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void AddRiser()
+    private void AddRiser(object parameter)
     {
-        try
+        if (parameter is Window window)
         {
-            // Выбор трубы пользователем
-            var selectionFilter = new VerticalPipeSelectionFilter();
-            var pickedRef =
-                _uiDoc.Selection.PickObject(ObjectType.Element, selectionFilter, "Выберите вертикальную трубу");
-
-            // Получаем выбранную трубу
-            if (_doc.GetElement(pickedRef.ElementId) is not Pipe selectedPipe) return;
-
-            // Получаем координаты выбранной трубы
-            XYZ selectedPipeLocation = GetPipeLocationXY(selectedPipe);
-
-            // Получаем все вертикальные трубы
-            List<Pipe> verticalPipes = _numberingOfRisersServices.GetVerticalPipes(_doc).ToList();
-
-            // Определяем допустимое расстояние для группировки труб
-            const double tolerance = 0.1; // в футах, настройте в соответствии с вашими требованиями
-
-            // Находим трубы, расположенные рядом по X и Y
-            List<Pipe> nearbyPipes = verticalPipes
-                .Where(pipe => IsNearbyInXY(pipe, selectedPipeLocation, tolerance))
-                .ToList();
-
-            // Добавляем выбранную трубу, если ее нет в списке
-            if (nearbyPipes.All(p => p.Id.Value != selectedPipe.Id.Value))
+            window.Visibility = Visibility.Hidden;
+            try
             {
-                nearbyPipes.Add(selectedPipe);
-            }
+                // Выбор трубы пользователем
+                var selectionFilter = new VerticalPipeSelectionFilter();
+                var pickedRef =
+                    _uiDoc.Selection.PickObject(ObjectType.Element, selectionFilter, "Выберите вертикальную трубу");
 
-            // Создаем новый стояк из найденных труб
-            if (nearbyPipes.Any())
-            {
-                // Проверяем, не входят ли найденные трубы уже в существующие стояки
-                // Проверяем, не входят ли найденные трубы уже в существующие стояки
-                bool pipeAlreadyInRiser = false;
-                foreach (var systemType in RiserSystemTypes)
+                // Получаем выбранную трубу
+                if (_doc.GetElement(pickedRef.ElementId) is not Pipe selectedPipe)
                 {
-                    if (systemType.Risers.Any(r =>
-                            nearbyPipes.Any(p => r.ElementIds.Contains(p.Id))))
-                    {
-                        pipeAlreadyInRiser = true;
-                        break;
-                    }
-                }
-
-                if (pipeAlreadyInRiser)
-                {
-                    // var result = TaskDialog.Show("Предупреждение", 
-                    //     "Некоторые из найденных труб уже входят в существующие стояки. Продолжить?",
-                    //     TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No);
-                    //
-                    // if (result != TaskDialogResult.Yes)
+                    window.Visibility = Visibility.Visible;
                     return;
                 }
 
-                if (nearbyPipes.Count > 0)
+                // Получаем координаты выбранной трубы
+                XYZ selectedPipeLocation = GetPipeLocationXY(selectedPipe);
+
+                // Получаем все вертикальные трубы
+                List<Pipe> verticalPipes = _numberingOfRisersServices.GetVerticalPipes(_doc).ToList();
+
+                // Определяем допустимое расстояние для группировки труб
+                const double tolerance = 0.1; // в футах, настройте в соответствии с вашими требованиями
+
+                // Находим трубы, расположенные рядом по X и Y
+                List<Pipe> nearbyPipes = verticalPipes
+                    .Where(pipe => IsNearbyInXY(pipe, selectedPipeLocation, tolerance))
+                    .ToList();
+
+                // Добавляем выбранную трубу, если ее нет в списке
+                if (nearbyPipes.All(p => p.Id.Value != selectedPipe.Id.Value))
                 {
-                    Riser newRiser = new Riser(nearbyPipes);
+                    nearbyPipes.Add(selectedPipe);
+                }
 
-                    // Присваиваем новый номер (следующий после максимального) для всех стояков
-                    // int maxNumber = 0;
-                    // foreach (var systemType in RiserSystemTypes)
-                    // {
-                    //     if (systemType.Risers.Any())
-                    //     {
-                    //         int sysMaxNumber = systemType.Risers.Max(r => r.Number);
-                    //         maxNumber = Math.Max(maxNumber, sysMaxNumber);
-                    //     }
-                    // }
-                    //
-                    // newRiser.Number = maxNumber + 1;
-
-                    // Проверяем минимальную длину
-                    // if (newRiser.TotalLength < 2000)
-                    // {
-                    //     var lengthResult = TaskDialog.Show("Предупреждение",
-                    //         $"Длина стояка ({newRiser.TotalLength} мм) меньше минимальной (2000 мм). Добавить стояк?",
-                    //         TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No);
-                    //
-                    //     if (lengthResult != TaskDialogResult.Yes)
-                    //         return;
-                    // }
-
-                    // Обновляем параметры труб в Revit
-                    // using (Transaction tx = new Transaction(_doc, "Добавление стояка"))
-                    // {
-                    //     tx.Start();
-                    //
-                    //     foreach (Pipe pipe in newRiser.Pipes)
-                    //     {
-                    //         // Обновляем параметр "ADSK_Номер стояка"
-                    //         Parameter riserNumberParam = pipe.FindParameter("ADSK_Номер стояка");
-                    //         if (riserNumberParam != null)
-                    //         {
-                    //             riserNumberParam.Set(newRiser.Number.ToString());
-                    //         }
-                    //     }
-                    //
-                    //     tx.Commit();
-                    // }
-
-                    // Добавляем стояк в соответствующий RiserSystemType
-                    string systemTypeName = newRiser.MepSystemType?.Name ?? "Без системы";
-                    RiserSystemType targetSystemType =
-                        RiserSystemTypes.FirstOrDefault(st => st.MepSystemTypeName == systemTypeName);
-
-                    if (targetSystemType == null)
+                // Создаем новый стояк из найденных труб
+                if (nearbyPipes.Any())
+                {
+                    // Проверяем, не входят ли найденные трубы уже в существующие стояки
+                    bool pipeAlreadyInRiser = false;
+                    foreach (var systemType in RiserSystemTypes)
                     {
-                        // Создаем новый тип системы, если такого еще нет
-                        targetSystemType = new RiserSystemType(new List<Riser> { newRiser });
-                        RiserSystemTypes.Add(targetSystemType);
-                    }
-                    else
-                    {
-                        // Добавляем стояк в существующий тип системы
-                        targetSystemType.Risers.Add(newRiser);
+                        if (systemType.Risers.Any(r =>
+                                nearbyPipes.Any(p => r.ElementIds.Contains(p.Id))))
+                        {
+                            pipeAlreadyInRiser = true;
+                            break;
+                        }
                     }
 
-                    // // Оповещаем пользователя
-                    // TaskDialog.Show("Стояк добавлен",
-                    //     $"Добавлен новый стояк #{newRiser.Number} в систему '{systemTypeName}', включающий {newRiser.CountPipes} труб.");
+                    if (pipeAlreadyInRiser)
+                    {
+                        window.Visibility = Visibility.Visible;
+                        return;
+                    }
+
+                    if (nearbyPipes.Count > 0)
+                    {
+                        var newRiser = new Riser(nearbyPipes);
+                        // Добавляем стояк в соответствующий RiserSystemType
+                        string systemTypeName = newRiser.MepSystemType?.Name ?? "Без системы";
+                        RiserSystemType targetSystemType =
+                            RiserSystemTypes.FirstOrDefault(st => st.MepSystemTypeName == systemTypeName);
+
+                        if (targetSystemType == null)
+                        {
+                            // Создаем новый тип системы, если такого еще нет
+                            targetSystemType = new RiserSystemType(new List<Riser> { newRiser });
+                            RiserSystemTypes.Add(targetSystemType);
+                        }
+
+                        bool riserAdded = false;
+
+                        foreach (Riser riser in _riserDataStorage.Risers)
+                        {
+                            long matchCount = riser.ElementIds.Count(elementId =>
+                                newRiser.ElementIds.Any(newElementId => newElementId.Value == elementId.Value));
+
+                            if (matchCount > 0)
+                            {
+                                targetSystemType.Risers.Add(riser);
+                                riserAdded = true;
+                                break;
+                            }
+                        }
+
+                        if (!riserAdded)
+                        {
+                            targetSystemType.Risers.Add(newRiser);
+                            _riserDataStorage.Risers.Add(newRiser);
+                        }
+                    }
+                }
+                else
+                {
+                    TaskDialog.Show("Ошибка", "Не найдены трубы, расположенные рядом с выбранной.");
                 }
             }
-            else
+            catch (Autodesk.Revit.Exceptions.OperationCanceledException)
             {
-                TaskDialog.Show("Ошибка", "Не найдены трубы, расположенные рядом с выбранной.");
+                // Пользователь отменил выбор
             }
-        }
-        catch (Autodesk.Revit.Exceptions.OperationCanceledException)
-        {
-            // Пользователь отменил выбор
-        }
-        catch (Exception ex)
-        {
-            TaskDialog.Show("Ошибка", $"Произошла ошибка при добавлении стояка: {ex.Message}");
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Ошибка", $"Произошла ошибка при добавлении стояка: {ex.Message}");
+            }
+
+            window.Visibility = Visibility.Visible;
         }
     }
 
@@ -543,11 +421,11 @@ public partial class NumberingOfRisersViewModel : ObservableObject
 
         foreach (var riserSystemType in RiserSystemTypes.ToList())
         {
-            var deleteRiser = riserSystemType.Risers.FirstOrDefault(x => x.Id == riser.Id);
+            var deleteRiser = _riserDataStorage.Risers.FirstOrDefault(x => x.Id == riser.Id);
             if (deleteRiser == null) continue;
+            deleteRiser.Ignored = true;
             // Удаляем стояк из коллекции
             riserSystemType.Risers.Remove(deleteRiser);
-
             // Если система стала пустой, отмечаем ее для удаления
             if (riserSystemType.Risers.Count == 0)
             {

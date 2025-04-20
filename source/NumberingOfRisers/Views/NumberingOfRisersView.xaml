@@ -25,7 +25,8 @@
 <StackPanel Orientation="Horizontal"
             >
     <Button Content="Добавить стояк"
-            Command="{Binding AddRiserCommand}" />
+            Command="{Binding AddRiserCommand}" 
+            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"/>
     <Button Grid.Row="2"
             Content="Обновить данные"/>
 </StackPanel>
