@@ -11,7 +11,7 @@ public class RiserStorageManager
     private static readonly Guid SchemaGuid = new Guid("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
     private static readonly string SchemaName = "RisersStorageSchema";
     private static readonly string SchemaDescription = "Хранилище данных стояков";
-    private static readonly string FieldName = "RisersData";
+    private static readonly string RiserFieldName = "RisersData";
 
     /// <summary>
     /// Создает или получает схему хранения стояков
@@ -27,7 +27,7 @@ public class RiserStorageManager
         schemaBuilder.SetDocumentation(SchemaDescription);
 
         // Добавляем строковое поле для хранения данных в JSON формате
-        FieldBuilder fieldBuilder = schemaBuilder.AddSimpleField(FieldName, typeof(string));
+        FieldBuilder fieldBuilder = schemaBuilder.AddSimpleField(RiserFieldName, typeof(string));
         fieldBuilder.SetDocumentation("Данные о стояках в JSON формате");
 
         // Создаем схему
@@ -60,7 +60,7 @@ public class RiserStorageManager
             Entity existingEntity = projectInfo.GetEntity(schema);
             if (existingEntity != null && existingEntity.IsValid())
             {
-                string existingJsonData = existingEntity.Get<string>(FieldName);
+                string existingJsonData = existingEntity.Get<string>(RiserFieldName);
                 if (!string.IsNullOrEmpty(existingJsonData))
                 {
                     existingRiserData = JsonConvert.DeserializeObject<List<RiserData>>(existingJsonData);
@@ -88,7 +88,7 @@ public class RiserStorageManager
 
             // Создаем Entity для хранения данных
             Entity entity = new Entity(schema);
-            entity.Set(FieldName, jsonData);
+            entity.Set(RiserFieldName, jsonData);
 
             // Сохраняем данные в ProjectInfo
             projectInfo.SetEntity(entity);
@@ -101,6 +101,11 @@ public class RiserStorageManager
             throw new Exception($"Ошибка при сохранении данных стояков: {ex.Message}", ex);
         }
     }
+
+    public void SaveSettings()
+    {
+    }
+
     public static void ClearRiserData(Document doc)
     {
         using Transaction tx = new Transaction(doc, "Удаление данных стояков");
@@ -125,7 +130,7 @@ public class RiserStorageManager
                 Entity emptyEntity = new Entity(schema);
 
                 // Устанавливаем пустое значение для поля
-                emptyEntity.Set(FieldName, string.Empty);
+                emptyEntity.Set(RiserFieldName, string.Empty);
 
                 // Заменяем существующую сущность пустой
                 projectInfo.SetEntity(emptyEntity);
@@ -139,6 +144,7 @@ public class RiserStorageManager
             throw new Exception($"Ошибка при удалении данных стояков: {ex.Message}", ex);
         }
     }
+
     private static List<RiserData> MergeRiserData(List<RiserData> existingData, List<RiserData> newData)
     {
         var mergedData = new List<RiserData>(existingData);
@@ -206,7 +212,7 @@ public class RiserStorageManager
         try
         {
             // Получаем JSON данные
-            string jsonData = entity.Get<string>(FieldName);
+            string jsonData = entity.Get<string>(RiserFieldName);
             if (string.IsNullOrEmpty(jsonData))
             {
                 return new List<RiserData>();
@@ -225,5 +231,10 @@ public class RiserStorageManager
         }
 
         return riserDates;
+    }
+
+    public static double LoadSettings()
+    {
+        throw new NotImplementedException();
     }
 }

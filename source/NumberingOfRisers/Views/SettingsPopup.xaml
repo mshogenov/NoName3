@@ -1,0 +1,33 @@
+<UserControl x:Class="NumberingOfRisers.Views.SettingsPopup"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:NumberingOfRisers.Views"
+             xmlns:viewModels="clr-namespace:NumberingOfRisers.ViewModels"
+             d:DataContext="{d:DesignInstance viewModels:NumberingOfRisersViewModel }"
+
+             mc:Ignorable="d"
+             d:DesignHeight="300" d:DesignWidth="400">
+    <Border
+        Background="White" 
+        BorderBrush="Gray" 
+        BorderThickness="1" 
+        CornerRadius="5" 
+        Padding="10"
+            
+         >
+        <Grid >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <DockPanel Margin="0,5">
+                <TextBlock Text="Не считать за стояк с общей длиной меньше:" VerticalAlignment="Center" />
+                <TextBox Margin="5,0,0,0" Width="100"   
+                         Text="{Binding TotalLengthRiser}"/>
+                <TextBlock Text="мм" VerticalAlignment="Center" />
+            </DockPanel>
+        </Grid>
+    </Border>
+</UserControl>

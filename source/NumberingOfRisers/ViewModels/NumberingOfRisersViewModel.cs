@@ -5,10 +5,8 @@ using NumberingOfRisers.Models;
 using NumberingOfRisers.Services;
 using NumberingOfRisers.Storages;
 using System.Windows;
-using System.Windows.Controls;
 using Autodesk.Revit.UI.Selection;
 using Nice3point.Revit.Toolkit.External.Handlers;
-using NoNameApi.Utils;
 using NumberingOfRisers.Filters;
 using Transaction = Autodesk.Revit.DB.Transaction;
 using Visibility = System.Windows.Visibility;
@@ -20,95 +18,38 @@ public partial class NumberingOfRisersViewModel : ObservableObject
     private readonly Document _doc = Context.ActiveDocument;
     private readonly ActionEventHandler _actionEvent = new();
     private readonly UIDocument _uiDoc = Context.ActiveUiDocument;
-    private readonly SettingsDataStorage _settingsDataStorage;
-    private UserControl _settingsWindow;
-    [ObservableProperty] private NumberingStrategy _selectedStrategy;
+    private double _totalLengthRiser;
 
+    public double TotalLengthRiser
+    {
+        get => _totalLengthRiser;
+        set
+        {
+            _totalLengthRiser = value;
+            OnPropertyChanged();
+            _settingsDataStorage.MinimumLengthRiser = value;
+        }
+    }
+
+    [ObservableProperty] private bool _isPopupOpen;
+    [ObservableProperty] private NumberingStrategy _selectedStrategy;
     public ObservableCollection<NumberingStrategy> NumberingStrategies { get; } = [];
     [ObservableProperty] private string _setNumberRiserValue;
-
-    public UserControl SettingsWindow
-    {
-        get => _settingsWindow;
-        set
-        {
-            _settingsWindow = value;
-            OnPropertyChanged();
-        }
-    }
-
-    private bool _manualFillingIsChecked;
-
-    public bool ManualFillingIsChecked
-    {
-        get => _manualFillingIsChecked;
-        set
-        {
-            if (_manualFillingIsChecked != value)
-            {
-                _manualFillingIsChecked = value;
-
-                OnPropertyChanged();
-                _settingsDataStorage.ManualFillingIsChecked = value;
-            }
-        }
-    }
-
-    private bool _automaticFillingIsChecked;
-
-    public bool AutomaticFillingIsChecked
-    {
-        get => _automaticFillingIsChecked;
-        set
-        {
-            if (_automaticFillingIsChecked != value)
-            {
-                _automaticFillingIsChecked = value;
-
-                OnPropertyChanged();
-                _settingsDataStorage.AutomaticFillingIsChecked = value;
-            }
-        }
-    }
-
-    private double _minimumPipeLength = 2000;
-
-    public double MinimumPipeLength
-    {
-        get => _minimumPipeLength;
-        set
-        {
-            _minimumPipeLength = value;
-            OnPropertyChanged();
-            _settingsDataStorage.MinimumPipeLengthRiserPipe = value;
-        }
-    }
-
-    private int _minimumCountPipes;
-
-    public int MinimumCountPipes
-    {
-        get => _minimumCountPipes;
-        set
-        {
-            _minimumCountPipes = value;
-            OnPropertyChanged();
-            _settingsDataStorage.MinimumNumberPipesRiserPipe = value;
-        }
-    }
-
     private readonly NumberingOfRisersServices _numberingOfRisersServices;
     [ObservableProperty] private ObservableCollection<RiserSystemType> _riserSystemTypes = [];
 
-    private readonly DataLoader _dataLoader = new(fileName: "DataNumberingOfRisers");
     [ObservableProperty] private bool _isVisibilityMissingParameterParamRiserId;
     [ObservableProperty] private bool _isVisibilityMissingParameters;
     private readonly RiserDataStorage _riserDataStorage;
+    private readonly SettingsDataStorage _settingsDataStorage;
 
     public NumberingOfRisersViewModel()
     {
         _numberingOfRisersServices = new NumberingOfRisersServices();
-        _riserDataStorage = new RiserDataStorage(_doc);
+        _riserDataStorage = new RiserDataStorage();
+        _settingsDataStorage = new SettingsDataStorage();
+        TotalLengthRiser = _settingsDataStorage.MinimumLengthRiser;
+        _riserDataStorage.LoadRisers(_doc, TotalLengthRiser);
 
         // Загружаем данные из ExtensibleStorage
         InitializeFromStorage();
@@ -548,8 +489,14 @@ public partial class NumberingOfRisersViewModel : ObservableObject
     [RelayCommand]
     private void UpdateData()
     {
-        _riserDataStorage.LoadRisers(_doc);
+        _riserDataStorage.LoadRisers(_doc, TotalLengthRiser);
         InitializeFromStorage();
+    }
+
+    [RelayCommand]
+    private void Settings()
+    {
+        IsPopupOpen = true;
     }
 
     [RelayCommand]
@@ -569,7 +516,7 @@ public partial class NumberingOfRisersViewModel : ObservableObject
                 _actionEvent.Cancel();
             }
         });
-        _riserDataStorage.LoadRisers(_doc);
+        _riserDataStorage.LoadRisers(_doc, TotalLengthRiser);
         InitializeFromStorage();
     }
 
@@ -897,5 +844,10 @@ public partial class NumberingOfRisersViewModel : ObservableObject
         }
 
         return false;
+    }
+
+    public void SaveSettings()
+    {
+        _settingsDataStorage.Save();
     }
 }

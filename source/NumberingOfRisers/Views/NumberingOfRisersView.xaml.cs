@@ -8,11 +8,20 @@ namespace NumberingOfRisers.Views;
 
 public partial class NumberingOfRisersView 
 {
+    private readonly NumberingOfRisersViewModel _viewModel;
     public NumberingOfRisersView(NumberingOfRisersViewModel viewModel)
     {
         InitializeComponent();
         LoadWindowTemplate();
+        _viewModel = viewModel;
         DataContext = viewModel;
+        // Подписываемся на событие закрытия окна
+        Closing += SaveSettings;
+    }
+
+    private void SaveSettings(object sender, EventArgs e)
+    {
+        _viewModel.SaveSettings();
     }
 
     private void TreeViewItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
