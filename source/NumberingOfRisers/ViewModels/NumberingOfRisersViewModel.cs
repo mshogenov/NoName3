@@ -559,7 +559,6 @@ public partial class NumberingOfRisersViewModel : ObservableObject
 
         deleteRiser.Ignored = true;
 
-
         foreach (var riserSystemType in RiserSystemTypes.ToList())
         {
             var riserToRemove = riserSystemType.Risers.FirstOrDefault(r => r.Id == riser.Id);
@@ -569,10 +568,14 @@ public partial class NumberingOfRisersViewModel : ObservableObject
             }
         }
 
-        // Удаляем пустые системы и обновляем коллекцию
-        RiserSystemTypes = new ObservableCollection<RiserSystemType>(
-            RiserSystemTypes.Where(rst => rst.Risers.Count > 0)
-        );
+        // Удаляем пустые системы непосредственно из коллекции
+        for (int i = RiserSystemTypes.Count - 1; i >= 0; i--)
+        {
+            if (RiserSystemTypes[i].Risers.Count == 0)
+            {
+                RiserSystemTypes.RemoveAt(i);
+            }
+        }
     }
 
 

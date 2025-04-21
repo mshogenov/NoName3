@@ -47,7 +47,7 @@
             <Button Grid.Row="2"
                     x:Name="SettingsButton"
                     Command="{Binding SettingsCommand}"
-                   Content="Настройки" />
+                    Content="Настройки" />
         </StackPanel>
         <!-- Основной контент -->
 
@@ -59,11 +59,6 @@
             Height="300"
             MaxHeight="300"
             ScrollViewer.VerticalScrollBarVisibility="Auto">
-            <TreeView.ItemContainerStyle>
-                <Style TargetType="{x:Type TreeViewItem}">
-                   <EventSetter Event="PreviewMouseLeftButtonDown" Handler="TreeViewItem_PreviewMouseLeftButtonDown" />
-                </Style>
-            </TreeView.ItemContainerStyle>
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type models:RiserSystemType}"
                                           ItemsSource="{Binding Risers, UpdateSourceTrigger=PropertyChanged}">
@@ -102,18 +97,18 @@
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
         </TreeView>
-<Grid Grid.Row="2">
-    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-        <TextBlock Text="Направление нумерации:" VerticalAlignment="Center" Margin="0,0,10,0" />
-        <ComboBox Width="250"
-                  ItemsSource="{Binding NumberingStrategies}"
-                  SelectedItem="{Binding SelectedStrategy}"
-                  DisplayMemberPath="DisplayName" />
-    </StackPanel>
-</Grid>
+        <Grid Grid.Row="2">
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Направление нумерации:" VerticalAlignment="Center" Margin="0,0,10,0" />
+                <ComboBox Width="250"
+                          ItemsSource="{Binding NumberingStrategies}"
+                          SelectedItem="{Binding SelectedStrategy}"
+                          DisplayMemberPath="DisplayName" />
+            </StackPanel>
+        </Grid>
         <DockPanel Grid.Row="3" HorizontalAlignment="Right">
-           <!-- Выбор направления нумерации -->
-           
+            <!-- Выбор направления нумерации -->
+
             <Button Grid.Row="1"
                     Content="Нумеровать стояки"
                     Margin="10 0"
@@ -124,11 +119,11 @@
         </DockPanel>
         <!-- Popup с UserControl -->
         <Popup Grid.Row="0"
-               PlacementTarget="{Binding ElementName=SettingsButton}" 
+               PlacementTarget="{Binding ElementName=SettingsButton}"
                Placement="Bottom"
                HorizontalOffset="-100"
                VerticalOffset="5"
-               StaysOpen="False" 
+               StaysOpen="False"
                IsOpen="{Binding IsPopupOpen}"
                AllowsTransparency="True">
 
@@ -136,5 +131,5 @@
             <local:SettingsPopup />
         </Popup>
     </Grid>
-    
+
 </views:BaseRevitWindow>

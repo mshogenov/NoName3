@@ -23,7 +23,11 @@
             </Grid.RowDefinitions>
 
             <DockPanel Margin="0,5">
-                <TextBlock Text="Не считать за стояк с общей длиной меньше:" VerticalAlignment="Center" />
+                <TextBlock VerticalAlignment="Center">
+                    <Run>Не считать за стояк с общей</Run>
+                    <LineBreak/>
+                    <Run>длиной труб меньше:</Run>
+                </TextBlock>
                 <TextBox Margin="5,0,0,0" Width="100"   
                          Text="{Binding TotalLengthRiser}"/>
                 <TextBlock Text="мм" VerticalAlignment="Center" />

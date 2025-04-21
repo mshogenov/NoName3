@@ -23,14 +23,5 @@ public partial class NumberingOfRisersView
     {
         _viewModel.SaveSettings();
     }
-
-    private void TreeViewItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        // Если мы кликнули на кнопку, предотвращаем обработку события TreeViewItem
-        if (e.OriginalSource is Button || 
-            VisualTreeHelper.GetParent(e.OriginalSource as DependencyObject ?? throw new InvalidOperationException()) is Button)
-        {
-            e.Handled = true;
-        }
-    }
+   
 }
