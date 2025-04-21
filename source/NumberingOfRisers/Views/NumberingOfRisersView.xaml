@@ -27,8 +27,15 @@
     <Button Content="Добавить стояк"
             Command="{Binding AddRiserCommand}" 
             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"/>
+    <Button
+        Grid.Row="2" Content="Сохранить данные" 
+        Command="{Binding SaveRisersDataCommand}"/>
     <Button Grid.Row="2"
+            Command="{Binding UpdateDataCommand }"
             Content="Обновить данные"/>
+    <Button Grid.Row="2"
+            Command="{Binding ResetDataCommand }"
+            Content="Сбросить данные"/>
 </StackPanel>
         <!-- Основной контент -->
        
@@ -95,9 +102,7 @@
             <Button Grid.Row="1"
                     Content="Нумеровать стояки"
                     Command="{Binding Path=NumberingOfRisersCommand}" />
-            <Button
-                Grid.Row="2" Content="Сохранить данные" 
-                    Command="{Binding SaveRisersDataCommand}"/>
+       
         </Grid>
        
         <StackPanel Grid.Row="4" Orientation="Horizontal"

@@ -248,7 +248,6 @@ public partial class NumberingOfRisersViewModel : ObservableObject
                 .GroupBy(r => r.MepSystemType?.Name ?? "Без системы")
                 .Select(group => new RiserSystemType(group.ToList()))
                 .ToList());
-            OnPropertyChanged(nameof(RiserSystemTypes));
         }
         catch (Exception ex)
         {
@@ -400,158 +399,158 @@ public partial class NumberingOfRisersViewModel : ObservableObject
 
     [RelayCommand]
     private void AddRiser(object parameter)
-{
-    if (parameter is not Window window) return;
-
-    window.Visibility = Visibility.Hidden;
-
-    try
     {
-        // Выбор трубы пользователем
-        var selectionFilter = new VerticalPipeSelectionFilter();
-        var pickedRef = _uiDoc.Selection.PickObject(ObjectType.Element, selectionFilter, "Выберите вертикальную трубу");
+        if (parameter is not Window window) return;
 
-        // Получаем выбранную трубу
-        if (_doc.GetElement(pickedRef.ElementId) is not Pipe selectedPipe)
+        window.Visibility = Visibility.Hidden;
+
+        try
+        {
+            // Выбор трубы пользователем
+            var selectionFilter = new VerticalPipeSelectionFilter();
+            var pickedRef =
+                _uiDoc.Selection.PickObject(ObjectType.Element, selectionFilter, "Выберите вертикальную трубу");
+
+            // Получаем выбранную трубу
+            if (_doc.GetElement(pickedRef.ElementId) is not Pipe selectedPipe)
+            {
+                window.Visibility = Visibility.Visible;
+                return;
+            }
+
+            // Получаем координаты выбранной трубы
+            XYZ selectedPipeLocation = GetPipeLocationXY(selectedPipe);
+
+            // Получаем все вертикальные трубы
+            List<Pipe> verticalPipes = _numberingOfRisersServices.GetVerticalPipes(_doc).ToList();
+
+            // Определяем допустимое расстояние для группировки труб
+            const double tolerance = 0.1; // в футах, настройте в соответствии с вашими требованиями
+
+            // Находим трубы, расположенные рядом по X и Y
+            List<Pipe> nearbyPipes = verticalPipes
+                .Where(pipe => IsNearbyInXY(pipe, selectedPipeLocation, tolerance))
+                .ToList();
+
+            // Добавляем выбранную трубу, если ее нет в списке
+            if (nearbyPipes.All(p => p.Id.Value != selectedPipe.Id.Value))
+            {
+                nearbyPipes.Add(selectedPipe);
+            }
+
+            // Проверяем наличие труб для создания стояка
+            if (!nearbyPipes.Any())
+            {
+                TaskDialog.Show("Информация", "Не найдены трубы, расположенные рядом с выбранной.");
+                return;
+            }
+
+            // Проверяем, не входят ли найденные трубы уже в существующие стояки
+            if (IsPipeAlreadyInExistingRiser(nearbyPipes))
+            {
+                TaskDialog.Show("Информация", "Одна или несколько выбранных труб уже включены в существующий стояк.");
+                return;
+            }
+
+            // Проверяем, не существует ли уже идентичный стояк
+            Riser existingRiser = FindIdenticalExistingRiser(nearbyPipes);
+            if (existingRiser != null)
+            {
+                AddExistingRiserToSystem(existingRiser);
+            }
+            else
+            {
+                // Создаем новый стояк
+                var newRiser = new Riser(nearbyPipes);
+                AddNewRiserToSystem(newRiser);
+            }
+        }
+        catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+        {
+            // Пользователь отменил выбор - ничего не делаем
+        }
+        catch (Exception ex)
+        {
+            TaskDialog.Show("Ошибка", $"Произошла ошибка при добавлении стояка: {ex.Message}");
+        }
+        finally
         {
             window.Visibility = Visibility.Visible;
-            return;
+        }
+    }
+
+    private bool IsPipeAlreadyInExistingRiser(List<Pipe> pipes)
+    {
+        foreach (var systemType in RiserSystemTypes)
+        {
+            if (systemType.Risers.Any(r =>
+                    pipes.Any(p => r.ElementIds.Contains(p.Id))))
+            {
+                return true;
+            }
         }
 
-        // Получаем координаты выбранной трубы
-        XYZ selectedPipeLocation = GetPipeLocationXY(selectedPipe);
+        return false;
+    }
 
-        // Получаем все вертикальные трубы
-        List<Pipe> verticalPipes = _numberingOfRisersServices.GetVerticalPipes(_doc).ToList();
-
-        // Определяем допустимое расстояние для группировки труб
-        const double tolerance = 0.1; // в футах, настройте в соответствии с вашими требованиями
-
-        // Находим трубы, расположенные рядом по X и Y
-        List<Pipe> nearbyPipes = verticalPipes
-            .Where(pipe => IsNearbyInXY(pipe, selectedPipeLocation, tolerance))
-            .ToList();
-
-        // Добавляем выбранную трубу, если ее нет в списке
-        if (nearbyPipes.All(p => p.Id.Value != selectedPipe.Id.Value))
+    private Riser FindIdenticalExistingRiser(List<Pipe> pipes)
+    {
+        foreach (Riser riser in _riserDataStorage.Risers)
         {
-            nearbyPipes.Add(selectedPipe);
+            if (IsIdenticalRisers(riser, pipes))
+            {
+                return riser;
+            }
         }
 
-        // Проверяем наличие труб для создания стояка
-        if (!nearbyPipes.Any())
-        {
-            TaskDialog.Show("Информация", "Не найдены трубы, расположенные рядом с выбранной.");
-            return;
-        }
+        return null;
+    }
 
-        // Проверяем, не входят ли найденные трубы уже в существующие стояки
-        if (IsPipeAlreadyInExistingRiser(nearbyPipes))
-        {
-            TaskDialog.Show("Информация", "Одна или несколько выбранных труб уже включены в существующий стояк.");
-            return;
-        }
+    private void AddExistingRiserToSystem(Riser riser)
+    {
+        string systemTypeName = riser.MepSystemType?.Name ?? "Без системы";
+        RiserSystemType targetSystemType =
+            RiserSystemTypes.FirstOrDefault(st => st.MepSystemTypeName == systemTypeName);
 
-        // Проверяем, не существует ли уже идентичный стояк
-        Riser existingRiser = FindIdenticalExistingRiser(nearbyPipes);
-        if (existingRiser != null)
+        if (targetSystemType == null)
         {
-            AddExistingRiserToSystem(existingRiser);
+            // Создаем новый тип системы, если такого еще нет
+            targetSystemType = new RiserSystemType(new List<Riser> { riser });
+            RiserSystemTypes.Add(targetSystemType);
+        }
+        else if (!targetSystemType.Risers.Contains(riser))
+        {
+            targetSystemType.Risers.Add(riser);
+        }
+    }
+
+    private void AddNewRiserToSystem(Riser newRiser)
+    {
+        string systemTypeName = newRiser.MepSystemType?.Name ?? "Без системы";
+        RiserSystemType targetSystemType =
+            RiserSystemTypes.FirstOrDefault(st => st.MepSystemTypeName == systemTypeName);
+
+        if (targetSystemType == null)
+        {
+            // Создаем новый тип системы, если такого еще нет
+            targetSystemType = new RiserSystemType(new List<Riser> { newRiser });
+            RiserSystemTypes.Add(targetSystemType);
         }
         else
         {
-            // Создаем новый стояк
-            var newRiser = new Riser(nearbyPipes);
-            AddNewRiserToSystem(newRiser);
+            targetSystemType.Risers.Add(newRiser);
         }
 
-        // Уведомляем UI об изменениях
-        OnPropertyChanged(nameof(RiserSystemTypes));
-
-        // Сохраняем изменения
-        SaveRisers();
-    }
-    catch (Autodesk.Revit.Exceptions.OperationCanceledException)
-    {
-        // Пользователь отменил выбор - ничего не делаем
-    }
-    catch (Exception ex)
-    {
-        TaskDialog.Show("Ошибка", $"Произошла ошибка при добавлении стояка: {ex.Message}");
-    }
-    finally
-    {
-        window.Visibility = Visibility.Visible;
-    }
-}
-
-private bool IsPipeAlreadyInExistingRiser(List<Pipe> pipes)
-{
-    foreach (var systemType in RiserSystemTypes)
-    {
-        if (systemType.Risers.Any(r => 
-            pipes.Any(p => r.ElementIds.Contains(p.Id))))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-private Riser FindIdenticalExistingRiser(List<Pipe> pipes)
-{
-    foreach (Riser riser in _riserDataStorage.Risers)
-    {
-        if (IsIdenticalRisers(riser, pipes))
-        {
-            return riser;
-        }
-    }
-    return null;
-}
-
-private void AddExistingRiserToSystem(Riser riser)
-{
-    string systemTypeName = riser.MepSystemType?.Name ?? "Без системы";
-    RiserSystemType targetSystemType = RiserSystemTypes.FirstOrDefault(st => st.MepSystemTypeName == systemTypeName);
-
-    if (targetSystemType == null)
-    {
-        // Создаем новый тип системы, если такого еще нет
-        targetSystemType = new RiserSystemType(new List<Riser> { riser });
-        RiserSystemTypes.Add(targetSystemType);
-    }
-    else if (!targetSystemType.Risers.Contains(riser))
-    {
-        targetSystemType.Risers.Add(riser);
-    }
-}
-
-private void AddNewRiserToSystem(Riser newRiser)
-{
-    string systemTypeName = newRiser.MepSystemType?.Name ?? "Без системы";
-    RiserSystemType targetSystemType = RiserSystemTypes.FirstOrDefault(st => st.MepSystemTypeName == systemTypeName);
-
-    if (targetSystemType == null)
-    {
-        // Создаем новый тип системы, если такого еще нет
-        targetSystemType = new RiserSystemType(new List<Riser> { newRiser });
-        RiserSystemTypes.Add(targetSystemType);
-    }
-    else
-    {
-        targetSystemType.Risers.Add(newRiser);
+        // Добавляем новый стояк в хранилище данных
+        _riserDataStorage.Risers.Add(newRiser);
     }
 
-    // Добавляем новый стояк в хранилище данных
-    _riserDataStorage.Risers.Add(newRiser);
-}
-
-private void SaveRisers()
-{
-    // Здесь должен быть код для сохранения изменений в хранилище
-    // Например: RiserStorageManager.SaveRisers(_doc, _riserDataStorage);
-}
+    [RelayCommand]
+    private void UpdateData()
+    {
+        _riserDataStorage.LoadRisers(_doc);
+        InitializeFromStorage();
+    }
 
     // Проверка, находится ли труба рядом с указанной точкой в плоскости XY
     private bool IsNearbyInXY(Pipe pipe, XYZ referencePoint, double tolerance)
