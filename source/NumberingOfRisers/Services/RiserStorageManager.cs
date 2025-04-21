@@ -101,7 +101,44 @@ public class RiserStorageManager
             throw new Exception($"Ошибка при сохранении данных стояков: {ex.Message}", ex);
         }
     }
+    public static void ClearRiserData(Document doc)
+    {
+        using Transaction tx = new Transaction(doc, "Удаление данных стояков");
+        tx.Start();
+        try
+        {
+            // Получаем схему хранения
+            Schema schema = GetSchema();
 
+            // Получаем ProjectInfo
+            ProjectInfo projectInfo = doc.ProjectInformation;
+            if (projectInfo == null)
+            {
+                throw new Exception("ProjectInfo не найден");
+            }
+
+            // Проверяем, существуют ли данные для удаления
+            Entity existingEntity = projectInfo.GetEntity(schema);
+            if (existingEntity != null && existingEntity.IsValid())
+            {
+                // Создаем новую пустую сущность
+                Entity emptyEntity = new Entity(schema);
+
+                // Устанавливаем пустое значение для поля
+                emptyEntity.Set(FieldName, string.Empty);
+
+                // Заменяем существующую сущность пустой
+                projectInfo.SetEntity(emptyEntity);
+            }
+
+            tx.Commit();
+        }
+        catch (Exception ex)
+        {
+            tx.RollBack();
+            throw new Exception($"Ошибка при удалении данных стояков: {ex.Message}", ex);
+        }
+    }
     private static List<RiserData> MergeRiserData(List<RiserData> existingData, List<RiserData> newData)
     {
         var mergedData = new List<RiserData>(existingData);

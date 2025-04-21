@@ -46,6 +46,12 @@
             Height="300"
             MaxHeight="300"
             ScrollViewer.VerticalScrollBarVisibility="Auto">
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="{x:Type TreeViewItem}">
+                    <Setter Property="IsExpanded" Value="True" />
+                    <EventSetter Event="PreviewMouseLeftButtonDown" Handler="TreeViewItem_PreviewMouseLeftButtonDown" />
+                </Style>
+            </TreeView.ItemContainerStyle>
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type models:RiserSystemType}"
                                           ItemsSource="{Binding Risers, UpdateSourceTrigger=PropertyChanged}">

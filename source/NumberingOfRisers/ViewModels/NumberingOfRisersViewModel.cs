@@ -552,6 +552,27 @@ public partial class NumberingOfRisersViewModel : ObservableObject
         InitializeFromStorage();
     }
 
+    [RelayCommand]
+    private void ResetData()
+    {
+        _actionEvent.Raise(_ =>
+        {
+            try
+            {
+                RiserStorageManager.ClearRiserData(_doc);
+            }
+            catch (Exception ex)
+            {
+            }
+            finally
+            {
+                _actionEvent.Cancel();
+            }
+        });
+        _riserDataStorage.LoadRisers(_doc);
+        InitializeFromStorage();
+    }
+
     // Проверка, находится ли труба рядом с указанной точкой в плоскости XY
     private bool IsNearbyInXY(Pipe pipe, XYZ referencePoint, double tolerance)
     {
