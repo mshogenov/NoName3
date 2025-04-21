@@ -12,13 +12,10 @@ namespace UpdatingParameters.Services;
 
 public  class DataStorageFactory
 {
-    private static DataStorageFactory _instance;
-    public static DataStorageFactory Instance => _instance ??= new DataStorageFactory();
-
     private readonly Dictionary<Type, Lazy<IDataStorage>> _storages = new();
     private readonly Dictionary<Type, Func<IDataStorage>> _creators;
     
-    private DataStorageFactory()
+    public  DataStorageFactory()
     {
         _creators = new Dictionary<Type, Func<IDataStorage>>
         {

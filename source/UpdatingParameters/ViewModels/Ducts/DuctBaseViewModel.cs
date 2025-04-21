@@ -1,16 +1,16 @@
-﻿using System.Windows;
+using System.Windows;
 using Autodesk.Revit.UI;
 using UpdatingParameters.Services;
-using UpdatingParameters.Storages.Ducts;
+using UpdatingParameters.Storages;
 using UpdatingParameters.Storages.Parameters;
 
 namespace UpdatingParameters.ViewModels.Ducts;
 
-public class DuctRoundViewModel : ElementTypeViewModelBase
+public class DuctBaseViewModel :ElementTypeViewModelBase
 {
-    private DataStorageFactory _storageFactory;
+    private readonly DataStorageFactory _storageFactory;
 
-    public DuctRoundViewModel(DuctRoundDataStorage dataStorageFormulas, DataStorageFactory storageFactory) : base(dataStorageFormulas)
+    public DuctBaseViewModel(DataStorageFormulas dataStorageFormulas,DataStorageFactory storageFactory) : base(dataStorageFormulas)
     {
         _storageFactory = storageFactory;
     }
