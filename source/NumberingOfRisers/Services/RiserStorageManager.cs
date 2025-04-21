@@ -233,8 +233,4 @@ public class RiserStorageManager
         return riserDates;
     }
 
-    public static double LoadSettings()
-    {
-        throw new NotImplementedException();
-    }
 }
