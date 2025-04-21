@@ -8,7 +8,7 @@ namespace NumberingOfRisers.Services;
 
 public class RiserStorageManager
 {
-    private static readonly Guid SchemaGuid = new Guid("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
+    private static readonly Guid SchemaGuid = new("A1B2C3D4-E5F6-7890-1234-567890ABCDEF");
     private static readonly string SchemaName = "RisersStorageSchema";
     private static readonly string SchemaDescription = "Хранилище данных стояков";
     private static readonly string RiserFieldName = "RisersData";

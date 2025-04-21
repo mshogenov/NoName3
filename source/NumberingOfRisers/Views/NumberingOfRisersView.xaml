@@ -68,9 +68,7 @@
                         <TextBlock Text=" (" />
                         <TextBlock Text="{Binding Risers.Count, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBlock Text=" стояков)" />
-                        <Button Content="Выделить все"
-                                Command="{Binding  DataContext.HighlightAllCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-                    </StackPanel>
+                      </StackPanel>
 
                     <HierarchicalDataTemplate.ItemTemplate>
                         <DataTemplate DataType="{x:Type models:Riser}">

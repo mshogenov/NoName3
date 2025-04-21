@@ -10,6 +10,7 @@ public partial class Riser : ObservableObject
     public XYZ Location { get; set; }
     [ObservableProperty] private string _newNumberRiser;
     public MEPSystemType MepSystemType { get; set; }
+  
     public List<ElementId> ElementIds { get; set; } = [];
     public double? TotalLength { get; set; }
 
@@ -24,6 +25,7 @@ public partial class Riser : ObservableObject
         {
             Pipes.Add(pipe);
             ElementIds.Add(pipe.Id);
+           
         }
 
         if (Pipes == null) return;
@@ -47,6 +49,7 @@ public partial class Riser : ObservableObject
         {
             Pipes.Add(pipe);
             ElementIds.Add(pipe.Id);
+          
         }
         if (Pipes.Count <= 0) return;
         Location = ((LocationCurve)Pipes.FirstOrDefault()?.Location)?.Curve.GetEndPoint(0);
