@@ -25,7 +25,7 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private List<DuctInsulationType> _ductInsulationThermalInsulationTypes=[];
     public MainViewModel()
     {
-       
+        var pipesOuterDiameterDataStorage = DataStorageFactory.Instance.GetStorage<PipesOuterDiameterDataStorage>();
         
     }
 

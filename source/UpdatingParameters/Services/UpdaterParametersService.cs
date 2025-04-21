@@ -11,7 +11,7 @@ using UpdatingParameters.Storages;
 
 namespace UpdatingParameters.Services;
 
-public class UpdaterParametersService
+public static class UpdaterParametersService
 {
     private static readonly List<BuiltInCategory> MepCategories =
     [
@@ -33,10 +33,6 @@ public class UpdaterParametersService
         BuiltInCategory.OST_DuctLinings
     ];
 
-    public UpdaterParametersService(DataStorageFactory dataStorage)
-    {
-        
-    }
     public static List<Parameter> GetAllParameters(Element element)
     {
         List<Parameter> parameters = [];
