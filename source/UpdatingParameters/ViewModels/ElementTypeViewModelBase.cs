@@ -156,7 +156,7 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
         SettingsManager.OnSettingsChanged += SettingsManager_OnSettingsChanged;
         _elements = _dataStorageFormulas.GetElements();
         _elementCounts = _elements.Count;
-        _element = _elements.FirstOrDefault();
+        _element = _elements.FirstOrDefault(x=>x.IsValidObject);
         AdskNameFormulas = new ObservableCollection<Formula>(_dataStorageFormulas.NameFormulas);
         AdskNoteFormulas = new ObservableCollection<Formula>(_dataStorageFormulas.NoteFormulas);
         AdskQuantityFormulas = new ObservableCollection<Formula>(_dataStorageFormulas.QuantityFormulas);
@@ -334,6 +334,7 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
     private void UpdateSignificance(Formula formula)
     {
         if (formula == null) return;
+      
         Parameter parameter = _element.FindParameter(formula.ParameterName);
         formula.Significance = formula.MeasurementUnit switch
         {
