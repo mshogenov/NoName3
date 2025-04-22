@@ -2,13 +2,19 @@
 
 namespace UpdatingParameters.Services;
 
-public static class SettingsManager
+public  class SettingsManager
 {
+    private static DataStorageFactory _storageFactory;
     public static event Action OnSettingsChanged;
 
+    public SettingsManager(DataStorageFactory dataStorage)
+    {
+        _storageFactory = dataStorage;
+    }
+   
     public static void ResetSettings()
     {
-        var dataStorages = DataStorageFactory.Instance.GetAllStorages();
+       var dataStorages = _storageFactory.GetAllStorages();
         foreach (var dataStorage in dataStorages)
         {
             dataStorage.InitializeDefault();

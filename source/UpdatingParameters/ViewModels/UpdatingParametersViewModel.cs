@@ -116,6 +116,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
     private readonly int _allElementsCount;
 
     private ProgressWindow _progressWindow;
+    private readonly DataStorageFactory _storageFactory;
 
 
     public UpdatingParametersViewModel()
@@ -125,30 +126,31 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
         var collector = new FilteredElementCollector(_doc).WherePasses(categoryFilter)
             .WhereElementIsNotElementType().ToElements();
         _allElementsCount = collector.Count;
-        DataStorageFactory.Instance.InitializeAllStorages();
-        _pipesWithoutDataStorage = DataStorageFactory.Instance.GetStorage<PipesWithoutDataStorage>();
-        _pipesOuterDiameterDataStorage = DataStorageFactory.Instance.GetStorage<PipesOuterDiameterDataStorage>();
-        _pipesInternalDiameterDataStorage = DataStorageFactory.Instance.GetStorage<PipesInternalDiameterDataStorage>();
-        _flexPipeWithoutDataStorage = DataStorageFactory.Instance.GetStorage<FlexPipeWithoutDataStorage>();
-        _flexPipesCorrugationsDataStorage = DataStorageFactory.Instance.GetStorage<FlexPipesCorrugationsDataStorage>();
-        _flexPipesConnectionsDataStorage = DataStorageFactory.Instance.GetStorage<FlexPipesConnectionsDataStorage>();
+        _storageFactory = new DataStorageFactory();
+        _storageFactory.InitializeAllStorages();
+        _pipesWithoutDataStorage = _storageFactory.GetStorage<PipesWithoutDataStorage>();
+        _pipesOuterDiameterDataStorage = _storageFactory.GetStorage<PipesOuterDiameterDataStorage>();
+        _pipesInternalDiameterDataStorage = _storageFactory.GetStorage<PipesInternalDiameterDataStorage>();
+        _flexPipeWithoutDataStorage = _storageFactory.GetStorage<FlexPipeWithoutDataStorage>();
+        _flexPipesCorrugationsDataStorage = _storageFactory.GetStorage<FlexPipesCorrugationsDataStorage>();
+        _flexPipesConnectionsDataStorage = _storageFactory.GetStorage<FlexPipesConnectionsDataStorage>();
         _pipeInsulationCylindersDataStorage =
-            DataStorageFactory.Instance.GetStorage<PipeInsulationCylindersDataStorage>();
-        _pipeInsulationTubesDataStorage = DataStorageFactory.Instance.GetStorage<PipeInsulationTubesDataStorage>();
+            _storageFactory.GetStorage<PipeInsulationCylindersDataStorage>();
+        _pipeInsulationTubesDataStorage = _storageFactory.GetStorage<PipeInsulationTubesDataStorage>();
         _insulationColouredTubesDataStorage =
-            DataStorageFactory.Instance.GetStorage<PipeInsulationColouredTubesDataStorage>();
+            _storageFactory.GetStorage<PipeInsulationColouredTubesDataStorage>();
         _ductInsulationFireproofingDataStorage =
-            DataStorageFactory.Instance.GetStorage<DuctInsulationFireproofingDataStorage>();
-        _ductInsulationThermalDataStorage = DataStorageFactory.Instance.GetStorage<DuctInsulationThermalDataStorage>();
-        _ductConnectionPartsDataStorage = DataStorageFactory.Instance.GetStorage<DuctConnectionPartsDataStorage>();
-        _ductPlasticDataStorage = DataStorageFactory.Instance.GetStorage<DuctPlasticDataStorage>();
-        _ductRectangularDataStorage = DataStorageFactory.Instance.GetStorage<DuctRectangularDataStorage>();
-        _ductRoundDataStorage = DataStorageFactory.Instance.GetStorage<DuctRoundDataStorage>();
-        _ductWithoutDataStorage = DataStorageFactory.Instance.GetStorage<DuctWithoutDataStorage>();
-        _flexibleDuctsRoundDataStorage = DataStorageFactory.Instance.GetStorage<FlexibleDuctsRoundDataStorage>();
-        _settingsDataStorage = DataStorageFactory.Instance.GetStorage<SettingsDataStorage>();
-        _ductParametersDataStorage = DataStorageFactory.Instance.GetStorage<DuctParametersDataStorage>();
-        _parametersDataStorage = DataStorageFactory.Instance.GetStorage<ParametersDataStorage>();
+            _storageFactory.GetStorage<DuctInsulationFireproofingDataStorage>();
+        _ductInsulationThermalDataStorage = _storageFactory.GetStorage<DuctInsulationThermalDataStorage>();
+        _ductConnectionPartsDataStorage = _storageFactory.GetStorage<DuctConnectionPartsDataStorage>();
+        _ductPlasticDataStorage = _storageFactory.GetStorage<DuctPlasticDataStorage>();
+        _ductRectangularDataStorage = _storageFactory.GetStorage<DuctRectangularDataStorage>();
+        _ductRoundDataStorage = _storageFactory.GetStorage<DuctRoundDataStorage>();
+        _ductWithoutDataStorage = _storageFactory.GetStorage<DuctWithoutDataStorage>();
+        _flexibleDuctsRoundDataStorage = _storageFactory.GetStorage<FlexibleDuctsRoundDataStorage>();
+        _settingsDataStorage = _storageFactory.GetStorage<SettingsDataStorage>();
+        _ductParametersDataStorage = _storageFactory.GetStorage<DuctParametersDataStorage>();
+        _parametersDataStorage = _storageFactory.GetStorage<ParametersDataStorage>();
         AllocationDataStorages(collector);
         InitializeViewModels();
     }
@@ -246,7 +248,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
     private void InitializeViewModels()
     {
         _mainViewModel = new MainViewModel();
-        _parametersViewModel = new ParametersViewModel();
+        _parametersViewModel = new ParametersViewModel(_storageFactory);
 
         if (_pipesWithoutDataStorage.GetElements().Count != 0)
         {
@@ -306,33 +308,33 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
 
         if (_ductWithoutDataStorage.GetElements().Count != 0)
         {
-            _ductWithoutViewModel = new DuctWithoutViewModel(_ductWithoutDataStorage);
+            _ductWithoutViewModel = new DuctWithoutViewModel(_ductWithoutDataStorage, _storageFactory);
             DuctWithoutButtonIsVisible = true;
         }
 
         if (_ductRoundDataStorage.GetElements().Count != 0)
         {
-            _ductRoundViewModel = new DuctRoundViewModel(_ductRoundDataStorage);
+            _ductRoundViewModel = new DuctRoundViewModel(_ductRoundDataStorage, _storageFactory);
             DuctRoundButtonIsVisible = true;
         }
 
         if (_ductPlasticDataStorage.GetElements().Count != 0)
         {
-            _ductPlasticViewModel = new DuctPlasticViewModel(_ductPlasticDataStorage);
+            _ductPlasticViewModel = new DuctPlasticViewModel(_ductPlasticDataStorage, _storageFactory);
             DuctPlasticButtonIsVisible = true;
         }
 
         if (_ductRectangularDataStorage.GetElements().Count != 0)
         {
             _ductRectangularViewModel =
-                new DuctRectangularViewModel(_ductRectangularDataStorage);
+                new DuctRectangularViewModel(_ductRectangularDataStorage, _storageFactory);
             DuctRectangularButtonIsVisible = true;
         }
 
         if (_ductConnectionPartsDataStorage.GetElements().Count != 0)
         {
             _ductConnectionPartsViewModel =
-                new DuctConnectionPartsViewModel(_ductConnectionPartsDataStorage);
+                new DuctConnectionPartsViewModel(_ductConnectionPartsDataStorage, _storageFactory);
             DuctConnectionPartsButtonIsVisible = true;
         }
 
@@ -345,7 +347,8 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
 
         if (_flexibleDuctsRoundDataStorage.GetElements().Count != 0)
         {
-            _flexibleDuctsRoundViewModel = new FlexibleDuctsRoundViewModel(_flexibleDuctsRoundDataStorage);
+            _flexibleDuctsRoundViewModel =
+                new FlexibleDuctsRoundViewModel(_flexibleDuctsRoundDataStorage, _storageFactory);
             FlexibleDuctsRoundButtonIsVisible = true;
         }
 
@@ -505,7 +508,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
     {
         try
         {
-            var dataStorages = DataStorageFactory.Instance.GetAllStorages();
+            var dataStorages = _storageFactory.GetAllStorages();
             foreach (var dataStorage in dataStorages)
             {
                 dataStorage.Save();
@@ -733,7 +736,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
 
     private void UpdateParameters()
     {
-        ParametersDataStorage dataStorage = DataStorageFactory.Instance.GetStorage<ParametersDataStorage>();
+        ParametersDataStorage dataStorage = _storageFactory.GetStorage<ParametersDataStorage>();
 
         // Получаем элементы и отфильтровываем недействительные
         var elements = dataStorage.GetElements()
