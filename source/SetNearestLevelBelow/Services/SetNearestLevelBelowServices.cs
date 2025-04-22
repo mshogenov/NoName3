@@ -193,26 +193,44 @@ public class SetNearestLevelBelowServices
         return mepElements;
     }
 
-    private Level FindNearestLevelBelow(Element element, List<Level> sortedLevels)
+    private Level FindNearestLevelBelow(Element element, List<Level> sortedLevels, double maxDistanceAbove = 300)
     {
         double elementZ = GetElementZPosition(element);
 
         if (double.IsNaN(elementZ))
             return null;
 
+        // Конвертируем миллиметры в футы (Revit использует футы)
+        double maxDistanceInFeet = maxDistanceAbove / 304.8;
+
         // Находим ближайший нижний уровень
         Level nearestLevelBelow = null;
+        Level levelAbove = null;
 
+        // Проверяем все уровни
         foreach (Level level in sortedLevels)
         {
+            // Если уровень ниже или равен элементу
             if (level.Elevation <= elementZ)
             {
                 nearestLevelBelow = level;
             }
+            // Если уровень выше элемента
             else
             {
+                // Проверяем, находится ли уровень на указанном расстоянии или меньше над элементом
+                if (level.Elevation - elementZ <= maxDistanceInFeet)
+                {
+                    levelAbove = level;
+                }
                 break;
             }
+        }
+
+        // Если есть уровень в пределах указанного расстояния над элементом, возвращаем его
+        if (levelAbove != null)
+        {
+            return levelAbove;
         }
 
         // Если не найден нижний уровень, берем первый (самый нижний) уровень из списка
