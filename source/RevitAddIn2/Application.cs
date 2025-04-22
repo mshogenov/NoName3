@@ -16,10 +16,18 @@ namespace RevitAddIn2;
  [UsedImplicitly]
     public class Application : ExternalApplication
     {
-        public static List<ElementId> SelectionHistory { get; } = [];
+        // Заменяем одиночный список историей из 10 списков
+        public static List<List<ElementId>> SelectionHistories { get; } = new List<List<ElementId>>(10);
+        public static int MaxHistories { get; } = 10;
 
         public override void OnStartup()
         {
+            // Инициализируем списки
+            for (int i = 0; i < MaxHistories; i++)
+            {
+                SelectionHistories.Add(new List<ElementId>());
+            }
+
             CreateRibbon();
             RegisterUpdaterParameters();
             Application.SelectionChanged += LastAllocation;
@@ -28,24 +36,38 @@ namespace RevitAddIn2;
         private void LastAllocation(object? sender, SelectionChangedEventArgs e)
         {
             ICollection<ElementId> currentSelection = e.GetSelectedElements();
-            switch (currentSelection.Count)
-            {
-                case 0:
-                    return;
-                case > 1:
-                {
-                    SelectionHistory.Clear();
-                    // Добавление текущего выделения в историю
-                    foreach (ElementId id in currentSelection)
-                    {
-                        if (!SelectionHistory.Contains(id))
-                        {
-                            SelectionHistory.Add(id);
-                        }
-                    }
+            if (currentSelection.Count == 0)
+                return;
 
+            // Создаем новый список выделения
+            var newSelection = new List<ElementId>();
+            foreach (ElementId id in currentSelection)
+            {
+                if (!newSelection.Contains(id))
+                {
+                    newSelection.Add(id);
+                }
+            }
+
+            // Проверяем, не совпадает ли новое выделение с уже существующим
+            bool isDuplicate = false;
+            foreach (var history in SelectionHistories)
+            {
+                if (history.Count == newSelection.Count && 
+                    history.All(newSelection.Contains) && 
+                    newSelection.All(history.Contains))
+                {
+                    isDuplicate = true;
                     break;
                 }
+            }
+
+            // Если это не дубликат, добавляем в историю
+            if (!isDuplicate && newSelection.Count > 0)
+            {
+                // Сдвигаем все списки на одну позицию вниз
+                SelectionHistories.RemoveAt(MaxHistories - 1);
+                SelectionHistories.Insert(0, newSelection);
             }
         }
 
