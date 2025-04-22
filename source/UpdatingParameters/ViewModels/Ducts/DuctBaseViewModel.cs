@@ -6,14 +6,9 @@ using UpdatingParameters.Storages.Parameters;
 
 namespace UpdatingParameters.ViewModels.Ducts;
 
-public class DuctBaseViewModel :ElementTypeViewModelBase
+public class DuctBaseViewModel(DataStorageFormulas dataStorageFormulas, DataStorageFactory storageFactory)
+    : ElementTypeViewModelBase(dataStorageFormulas)
 {
-    private readonly DataStorageFactory _storageFactory;
-
-    public DuctBaseViewModel(DataStorageFormulas dataStorageFormulas,DataStorageFactory storageFactory) : base(dataStorageFormulas)
-    {
-        _storageFactory = storageFactory;
-    }
     protected override void UpdateElements(object window)
     {
         var view = window as Window;
@@ -29,7 +24,7 @@ public class DuctBaseViewModel :ElementTypeViewModelBase
                 return;
             }
 
-            var parametersDataStorage = _storageFactory.GetStorage<ParametersDataStorage>();
+            var parametersDataStorage = storageFactory.GetStorage<ParametersDataStorage>();
             if (parametersDataStorage.HermeticClassIsChecked)
             {
                 UpdaterParametersService.UpdateParamHermeticСlass(Doc, Elements);
@@ -37,7 +32,7 @@ public class DuctBaseViewModel :ElementTypeViewModelBase
 
             if (parametersDataStorage.WallThicknessIsChecked)
             {
-                var ductParametersDataStorage = _storageFactory.GetStorage<DuctParametersDataStorage>();
+                var ductParametersDataStorage = storageFactory.GetStorage<DuctParametersDataStorage>();
                 UpdaterParametersService.UpdateParamWallThickness(Doc, Elements,
                     ductParametersDataStorage.DuctParameters);
             }

@@ -128,7 +128,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
         _allElementsCount = collector.Count;
         _storageFactory = new DataStorageFactory();
         _storageFactory.InitializeAllStorages();
-        _pipesWithoutDataStorage =_storageFactory.GetStorage<PipesWithoutDataStorage>();
+        _pipesWithoutDataStorage = _storageFactory.GetStorage<PipesWithoutDataStorage>();
         _pipesOuterDiameterDataStorage = _storageFactory.GetStorage<PipesOuterDiameterDataStorage>();
         _pipesInternalDiameterDataStorage = _storageFactory.GetStorage<PipesInternalDiameterDataStorage>();
         _flexPipeWithoutDataStorage = _storageFactory.GetStorage<FlexPipeWithoutDataStorage>();
@@ -308,33 +308,33 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
 
         if (_ductWithoutDataStorage.GetElements().Count != 0)
         {
-            _ductWithoutViewModel = new DuctWithoutViewModel(_ductWithoutDataStorage,_storageFactory);
+            _ductWithoutViewModel = new DuctWithoutViewModel(_ductWithoutDataStorage, _storageFactory);
             DuctWithoutButtonIsVisible = true;
         }
 
         if (_ductRoundDataStorage.GetElements().Count != 0)
         {
-            _ductRoundViewModel = new DuctRoundViewModel(_ductRoundDataStorage,_storageFactory);
+            _ductRoundViewModel = new DuctRoundViewModel(_ductRoundDataStorage, _storageFactory);
             DuctRoundButtonIsVisible = true;
         }
 
         if (_ductPlasticDataStorage.GetElements().Count != 0)
         {
-            _ductPlasticViewModel = new DuctPlasticViewModel(_ductPlasticDataStorage,_storageFactory);
+            _ductPlasticViewModel = new DuctPlasticViewModel(_ductPlasticDataStorage, _storageFactory);
             DuctPlasticButtonIsVisible = true;
         }
 
         if (_ductRectangularDataStorage.GetElements().Count != 0)
         {
             _ductRectangularViewModel =
-                new DuctRectangularViewModel(_ductRectangularDataStorage,_storageFactory);
+                new DuctRectangularViewModel(_ductRectangularDataStorage, _storageFactory);
             DuctRectangularButtonIsVisible = true;
         }
 
         if (_ductConnectionPartsDataStorage.GetElements().Count != 0)
         {
             _ductConnectionPartsViewModel =
-                new DuctConnectionPartsViewModel(_ductConnectionPartsDataStorage,_storageFactory);
+                new DuctConnectionPartsViewModel(_ductConnectionPartsDataStorage, _storageFactory);
             DuctConnectionPartsButtonIsVisible = true;
         }
 
@@ -347,7 +347,8 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
 
         if (_flexibleDuctsRoundDataStorage.GetElements().Count != 0)
         {
-            _flexibleDuctsRoundViewModel = new FlexibleDuctsRoundViewModel(_flexibleDuctsRoundDataStorage,_storageFactory);
+            _flexibleDuctsRoundViewModel =
+                new FlexibleDuctsRoundViewModel(_flexibleDuctsRoundDataStorage, _storageFactory);
             FlexibleDuctsRoundButtonIsVisible = true;
         }
 

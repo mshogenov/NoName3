@@ -5,9 +5,11 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Windows;
 using Autodesk.Revit.DB.Mechanical;
+using NoNameApi.Extensions;
 using NoNameApi.Utils;
 using UpdatingParameters.Models;
 using UpdatingParameters.Storages;
+
 
 namespace UpdatingParameters.Services;
 
@@ -35,8 +37,8 @@ public class UpdaterParametersService
 
     public UpdaterParametersService(DataStorageFactory dataStorage)
     {
-        
     }
+
     public static List<Parameter> GetAllParameters(Element element)
     {
         List<Parameter> parameters = [];
@@ -122,7 +124,7 @@ public class UpdaterParametersService
         }
 
         // Устанавливаем значение параметра "ADSK_Количество"
-        Parameter adskQuantity = element.FindParameter("ADSK_Количество");
+        Parameter adskQuantity = element.FetchParameter("ADSK_Количество");
         var currentValue = adskQuantity?.AsDouble();
         if (adskQuantity is { IsReadOnly: false } && Math.Abs(currentValue.Value - quantityValue) > 0.001)
         {
@@ -133,7 +135,7 @@ public class UpdaterParametersService
     private static double HandleLengthParameter(Element element, Formula formula, bool parsedStockpile,
         double stockpile)
     {
-        var parameter = element.FindParameter(formula.ParameterName);
+        var parameter = element.FetchParameter(formula.ParameterName);
         if (parameter == null) return 0;
 
         double significance = formula.MeasurementUnit switch
@@ -162,7 +164,7 @@ public class UpdaterParametersService
 
     private static double HandleAreaParameter(Element element, Formula formula, bool parsedStockpile, double stockpile)
     {
-        var parameter = element.FindParameter(formula.ParameterName);
+        var parameter = element.FetchParameter(formula.ParameterName);
         if (parameter == null) return 0;
 
         double significance = parameter.AsDouble().ToUnit(UnitTypeId.SquareMeters);
@@ -172,7 +174,7 @@ public class UpdaterParametersService
     private static double HandleVolumeParameter(Element element, Formula formula, bool parsedStockpile,
         double stockpile)
     {
-        var parameter = element.FindParameter(formula.ParameterName);
+        var parameter = element.FetchParameter(formula.ParameterName);
         if (parameter == null) return 0;
 
         double significance = parameter.AsDouble().ToUnit(UnitTypeId.CubicMeters);
@@ -187,15 +189,15 @@ public class UpdaterParametersService
             dataStorage.NameFormulas.Any(x => x.ParameterName == "Размер"))
         {
             noteValue = string.Concat(dataStorage.NoteFormulas.Select(f =>
-                $"{f.Prefix}{string.Join("-", element.FindParameter(f.ParameterName)?.AsValueString()?.Split('-').Distinct()!)}{f.Suffix}"));
+                $"{f.Prefix}{string.Join("-", element.FetchParameter(f.ParameterName)?.AsValueString()?.Split('-').Distinct()!)}{f.Suffix}"));
         }
         else
         {
             noteValue = string.Concat(dataStorage.NoteFormulas.Select(f =>
-                $"{f.Prefix}{element.FindParameter(f.ParameterName)?.AsValueString()}{f.Suffix}"));
+                $"{f.Prefix}{element.FetchParameter(f.ParameterName)?.AsValueString()}{f.Suffix}"));
         }
 
-        Parameter adskNote = element.FindParameter("ADSK_Примечание");
+        Parameter adskNote = element.FetchParameter("ADSK_Примечание");
         string currentValue = adskNote?.AsString();
         if (adskNote is { IsReadOnly: false } && currentValue != noteValue)
         {
@@ -216,7 +218,7 @@ public class UpdaterParametersService
         }
 
         // Поиск параметра "ADSK_Наименование"
-        Parameter adskName = element.FindParameter("ADSK_Наименование");
+        Parameter adskName = element.FetchParameter("ADSK_Наименование");
         if (adskName == null || adskName.IsReadOnly)
         {
             return;
@@ -258,7 +260,7 @@ public class UpdaterParametersService
 
     private static void HandleSizeParameter(Element element, Formula formula, List<string> nameComponents)
     {
-        var param = element.FindParameter(formula.ParameterName);
+        var param = element.FetchParameter(formula.ParameterName);
         if (param == null) return;
 
         if (element.Category?.BuiltInCategory == BuiltInCategory.OST_DuctFitting)
@@ -267,13 +269,13 @@ public class UpdaterParametersService
             if (valueString == null) return;
             if (valueString.Count >= 3)
             {
-                var radiusParam = element.FindParameter("Радиус воздуховода");
+                var radiusParam = element.FetchParameter("Радиус воздуховода");
                 if (radiusParam == null || radiusParam.AsDouble() == 0)
                 {
                     var distinctValue = valueString.Distinct().ToList();
                     if (distinctValue.Count == 1)
                     {
-                        var modelType = element.FindParameter(BuiltInParameter.ALL_MODEL_MODEL)?.AsValueString();
+                        var modelType =element.FetchParameter(BuiltInParameter.ALL_MODEL_MODEL)?.AsValueString();
                         if (modelType is "Тройник" or "Крестовина")
                         {
                             var prefix = modelType == "Тройник" ? "равнопроходной " : "равнопроходная ";
@@ -284,7 +286,7 @@ public class UpdaterParametersService
                 }
             }
 
-            if (element.FindParameter(BuiltInParameter.ALL_MODEL_MODEL)?.AsValueString() == "Отвод")
+            if (element.FetchParameter(BuiltInParameter.ALL_MODEL_MODEL)?.AsValueString() == "Отвод")
             {
                 nameComponents.Add($"{formula.Prefix}{string.Join("-", valueString.Distinct())}{formula.Suffix}");
                 return;
@@ -295,8 +297,8 @@ public class UpdaterParametersService
         }
         else if (element is Duct duct && duct.DuctType.Shape == ConnectorProfileType.Rectangular)
         {
-            var width = duct.FindParameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM)?.AsDouble().ToMillimeters();
-            var height = duct.FindParameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM)?.AsDouble().ToMillimeters();
+            var width = duct.FetchParameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM)?.AsDouble().ToMillimeters();
+            var height = duct.FetchParameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM)?.AsDouble().ToMillimeters();
 
             if (!width.HasValue || !height.HasValue) return;
             if (width < height)
@@ -309,9 +311,11 @@ public class UpdaterParametersService
         }
     }
 
+    
+
     private static void HandleDefaultParameter(Element element, Formula formula, List<string> nameComponents)
     {
-        var parameter = element.FindParameter(formula.ParameterName);
+        var parameter = element.FetchParameter(formula.ParameterName);
         var value = parameter?.AsValueString();
 
         if (!string.IsNullOrWhiteSpace(value))
@@ -322,18 +326,18 @@ public class UpdaterParametersService
 
     public static void CopyParameter(Document doc, Element element, string getParamName, string setParamName)
     {
-        if (getParamName == null || setParamName == null || element==null) return;
+        if (getParamName == null || setParamName == null || element == null) return;
         try
         {
-            Parameter getParam = element.FindParameter(getParamName);
-            Parameter setParam = element.FindParameter(setParamName);
+            Parameter getParam = element.FetchParameter(getParamName);
+            Parameter setParam = element.FetchParameter(setParamName);
             if (element.Category.BuiltInCategory == BuiltInCategory.OST_MechanicalEquipment)
             {
                 if (getParamName == "Сокращение для системы")
                 {
                     var connectors = (element as FamilyInstance)?.MEPModel?.ConnectorManager?.Connectors;
                     string parameterValue = string.Empty;
-                    setParam = element.FindParameter(setParamName);
+                    setParam = element.FetchParameter(setParamName);
                     if (connectors != null)
                     {
                         foreach (Connector connector in connectors)
@@ -342,7 +346,7 @@ public class UpdaterParametersService
                             ElementId systemTypeId = connector.MEPSystem.GetTypeId();
                             Element systemType = doc.GetElement(systemTypeId);
                             Parameter getParamAbbreviation =
-                                systemType?.FindParameter(BuiltInParameter.RBS_SYSTEM_ABBREVIATION_PARAM);
+                                systemType?.FetchParameter(BuiltInParameter.RBS_SYSTEM_ABBREVIATION_PARAM);
                             if (getParamAbbreviation != null &&
                                 !parameterValue.Contains(getParamAbbreviation.AsValueString()))
                             {
@@ -414,7 +418,7 @@ public class UpdaterParametersService
         {
             try
             {
-                Parameter setParam = instance.FindParameter(setParamName);
+                Parameter setParam = instance.FetchParameter(setParamName);
                 // Устанавливаем значение параметра для текущего вложенного элемента
                 SetParameter(sortedParameter, setParam);
                 // Рекурсивно обрабатываем вложенные экземпляры этого элемента
@@ -502,13 +506,13 @@ public class UpdaterParametersService
             return;
         }
 
-        Parameter adskWallThickness = fitting.FindParameter("ADSK_Толщина стенки");
+        Parameter adskWallThickness = fitting.FetchParameter("ADSK_Толщина стенки");
         if (adskWallThickness == null)
         {
             return;
         }
 
-        var wallThickness = nearestDuct.FindParameter("ADSK_Толщина стенки")?.AsDouble();
+        var wallThickness = nearestDuct.FetchParameter("ADSK_Толщина стенки")?.AsDouble();
         var currentValue = adskWallThickness?.AsDouble();
         if (wallThickness > 0 && Math.Abs(currentValue.Value - wallThickness.Value) > 0.001)
         {
@@ -556,7 +560,7 @@ public class UpdaterParametersService
 
     private static void SetWallThicknessParameter(Element element, double thickness)
     {
-        var adskWallThickness = element.FindParameter("ADSK_Толщина стенки");
+        var adskWallThickness = element.FetchParameter("ADSK_Толщина стенки");
         var currentValue = adskWallThickness?.AsDouble();
         if (adskWallThickness is { IsReadOnly: false } && Math.Abs(currentValue.Value - thickness) > 0.001)
         {
@@ -668,15 +672,15 @@ public class UpdaterParametersService
 
         // Получение внешней изоляции
         var externalInsulationValue =
-            element.FindParameter(BuiltInParameter.RBS_REFERENCE_INSULATION_TYPE)?.AsValueString();
+            element.FetchParameter(BuiltInParameter.RBS_REFERENCE_INSULATION_TYPE)?.AsValueString();
         var externalInsulation = externalInsulationValue == "Огнезащита" ? externalInsulationValue : string.Empty;
 
         return new DuctParametersInfo
         {
-            Material = element.FindParameter("ADSK_Материал обозначение")?.AsValueString() ?? string.Empty,
-            Shape = element.FindParameter(BuiltInParameter.WINDOW_TYPE_ID)?.AsValueString() ?? string.Empty,
+            Material = element.FetchParameter("ADSK_Материал обозначение")?.AsValueString() ?? string.Empty,
+            Shape = element.FetchParameter(BuiltInParameter.WINDOW_TYPE_ID)?.AsValueString() ?? string.Empty,
             ExternalInsulation = externalInsulation,
-            InternalInsulation = element.FindParameter(BuiltInParameter.RBS_REFERENCE_LINING_TYPE)?.AsValueString() ??
+            InternalInsulation = element.FetchParameter(BuiltInParameter.RBS_REFERENCE_LINING_TYPE)?.AsValueString() ??
                                  string.Empty,
             Size = FindLargerSide(element)?.ToMillimeters()
         };
@@ -761,10 +765,10 @@ public class UpdaterParametersService
 
         var dimensions = new[]
         {
-            familyInstance.FindParameter("Высота воздуховода 1")?.AsDouble(),
-            familyInstance.FindParameter("Высота воздуховода 2")?.AsDouble(),
-            familyInstance.FindParameter("Ширина воздуховода 1")?.AsDouble(),
-            familyInstance.FindParameter("Ширина воздуховода 2")?.AsDouble()
+            familyInstance.FetchParameter("Высота воздуховода 1")?.AsDouble(),
+            familyInstance.FetchParameter("Высота воздуховода 2")?.AsDouble(),
+            familyInstance.FetchParameter("Ширина воздуховода 1")?.AsDouble(),
+            familyInstance.FetchParameter("Ширина воздуховода 2")?.AsDouble()
         };
 
         return dimensions.Where(d => d.HasValue).Max() ?? 0;
@@ -782,8 +786,8 @@ public class UpdaterParametersService
             return connector.Radius * 2;
         }
 
-        var width = duct.FindParameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM)?.AsDouble();
-        var height = duct.FindParameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM)?.AsDouble();
+        var width = duct.FetchParameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM)?.AsDouble();
+        var height = duct.FetchParameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM)?.AsDouble();
         return new[] { width ?? 0, height ?? 0 }.Max();
     }
 
@@ -792,8 +796,8 @@ public class UpdaterParametersService
         if (element is not Duct && element.Category.BuiltInCategory != BuiltInCategory.OST_DuctFitting) return;
 
         string internalInsulationValue =
-            element?.FindParameter(BuiltInParameter.RBS_REFERENCE_LINING_TYPE)?.AsValueString();
-        Parameter hermeticСlass = element.FindParameter("Класс герметичности");
+            element?.FetchParameter(BuiltInParameter.RBS_REFERENCE_LINING_TYPE)?.AsValueString();
+        Parameter hermeticСlass = element.FetchParameter("Класс герметичности");
         string currentValue = hermeticСlass?.AsString();
 
         if (internalInsulationValue == null)

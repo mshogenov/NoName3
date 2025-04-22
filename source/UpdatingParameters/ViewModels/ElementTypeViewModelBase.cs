@@ -479,6 +479,7 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
                 UpdaterParametersService.ReturnWindowState(view);
                 return;
             }
+
             int current = 0;
             foreach (var element in Elements)
             {
