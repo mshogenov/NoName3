@@ -33,6 +33,7 @@
         <PackageReference Include="Nice3point.Revit.Extensions" Version="$(RevitVersion).*" />
         <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="$(RevitVersion).*" />
         <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="$(RevitVersion).*" />
+        <PackageReference Include="WixSharp.bin" Version="1.26.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -42,7 +43,7 @@
 
     <ItemGroup>
       <Compile Update="Utils\Helpers.cs">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       </Compile>
     </ItemGroup>
 

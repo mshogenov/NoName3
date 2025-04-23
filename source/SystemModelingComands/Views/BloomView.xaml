@@ -10,6 +10,7 @@
     mc:Ignorable="d"
     Width="500"
     SizeToContent="Height"
+    MaxHeight="800"
     WindowStartupLocation="Manual"
     Left="400"
     Top="100"
@@ -19,11 +20,13 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
-                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/ThemesResourceDictionary.xaml" />
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/LightTheme.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-  
+
     <Grid
         Style="{StaticResource Grid}">
         <Grid.RowDefinitions>
@@ -35,10 +38,10 @@
         <GroupBox
             Style="{StaticResource GroupBoxStyle}"
             Header="Типы труб"
+            Margin="10"
             Grid.Row="0">
             <ListBox ItemsSource="{Binding  Path=MepCurveTypes}"
                      SelectedItem="{Binding SelectedMepCurveType, UpdateSourceTrigger=PropertyChanged}"
-                    
                      Style="{StaticResource ModernListBoxStyle}">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
@@ -52,10 +55,10 @@
         </Grid>
         <DockPanel Grid.Row="1"
                    HorizontalAlignment="Right"
-                   Margin="5 5 10 5 ">
+                   Margin="5 0 10 5 ">
             <Button
                 Content="Вставить трубу"
-                Style="{StaticResource CommonButton}"
+                Style="{StaticResource CommonButtonStyle2}"
                 Click="ButtonInsertPipe_OnClick">
             </Button>
             <Button

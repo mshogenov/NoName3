@@ -74,22 +74,21 @@ namespace UpdatingParameters.ViewModels.Parameters
             //"ADSK_Система_Классификация",
         ];
 
-       
 
         private readonly ParametersDataStorage _parametersDataStorage;
         private readonly DuctParametersDataStorage _ductParametersDataStorage;
 
-        public ParametersViewModel()
+        public ParametersViewModel(DataStorageFactory dataStorage)
         {
             _doc = Context.ActiveDocument;
             _app = Context.Application;
-            _parametersDataStorage = DataStorageFactory.Instance.GetStorage<ParametersDataStorage>();
+            _parametersDataStorage = dataStorage.GetStorage<ParametersDataStorage>();
             _elements = _parametersDataStorage.GetElements();
             SystemAbbreviationIsChecked = _parametersDataStorage.SystemAbbreviationIsChecked;
             SystemNameIsChecked = _parametersDataStorage.SystemNameIsChecked;
             WallThicknessIsChecked = _parametersDataStorage.WallThicknessIsChecked;
             HermeticClassIsChecked = _parametersDataStorage.HermeticClassIsChecked;
-            _ductParametersDataStorage = DataStorageFactory.Instance.GetStorage<DuctParametersDataStorage>();
+            _ductParametersDataStorage = dataStorage.GetStorage<DuctParametersDataStorage>();
         }
 
         [RelayCommand]
@@ -129,8 +128,10 @@ namespace UpdatingParameters.ViewModels.Parameters
 
                 if (WallThicknessIsChecked)
                 {
-                    UpdaterParametersService.UpdateParamWallThickness(_doc, _elements, _ductParametersDataStorage.DuctParameters);
+                    UpdaterParametersService.UpdateParamWallThickness(_doc, _elements,
+                        _ductParametersDataStorage.DuctParameters);
                 }
+
                 tr.Commit();
                 TaskDialog.Show("Информация", "Параметры обновлены");
                 // Возвращаем активность окну

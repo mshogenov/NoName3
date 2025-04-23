@@ -10,5 +10,6 @@ public sealed partial class MepElementsCopyView
     {
         DataContext = levelsViewModel;
         InitializeComponent();
+        LoadWindowTemplate();
     }
 }

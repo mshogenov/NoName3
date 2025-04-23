@@ -17,7 +17,7 @@ public class PositionNumberingServices
 
         using var transaction = new Transaction(_doc, "Нумерация позиций");
         transaction.Start();
-        using var progressBar = new ProgressWindow(numberingGroups.Count);
+         var progressBar = new ProgressWindow(numberingGroups.Count);
         progressBar.Show();
         try
         {
@@ -152,6 +152,11 @@ public class PositionNumberingServices
             familyNumber++;
         }
     }
+    /// <summary>
+    /// Получает все вложенные семейства в документе
+    /// </summary>
+    /// <param name="elements"></param>
+    /// <returns></returns>
     private IList<Element> GetNestedFamilies(IList<Element> elements)
     {
         var nestedElements = new List<Element>();
@@ -161,17 +166,14 @@ public class PositionNumberingServices
             var subComponentIds = element.GetSubComponentIds();
             foreach (var id in subComponentIds)
             {
-                if (id != null)
+                if (id == null) continue;
+                var subElement = _doc.GetElement(id);
+                if (subElement is FamilyInstance)
                 {
-                    var subElement = _doc.GetElement(id);
-                    if (subElement is FamilyInstance)
-                    {
-                        nestedElements.Add(subElement);
-                    }
+                    nestedElements.Add(subElement);
                 }
             }
         }
-
         return nestedElements;
     }
 // Метод для нахождения родителя вложенного элемента

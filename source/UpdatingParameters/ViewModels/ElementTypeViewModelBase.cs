@@ -16,9 +16,9 @@ namespace UpdatingParameters.ViewModels;
 
 public abstract partial class ElementTypeViewModelBase : ViewModelBase
 {
-    private readonly Document _doc = Context.ActiveDocument;
-    private readonly DataStorageFormulas _dataStorageFormulas;
-    private readonly List<Element> _elements;
+    protected readonly Document Doc = Context.ActiveDocument;
+    protected readonly DataStorageFormulas DataStorageFormulas;
+    protected readonly List<Element> Elements;
     private readonly Element _element;
     [ObservableProperty] private ObservableCollection<Parameter> _parametersForName = [];
     [ObservableProperty] private ObservableCollection<Parameter> _parametersForNote = [];
@@ -75,7 +75,7 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
         {
             _noteIsChecked = value;
             OnPropertyChanged();
-            _dataStorageFormulas.NoteIsChecked = value;
+            DataStorageFormulas.NoteIsChecked = value;
         }
     }
 
@@ -88,7 +88,7 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
         {
             _nameIsChecked = value;
             OnPropertyChanged();
-            _dataStorageFormulas.NameIsChecked = value;
+            DataStorageFormulas.NameIsChecked = value;
         }
     }
 
@@ -101,7 +101,7 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
         {
             _quantityIsChecked = value;
             OnPropertyChanged();
-            _dataStorageFormulas.QuantityIsChecked = value;
+            DataStorageFormulas.QuantityIsChecked = value;
         }
     }
 
@@ -152,17 +152,17 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
 
     protected ElementTypeViewModelBase(DataStorageFormulas dataStorageFormulas)
     {
-        _dataStorageFormulas = dataStorageFormulas;
+        DataStorageFormulas = dataStorageFormulas;
         SettingsManager.OnSettingsChanged += SettingsManager_OnSettingsChanged;
-        _elements = _dataStorageFormulas.GetElements();
-        _elementCounts = _elements.Count;
-        _element = _elements.FirstOrDefault();
-        AdskNameFormulas = new ObservableCollection<Formula>(_dataStorageFormulas.NameFormulas);
-        AdskNoteFormulas = new ObservableCollection<Formula>(_dataStorageFormulas.NoteFormulas);
-        AdskQuantityFormulas = new ObservableCollection<Formula>(_dataStorageFormulas.QuantityFormulas);
-        NoteIsChecked = _dataStorageFormulas.NoteIsChecked;
-        NameIsChecked = _dataStorageFormulas.NameIsChecked;
-        QuantityIsChecked = _dataStorageFormulas.QuantityIsChecked;
+        Elements = DataStorageFormulas.GetElements();
+        _elementCounts = Elements.Count;
+        _element = Elements.FirstOrDefault(x => x.IsValidObject);
+        AdskNameFormulas = new ObservableCollection<Formula>(DataStorageFormulas.NameFormulas);
+        AdskNoteFormulas = new ObservableCollection<Formula>(DataStorageFormulas.NoteFormulas);
+        AdskQuantityFormulas = new ObservableCollection<Formula>(DataStorageFormulas.QuantityFormulas);
+        NoteIsChecked = DataStorageFormulas.NoteIsChecked;
+        NameIsChecked = DataStorageFormulas.NameIsChecked;
+        QuantityIsChecked = DataStorageFormulas.QuantityIsChecked;
         var nameFormulasHandler = new FormulaCollectionHandler(AdskNameFormulas);
         var noteFormulasHandler = new FormulaCollectionHandler(AdskNoteFormulas);
         var quantityFormulasHandler = new FormulaCollectionHandler(AdskQuantityFormulas);
@@ -170,9 +170,9 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
         noteFormulasHandler.OnCollectionChangedAction += () => OnPropertyChanged(nameof(CombinedNoteValues));
         quantityFormulasHandler.OnCollectionChangedAction += () => OnPropertyChanged(nameof(CombinedQuantityValues));
         quantityFormulasHandler.OnCollectionChangedAction += () => OnPropertyChanged(nameof(AdskQuantityFormulas));
-        var ignoredParametersName = _dataStorageFormulas.NameFormulas.Select(x => x.ParameterName).ToList();
-        var ignoredParametersNote = _dataStorageFormulas.NoteFormulas.Select(x => x.ParameterName).ToList();
-        var ignoredParametersQuantity = _dataStorageFormulas.QuantityFormulas.Select(x => x.ParameterName).ToList();
+        var ignoredParametersName = DataStorageFormulas.NameFormulas.Select(x => x.ParameterName).ToList();
+        var ignoredParametersNote = DataStorageFormulas.NoteFormulas.Select(x => x.ParameterName).ToList();
+        var ignoredParametersQuantity = DataStorageFormulas.QuantityFormulas.Select(x => x.ParameterName).ToList();
         var parameters = UpdaterParametersService.GetAllParameters(_element);
         if (parameters != null)
         {
@@ -221,11 +221,11 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
         ParametersViewForName = CreateParametersView(ParametersForName, FilterParametersForName);
         ParametersViewForNote = CreateParametersView(ParametersForNote, FilterParametersForNote);
         _nameFormulaManager = new FormulaManager(AdskNameFormulas, ParametersForName,
-            () => _dataStorageFormulas.NameFormulas = AdskNameFormulas);
+            () => DataStorageFormulas.NameFormulas = AdskNameFormulas);
         _noteFormulaManager = new FormulaManager(AdskNoteFormulas, ParametersForNote,
-            () => _dataStorageFormulas.NoteFormulas = AdskNoteFormulas);
+            () => DataStorageFormulas.NoteFormulas = AdskNoteFormulas);
         _quantityFormulaManager = new FormulaManager(AdskQuantityFormulas, ParametersForQuantity,
-            () => _dataStorageFormulas.QuantityFormulas = AdskQuantityFormulas);
+            () => DataStorageFormulas.QuantityFormulas = AdskQuantityFormulas);
     }
 
     private string FormationCombinedQuantityValues()
@@ -284,28 +284,28 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
 
     private void SettingsManager_OnSettingsChanged()
     {
-        _dataStorageFormulas.LoadData();
+        DataStorageFormulas.LoadData();
         AdskNameFormulas.Clear();
-        foreach (var formula in _dataStorageFormulas.NameFormulas)
+        foreach (var formula in DataStorageFormulas.NameFormulas)
         {
             AdskNameFormulas.Add(formula);
         }
 
         AdskNoteFormulas.Clear();
-        foreach (var formula in _dataStorageFormulas.NoteFormulas)
+        foreach (var formula in DataStorageFormulas.NoteFormulas)
         {
             AdskNoteFormulas.Add(formula);
         }
 
         AdskQuantityFormulas.Clear();
-        foreach (var formula in _dataStorageFormulas.QuantityFormulas)
+        foreach (var formula in DataStorageFormulas.QuantityFormulas)
         {
             AdskQuantityFormulas.Add(formula);
         }
 
-        NoteIsChecked = _dataStorageFormulas.NoteIsChecked;
-        NameIsChecked = _dataStorageFormulas.NameIsChecked;
-        QuantityIsChecked = _dataStorageFormulas.QuantityIsChecked;
+        NoteIsChecked = DataStorageFormulas.NoteIsChecked;
+        NameIsChecked = DataStorageFormulas.NameIsChecked;
+        QuantityIsChecked = DataStorageFormulas.QuantityIsChecked;
     }
 
     private ICollectionView CreateParametersView(IEnumerable<Parameter> parameters, Predicate<object> filter)
@@ -333,6 +333,8 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
 
     private void UpdateSignificance(Formula formula)
     {
+        if (formula == null) return;
+
         Parameter parameter = _element.FindParameter(formula.ParameterName);
         formula.Significance = formula.MeasurementUnit switch
         {
@@ -463,38 +465,25 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
     #endregion
 
     [RelayCommand]
-    private void UpdateElements(object window)
+    protected virtual void UpdateElements(object window)
     {
         var view = window as Window;
         using Transaction tr = new(Context.ActiveDocument, "Обновление параметров");
         try
         {
             tr.Start();
-            if (_elements == null || _elements.Count == 0)
+            if (Elements == null || Elements.Count == 0)
             {
                 tr.RollBack();
                 TaskDialog.Show("Ошибка", "Нет труб для обновления.");
-              UpdaterParametersService.ReturnWindowState(view);
+                UpdaterParametersService.ReturnWindowState(view);
                 return;
             }
 
-            var parametersDataStorage = DataStorageFactory.Instance.GetStorage<ParametersDataStorage>();
-            if (parametersDataStorage.HermeticClassIsChecked)
-            {
-                UpdaterParametersService.UpdateParamHermeticСlass(_doc, _elements);
-            }
-
-            if (parametersDataStorage.WallThicknessIsChecked)
-            {
-                var ductParametersDataStorage = DataStorageFactory.Instance.GetStorage<DuctParametersDataStorage>();
-                UpdaterParametersService.UpdateParamWallThickness(_doc, _elements,
-                    ductParametersDataStorage.DuctParameters);
-            }
-
             int current = 0;
-            foreach (var element in _elements)
+            foreach (var element in Elements)
             {
-                UpdaterParametersService.UpdateParameters(element, _dataStorageFormulas);
+                UpdaterParametersService.UpdateParameters(element, DataStorageFormulas);
                 current++;
             }
 
@@ -506,16 +495,15 @@ public abstract partial class ElementTypeViewModelBase : ViewModelBase
         {
             tr.RollBack();
             TaskDialog.Show("Ошибка", ex.Message);
-          UpdaterParametersService.ReturnWindowState(view);
+            UpdaterParametersService.ReturnWindowState(view);
         }
     }
 
-    
 
     [RelayCommand]
     private void SaveSettings()
     {
-        _dataStorageFormulas.Save();
+        DataStorageFormulas.Save();
         MessageBox.Show("Настройки сохранены");
     }
 }

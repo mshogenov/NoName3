@@ -1,11 +1,6 @@
-﻿using Autodesk.Revit.DB.Events;
-using Autodesk.Revit.UI;
+﻿using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
 using Nice3point.Revit.Toolkit.External;
-using RevitAddIn.Commands.CreatingSchematicsCommands;
-using RevitAddIn.Commands.CreatingSpecificationsCommands;
-using RevitAddIn.Commands.SystemModelingCommands;
-using RevitAddIn.Services;
 using UpdatingParameters.Services;
 
 namespace RevitAddIn
@@ -13,22 +8,17 @@ namespace RevitAddIn
     [UsedImplicitly]
     public class Application : ExternalApplication
     {
-        private FailureReplacement _failureReplacement;
-
-        public static List<ElementId> SelectionHistory { get;  } = [];
+        public static List<ElementId> SelectionHistory { get; } = [];
 
         public override void OnStartup()
         {
             CreateRibbon();
             RegisterUpdaterParameters();
-            _failureReplacement = new FailureReplacement();
-            // Application.ControlledApplication.FailuresProcessing += ControlledOnFailuresProcessing;
             Application.SelectionChanged += LastAllocation;
         }
 
         private void LastAllocation(object? sender, SelectionChangedEventArgs e)
         {
-           
             ICollection<ElementId> currentSelection = e.GetSelectedElements();
             switch (currentSelection.Count)
             {
@@ -45,38 +35,19 @@ namespace RevitAddIn
                             SelectionHistory.Add(id);
                         }
                     }
+
                     break;
                 }
             }
         }
-      
 
-        private void ControlledOnFailuresProcessing(object sender, FailuresProcessingEventArgs e)
-        {
-            var failuresAccessor = e.GetFailuresAccessor();
-            var failureMessages = failuresAccessor.GetFailureMessages(FailureSeverity.Error);
-            //.Where(x => x.GetFailureDefinitionId() == BuiltInFailures.FamilyFailures.UnexpectedFamilyChangeResultsWarning)
-            //.ToList();
-            if (failuresAccessor.GetTransactionName() != "Изменение типа") return;
-            if (failureMessages.Any())
-            {
-                var failureHandlingOptions = failuresAccessor.GetFailureHandlingOptions();
-
-                failureHandlingOptions.SetClearAfterRollback(true);
-
-                failuresAccessor.SetFailureHandlingOptions(failureHandlingOptions);
-                e.SetProcessingResult(FailureProcessingResult.ProceedWithRollBack);
-            }
-
-            var a = failureMessages.SelectMany(x => x.GetAdditionalElementIds());
-            _failureReplacement.PostFailure(failureMessages.SelectMany(x => x.GetFailingElementIds()));
-        }
 
         private void CreateRibbon()
         {
             var panelSystemModeling = Application.CreatePanel("Моделирование", "Фигня");
             var panelSystemCreatingSchematics = Application.CreatePanel("Схемы", "Фигня");
             var panelFormationOfSpecification = Application.CreatePanel("Спецификации", "Фигня");
+            var panelOther = Application.CreatePanel("Прочее", "Фигня");
 
             #region Bloom
 
@@ -174,22 +145,26 @@ namespace RevitAddIn
             ((PushButton)moveConnectAlignCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
 
             #endregion
+
             #region CopyElements
 
-            var mepElementsCopyCommandButton = panelSystemModeling.AddPushButton<MepElementsCopyCommand>("Копировать\nэлементы")
+            var mepElementsCopyCommandButton = panelSystemModeling
+                .AddPushButton<MepElementsCopyCommand>("Копировать\nэлементы")
                 .SetImage("/RevitAddIn;component/Resources/Icons/dublikat_16.png")
                 .SetLargeImage("/RevitAddIn;component/Resources/Icons/dublikat_32.png");
             ((PushButton)mepElementsCopyCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
 
             #endregion
 
-            
+
             #region LastAllocation
 
             panelSystemModeling.AddPushButton<LastAllocationCommand>("Последнее\nвыделенное")
                 .SetImage("/RevitAddIn;component/Resources/Icons/Последнее выделенное 16.ico")
                 .SetLargeImage("/RevitAddIn;component/Resources/Icons/Последнее выделенное 32.ico");
+
             #endregion
+
             #region RoomsInSpaces
 
             panelSystemModeling.AddPushButton<RoomsInSpacesCommand>("Помещения в\nпространства")
@@ -209,7 +184,8 @@ namespace RevitAddIn
                     .AddPushButton<ViewOfPipeSystemsCommand>("Создать\nвиды систем")
                     .SetImage("/RevitAddIn;component/Resources/Icons/Pipe systems 16.png")
                     .SetLargeImage("/RevitAddIn;component/Resources/Icons/Pipe systems 32.png");
-                ((PushButton)viewOfPipeSystemsCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
+                ((PushButton)viewOfPipeSystemsCommandButton).AvailabilityClassName =
+                    typeof(CommandAvailability).FullName;
             }
 
             if (splitButtonViewSystems != null)
@@ -230,6 +206,7 @@ namespace RevitAddIn
             //     .SetLargeImage("/RevitAddIn;component/Resources/Icons/Обозначение стояка_32.ico");
 
             #endregion
+
             #region MakeBreak
 
             var makeBreakCommandButton = panelSystemCreatingSchematics
@@ -276,6 +253,14 @@ namespace RevitAddIn
             panelFormationOfSpecification.AddPushButton<ElementsTypicalFloorCommand>("Элементы\nтипового этажа")
                 .SetImage("/RevitAddIn;component/Resources/Icons/Элементы типового этажа 16.ico")
                 .SetLargeImage("/RevitAddIn;component/Resources/Icons/Элементы типового этажа 32.ico");
+
+            #endregion
+
+            #region SetNearestLevelBelow
+
+            panelOther.AddPushButton<SetNearestLevelBelowCommand>("Установить ближайший\nуровень")
+                .SetImage("/RevitAddIn;component/Resources/Icons/uroven_mauxlwi8s01i_16.png")
+                .SetLargeImage("/RevitAddIn;component/Resources/Icons/uroven_mauxlwi8s01i_32.png");
 
             #endregion
         }

@@ -15,6 +15,7 @@ namespace ElementsTypicalFloor.Views
         {
             DataContext = viewModel;
             InitializeComponent();
+            LoadWindowTemplate();
         }
         private void TextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
