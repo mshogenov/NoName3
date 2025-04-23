@@ -1,6 +1,8 @@
 using Autodesk.Revit.Attributes;
-using Autodesk.Revit.UI;
+using LastAllocation.ViewModels;
+using LastAllocation.Views;
 using Nice3point.Revit.Toolkit.External;
+using NoNameApi.Services;
 
 namespace RevitAddIn2.Commands.Others;
 
@@ -8,17 +10,11 @@ namespace RevitAddIn2.Commands.Others;
 [Transaction(TransactionMode.Manual)]
 public class LastAllocationCommand : ExternalCommand
 {
-    private readonly UIDocument _uidoc = Context.ActiveUiDocument;
-
     public override void Execute()
     {
-        // Вместо немедленного применения выделения показываем диалог выбора
-        ShowSelectionHistoryDialog();
-    }
-
-    private void ShowSelectionHistoryDialog()
-    {
-        var dialog = new SelectionHistoryWindow(_uidoc);
-        dialog.ShowDialog();
+        if (WindowController.Focus<LastAllocationView>()) return;
+        var viewModel = new LastAllocationViewModel(RevitAddIn2.Application.SelectionHistories);
+        var view = new LastAllocationView(viewModel);
+        WindowController.Show(view, UiApplication.MainWindowHandle);
     }
 }

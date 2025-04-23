@@ -1,5 +1,7 @@
-﻿using Autodesk.Revit.UI;
+﻿using System.Collections.ObjectModel;
+using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
+using LastAllocation.Models;
 using Nice3point.Revit.Toolkit.External;
 using RevitAddIn2.Commands.CreatingSchematicsCommands;
 using RevitAddIn2.Commands.CreatingSpecificationsCommands;
@@ -17,17 +19,11 @@ namespace RevitAddIn2;
     public class Application : ExternalApplication
     {
         // Заменяем одиночный список историей из 10 списков
-        public static List<List<ElementId>> SelectionHistories { get; } = new List<List<ElementId>>(10);
+        public static ObservableCollection<SelectionHistoryData> SelectionHistories { get; } = new ();
         public static int MaxHistories { get; } = 10;
 
         public override void OnStartup()
         {
-            // Инициализируем списки
-            for (int i = 0; i < MaxHistories; i++)
-            {
-                SelectionHistories.Add(new List<ElementId>());
-            }
-
             CreateRibbon();
             RegisterUpdaterParameters();
             Application.SelectionChanged += LastAllocation;
@@ -36,7 +32,7 @@ namespace RevitAddIn2;
         private void LastAllocation(object? sender, SelectionChangedEventArgs e)
         {
             ICollection<ElementId> currentSelection = e.GetSelectedElements();
-            if (currentSelection.Count == 0)
+            if (currentSelection.Count <= 1)
                 return;
 
             // Создаем новый список выделения
@@ -51,8 +47,9 @@ namespace RevitAddIn2;
 
             // Проверяем, не совпадает ли новое выделение с уже существующим
             bool isDuplicate = false;
-            foreach (var history in SelectionHistories)
+            foreach (var historyData in SelectionHistories)
             {
+                var history = historyData.ElementsIds;
                 if (history.Count == newSelection.Count && 
                     history.All(newSelection.Contains) && 
                     newSelection.All(history.Contains))
@@ -65,9 +62,17 @@ namespace RevitAddIn2;
             // Если это не дубликат, добавляем в историю
             if (!isDuplicate && newSelection.Count > 0)
             {
-                // Сдвигаем все списки на одну позицию вниз
-                SelectionHistories.RemoveAt(MaxHistories - 1);
-                SelectionHistories.Insert(0, newSelection);
+                // Создаем новый объект SelectionHistoryData с текущим временем
+                var newHistoryData = new SelectionHistoryData(newSelection);
+
+                // Если достигли максимального количества историй, удаляем последнюю
+                if (SelectionHistories.Count >= MaxHistories)
+                {
+                    SelectionHistories.RemoveAt(SelectionHistories.Count - 1);
+                }
+
+                // Добавляем новую историю в начало списка
+                SelectionHistories.Insert(0, newHistoryData);
             }
         }
 
@@ -187,7 +192,7 @@ namespace RevitAddIn2;
 
             #region LastAllocation
 
-            panelSystemModeling.AddPushButton<LastAllocationCommand>("Последнее\nвыделенное")
+            panelSystemModeling.AddPushButton<LastAllocationCommand>("Последние\nвыделенные")
                 .SetImage("/RevitAddIn2;component/Resources/Icons/Последнее выделенное 16.ico")
                 .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Последнее выделенное 32.ico");
 
