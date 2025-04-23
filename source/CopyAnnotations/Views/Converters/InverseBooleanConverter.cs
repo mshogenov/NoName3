@@ -2,7 +2,7 @@
 using System.Windows.Data;
 using System.Windows.Markup;
 
-namespace RevitAddIn1.Views.Converters;
+namespace CopyAnnotations.Views.Converters;
 
 public sealed class InverseBooleanConverter : MarkupExtension, IValueConverter
 {

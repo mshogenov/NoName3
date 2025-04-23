@@ -1,6 +1,6 @@
 using Autodesk.Revit.UI.Selection;
 
-namespace RevitAddIn1.Filters;
+namespace CopyAnnotations.Filters;
 
 public class TagSelectionFilter : ISelectionFilter
 {

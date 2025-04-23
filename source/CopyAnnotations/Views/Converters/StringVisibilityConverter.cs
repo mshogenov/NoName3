@@ -23,7 +23,7 @@ using System.Windows.Data;
 using System.Windows.Markup;
 using Visibility = System.Windows.Visibility;
 
-namespace RevitAddIn1.Views.Converters;
+namespace CopyAnnotations.Views.Converters;
 
 public sealed class StringVisibilityConverter : MarkupExtension, IValueConverter
 {

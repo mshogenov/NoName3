@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Markup;
 
-namespace RevitAddIn1.Views.Converters;
+namespace CopyAnnotations.Views.Converters;
 
 public class EnumBooleanConverter<TEnum> : MarkupExtension, IValueConverter where TEnum : Enum
 {

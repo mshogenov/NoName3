@@ -1,4 +1,4 @@
-namespace RevitAddIn1.Models;
+namespace CopyAnnotations.Models;
 
 public class TagInfo
 {

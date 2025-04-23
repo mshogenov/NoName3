@@ -1,6 +1,6 @@
-﻿using RevitAddIn1.ViewModels;
+﻿using CopyAnnotations.ViewModels;
 
-namespace RevitAddIn1.Views;
+namespace CopyAnnotations.Views;
 
 public sealed partial class RevitAddIn1View
 {

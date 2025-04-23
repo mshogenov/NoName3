@@ -1,4 +1,4 @@
-namespace RevitAddIn1.Models;
+namespace CopyAnnotations.Models;
 
 public class TagData
 {
@@ -12,4 +12,9 @@ public class TagData
     public XYZ LeaderElbow { get; set; }
     public LeaderEndCondition LeaderEndCondition { get; set; }
     public XYZ RelativeLeaderElbow { get; set; }
+
+    public TagData(IndependentTag tag)
+    {
+        
+    }
 }
