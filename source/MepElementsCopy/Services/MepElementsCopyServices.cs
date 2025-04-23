@@ -67,19 +67,90 @@ public class MepElementsCopyServices
     public void SetBaseLevel(List<ElementModel> mepElementModels, LevelModel selectedLevel)
     {
         var selectedLevelId = selectedLevel.Id;
+        Document doc = mepElementModels.FirstOrDefault()?.Element?.Document;
+
+        if (doc == null || selectedLevel.Level == null)
+            return;
+
+        // Получаем elevation выбранного уровня
+        double newLevelElevation = selectedLevel.Level.Elevation;
+
         foreach (var elem in mepElementModels)
         {
-            Parameter baseLevel = elem.Element switch
+            // Получаем текущие координаты элемента
+            XYZ currentPosition = GetElementPosition(elem.Element);
+            if (currentPosition == null)
+                continue;
+
+            // Получаем текущий уровень элемента
+            ElementId currentLevelId = null;
+            Parameter baseLevelParam = null;
+            Parameter offsetParam = null;
+
+            switch (elem.Element)
             {
-                FamilyInstance => elem.Element.get_Parameter(BuiltInParameter.FAMILY_LEVEL_PARAM),
-                MEPCurve => elem.Element.get_Parameter(BuiltInParameter.RBS_START_LEVEL_PARAM),
-                _ => null
-            };
-            var currentValue = baseLevel?.AsElementId();
-            if (baseLevel is { IsReadOnly: false } && currentValue != selectedLevelId)
-            {
-                baseLevel.Set(selectedLevelId);
+                case FamilyInstance fi:
+                    baseLevelParam = fi.get_Parameter(BuiltInParameter.FAMILY_LEVEL_PARAM);
+                    offsetParam = fi.get_Parameter(BuiltInParameter.INSTANCE_FREE_HOST_OFFSET_PARAM);
+                    break;
+
+                case MEPCurve curve:
+                    baseLevelParam = curve.get_Parameter(BuiltInParameter.RBS_START_LEVEL_PARAM);
+                    offsetParam = curve.get_Parameter(BuiltInParameter.RBS_OFFSET_PARAM);
+                    break;
             }
+
+            if (baseLevelParam == null || offsetParam == null || baseLevelParam.IsReadOnly)
+                continue;
+
+            currentLevelId = baseLevelParam.AsElementId();
+            if (currentLevelId.Value < 0 || currentLevelId.Equals(selectedLevelId))
+                continue;
+
+            // Получаем elevation текущего уровня
+            Level currentLevel = doc.GetElement(currentLevelId) as Level;
+            if (currentLevel == null)
+                continue;
+
+            double currentLevelElevation = currentLevel.Elevation;
+
+            // Получаем текущее смещение от уровня
+            double currentOffset = offsetParam.AsDouble();
+
+            // Вычисляем абсолютную высоту элемента
+            double absoluteElevation = currentLevelElevation + currentOffset;
+
+            // Вычисляем новое смещение от нового уровня
+            double newOffset = absoluteElevation - newLevelElevation;
+
+            // Устанавливаем новый уровень и смещение
+            baseLevelParam.Set(selectedLevelId);
+            offsetParam.Set(newOffset);
+        }
+    }
+
+// Вспомогательный метод для получения позиции элемента
+    private XYZ GetElementPosition(Element element)
+    {
+        if (element == null)
+            return null;
+
+        switch (element)
+        {
+            case FamilyInstance fi:
+                return fi.Location is LocationPoint locationPoint ? locationPoint.Point : null;
+
+            case MEPCurve mepCurve:
+                if (mepCurve.Location is LocationCurve locationCurve)
+                {
+                    Curve curve = locationCurve.Curve;
+                    return curve?.GetEndPoint(0); // Берем начальную точку кривой
+                }
+
+                return null;
+
+            default:
+                return null;
         }
     }
 

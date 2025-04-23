@@ -1,13 +1,13 @@
 ﻿using RoomsInSpaces.ViewModels;
 
-namespace RoomsInSpaces.Views
+namespace RoomsInSpaces.Views;
+
+public sealed partial class RoomsInSpaceView
 {
-    public sealed partial class RoomsInSpaceView
+    public RoomsInSpaceView(RoomsInSpacesViewModel viewModel)
     {
-        public RoomsInSpaceView(RoomsInSpacesViewModel viewModel)
-        {
-            DataContext = viewModel;
-            InitializeComponent();
-        }
+        DataContext = viewModel;
+        InitializeComponent();
+        LoadWindowTemplate();
     }
 }

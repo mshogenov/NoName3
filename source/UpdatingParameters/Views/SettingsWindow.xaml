@@ -11,129 +11,155 @@
              Height="auto" Width="auto">
     <UserControl.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
+            <d:ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
-                    Source="pack://application:,,,/UpdatingParameters;component/Views/Resources/CommonLayoutControlResources.xaml" />
-            </ResourceDictionary.MergedDictionaries>
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
+            </d:ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         </ResourceDictionary>
 
     </UserControl.Resources>
-    <Grid Style="{StaticResource Grid}">
-        <Grid.RowDefinitions>
+    <Grid Style="{DynamicResource Grid}">
+       <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
         <CheckBox x:Name="UpdaterCheckBox"
-                  Style="{StaticResource AnimatedCheckBox}"
+                  Style="{DynamicResource JellyCheckboxStyle}"
                   Content="Обновление параметров"
-                  Margin="5 5 0 0" IsChecked="{Binding UpdaterIsChecked}" />
+                   IsChecked="{Binding UpdaterIsChecked}">
+      </CheckBox>
 
         <GroupBox Grid.Row="1" Header="Категории"
-                  Style="{StaticResource GradientGroupBoxStyle}">
-            <GroupBox.Visibility>
-                <Binding Path="IsChecked" ElementName="UpdaterCheckBox"
-                         Converter="{StaticResource BooleanToVisibilityConverter}" />
-            </GroupBox.Visibility>
+                  Margin="0 5 "
+                  Style="{DynamicResource GroupBoxStyle}"
+                  Visibility="{Binding Path=IsChecked, ElementName=UpdaterCheckBox, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <StackPanel>
-                    <StackPanel.Resources>
-                        <Style TargetType="CheckBox" BasedOn="{StaticResource AnimatedCheckBox}">
-                            <Setter Property="Margin" Value="0 3" />
-                        </Style>
-                    </StackPanel.Resources>
+                <ScrollViewer Style="{DynamicResource CustomScrollViewerStyle}">
+                     <StackPanel>
                     <CheckBox Content="Трубы:Без типа"
-                              IsChecked="{Binding PipesWithoutIsChecked}" />
+                              Style="{DynamicResource JellyCheckboxStyle}"
+                              IsChecked="{Binding PipesWithoutIsChecked}" 
+                              Margin="0 0 0 3"/>
                     <CheckBox Content="Трубы:Днар х Стенка"
+                              Style="{DynamicResource JellyCheckboxStyle}"
+                              Margin="0 0 0 3"
                               IsChecked="{Binding PipesOuterDiameterIsChecked}" />
+                    
                     <CheckBox Content="Трубы:Ду х Стенка"
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                              IsChecked="{Binding PipesInternalDiameterIsChecked}" />
                     <CheckBox Content="Гибкие трубы: Без типа"
-                           
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding FlexPipesWithoutIsChecked}" />
                     <CheckBox Content="Гибкие трубы: Подводки"
-                          
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding FlexPipesConnectionsIsChecked}" />
                     <CheckBox Content="Гибкие трубы: Гофры"
-                             
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding FlexPipesCorrugationsIsChecked}" />
                     <CheckBox Content="Материал изоляции трубы: Трубки"
-                           
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding PipeInsulationTubesIsChecked}" />
                     <CheckBox Content="Материал изоляции трубы: Цилиндры"
-                            
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding PipeInsulationCylindersIsChecked}" />
                     <CheckBox Content="Материал изоляции трубы: Трубки цветные"
-                             
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding PipeInsulationColouredTubesIsChecked}" />
                     <CheckBox Content="Воздуховоды: Без типа"
-                             
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding DuctWithoutIsChecked}" />
                     <CheckBox Content="Воздуховоды: Круглые"
-                             
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding DuctRoundIsChecked}" />
                     <CheckBox Content="Воздуховоды: Пластик"
-                            
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding DuctPlasticIsChecked}" />
                     <CheckBox Content="Воздуховоды: Прямоугольные"
-                             
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding DuctRectangularIsChecked}" />
                     <CheckBox Content="Гибкие воздуховоды: Круглые"
-                            
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding FlexibleDuctsRoundIsChecked}" />
                     <CheckBox Content="Материал изоляции воздуховодов: Огнезащита"
-                              
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding DuctInsulationFireproofingIsChecked}" />
                     <CheckBox Content="Материал изоляции воздуховодов: Теплоизоляция"
-                             
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding DuctInsulationThermalInsulationIsChecked}" />
                     <CheckBox Content="Соединительные детали воздуховодов"
-                             
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding DuctConnectionPartsIsChecked}" />
-                    <CheckBox Content="Параметр: ADSK__Система__Имя"
-                            
+                    <CheckBox Content="Параметр: ADSK_Система_Имя"
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding AdskSystemNameIsChecked}" />
-                    <CheckBox Content="Параметр: ADSK__Система__Сокращение"
-                            
+                    <CheckBox Content="Параметр: ADSK_Система_Сокращение"
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding AdskSystemAbbreviationIsChecked}" />
-                    <CheckBox Content="Параметр: ADSK__Толщина стенки"
-                             
+                    <CheckBox Content="Параметр: ADSK_Толщина стенки"
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding AdskWallThicknessIsChecked}" />
                     <CheckBox Content="Параметр: Класс герметичности"
-                            
+                              Margin="0 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding HermeticClassIsChecked}" />
                 </StackPanel>
-                <Separator Grid.Row="1" Style="{StaticResource ShadowSeparator}" />
+                </ScrollViewer>
+               
+                <Separator Grid.Row="1"
+                           Style="{DynamicResource ShadowSeparator}">
+                   </Separator>
                 <StackPanel Orientation="Horizontal" Grid.Row="2" VerticalAlignment="Top">
                     <Button Command="{Binding HighlightAllCommand}"
-                            Style="{StaticResource SelectAllButton}" />
+                            Style="{DynamicResource SelectAllButton}">
+                     
+                    </Button>
                     <Button Command="{Binding DeselectCommand}"
-                            Style="{StaticResource ClearSelectionButton}" />
+                            Style="{DynamicResource ClearSelectionButton}">
+                       </Button>
                 </StackPanel>
             </Grid>
-
         </GroupBox>
 
-        <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition />
-                <ColumnDefinition />
-            </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" Content="Восстановить настройки по умолчанию"
+        <DockPanel Grid.Row="2" HorizontalAlignment="Right"
+                   Margin="0,5"   >
+            <Button Content="Восстановить настройки по умолчанию"
                     Command="{Binding ResetSettingsCommand}"
-                    Style="{StaticResource UpdateButton}"
-                    Margin="5 5 10 5" />
-            <Button Content="Сохранить настройки" Grid.Column="1"
-                    Margin="10 5 5 5"
-                    Style="{StaticResource UpdateButton}"
-                    Command="{Binding SaveSettingsCommand}" />
-        </Grid>
+                   Style="{DynamicResource CommonButtonStyle2}">
+             </Button>
+            <Button Content="Сохранить настройки" 
+                    Margin="10,0,0,0"
+                    Style="{DynamicResource CommonButtonStyle2}"
+                    Command="{Binding SaveSettingsCommand}">
+            </Button>
+        </DockPanel>
     </Grid>
 
 </UserControl>

@@ -1,4 +1,4 @@
-﻿<Window
+﻿<views:BaseRevitWindow
     x:Class="MepElementsCopy.Views.MepElementsCopyView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -8,6 +8,8 @@
     xmlns:local="clr-namespace:MepElementsCopy.Views"
     mc:Ignorable="d"
     xmlns:converter="clr-namespace:MepElementsCopy.Views.Converters"
+    xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
+    xmlns:controls="clr-namespace:NoNameApi.Views.Controls;assembly=NoNameAPI"
     Height="600" Width="400"
     d:DataContext="{d:DesignInstance viewModel:MepElementsCopyLevelsViewModel}"
     WindowStartupLocation="CenterScreen"
@@ -17,29 +19,34 @@
         <ResourceDictionary>
             <!-- Сначала все ресурсы, которые не являются словарями -->
             <converter:BoolVisibilityConverter x:Key="BoolVisibilityConverter" />
-
             <Storyboard x:Key="NotificationFadeIn">
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.3" />
             </Storyboard>
-
             <Storyboard x:Key="NotificationFadeOut">
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0" Duration="0:0:0.3" />
             </Storyboard>
 
             <!-- Затем блок MergedDictionaries должен быть полностью отдельным -->
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/MepElementsCopy;component/Views/ModernStyles.xaml" />
-            </ResourceDictionary.MergedDictionaries>
+            <d:ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/LightTheme.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
+            </d:ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-    <Grid>
+    <Grid Style="{DynamicResource Grid}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TabControl Style="{StaticResource ModernTabControl}">
-            <TabItem Header="Копировать по уровням">
-                <Grid Margin="20">
+        <TabControl
+
+            Margin="5"
+            Style="{DynamicResource TabControlStyle}">
+            <TabItem Header="Копировать по уровням"
+                     Style="{DynamicResource TabItemStyle}">
+                <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="2*" />
@@ -47,13 +54,14 @@
                     </Grid.RowDefinitions>
 
                     <GroupBox Grid.Row="0"
+                              Margin="5"
                               Header="Установить базовый уровень"
-                              Style="{StaticResource ModernGroupBox}">
+                              Style="{DynamicResource GroupBoxStyle}">
                         <StackPanel>
                             <ComboBox ItemsSource="{Binding LevelModels}"
                                       SelectedItem="{Binding SelectedLevelModel, UpdateSourceTrigger=PropertyChanged,Mode=TwoWay}"
-                                      Style="{StaticResource ModernComboBox}"
-                                      Margin="0,0,0,10">
+                                      Style="{DynamicResource ModernComboBoxStyle}"
+                                      Margin="0,0,0,5">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Name}" />
@@ -62,50 +70,61 @@
                             </ComboBox>
 
                             <Button Content="Установить уровень"
+                                    Padding="3"
                                     Command="{Binding SetBaseLevelCommand}"
-                                    Height="20"
-                                    Style="{StaticResource ModernButton}" />
+                                    Style="{DynamicResource CommonButtonStyle2}" />
                         </StackPanel>
                     </GroupBox>
 
-                    <GroupBox Grid.Row="1" Header="Уровни"
-
-                              Style="{StaticResource ModernGroupBox}">
+                    <GroupBox Grid.Row="1"
+                              Header="Уровни"
+                              Margin="5 0 5 5"
+                              Style="{DynamicResource GroupBoxStyle}">
                         <ListView ItemsSource="{Binding LevelModels}"
-                                  Style="{StaticResource ModernListView}"
+                                  Style="{DynamicResource ListViewStyle}"
                                   ScrollViewer.VerticalScrollBarVisibility="Auto">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <CheckBox Content="{Binding Path=Name}"
                                               IsChecked="{Binding Path=IsChecked}"
-                                              Style="{StaticResource ModernCheckBox}" />
+                                              Style="{DynamicResource JellyCheckboxStyle}" />
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
                     </GroupBox>
-
-                    <Button Grid.Row="2"
+                    <DockPanel Grid.Row="2"
+                               HorizontalAlignment="Right">
+                        <Button
                             Content="Копировать"
                             Command="{Binding MepElementsCopyElevationCommand}"
                             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
-                            Style="{StaticResource ModernAccentButton}"
-                            Margin="0 10 0 0"
-                            HorizontalAlignment="Right"
-                            Width="120"
-                            Height="35" />
+                            Style="{DynamicResource CommonButtonStyle2}"
+                            HorizontalAlignment="Right" />
+                        <Button Content="Закрыть"
+                                HorizontalAlignment="Right"
+                                Command="{Binding CloseCommand}"
+                                CommandParameter="{Binding  RelativeSource={RelativeSource AncestorType=Window}}"
+                                Style="{DynamicResource OutlineCloseButtonStyle}"
+                                Margin="10,0,5,0" />
+                    </DockPanel>
+
                 </Grid>
             </TabItem>
 
-            <TabItem Header="Копировать в направлении">
+            <TabItem Header="Копировать в направлении"
+                     Style="{DynamicResource TabItemStyle}">
                 <local:CopyToDirectionWindow DataContext="{Binding}" />
             </TabItem>
         </TabControl>
-        <StatusBar Grid.Row="1" 
-                   Background="#F0F0F0"
-                   Visibility="{Binding IsStatusVisible, Converter={StaticResource BoolVisibilityConverter}}">
-            <TextBlock Text="{Binding StatusMessage}" Margin="10,2" Foreground="#333333"/>
+        <StatusBar Grid.Row="1"
+                   Margin="5"
+                   Style="{DynamicResource StatusBarStyle}">
+            <TextBlock
+                Style="{DynamicResource TextBlockStyle}"
+                Text="{Binding StatusMessage}"
+                Visibility="{Binding Path= IsStatusVisible, Converter={StaticResource BoolVisibilityConverter}}" />
         </StatusBar>
     </Grid>
 
 
-</Window>
+</views:BaseRevitWindow>

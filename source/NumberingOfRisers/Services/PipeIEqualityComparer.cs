@@ -4,7 +4,7 @@
 public class PipeIEqualityComparer : IEqualityComparer<Element>
 {
     // Константа для допустимого расстояния между трубами (в единицах модели)
-    private const double TOLERANCE = 0.1; // Можно настроить под ваши требования
+    private const double Tolerance = 0.1; // Можно настроить под ваши требования
 
     public bool Equals(Element firstElement, Element secondElement)
     {
@@ -22,7 +22,7 @@ public class PipeIEqualityComparer : IEqualityComparer<Element>
         double deltaY = Math.Abs(firstStartPoint.Y - secondStartPoint.Y);
 
         // Трубы считаются в одной группе, если обе координаты X и Y близки
-        return deltaX <= TOLERANCE && deltaY <= TOLERANCE;
+        return deltaX <= Tolerance && deltaY <= Tolerance;
     }
 
     public int GetHashCode(Element obj)
@@ -37,8 +37,8 @@ public class PipeIEqualityComparer : IEqualityComparer<Element>
 
         // Округляем координаты до ячеек размером с TOLERANCE
         // для обеспечения совместимости с Equals
-        double cellX = Math.Floor(startPoint.X / TOLERANCE);
-        double cellY = Math.Floor(startPoint.Y / TOLERANCE);
+        double cellX = Math.Floor(startPoint.X / Tolerance);
+        double cellY = Math.Floor(startPoint.Y / Tolerance);
 
         unchecked
         {

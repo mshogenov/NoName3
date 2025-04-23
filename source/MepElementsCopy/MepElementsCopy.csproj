@@ -33,14 +33,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Page Update="Views\sdd.xaml">
-        <Generator>MSBuild:Compile</Generator>
-        <XamlRuntime>Wpf</XamlRuntime>
-        <SubType>Designer</SubType>
-      </Page>
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\NoNameAPI\NoNameAPI.csproj" />
     </ItemGroup>
 

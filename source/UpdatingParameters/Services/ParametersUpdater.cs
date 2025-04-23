@@ -34,6 +34,7 @@ namespace UpdatingParameters.Services
         private FlexibleDuctsRoundDataStorage _flexibleDuctsRoundDataStorage;
         private DuctParametersDataStorage _ductParametersDataStorage;
         private readonly PipeInsulationColouredTubesDataStorage _pipeInsulationColoredTubesDataStorage;
+        private readonly DataStorageFactory _storageFactory;
         private const string SetParamSystemAbbreviation = "ADSK_Система_Сокращение";
         private const string GetParamSystemAbbreviation = "Сокращение для системы";
         private const string SetParamSystemName = "ADSK_Система_Имя";
@@ -41,34 +42,35 @@ namespace UpdatingParameters.Services
 
         public ParametersUpdater()
         {
-            DataStorageFactory.Instance.InitializeAllStorages();
-            _pipesWithoutDataStorage = DataStorageFactory.Instance.GetStorage<PipesWithoutDataStorage>();
-            _pipesOuterDiameterDataStorage = DataStorageFactory.Instance.GetStorage<PipesOuterDiameterDataStorage>();
+            _storageFactory = new DataStorageFactory();
+            _storageFactory.InitializeAllStorages();
+            _pipesWithoutDataStorage = _storageFactory.GetStorage<PipesWithoutDataStorage>();
+            _pipesOuterDiameterDataStorage = _storageFactory.GetStorage<PipesOuterDiameterDataStorage>();
             _pipesInternalDiameterDataStorage =
-                DataStorageFactory.Instance.GetStorage<PipesInternalDiameterDataStorage>();
-            _flexPipeWithoutDataStorage = DataStorageFactory.Instance.GetStorage<FlexPipeWithoutDataStorage>();
+                _storageFactory.GetStorage<PipesInternalDiameterDataStorage>();
+            _flexPipeWithoutDataStorage = _storageFactory.GetStorage<FlexPipeWithoutDataStorage>();
             _flexPipesCorrugationsDataStorage =
-                DataStorageFactory.Instance.GetStorage<FlexPipesCorrugationsDataStorage>();
+                _storageFactory.GetStorage<FlexPipesCorrugationsDataStorage>();
             _flexPipesConnectionsDataStorage =
-                DataStorageFactory.Instance.GetStorage<FlexPipesConnectionsDataStorage>();
+                _storageFactory.GetStorage<FlexPipesConnectionsDataStorage>();
             _pipeInsulationCylindersDataStorage =
-                DataStorageFactory.Instance.GetStorage<PipeInsulationCylindersDataStorage>();
-            _pipeInsulationTubesDataStorage = DataStorageFactory.Instance.GetStorage<PipeInsulationTubesDataStorage>();
+                _storageFactory.GetStorage<PipeInsulationCylindersDataStorage>();
+            _pipeInsulationTubesDataStorage = _storageFactory.GetStorage<PipeInsulationTubesDataStorage>();
             _pipeInsulationColoredTubesDataStorage =
-                DataStorageFactory.Instance.GetStorage<PipeInsulationColouredTubesDataStorage>();
+                _storageFactory.GetStorage<PipeInsulationColouredTubesDataStorage>();
             _ductInsulationFireproofingDataStorage =
-                DataStorageFactory.Instance.GetStorage<DuctInsulationFireproofingDataStorage>();
+                _storageFactory.GetStorage<DuctInsulationFireproofingDataStorage>();
             _ductInsulationThermalDataStorage =
-                DataStorageFactory.Instance.GetStorage<DuctInsulationThermalDataStorage>();
-            _ductConnectionPartsDataStorage = DataStorageFactory.Instance.GetStorage<DuctConnectionPartsDataStorage>();
-            _ductPlasticDataStorage = DataStorageFactory.Instance.GetStorage<DuctPlasticDataStorage>();
-            _ductRectangularDataStorage = DataStorageFactory.Instance.GetStorage<DuctRectangularDataStorage>();
-            _ductRoundDataStorage = DataStorageFactory.Instance.GetStorage<DuctRoundDataStorage>();
-            _ductWithoutDataStorage = DataStorageFactory.Instance.GetStorage<DuctWithoutDataStorage>();
-            _flexibleDuctsRoundDataStorage = DataStorageFactory.Instance.GetStorage<FlexibleDuctsRoundDataStorage>();
-            _settingsDataStorage = DataStorageFactory.Instance.GetStorage<SettingsDataStorage>();
-            _ductParametersDataStorage = DataStorageFactory.Instance.GetStorage<DuctParametersDataStorage>();
-_parametersDataStorage = DataStorageFactory.Instance.GetStorage<ParametersDataStorage>();
+                _storageFactory.GetStorage<DuctInsulationThermalDataStorage>();
+            _ductConnectionPartsDataStorage = _storageFactory.GetStorage<DuctConnectionPartsDataStorage>();
+            _ductPlasticDataStorage = _storageFactory.GetStorage<DuctPlasticDataStorage>();
+            _ductRectangularDataStorage = _storageFactory.GetStorage<DuctRectangularDataStorage>();
+            _ductRoundDataStorage = _storageFactory.GetStorage<DuctRoundDataStorage>();
+            _ductWithoutDataStorage = _storageFactory.GetStorage<DuctWithoutDataStorage>();
+            _flexibleDuctsRoundDataStorage = _storageFactory.GetStorage<FlexibleDuctsRoundDataStorage>();
+            _settingsDataStorage = _storageFactory.GetStorage<SettingsDataStorage>();
+            _ductParametersDataStorage = _storageFactory.GetStorage<DuctParametersDataStorage>();
+_parametersDataStorage = _storageFactory.GetStorage<ParametersDataStorage>();
             SettingsDataStorage.OnSettingsDataChanged += SettingsDataStorageOnSettingsDataChanged;
             DataStorageFormulas.OnDataStorageFormulasChanged += DataStorageFormulas_OnDataStorageFormulasChanged;
             ParametersDataStorage.OnParametersDataStorageChanged += ParametersDataStorageOnParametersDataStorageChanged;
@@ -76,7 +78,7 @@ _parametersDataStorage = DataStorageFactory.Instance.GetStorage<ParametersDataSt
 
         private void ParametersDataStorageOnParametersDataStorageChanged(object sender, EventArgs e)
         {
-            DataStorageFactory.Instance.UpdateStorage<ParametersDataStorage>();
+            _storageFactory.UpdateStorage<ParametersDataStorage>();
         }
 
         private void DataStorageFormulas_OnDataStorageFormulasChanged(object sender, EventArgs e)
@@ -84,69 +86,69 @@ _parametersDataStorage = DataStorageFactory.Instance.GetStorage<ParametersDataSt
             switch (sender)
             {
                 case PipesWithoutDataStorage:
-                    DataStorageFactory.Instance.UpdateStorage<PipesWithoutDataStorage>();
+                    _storageFactory.UpdateStorage<PipesWithoutDataStorage>();
                     break;
                 case PipesInternalDiameterDataStorage:
 
-                    DataStorageFactory.Instance.UpdateStorage<PipesInternalDiameterDataStorage>();
+                    _storageFactory.UpdateStorage<PipesInternalDiameterDataStorage>();
                     break;
                 case PipesOuterDiameterDataStorage:
 
-                    DataStorageFactory.Instance.UpdateStorage<PipesOuterDiameterDataStorage>();
+                    _storageFactory.UpdateStorage<PipesOuterDiameterDataStorage>();
                     break;
                 case FlexPipeWithoutDataStorage:
 
-                    DataStorageFactory.Instance.UpdateStorage<FlexPipeWithoutDataStorage>();
+                    _storageFactory.UpdateStorage<FlexPipeWithoutDataStorage>();
                     break;
                 case FlexPipesConnectionsDataStorage:
 
-                    DataStorageFactory.Instance.UpdateStorage<FlexPipesConnectionsDataStorage>();
+                    _storageFactory.UpdateStorage<FlexPipesConnectionsDataStorage>();
                     break;
                 case FlexPipesCorrugationsDataStorage:
 
-                    DataStorageFactory.Instance.UpdateStorage<FlexPipesCorrugationsDataStorage>();
+                    _storageFactory.UpdateStorage<FlexPipesCorrugationsDataStorage>();
                     break;
                 case PipeInsulationCylindersDataStorage:
 
-                    DataStorageFactory.Instance.UpdateStorage<PipeInsulationCylindersDataStorage>();
+                    _storageFactory.UpdateStorage<PipeInsulationCylindersDataStorage>();
                     break;
                 case PipeInsulationTubesDataStorage:
 
-                    DataStorageFactory.Instance.UpdateStorage<PipeInsulationTubesDataStorage>();
+                    _storageFactory.UpdateStorage<PipeInsulationTubesDataStorage>();
                     break;
                 case DuctInsulationFireproofingDataStorage:
-                    DataStorageFactory.Instance.UpdateStorage<DuctInsulationFireproofingDataStorage>();
+                    _storageFactory.UpdateStorage<DuctInsulationFireproofingDataStorage>();
                     break;
                 case DuctInsulationThermalDataStorage:
-                    DataStorageFactory.Instance.UpdateStorage<DuctInsulationThermalDataStorage>();
+                    _storageFactory.UpdateStorage<DuctInsulationThermalDataStorage>();
                     break;
                 case DuctConnectionPartsDataStorage:
-                    DataStorageFactory.Instance.UpdateStorage<DuctConnectionPartsDataStorage>();
+                    _storageFactory.UpdateStorage<DuctConnectionPartsDataStorage>();
                     break;
                 case DuctPlasticDataStorage:
-                    DataStorageFactory.Instance.UpdateStorage<DuctPlasticDataStorage>();
+                    _storageFactory.UpdateStorage<DuctPlasticDataStorage>();
                     break;
                 case DuctRectangularDataStorage:
-                    DataStorageFactory.Instance.UpdateStorage<DuctRectangularDataStorage>();
+                    _storageFactory.UpdateStorage<DuctRectangularDataStorage>();
                     break;
                 case DuctRoundDataStorage:
-                    DataStorageFactory.Instance.UpdateStorage<DuctRoundDataStorage>();
+                    _storageFactory.UpdateStorage<DuctRoundDataStorage>();
                     break;
                 case DuctWithoutDataStorage:
-                    DataStorageFactory.Instance.UpdateStorage<DuctWithoutDataStorage>();
+                    _storageFactory.UpdateStorage<DuctWithoutDataStorage>();
                     break;
                 case FlexibleDuctsRoundDataStorage:
-                    DataStorageFactory.Instance.UpdateStorage<FlexibleDuctsRoundDataStorage>();
+                    _storageFactory.UpdateStorage<FlexibleDuctsRoundDataStorage>();
                     break;
                 case DuctParametersDataStorage:
-                    DataStorageFactory.Instance.UpdateStorage<DuctParametersDataStorage>();
+                    _storageFactory.UpdateStorage<DuctParametersDataStorage>();
                     break;
             }
         }
 
         private void SettingsDataStorageOnSettingsDataChanged()
         {
-            DataStorageFactory.Instance.UpdateStorage<SettingsDataStorage>();
+            _storageFactory.UpdateStorage<SettingsDataStorage>();
         }
 
         public void Execute(UpdaterData data)

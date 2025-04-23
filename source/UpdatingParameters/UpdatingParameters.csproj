@@ -38,19 +38,11 @@
         <RevitVersion>2026</RevitVersion>
         <TargetFramework>net8.0-windows</TargetFramework>
     </PropertyGroup>
-    <ItemGroup>
-      <None Remove="Resources\Icons\стрелка вверх-30.png" />
-      <None Remove="Resources\Icons\стрелка влево-30.png" />
-      <None Remove="Resources\Icons\стрелка вниз-30.png" />
-      <None Remove="Resources\Icons\стрелка вправо-30.png" />
-      <None Remove="Resources\стрелка вправо-32.png" />
-      <None Remove="Resources\ФОП2021.txt" />
-      <None Remove="Resources\ФОПФигня.txt" />
-    </ItemGroup>
+    
 
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
-        <PackageReference Include="Dapper" Version="2.1.35" />
+      
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Nice3point.Revit.Build.Tasks" Version="2.0.2" />
         <PackageReference Include="Nice3point.Revit.Toolkit" Version="$(RevitVersion).*" />
@@ -59,8 +51,7 @@
         <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="$(RevitVersion).*">
           <GeneratePathProperty>False</GeneratePathProperty>
         </PackageReference>
-        <PackageReference Include="ricaun.Revit.UI.StatusBar" Version="1.0.0" />
-        <PackageReference Include="System.Data.SQLite" Version="1.0.119" />
+       
     </ItemGroup>
 
     <ItemGroup>
@@ -78,24 +69,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Resource Include="Views\Resources\Icons\стрелка вниз-30.png" />
-      <Resource Include="Views\Resources\Icons\стрелка вправо-30.png" />
-      <Page Remove="Views\Resources\UpdaterParametersWindowResources.xaml" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <EmbeddedResource Include="Views\Resources\ФОП2021.txt" />
-      <EmbeddedResource Include="Views\Resources\ФОПФигня.txt" />
-      <None Remove="Resources\DuctParameters.json" />
-      <EmbeddedResource Include="Resources\DefaultDuctParameters.json" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\NoNameAPI\NoNameAPI.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Views\Resources\Icons\" />
-    </ItemGroup>
+   
 
 </Project>

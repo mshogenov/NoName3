@@ -3,12 +3,13 @@ using UpdatingParameters.Models;
 
 namespace UpdatingParameters.Views.Parameters;
 
-public partial class DuctParameterDialog : Window
+public partial class DuctParameterDialog 
 {
     private DuctParameters _parameters;
     public DuctParameterDialog(DuctParameters parameters)
     {
         InitializeComponent();
+        LoadWindowTemplate();
         _parameters = parameters;
         DataContext = _parameters;
     }

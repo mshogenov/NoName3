@@ -4,7 +4,7 @@ using Autodesk.Revit.UI;
 
 namespace NoNameApi.Views;
 
-public partial class ProgressWindow : Window, IDisposable
+public partial class ProgressWindow 
 {
     private int _totalSteps;
     private bool _isCanceled;
@@ -12,6 +12,7 @@ public partial class ProgressWindow : Window, IDisposable
     public ProgressWindow(int totalSteps)
     {
         InitializeComponent();
+        LoadWindowTemplate();
         _isCanceled = false;
         _totalSteps = totalSteps;
         ProgressBar.Maximum = totalSteps;

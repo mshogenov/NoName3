@@ -1,33 +1,39 @@
-<Window x:Class="UpdatingParameters.Views.Parameters.DuctThicknessWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:vm="clr-namespace:UpdatingParameters.ViewModels.Parameters"
-        xmlns:parameters="clr-namespace:UpdatingParameters.ViewModels.Parameters"
-        mc:Ignorable="d"
-        WindowStartupLocation="CenterScreen"
-        Title="Параметры воздуховодов" Height="800" Width="1200"
-        d:DataContext="{d:DesignInstance parameters:DuctThicknessViewModel }">
+<views:BaseRevitWindow x:Class="UpdatingParameters.Views.Parameters.DuctThicknessWindow"
+                       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                       xmlns:vm="clr-namespace:UpdatingParameters.ViewModels.Parameters"
+                       xmlns:parameters="clr-namespace:UpdatingParameters.ViewModels.Parameters"
+                       xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
+                       mc:Ignorable="d"
+                       WindowStartupLocation="CenterScreen"
+                       Title="Параметры воздуховодов" Height="800" Width="1200"
+                       d:DataContext="{d:DesignInstance parameters:DuctThicknessViewModel }">
     <Window.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
+            <d:ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
-                    Source="pack://application:,,,/UpdatingParameters;component/Views/Resources/CommonLayoutControlResources.xaml" />
-            </ResourceDictionary.MergedDictionaries>
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
+            </d:ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid Style="{StaticResource Grid}">
+    <Grid Style="{DynamicResource Grid}">
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <!-- Панель инструментов -->
-        <Border Style="{StaticResource BorderFolding}">
-            <ToolBar Margin="5" Background="Transparent" BorderThickness="0">
-                <ToolBar.Resources>
+        <Border Margin="5"
+                Style="{DynamicResource BorderContentStyle}"
+                CornerRadius="5">
+            <StackPanel Margin="5" Background="Transparent" Orientation="Horizontal">
+                <StackPanel.Resources>
                     <Style TargetType="Button">
                         <Setter Property="Margin" Value="3" />
                         <Setter Property="Padding" Value="8,5" />
@@ -60,7 +66,7 @@
                     <Style TargetType="Separator">
                         <Setter Property="Margin" Value="5,0" />
                     </Style>
-                </ToolBar.Resources>
+                </StackPanel.Resources>
 
                 <!-- Кнопка Добавить -->
                 <Button Command="{Binding AddCommand}">
@@ -140,50 +146,46 @@
                         <ToolTip>Сохранить данные</ToolTip>
                     </Button.ToolTip>
                 </Button>
-            </ToolBar>
+            </StackPanel>
         </Border>
 
         <!-- Таблица данных -->
-        <Border Grid.Row="1"
-                Margin="5"
-                Background="White"
-                BorderBrush="#DDDDDD"
-                BorderThickness="1"
-                CornerRadius="4">
-            <DataGrid ItemsSource="{Binding DuctParameters}"
-                      SelectedItem="{Binding SelectedParameter}"
-                      Style="{StaticResource CleanDataGridStyle}"
-                      ColumnHeaderStyle="{StaticResource CleanColumnHeaderStyle}"
-                      CellStyle="{StaticResource CleanCellStyle}"
-                      RowStyle="{StaticResource CleanRowStyle}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      HeadersVisibility="Column">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Материал"
-                                        Binding="{Binding Material}"
-                                        Width="*" />
-                    <DataGridTextColumn Header="Сечение"
-                                        Binding="{Binding Shape}"
-                                        Width="*" />
-                    <DataGridTextColumn Header="Внешняя изоляция"
-                                        Binding="{Binding ExternalInsulation}"
-                                        Width="*" />
-                    <DataGridTextColumn Header="Внутренняя изоляция"
-                                        Binding="{Binding InternalInsulation}"
-                                        Width="*" />
-                    <DataGridTextColumn Width="*" Binding="{Binding Size}">
-                        <DataGridTextColumn.Header>
-                            <TextBlock Text="Размер большей&#x0a;стороны (включительно)"
-                                       TextWrapping="Wrap"
-                                       TextAlignment="Center" />
-                        </DataGridTextColumn.Header>
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="Толщина стенки"
-                                        Binding="{Binding Thickness}"
-                                        Width="*" />
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
+        <DataGrid
+            Margin="5"
+            Grid.Row="1"
+            ItemsSource="{Binding DuctParameters}"
+            SelectedItem="{Binding SelectedParameter}"
+            AutoGenerateColumns="False"
+            IsReadOnly="True"
+            Style="{DynamicResource CleanDataGridStyle}"
+            ColumnHeaderStyle="{DynamicResource CleanColumnHeaderStyle}"
+            CellStyle="{DynamicResource CleanCellStyle}"
+            RowStyle="{DynamicResource CleanRowStyle}">
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Материал"
+                                    Binding="{Binding Material}"
+                                    Width="*" />
+                <DataGridTextColumn Header="Сечение"
+                                    Binding="{Binding Shape}"
+                                    Width="*" />
+                <DataGridTextColumn Header="Внешняя изоляция"
+                                    Binding="{Binding ExternalInsulation}"
+                                    Width="*" />
+                <DataGridTextColumn Header="Внутренняя изоляция"
+                                    Binding="{Binding InternalInsulation}"
+                                    Width="*" />
+                <DataGridTextColumn Width="*" Binding="{Binding Size}">
+                    <DataGridTextColumn.Header>
+                        <TextBlock Text="Размер большей&#x0a;стороны (включительно)"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Center" />
+                    </DataGridTextColumn.Header>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Толщина стенки"
+                                    Binding="{Binding Thickness}"
+                                    Width="*" />
+            </DataGrid.Columns>
+        </DataGrid>
     </Grid>
-</Window>
+</views:BaseRevitWindow>

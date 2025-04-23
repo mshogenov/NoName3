@@ -12,44 +12,40 @@
             <converter:BoolVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <converter:MeasurementUnitFilterConverter x:Key="MeasurementUnitFilterConverter" />
             <converter:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
-            <ResourceDictionary.MergedDictionaries>
+            <d:ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
-                    Source="pack://application:,,,/UpdatingParameters;component/Views/Resources/CommonLayoutControlResources.xaml" />
-            </ResourceDictionary.MergedDictionaries>
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
+            </d:ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
     <Border
+        Style="{DynamicResource BorderFolding}"
         MaxHeight="250"
         VerticalAlignment="Top"
-        Style="{StaticResource BorderFolding}"
         Tag="{Binding ElementName=NameCheckBox}">
+
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0"
-                        Orientation="Horizontal"
-                        Margin="3 2">
-                <TextBlock
-                    Margin="10 2 10 0"
-                    Text="{Binding NameParameter, RelativeSource={RelativeSource AncestorType= UserControl}}"
-                    Style="{StaticResource TextBlock}" />
-                <CheckBox
-                    Name="NameCheckBox"
-                    Content="Заполнять"
-                    Style="{StaticResource AnimatedCheckBox}"
-                    IsChecked="{Binding IsChecked,RelativeSource={RelativeSource AncestorType= UserControl}}" />
-            </StackPanel>
+            <CheckBox
+                Style="{DynamicResource JellyCheckboxStyle}"
+                Name="NameCheckBox"
+                Content="{Binding NameParameter, RelativeSource={RelativeSource AncestorType= UserControl}}"
+                IsChecked="{Binding IsChecked,RelativeSource={RelativeSource AncestorType= UserControl}}">
+            </CheckBox>
             <Grid Grid.Row="1"
-                  Margin="0 2">
+               >
                 <Grid.Visibility>
                     <Binding Path="IsChecked" ElementName="NameCheckBox"
                              Converter="{StaticResource BoolToVisibilityConverter}" />
                 </Grid.Visibility>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="5*" />
+                    <ColumnDefinition Width="6*" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="10*" />
                 </Grid.ColumnDefinitions>
@@ -58,23 +54,17 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <GroupBox Grid.Row="0" Header="Список параметров"
+                          Margin="0 5"
                           Grid.Column="0"
-                          Style="{StaticResource GradientGroupBoxStyle}">
+                          Style="{DynamicResource GroupBoxStyle}">
                     <Grid>
                         <ListBox Grid.Row="0"
-                                 Style="{StaticResource ModernListBoxStyle}"
-                                 ItemContainerStyle="{StaticResource ModernListBoxItemStyle}"
+                                 Style="{DynamicResource ModernListBoxStyle}"
                                  ItemsSource="{Binding Parameters,RelativeSource={RelativeSource AncestorType=UserControl}}"
                                  SelectedItem="{Binding SelectParameter,RelativeSource={RelativeSource AncestorType=UserControl}}">
-                            <ListBox.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <VirtualizingStackPanel />
-                                </ItemsPanelTemplate>
-                            </ListBox.ItemsPanel>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding }"
-                                               Style="{StaticResource ListBoxItemTextStyle}" />
+                                    <TextBlock Text="{Binding }" />
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
@@ -84,11 +74,13 @@
                             DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center">
-                    <Button Style="{StaticResource ButtonArrowRight}"
-                            Command="{Binding AddParameterFormulaCommand}">
+                    <Button
+                        Style="{DynamicResource ButtonArrowRightStyle}"
+                        Command="{Binding AddParameterFormulaCommand}">
                     </Button>
-                    <Button Style="{StaticResource ButtonArrowLeft}"
-                            Command="{Binding RemoveParameterFormulaCommand}">
+                    <Button
+                        Style="{DynamicResource ButtonArrowLeftStyle}"
+                        Command="{Binding RemoveParameterFormulaCommand}">
                     </Button>
                 </StackPanel>
                 <Grid Grid.Row="0" Grid.Column="2">
@@ -96,20 +88,22 @@
                         <RowDefinition Height="*" />
                         <RowDefinition Height="auto" />
                     </Grid.RowDefinitions>
-                    <GroupBox Grid.Row="0" Header="Формула"
-                              Style="{StaticResource GradientGroupBoxStyle}">
+                    <GroupBox
+                        Style="{DynamicResource GroupBoxStyle}"
+                        Grid.Row="0" Header="Формула">
+
                         <DataGrid
+                            Style="{DynamicResource CleanDataGridStyle}"
                             ItemsSource="{Binding Path=AdskFormulas, 
                       RelativeSource={RelativeSource AncestorType=UserControl}}"
                             SelectedItem="{Binding SelectFormula,RelativeSource={RelativeSource AncestorType=UserControl}}"
                             CanUserAddRows="False"
                             CanUserResizeColumns="True"
                             CanUserReorderColumns="False"
-                            AutoGenerateColumns="False"
-                            Style="{StaticResource CleanDataGridStyle}"
-                            ColumnHeaderStyle="{StaticResource CleanColumnHeaderStyle}"
-                            CellStyle="{StaticResource CleanCellStyle}"
-                            RowStyle="{StaticResource CleanRowStyle}">
+                            AutoGenerateColumns="False" ColumnHeaderStyle="{DynamicResource CleanColumnHeaderStyle}"
+                            CellStyle="{DynamicResource CleanCellStyle}"
+                            RowStyle="{DynamicResource CleanRowStyle}">
+
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Имя параметра"
                                                     Binding="{Binding ParameterName}"
@@ -154,25 +148,26 @@
                     <StackPanel Orientation="Horizontal"
                                 DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
                                 Grid.Row="1"
-                                Margin="12 0">
-                        <Button Style="{StaticResource ButtonArrowUp}"
-                                Command="{Binding MoveUpFormulaCommand }">
-
+                                Margin="12 3">
+                        <Button
+                            Style="{DynamicResource ButtonArrowUpStyle}"
+                            Command="{Binding MoveUpFormulaCommand }">
                         </Button>
 
-                        <Button Style="{StaticResource ButtonArrowDown}"
-                                Command="{Binding MoveDownFormulaCommand}">
-
+                        <Button
+                            Style="{DynamicResource ButtonArrowDownStyle}"
+                            Command="{Binding MoveDownFormulaCommand}">
                         </Button>
                     </StackPanel>
                 </Grid>
-                <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Grid.Column="0"
-                           DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
-                           Style="{StaticResource TextBlock}"
-                           Margin="10 0 10 5 ">
+                <TextBlock
+                    Style="{DynamicResource TextBlockStyle}"
+                    Grid.Row="1" Grid.ColumnSpan="3" Grid.Column="0"
+                    DataContext="{Binding RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Margin="10 3 10 5 ">
                     <Run Text="Пример: " />
-                    <Run Text="{Binding NameParameter, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                    <Run Text=" = "/>
+                    <Run Text="{Binding NameParameter, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                    <Run Text=" = " />
                     <Run
                         Text="{Binding CombinedValues,Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
                 </TextBlock>

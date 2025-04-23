@@ -24,7 +24,7 @@ public abstract class DataStorageBase : IDataStorage
     {
         if (element != null)
         {
-            _elements.Add(element);
+          _elements.Add(element);
         }
     }
 

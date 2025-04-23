@@ -4,17 +4,16 @@ using UpdatingParameters.ViewModels;
 using UpdatingParameters.Views;
 
 
-namespace UpdatingParameters.Commands
+namespace UpdatingParameters.Commands;
+
+[UsedImplicitly]
+[Transaction(TransactionMode.Manual)]
+public class UpdatingParameters : ExternalCommand
 {
-    [UsedImplicitly]
-    [Transaction(TransactionMode.Manual)]
-    public class UpdatingParameters : ExternalCommand
+    public override void Execute()
     {
-        public override void Execute()
-        {
-            var viewModel = new UpdatingParametersViewModel();
-            var view = new UpdatingParametersView(viewModel);
-            view.ShowDialog();
-        }
+        var viewModel = new UpdatingParametersViewModel();
+        var view = new UpdatingParametersView(viewModel);
+        view.ShowDialog();
     }
 }

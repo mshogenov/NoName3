@@ -43,4 +43,8 @@
         <Folder Include="Models" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\NoNameAPI\NoNameAPI.csproj" />
+    </ItemGroup>
+
 </Project>

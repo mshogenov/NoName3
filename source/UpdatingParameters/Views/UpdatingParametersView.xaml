@@ -1,4 +1,4 @@
-﻿<Window
+﻿<views:BaseRevitWindow
     x:Class="UpdatingParameters.Views.UpdatingParametersView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -7,6 +7,7 @@
     xmlns:vm="clr-namespace:UpdatingParameters.ViewModels"
     xmlns:converter="clr-namespace:UpdatingParameters.Views.Converters"
     xmlns:model="clr-namespace:UpdatingParameters.Models"
+    xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
     WindowStartupLocation="CenterScreen"
     d:DataContext="{d:DesignInstance Type=vm:UpdatingParametersViewModel}"
     mc:Ignorable="d"
@@ -17,190 +18,236 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
                     Source="pack://application:,,,/UpdatingParameters;component/Views/Resources/UpdatingParametersWindowResources.xaml " />
-                <ResourceDictionary
-                    Source="pack://application:,,,/UpdatingParameters;component/Views/Resources/CommonLayoutControlResources.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            <converter:BoolVisibilityConverter x:Key="BoolVisibilityConverter" />
+            <d:ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
+            </d:ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-        <Grid  Style="{StaticResource Grid}">
-                <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="4*" />
 
-                </Grid.ColumnDefinitions>
-                <GridSplitter Grid.Column="1" Width="5"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Stretch"
-                              Background="#DDDDDD">
+    <Grid Style="{DynamicResource Grid}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="4*" />
+        </Grid.ColumnDefinitions>
+        <GridSplitter Grid.Column="1"
+                      Style="{DynamicResource InvisibleGridSplitter}">
+        </GridSplitter>
+        <Border Grid.Column="0"
+                Margin="0 5 0 0"
+                CornerRadius="0 5 5 0"
+                Style="{DynamicResource BorderContentStyle}">
+            <ScrollViewer
+                Style="{DynamicResource ScrollViewerStyle}"
+                VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled">
+                <StackPanel
+                    VerticalAlignment="Top">
 
-                </GridSplitter>
-                <ScrollViewer Grid.Column="0"
-                              VerticalScrollBarVisibility="Auto" 
-                              HorizontalScrollBarVisibility="Disabled"
-                              Style="{StaticResource ScrollViewerStyle}">
-                           <StackPanel   
-                             Margin="0 5" 
-                              VerticalAlignment="Top">
-                        <!--            <Button Content="Главная" -->
-                        <!--                    Style="{StaticResource CommonButtonStyle}" -->
-                        <!--                    Background="{Binding SelectedButton,  -->
-                        <!-- Converter={StaticResource ButtonSelectedConverter}, -->
-                        <!-- ConverterParameter={x:Static model:ButtonType.Main}}" -->
-                        <!--                    Command="{Binding MainCommand}" -->
-                        <!--                    Visibility="{Binding Path=MainIsVisible, Converter={StaticResource BoolVisibilityConverter}}" /> -->
-                        <Button Content="Трубы:Без типа"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Background="{Binding SelectedButton, 
+                    <!--            <Button Content="Главная" -->
+                    <!--                    Style="{StaticResource CommonButtonStyle}" -->
+                    <!--                    Background="{Binding SelectedButton,  -->
+                    <!-- Converter={StaticResource ButtonSelectedConverter}, -->
+                    <!-- ConverterParameter={x:Static model:ButtonType.Main}}" -->
+                    <!--                    Command="{Binding MainCommand}" -->
+                    <!--                    Visibility="{Binding Path=MainIsVisible, Converter={StaticResource BoolVisibilityConverter}}" /> -->
+                    <Button Content="Трубы:Без типа"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.PipesWithout}}"
-                                Command="{Binding PipesWithoutCommand}"
-                                Visibility="{Binding Path=PipesWithoutButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}" />
+                            Command="{Binding PipesWithoutCommand}"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Visibility="{Binding Path=PipesWithoutButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
+                    </Button>
 
-                        <Button Content="Трубы:Днар х Стенка"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Background="{Binding SelectedButton, 
+                    <Button Content="Трубы:Днар х Стенка"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.PipesOuterDiameter}}"
-                                Command="{Binding PipesOuterDiameterCommand}"
-                                Visibility="{Binding Path=PipesOuterDiameterButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}" />
+                            Command="{Binding PipesOuterDiameterCommand}"
+                            Visibility="{Binding Path=PipesOuterDiameterButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
+                    </Button>
 
-                        <Button Content="Трубы:Ду х Стенка"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Background="{Binding SelectedButton, 
+                    <Button Content="Трубы:Ду х Стенка"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.PipesInternalDiameter}}"
-                                Command="{Binding PipesInternalDiameterCommand}"
-                                Visibility="{Binding Path=PipesInternalDiameterButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}" />
-                        <Button Content="Гибкие трубы: Без типа"
-                                Background="{Binding SelectedButton, 
+                            Command="{Binding PipesInternalDiameterCommand}"
+                            Visibility="{Binding Path=PipesInternalDiameterButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
+                    </Button>
+                    <Button Content="Гибкие трубы: Без типа"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.FlexiblePipesWithoutType}}"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Command="{Binding FlexPipesWithoutCommand}"
-                                Visibility="{Binding Path=FlexPipesWithoutButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}" />
-                        <Button Content="Гибкие трубы: Подводки"
-                                Background="{Binding SelectedButton, 
+                            Command="{Binding FlexPipesWithoutCommand}"
+                            Visibility="{Binding Path=FlexPipesWithoutButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
+
+                    </Button>
+                    <Button Content="Гибкие трубы: Подводки"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.FlexiblePipesConnections}}"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Command="{Binding FlexPipesConnectionsCommand}"
-                                Visibility="{Binding Path=FlexPipesConnectionsButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}" />
-                        <Button Content="Гибкие трубы: Гофры"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Command="{Binding FlexPipesCorrugationsCommand}"
-                                Background="{Binding SelectedButton, 
+                            Command="{Binding FlexPipesConnectionsCommand}"
+                            Visibility="{Binding Path=FlexPipesConnectionsButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
+
+                    </Button>
+                    <Button Content="Гибкие трубы: Гофры"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Command="{Binding FlexPipesCorrugationsCommand}"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.FlexiblePipesCorrugations}}"
-                                Visibility="{Binding Path=FlexPipesCorrugationsButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}" />
-                        <Button Content="Материал изоляции трубы: Трубки"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Background="{Binding SelectedButton, 
+                            Visibility="{Binding Path=FlexPipesCorrugationsButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
+
+                    </Button>
+                    <Button Content="Материал изоляции трубы: Трубки"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.PipeInsulationTubes}}"
-                                Command="{Binding PipeInsulationTubesCommand}"
-                                Visibility="{Binding Path=PipeInsulationTubesButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}" />
-                        <Button Content="Материал изоляции трубы: Цилиндры"
-                                Background="{Binding SelectedButton, 
+                            Command="{Binding PipeInsulationTubesCommand}"
+                            Visibility="{Binding Path=PipeInsulationTubesButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
+
+                    </Button>
+                    <Button Content="Материал изоляции трубы: Цилиндры"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.PipeInsulationCylinders}}"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Command="{Binding PipeInsulationCylindersCommand}"
-                                Visibility="{Binding Path=PipeInsulationCylindersButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}" />
-                        <Button Content="Материал изоляции трубы: Трубки цветные"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Command="{Binding PipeInsulationColouredTubesCommand}"
-                                Background="{Binding SelectedButton, 
+                            Command="{Binding PipeInsulationCylindersCommand}"
+                            Visibility="{Binding Path=PipeInsulationCylindersButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
+
+                    </Button>
+                    <Button Content="Материал изоляции трубы: Трубки цветные"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Command="{Binding PipeInsulationColouredTubesCommand}"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.PipeInsulationColouredTubes}}"
-                                Visibility="{Binding Path=PipeInsulationColouredTubesButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}" />
-                        <Button Content="Воздуховоды: Без типа"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Command="{Binding DuctWithoutCommand}"
-                                Background="{Binding SelectedButton, 
+                            Visibility="{Binding Path=PipeInsulationColouredTubesButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
+
+                    </Button>
+                    <Button Content="Воздуховоды: Без типа"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Command="{Binding DuctWithoutCommand}"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.DuctWithout}}"
-                                Visibility="{Binding DuctWithoutButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}" />
-                        <Button Content="Воздуховоды: Круглые"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Background="{Binding SelectedButton, 
+                            Visibility="{Binding DuctWithoutButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
+
+                    </Button>
+                    <Button Content="Воздуховоды: Круглые"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.DuctRound}}"
-                                Command="{Binding DuctRoundCommand}"
-                                Visibility="{Binding DuctRoundButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}" />
-                        <Button Content="Воздуховоды: Пластик"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Background="{Binding SelectedButton, 
+                            Command="{Binding DuctRoundCommand}"
+                            Visibility="{Binding DuctRoundButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
+
+                    </Button>
+                    <Button Content="Воздуховоды: Пластик"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.DuctPlastic}}"
-                                Command="{Binding DuctPlasticCommand}"
-                                Visibility="{Binding DuctPlasticButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}" />
-                        <Button Content="Воздуховоды: Прямоугольные"
-                                Background="{Binding SelectedButton, 
+                            Command="{Binding DuctPlasticCommand}"
+                            Visibility="{Binding DuctPlasticButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
+
+                    </Button>
+                    <Button Content="Воздуховоды: Прямоугольные"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.DuctRectangular}}"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Command="{Binding DuctRectangularCommand}"
-                                Visibility="{Binding DuctRectangularButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}" />
-                        <Button Content="Гибкие воздуховоды: Круглые"
-                                Background="{Binding SelectedButton, 
+                            Command="{Binding DuctRectangularCommand}"
+                            Visibility="{Binding DuctRectangularButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
+
+                    </Button>
+                    <Button Content="Гибкие воздуховоды: Круглые"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.FlexibleDuctsRound}}"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Command="{Binding FlexibleDuctsRoundCommand}"
-                                Visibility="{Binding FlexibleDuctsRoundButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}" />
-                        <Button Content="Материал изоляции воздуховодов: Огнезащита"
-                                Background="{Binding SelectedButton, 
+                            Command="{Binding FlexibleDuctsRoundCommand}"
+                            Visibility="{Binding FlexibleDuctsRoundButtonIsVisible, Converter={StaticResource BoolVisibilityConverter}}">
+
+                    </Button>
+                    <Button Content="Материал изоляции воздуховодов: Огнезащита"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.DuctInsulationFireproofing}}"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Command="{Binding DuctInsulationFireproofingCommand}"
-                                Visibility="{Binding DuctInsulationFireproofingButtonIsVisible, Converter={StaticResource BoolVisibilityConverter} }" />
-                        <Button Content="Материал изоляции воздуховодов: Теплоизоляция"
-                                Background="{Binding SelectedButton, 
+                            Command="{Binding DuctInsulationFireproofingCommand}"
+                            Visibility="{Binding DuctInsulationFireproofingButtonIsVisible, Converter={StaticResource BoolVisibilityConverter} }">
+
+                    </Button>
+                    <Button Content="Материал изоляции воздуховодов: Теплоизоляция"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.DuctInsulationThermalInsulation}}"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Command="{Binding DuctInsulationThermalInsulationCommand}"
-                                Visibility="{Binding DuctInsulationThermalInsulationButtonIsVisible, Converter={StaticResource BoolVisibilityConverter} }" />
-                        <Button Content="Соединительные детали воздуховодов"
-                                Background="{Binding SelectedButton, 
+                            Command="{Binding DuctInsulationThermalInsulationCommand}"
+                            Visibility="{Binding DuctInsulationThermalInsulationButtonIsVisible, Converter={StaticResource BoolVisibilityConverter} }">
+
+                    </Button>
+                    <Button Content="Соединительные детали воздуховодов"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
                         ConverterParameter={x:Static model:ButtonType.DuctConnectionParts}}"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Command="{Binding DuctConnectionPartsCommand}"
-                                Visibility="{Binding DuctConnectionPartsButtonIsVisible,Converter={StaticResource BoolVisibilityConverter}}" />
-                        <Button Content="Параметры" 
-                                Style="{StaticResource CommonButtonStyle}"
-                                Command="{Binding ParametersCommand}"
-                                Background="{Binding SelectedButton, 
-                        Converter={StaticResource ButtonSelectedConverter},
-                        ConverterParameter={x:Static model:ButtonType.AllCategories}}" />
-                        <Separator  Style="{StaticResource ShadowSeparator}" />
-                        <Button Content="Обновить все типы"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Command="{Binding UpdateAllTypesCommand}"
-                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}" />
-                        <Button Content="Сохранить все настройки"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Command="{Binding SaveSettingsCommand}" />
-                        <Button Content="Настройки"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Command="{Binding SettingsCommand}"
-                                Background="{Binding SelectedButton, 
-                        Converter={StaticResource ButtonSelectedConverter},
-                        ConverterParameter={x:Static model:ButtonType.Settings}}" />
-                        <Button Content="Закрыть"
-                                Style="{StaticResource CommonButtonStyle}"
-                                Command="{Binding CloseWindowCommand}"
-                                CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}" />
-                </StackPanel>
-                </ScrollViewer>
-             
+                            Command="{Binding DuctConnectionPartsCommand}"
+                            Visibility="{Binding DuctConnectionPartsButtonIsVisible,Converter={StaticResource BoolVisibilityConverter}}">
 
-                <Grid Grid.Column="2">
-                        <ContentControl Content="{Binding SelectedContent}" />
-                </Grid>
+                    </Button>
+                    <Button Content="Параметры"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Command="{Binding ParametersCommand}"
+                            Background="{Binding SelectedButton, 
+                        Converter={StaticResource ButtonSelectedConverter},
+                        ConverterParameter={x:Static model:ButtonType.AllCategories}}">
+
+                    </Button>
+                    <Separator Style="{DynamicResource ShadowSeparator}" />
+                    <Button
+                        Content="Обновить все типы"
+                        Style="{DynamicResource CommonButtonStyle}"
+                        Command="{Binding UpdateAllTypesCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}">
+                    </Button>
+                    <Separator Style="{DynamicResource ShadowSeparator}" />
+
+
+                    <Button Content="Настройки"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Command="{Binding SettingsCommand}"
+                            Background="{Binding SelectedButton, 
+                        Converter={StaticResource ButtonSelectedConverter},
+                        ConverterParameter={x:Static model:ButtonType.Settings}}">
+                    </Button>
+                    <Button Content="Сохранить все настройки"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Command="{Binding SaveSettingsCommand}">
+                    </Button>
+                    <Separator Style="{DynamicResource ShadowSeparator}" />
+                    <Button Content="Закрыть"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Command="{Binding CloseWindowCommand}"
+                            CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}">
+
+                    </Button>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+        <Grid Grid.Column="2" Margin="5 5 10 5">
+            <ContentControl Content="{Binding SelectedContent}" />
         </Grid>
-</Window>
+    </Grid>
+</views:BaseRevitWindow>
