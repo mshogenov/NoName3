@@ -20,109 +20,109 @@ public class CopyAnnotationsServices
             // Вычисляем вектор перемещения между опорными элементами
             XYZ translationVector = targetBasePoint - sourceBasePoint;
             // Сохраняем выбранные марки и их данные
-            List<TagData> tagsData = GetTagsData(selectedTagRefs, sourceBasePoint);
+            List<TagData> tagsData = GetTagsData(selectedTagRefs);
             // 3. Создаем новые марки в указанном месте
-            using (Transaction trans = new Transaction(_doc, "Копирование независимых марок"))
+            using Transaction trans = new Transaction(_doc, "Копирование независимых марок");
+            trans.Start();
+            foreach (TagData tagData in tagsData)
             {
-                trans.Start();
+                tagData.GetRelativePositions(sourceBasePoint);
+                // Вычисляем новую позицию марки относительно целевой базовой точки
+                XYZ newPosition = targetBasePoint + tagData.RelativePosition;
 
-                foreach (TagData tagData in tagsData)
+                // Находим ближайший элемент соответствующей категории
+                if (tagData.TaggedElementCategory != null)
                 {
-                    // Вычисляем новую позицию марки относительно целевой базовой точки
-                    XYZ newPosition = targetBasePoint + tagData.RelativePosition;
-
-                    // Находим ближайший элемент соответствующей категории
-                    if (tagData.TaggedElementCategory != null)
+                    // Определяем точку для поиска ближайшего элемента
+                    XYZ searchPoint;
+                    if (tagData is { HasLeader: true})
                     {
-                        // Определяем точку для поиска ближайшего элемента
-                        XYZ searchPoint;
-                        if (tagData.Leader && tagData.RelativeLeaderEnd != null)
+                        // Если есть выноска, ищем элемент в точке конца выноски
+                        searchPoint = targetBasePoint + tagData.RelativeLeaderEnd;
+                    }
+                    else
+                    {
+                        // Иначе ищем рядом с позицией марки
+                        searchPoint = newPosition;
+                    }
+                    Element nearestElement =
+                        FindNearestElementOfCategory(_doc, searchPoint, tagData.TaggedElementCategory);
+                    if (nearestElement != null)
+                    {
+                        // Создаем новую марку для найденного элемента
+                        Reference elementRef = new Reference(nearestElement);
+
+                        IndependentTag newTag = IndependentTag.Create(
+                            _doc,
+                            tagData.TagType, // Тип марки
+                            _doc.ActiveView.Id, // ID текущего вида
+                            elementRef, // Ссылка на элемент для маркировки
+                            tagData.HasLeader, // Нужна ли выноска
+                            tagData.Orientation, // Ориентация марки
+                            newPosition // Позиция марки
+                        );
+                        if (newTag != null && tagData.HasLeader)
                         {
-                            // Если есть выноска, ищем элемент в точке конца выноски
-                            searchPoint = targetBasePoint + tagData.RelativeLeaderEnd;
-                        }
-                        else
-                        {
-                            // Иначе ищем рядом с позицией марки
-                            searchPoint = newPosition;
-                        }
-
-                        Element nearestElement =
-                            FindNearestElementOfCategory(_doc, searchPoint, tagData.TaggedElementCategory);
-
-                        if (nearestElement != null)
-                        {
-                            // Создаем новую марку для найденного элемента
-                            Reference elementRef = new Reference(nearestElement);
-
-
-                            IndependentTag newTag = IndependentTag.Create(
-                                _doc,
-                                tagData.TagType, // Тип марки
-                                _doc.ActiveView.Id, // ID текущего вида
-                                elementRef, // Ссылка на элемент для маркировки
-                                tagData.Leader, // Нужна ли выноска
-                                tagData.Orientation, // Ориентация марки
-                                newPosition // Позиция марки
-                            );
-
-
                             // Настраиваем положение лидера, если он есть
-                            if (newTag != null && tagData.Leader)
-                            {
-                                try
-                                {
-                                    // Устанавливаем тип условия конца лидера
-                                    if (tagData.LeaderEndCondition != null)
-                                    {
-                                        newTag.LeaderEndCondition = tagData.LeaderEndCondition;
-                                    }
-
-                                    // Вычисляем новые координаты конца выноски относительно целевой точки
-                                    if (tagData.RelativeLeaderEnd != null)
-                                    {
-                                        XYZ newLeaderEnd = targetBasePoint + tagData.RelativeLeaderEnd;
-                                        newTag.SetLeaderEnd(elementRef, newLeaderEnd);
-                                    }
-                                    else if (tagData.LeaderVector != null)
-                                    {
-                                        // Альтернативный способ: используя вектор направления
-                                        XYZ leaderEndPoint = newTag.TagHeadPosition + tagData.LeaderVector;
-                                        newTag.SetLeaderEnd(elementRef, leaderEndPoint);
-                                    }
-
-                                    // Устанавливаем локоть лидера относительно целевой точки
-                                    if (tagData.RelativeLeaderElbow != null)
-                                    {
-                                        XYZ newLeaderElbow = targetBasePoint + tagData.RelativeLeaderElbow;
-                                        newTag.SetLeaderElbow(elementRef, newLeaderElbow);
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    // Игнорируем ошибки при настройке лидера
-                                }
-                            }
+                            AdjustPositionLeader(newTag, tagData, targetBasePoint, elementRef); 
                         }
+                     
                     }
                 }
-
-                trans.Commit();
             }
 
-            return;
+            trans.Commit();
         }
         catch (Autodesk.Revit.Exceptions.OperationCanceledException)
         {
-            return;
         }
         catch (Exception ex)
         {
-            return;
+           TaskDialog.Show("Ошибка", ex.Message);
         }
     }
 
-    private List<TagData> GetTagsData(List<Reference> selectedTagRefs, XYZ sourceBasePoint)
+    private static void AdjustPositionLeader(IndependentTag newTag, TagData tagData, XYZ targetBasePoint,
+        Reference elementRef)
+    {
+        if (newTag != null && tagData.HasLeader)
+        {
+            try
+            {
+                // Устанавливаем тип условия конца лидера
+                if (tagData.LeaderEndCondition != null)
+                {
+                    newTag.LeaderEndCondition = tagData.LeaderEndCondition;
+                }
+                        
+                // Вычисляем новые координаты конца выноски относительно целевой точки
+                if (tagData.RelativeLeaderEnd != null)
+                {
+                    XYZ newLeaderEnd = targetBasePoint + tagData.RelativeLeaderEnd;
+                    newTag.SetLeaderEnd(elementRef, newLeaderEnd);
+                }
+                else if (tagData.LeaderVector != null)
+                {
+                    // Альтернативный способ: используя вектор направления
+                    XYZ leaderEndPoint = newTag.TagHeadPosition + tagData.LeaderVector;
+                    newTag.SetLeaderEnd(elementRef, leaderEndPoint);
+                }
+                        
+                // Устанавливаем локоть лидера относительно целевой точки
+                if (tagData.RelativeLeaderElbow != null)
+                {
+                    XYZ newLeaderElbow = targetBasePoint + tagData.RelativeLeaderElbow;
+                    newTag.SetLeaderElbow(elementRef, newLeaderElbow);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Игнорируем ошибки при настройке лидера
+            }
+        }
+    }
+
+    private List<TagData> GetTagsData(List<Reference> selectedTagRefs)
     {
         List<TagData> tagsData = [];
         foreach (Reference tagRef in selectedTagRefs)
@@ -130,77 +130,9 @@ public class CopyAnnotationsServices
             IndependentTag tag = _doc.GetElement(tagRef) as IndependentTag;
             if (tag != null)
             {
-                // Получаем элемент, к которому привязана марка
-                Element taggedElement = null;
-                Reference taggedElementRef = null;
-
-                ICollection<LinkElementId> taggedElementIds = tag.GetTaggedElementIds();
-                if (taggedElementIds is { Count: > 0 })
-                {
-                    taggedElement = _doc.GetElement(taggedElementIds.First().HostElementId);
-                    if (taggedElement != null)
-                    {
-                        taggedElementRef = new Reference(taggedElement);
-                    }
-                }
-                // Сохраняем категорию элемента, к которому привязана марка
-                ElementId categoryId = taggedElement.Category?.Id;
-
-                // Сохраняем относительное положение от базовой точки
-                XYZ relativePosition = tag.TagHeadPosition - sourceBasePoint;
-
-                if (tag.HasLeader && taggedElementRef != null)
-                {
-                    try
-                    {
-                        // Получаем конец выноски и локоть выноски
-                        XYZ leaderEnd = tag.GetLeaderEnd(taggedElementRef);
-                        XYZ leaderElbow = tag.GetLeaderElbow(taggedElementRef);
-
-                        // Сохраняем относительные позиции от базовой точки
-                        XYZ relativeLeaderEnd = leaderEnd - sourceBasePoint;
-                        XYZ relativeLeaderElbow = leaderElbow - sourceBasePoint;
-                        LeaderEndCondition leaderEndCondition = tag.LeaderEndCondition;
-                        // И вектор направления выноски относительно позиции марки (для сохранения угла)
-                        XYZ leaderVector = leaderEnd - tag.TagHeadPosition;
-
-                        TagData tagData = new TagData(tag)
-                        {
-                            TagType = tag.GetTypeId(),
-                            TaggedElementCategory = categoryId,
-                            RelativePosition = relativePosition,
-                            RelativeLeaderEnd = relativeLeaderEnd, // Относительно базовой точки
-                            RelativeLeaderElbow = relativeLeaderElbow, // Относительно базовой точки
-                            LeaderVector = leaderVector, // Относительно марки 
-                            Orientation = tag.TagOrientation,
-                            Leader = tag.HasLeader,
-                            LeaderEndCondition = leaderEndCondition
-                        };
-
-                        tagsData.Add(tagData);
-                    }
-                    catch (Exception)
-                    {
-                        // Если получить данные о лидере не удалось, оставляем null
-                    }
-                }
-                else
-                {
-                    // Для марок без выноски
-                    TagData tagData = new TagData(tag)
-                    {
-                        TagType = tag.GetTypeId(),
-                        TaggedElementCategory = categoryId,
-                        RelativePosition = relativePosition,
-                        Orientation = tag.TagOrientation,
-                        Leader = tag.HasLeader
-                    };
-
-                    tagsData.Add(tagData);
-                }
+                tagsData.Add(new TagData(tag));
             }
         }
-
         return tagsData;
     }
 
@@ -226,11 +158,11 @@ public class CopyAnnotationsServices
     }
 
     // Метод для поиска ближайшего элемента указанной категории
-    private Element FindNearestElementOfCategory(Document doc, XYZ searchPoint, ElementId categoryId)
+    private Element FindNearestElementOfCategory(Document doc, XYZ searchPoint, Category category)
     {
         // Получаем все элементы указанной категории в активном виде
         FilteredElementCollector collector = new FilteredElementCollector(doc, doc.ActiveView.Id);
-        collector.OfCategoryId(categoryId);
+        collector.OfCategoryId(category.Id);
 
         Element nearestElement = null;
         double minDistance = double.MaxValue;
