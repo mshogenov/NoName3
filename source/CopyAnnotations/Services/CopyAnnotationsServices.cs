@@ -17,68 +17,46 @@ public class CopyAnnotationsServices
             List<Reference> selectedTagRefs = GetCopyTags().ToList();
             XYZ sourceBasePoint = GetPoint("Выберите исходный опорный элемент");
             XYZ targetBasePoint = GetPoint("Выберите целевой опорный элемент");
+
             // Вычисляем вектор перемещения между опорными элементами
             XYZ translationVector = targetBasePoint - sourceBasePoint;
-            // Сохраняем выбранные марки и их данные
-            List<TagData> tagsData = GetTagsData(selectedTagRefs);
-            // 3. Создаем новые марки в указанном месте
-            using Transaction trans = new Transaction(_doc, "Копирование независимых марок");
-            trans.Start();
-            foreach (TagData tagData in tagsData)
+
+            using (Transaction trans = new Transaction(_doc, "Копирование независимых марок"))
             {
-                tagData.GetRelativePositions(sourceBasePoint);
-                // Вычисляем новую позицию марки относительно целевой базовой точки
-                XYZ newPosition = targetBasePoint + tagData.RelativePosition;
+                trans.Start();
 
-                // Находим ближайший элемент соответствующей категории
-                if (tagData.TaggedElementCategory != null)
+                foreach (Reference tagRef in selectedTagRefs)
                 {
-                    // Определяем точку для поиска ближайшего элемента
-                    XYZ searchPoint;
-                    if (tagData is { HasLeader: true})
-                    {
-                        // Если есть выноска, ищем элемент в точке конца выноски
-                        searchPoint = targetBasePoint + tagData.RelativeLeaderEnd;
-                    }
-                    else
-                    {
-                        // Иначе ищем рядом с позицией марки
-                        searchPoint = newPosition;
-                    }
-                    Element nearestElement =
-                        FindNearestElementOfCategory(_doc, searchPoint, tagData.TaggedElementCategory);
-                    if (nearestElement != null)
-                    {
-                        // Создаем новую марку для найденного элемента
-                        Reference elementRef = new Reference(nearestElement);
+                    // Получаем оригинальную марку
+                    Element element = _doc.GetElement(tagRef);
+                    IndependentTag originalTag = element as IndependentTag;
 
-                        IndependentTag newTag = IndependentTag.Create(
+                    if (originalTag != null)
+                    {
+                        // Прямое копирование через ElementTransformUtils
+                        ICollection<ElementId> copiedIds = ElementTransformUtils.CopyElement(
                             _doc,
-                            tagData.TagType, // Тип марки
-                            _doc.ActiveView.Id, // ID текущего вида
-                            elementRef, // Ссылка на элемент для маркировки
-                            tagData.HasLeader, // Нужна ли выноска
-                            tagData.Orientation, // Ориентация марки
-                            newPosition // Позиция марки
+                            originalTag.Id,
+                            translationVector
                         );
-                        if (newTag != null && tagData.HasLeader)
+
+                        if (copiedIds.Count == 0)
                         {
-                            // Настраиваем положение лидера, если он есть
-                            AdjustPositionLeader(newTag, tagData, targetBasePoint, elementRef); 
+                            TaskDialog.Show("Предупреждение", "Не удалось скопировать марку");
                         }
-                     
                     }
                 }
-            }
 
-            trans.Commit();
+                trans.Commit();
+            }
         }
         catch (Autodesk.Revit.Exceptions.OperationCanceledException)
         {
+            // Пользователь отменил операцию
         }
         catch (Exception ex)
         {
-           TaskDialog.Show("Ошибка", ex.Message);
+            TaskDialog.Show("Ошибка", ex.Message);
         }
     }
 
