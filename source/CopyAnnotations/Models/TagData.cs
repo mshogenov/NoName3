@@ -2,7 +2,8 @@ namespace CopyAnnotations.Models;
 
 public class TagData
 {
-    public ElementId TagType { get; set; }
+    public ElementId Id { get; set; }
+    public ElementId TagTypeId { get; set; }
     public IndependentTag IndependentTag { get; set; }
     public XYZ TagHeadPosition { get; set; }
     public bool HasLeader { get; set; }
@@ -22,9 +23,10 @@ public class TagData
     public TagData(IndependentTag tag)
     {
         IndependentTag = tag;
+        Id = tag.Id;
         TagHeadPosition = tag.TagHeadPosition;
         HasLeader = tag.HasLeader;
-        TagType = tag.GetTypeId();
+        TagTypeId = tag.GetTypeId();
         Document doc = tag.Document;
         ICollection<LinkElementId> taggedElementIds = tag.GetTaggedElementIds();
         if (taggedElementIds is { Count: > 0 })

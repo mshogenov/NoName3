@@ -17,37 +17,103 @@ public class CopyAnnotationsServices
             List<Reference> selectedTagRefs = GetCopyTags().ToList();
             XYZ sourceBasePoint = GetPoint("Выберите исходный опорный элемент");
             XYZ targetBasePoint = GetPoint("Выберите целевой опорный элемент");
+            var tagsData = GetTagsData(selectedTagRefs);
 
             // Вычисляем вектор перемещения между опорными элементами
             XYZ translationVector = targetBasePoint - sourceBasePoint;
+
+            // Словарь для отслеживания скопированных марок (исходная -> копия)
+            Dictionary<ElementId, ElementId> copiedTagsMap = new Dictionary<ElementId, ElementId>();
+            // Список для хранения марок, которые не удалось скопировать
+            List<TagData> notCopiedTags = new List<TagData>();
 
             using (Transaction trans = new Transaction(_doc, "Копирование независимых марок"))
             {
                 trans.Start();
 
-                foreach (Reference tagRef in selectedTagRefs)
+                foreach (TagData tagData in tagsData)
                 {
-                    // Получаем оригинальную марку
-                    Element element = _doc.GetElement(tagRef);
-                    IndependentTag originalTag = element as IndependentTag;
-
-                    if (originalTag != null)
+                    if (tagData != null)
                     {
                         // Прямое копирование через ElementTransformUtils
                         ICollection<ElementId> copiedIds = ElementTransformUtils.CopyElement(
                             _doc,
-                            originalTag.Id,
+                            tagData.Id,
                             translationVector
                         );
-
-                        if (copiedIds.Count == 0)
+                        Element copied = _doc.GetElement(copiedIds.First());
+                        var copiedTag = copied as IndependentTag;
+                        var a = copiedTag.GetTaggedElementIds();
+                        if (copiedIds.Count > 0)
                         {
-                            TaskDialog.Show("Предупреждение", "Не удалось скопировать марку");
+                            // Запоминаем связь между исходной маркой и копией
+                            copiedTagsMap[tagData.Id] = copiedIds.First();
+                        }
+                        else
+                        {
+                            // Если копирование не удалось, добавляем в список нескопированных
+                            notCopiedTags.Add(tagData);
+                        }
+                    }
+                }
+
+                // Здесь можно обработать нескопированные марки (notCopiedTags)
+                foreach (var tagData in notCopiedTags)
+                {
+                    // 3. Создаем новые марки в указанном месте
+                    tagData.GetRelativePositions(sourceBasePoint);
+                    // Вычисляем новую позицию марки относительно целевой базовой точки
+                    XYZ newPosition = targetBasePoint + tagData.RelativePosition;
+                    // Находим ближайший элемент соответствующей категории
+                    if (tagData.TaggedElementCategory != null)
+                    {
+                        // Определяем точку для поиска ближайшего элемента
+                        XYZ searchPoint;
+                        if (tagData is { HasLeader: true })
+                        {
+                            // Если есть выноска, ищем элемент в точке конца выноски
+                            searchPoint = targetBasePoint + tagData.RelativeLeaderEnd;
+                        }
+                        else
+                        {
+                            // Иначе ищем рядом с позицией марки
+                            searchPoint = newPosition;
+                        }
+
+                        Element nearestElement =
+                            FindNearestElementOfCategory(_doc, searchPoint, tagData.TaggedElementCategory);
+                        if (nearestElement != null)
+                        {
+                            // Создаем новую марку для найденного элемента
+                            Reference elementRef = new Reference(nearestElement);
+
+                            IndependentTag newTag = IndependentTag.Create(
+                                _doc,
+                                tagData.TagTypeId, // Тип марки
+                                _doc.ActiveView.Id, // ID текущего вида
+                                elementRef, // Ссылка на элемент для маркировки
+                                tagData.HasLeader, // Нужна ли выноска
+                                tagData.Orientation, // Ориентация марки
+                                newPosition // Позиция марки
+                            );
+                            if (newTag != null && tagData.HasLeader)
+                            {
+                                // Настраиваем положение лидера, если он есть
+                                AdjustPositionLeader(newTag, tagData, targetBasePoint, elementRef);
+                            }
                         }
                     }
                 }
 
                 trans.Commit();
+            }
+
+            // Вывод информации
+            if (notCopiedTags.Count > 0)
+            {
+                TaskDialog.Show("Информация",
+                    $"Скопировано марок: {copiedTagsMap.Count}\n" +
+                    $"Не удалось скопировать: {notCopiedTags.Count}");
             }
         }
         catch (Autodesk.Revit.Exceptions.OperationCanceledException)
@@ -72,7 +138,7 @@ public class CopyAnnotationsServices
                 {
                     newTag.LeaderEndCondition = tagData.LeaderEndCondition;
                 }
-                        
+
                 // Вычисляем новые координаты конца выноски относительно целевой точки
                 if (tagData.RelativeLeaderEnd != null)
                 {
@@ -85,7 +151,7 @@ public class CopyAnnotationsServices
                     XYZ leaderEndPoint = newTag.TagHeadPosition + tagData.LeaderVector;
                     newTag.SetLeaderEnd(elementRef, leaderEndPoint);
                 }
-                        
+
                 // Устанавливаем локоть лидера относительно целевой точки
                 if (tagData.RelativeLeaderElbow != null)
                 {
@@ -111,6 +177,7 @@ public class CopyAnnotationsServices
                 tagsData.Add(new TagData(tag));
             }
         }
+
         return tagsData;
     }
 
