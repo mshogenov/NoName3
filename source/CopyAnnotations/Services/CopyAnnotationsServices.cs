@@ -21,7 +21,8 @@ public class CopyAnnotationsServices
             // Вычисляем вектор перемещения между опорными элементами
             XYZ translationVector = targetBasePoint - sourceBasePoint;
 
-            using (Transaction trans = new Transaction(_doc, "Копирование независимых марок"))
+          
+            using (Transaction trans = new Transaction(_doc, "Копирование марок"))
             {
                 trans.Start();
 
@@ -29,12 +30,48 @@ public class CopyAnnotationsServices
                 {
                     if (tagData != null)
                     {
-                        // Прямое копирование через ElementTransformUtils
-                        ICollection<ElementId> copiedIds = ElementTransformUtils.CopyElement(
-                            _doc,
-                            tagData.Id,
-                            translationVector
-                        );
+                        // Получаем оригинальную марку
+                        IndependentTag originalTag = _doc.GetElement(tagData.Id) as IndependentTag;
+                        if (originalTag == null) continue;
+
+                        // Получаем текущую позицию марки
+                        XYZ currentPosition = originalTag.TagHeadPosition;
+                        // Рассчитываем новую позицию марки
+                        XYZ newPosition = currentPosition + translationVector;
+
+                        // Определяем категорию маркируемого элемента
+                        Element taggedElement = _doc.GetElement(originalTag.GetTaggedElementIds().FirstOrDefault().HostElementId);
+                        BuiltInCategory elementCategory = (BuiltInCategory)taggedElement.Category.Id.IntegerValue;
+
+                        // Находим ближайший элемент в новой позиции
+                        Element nearestElement = FindNearestElement(newPosition, elementCategory);
+
+                        if (nearestElement == null)
+                        {
+                            // Корректируем положение марки до копирования
+                            // XYZ correctedPosition = GetCorrectedPosition(nearestElement, newPosition);
+
+                            // Вычисляем скорректированный вектор перемещения
+                            // XYZ correctedTranslationVector = correctedPosition - currentPosition;
+
+                            // Копируем марку с использованием скорректированного вектора
+                            ElementId copiedTagId = ElementTransformUtils.CopyElement(
+                                _doc,
+                                originalTag.Id,
+                                translationVector
+                            ).First();
+
+                            IndependentTag copiedTag = _doc.GetElement(copiedTagId) as IndependentTag;
+
+                            // Обновляем привязку к новому элементу
+                            // copiedTag.TaggedElementId = new ElementId(nearestElement.Id.IntegerValue);
+
+                        }
+                        else
+                        {
+                            TaskDialog.Show("Предупреждение",
+                                $"Не найден элемент категории {taggedElement.Category.Name} в новой позиции для марки.");
+                        }
                     }
                 }
 
@@ -49,6 +86,89 @@ public class CopyAnnotationsServices
         {
             TaskDialog.Show("Ошибка", ex.Message);
         }
+    }
+
+    // Метод для поиска ближайшего элемента заданной категории
+    private Element FindNearestElement(XYZ position, BuiltInCategory category)
+    {
+        // Определяем радиус поиска
+        double searchRadius = 5.0; // в футах, можно настроить
+
+        Element nearestElement = null;
+        double minDistance = double.MaxValue;
+
+        // Создаем Outline для BoundingBoxIntersectsFilter
+        XYZ minPoint = position - new XYZ(searchRadius, searchRadius, searchRadius);
+        XYZ maxPoint = position + new XYZ(searchRadius, searchRadius, searchRadius);
+        Outline searchBox = new Outline(minPoint, maxPoint);
+
+        // Фильтр по категории
+        ElementCategoryFilter categoryFilter = new ElementCategoryFilter(category);
+
+        // Получаем все элементы в заданном радиусе с нужной категорией
+        FilteredElementCollector collector = new FilteredElementCollector(_doc, _doc.ActiveView.Id)
+            .WherePasses(categoryFilter)
+            .WherePasses(new BoundingBoxIntersectsFilter(searchBox));
+
+        foreach (Element element in collector)
+        {
+            // Используем Location элемента для определения его положения
+            Location location = element.Location;
+            XYZ elementPosition;
+
+            if (location is LocationPoint locationPoint)
+            {
+                elementPosition = locationPoint.Point;
+            }
+            else if (location is LocationCurve locationCurve)
+            {
+                // Для линейных элементов берем середину кривой
+                elementPosition = (locationCurve.Curve.GetEndPoint(0) + locationCurve.Curve.GetEndPoint(1)) / 2;
+            }
+            else
+            {
+                continue; // Пропускаем, если невозможно определить положение
+            }
+
+            double distance = position.DistanceTo(elementPosition);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                nearestElement = element;
+            }
+        }
+
+        return nearestElement;
+    }
+    private XYZ GetCorrectedPosition(Element element, XYZ proposedPosition)
+    {
+        // Здесь реализуйте логику корректировки положения марки
+        // в зависимости от геометрии элемента
+
+        // Пример: проецирование точки на ближайшую грань элемента
+        Options options = new Options();
+        GeometryElement geomElem = element.get_Geometry(options);
+        XYZ closestPoint = proposedPosition;
+        double minDistance = double.MaxValue;
+
+        foreach (GeometryObject geomObj in geomElem)
+        {
+            if (geomObj is Solid solid)
+            {
+                foreach (Face face in solid.Faces)
+                {
+                    XYZ pointOnFace = face.Project(proposedPosition).XYZPoint;
+                    double distance = proposedPosition.DistanceTo(pointOnFace);
+                    if (distance < minDistance)
+                    {
+                        minDistance = distance;
+                        closestPoint = pointOnFace;
+                    }
+                }
+            }
+        }
+
+        return closestPoint;
     }
 
     private bool IsVectorAlmostEqual(XYZ vector1, XYZ vector2, double tolerance = 0.001)
@@ -93,7 +213,7 @@ public class CopyAnnotationsServices
                 {
                     newTag.LeaderEndCondition = tagData.LeaderEndCondition;
                 }
-                        
+
                 // Вычисляем новые координаты конца выноски относительно целевой точки
                 if (tagData.RelativeLeaderEnd != null)
                 {
@@ -106,7 +226,7 @@ public class CopyAnnotationsServices
                     XYZ leaderEndPoint = newTag.TagHeadPosition + tagData.LeaderVector;
                     newTag.SetLeaderEnd(elementRef, leaderEndPoint);
                 }
-                        
+
                 // Устанавливаем локоть лидера относительно целевой точки
                 if (tagData.RelativeLeaderElbow != null)
                 {
@@ -132,6 +252,7 @@ public class CopyAnnotationsServices
                 tagsData.Add(new TagData(tag));
             }
         }
+
         return tagsData;
     }
 
@@ -200,7 +321,7 @@ public class CopyAnnotationsServices
         }
         else if (location is LocationCurve locationCurve)
         {
-            return locationCurve.Curve.Evaluate(0.5, true); // Центральная точка кривой
+            return (locationCurve.Curve as Line)?.Origin;
         }
 
         // Если точки расположения нет, используем центр ограничивающего бокса
