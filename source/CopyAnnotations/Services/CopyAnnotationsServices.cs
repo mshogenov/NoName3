@@ -45,10 +45,11 @@ public class CopyAnnotationsServices
             {
                 if (tagData != null)
                 {
+                    var searchPoint = GetElementPosition(tagData.TaggedElements.FirstOrDefault().Element) +translationVector2;
                     var newLeaderEnd = tagData.LeaderEnd + translationVector2;
                     var newTagHead = tagData.TagHeadPosition + translationVector2;
                     var newLeaderElbow = tagData.LeaderElbow + translationVector2;
-                    var nearestElement = FindNearestElementOfCategory(_doc, newLeaderEnd, tagData.TagCategory);
+                    var nearestElement = FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory);
 
                     // Создаем новую марку
                     IndependentTag newTag = IndependentTag.Create(
@@ -91,7 +92,7 @@ public class CopyAnnotationsServices
     private Element FindNearestElement(XYZ position, BuiltInCategory category)
     {
         // Определяем радиус поиска
-        double searchRadius = 5.0; // в футах, можно настроить
+        double searchRadius = 50; // в футах, можно настроить
 
         Element nearestElement = null;
         double minDistance = double.MaxValue;
@@ -289,13 +290,12 @@ public class CopyAnnotationsServices
 
         foreach (Element element in collector)
         {
-            // Получаем точку для измерения расстояния
-            // Используем либо LocationPoint, либо BoundingBox
-            XYZ elementPoint = GetElementPosition(element);
+            // Получаем все возможные точки элемента
+            List<XYZ> elementPoints = GetElementPoints(element);
 
-            if (elementPoint != null)
+            foreach (XYZ point in elementPoints)
             {
-                double distance = searchPoint.DistanceTo(elementPoint);
+                double distance = searchPoint.DistanceTo(point);
                 if (distance < minDistance)
                 {
                     minDistance = distance;
@@ -306,7 +306,63 @@ public class CopyAnnotationsServices
 
         return nearestElement;
     }
+    private List<XYZ> GetElementPoints(Element element)
+    {
+        List<XYZ> points = new List<XYZ>();
 
+        if (element == null)
+            return points;
+
+        // Получаем геометрию элемента
+        GeometryElement geomElem = element.get_Geometry(new Options());
+        if (geomElem != null)
+        {
+            foreach (GeometryObject geomObj in geomElem)
+            {
+                if (geomObj is Solid solid)
+                {
+                    // Добавляем все вершины солида
+                    foreach (Edge edge in solid.Edges)
+                    {
+                        points.Add(edge.AsCurve().GetEndPoint(0));
+                        points.Add(edge.AsCurve().GetEndPoint(1));
+                    }
+                }
+                else if (geomObj is Line line)
+                {
+                    points.Add(line.GetEndPoint(0));
+                    points.Add(line.GetEndPoint(1));
+                }
+                else if (geomObj is Point point)
+                {
+                    points.Add(point.Coord);
+                }
+            }
+        }
+
+        // Добавляем точку расположения
+        Location location = element.Location;
+        if (location is LocationPoint locationPoint)
+        {
+            points.Add(locationPoint.Point);
+        }
+        else if (location is LocationCurve locationCurve)
+        {
+            points.Add(locationCurve.Curve.GetEndPoint(0));
+            points.Add(locationCurve.Curve.GetEndPoint(1));
+        }
+
+        // Добавляем точки ограничивающего бокса
+        BoundingBoxXYZ bb = element.get_BoundingBox(null);
+        if (bb != null)
+        {
+            points.Add(bb.Min);
+            points.Add(bb.Max);
+            points.Add((bb.Min + bb.Max) * 0.5); // центр
+        }
+
+        return points.Distinct().ToList();
+    }
     // Метод для получения позиции элемента
     private XYZ GetElementPosition(Element element)
     {
