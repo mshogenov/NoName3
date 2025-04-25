@@ -7,15 +7,15 @@ namespace CopyAnnotations.Services;
 
 public class CopyAnnotationsServices
 {
-    private readonly UIDocument _uidoc = Context.ActiveUiDocument;
-    private readonly Document _doc = Context.ActiveDocument;
+    private readonly UIDocument? _uidoc = Context.ActiveUiDocument;
+    private readonly Document? _doc = Context.ActiveDocument;
 
     public void CopyAnnotations()
     {
         try
         {
             List<Reference> selectedTagRefs = GetCopyTags().ToList();
-            var originalTagRefs = _uidoc.Selection.PickObject(ObjectType.Element,
+            var originalTagRefs = _uidoc?.Selection.PickObject(ObjectType.Element,
                 new TagSelectionFilter(), "Выберите исходную марку для копирования");
             XYZ sourceBasePoint = GetPoint("Выберите исходный опорный элемент");
             XYZ targetBasePoint = GetPoint("Выберите целевой опорный элемент");
@@ -37,70 +37,61 @@ public class CopyAnnotationsServices
                 var copyTag = new TagData(_doc.GetElement(copiedTagId) as IndependentTag);
                 translationVector2 = (originalTag.TagHeadPosition - copyTag.TagHeadPosition).Multiply(-1);
             }
-
             using Transaction trans2 = new Transaction(_doc, "Копирование марок2");
             trans2.Start();
             tagsData.RemoveAll(t => t.Id == originalTag.Id);
             foreach (TagData tagData in tagsData)
             {
-                if (tagData != null)
+                if (tagData == null) continue;
+                var searchPoint = tagData.TaggedElements.FirstOrDefault().Position + translationVector;
+                var newLeaderEnd = tagData.LeaderEnd + translationVector2;
+                var newTagHead = tagData.TagHeadPosition + translationVector2;
+                var newLeaderElbow = tagData.LeaderElbow + translationVector2;
+                var nearestElement =
+                    new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory));
+                IndependentTag newTag;
+                if (!ArePointsEqual(searchPoint, nearestElement.Position, 0.01))
                 {
-                    var searchPoint = tagData.TaggedElements.FirstOrDefault().Position + translationVector;
-                    var newLeaderEnd = tagData.LeaderEnd + translationVector2;
-                    var newTagHead = tagData.TagHeadPosition + translationVector2;
-                    var newLeaderElbow = tagData.LeaderElbow + translationVector2;
-                    var nearestElement =
-                        new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory));
-                    IndependentTag newTag;
-                    if (!ArePointsEqual(searchPoint, nearestElement.Position, 0.01))
-                    {
-                        var displacement = nearestElement.Position.Subtract(searchPoint);
-                        // Создаем новую марку
-                        newTag = IndependentTag.Create(
-                            _doc, // документ
-                            tagData.TagTypeId, // тип марки
-                            _doc.ActiveView.Id, // id вида
-                            new Reference(nearestElement.Element), // ссылка на элемент
-                            tagData.HasLeader, // наличие выноски
-                            tagData.Orientation, // ориентация
-                            newTagHead // позиция марки
-                        );
+                    var displacement = nearestElement.Position.Subtract(searchPoint);
+                    // Создаем новую марку
+                    newTag = IndependentTag.Create(
+                        _doc, // документ
+                        tagData.TagTypeId, // тип марки
+                        _doc.ActiveView.Id, // id вида
+                        new Reference(nearestElement.Element), // ссылка на элемент
+                        tagData.HasLeader, // наличие выноски
+                        tagData.Orientation, // ориентация
+                        newTagHead.Add(displacement) // позиция марки
+                    );
+                    newTag.TagHeadPosition = newTagHead.Add(displacement);
+                    // Если есть выноска, устанавливаем её точки
+                    if (!tagData.HasLeader) continue;
+                    newTag.LeaderEndCondition = tagData.LeaderEndCondition;
+                    newTag.SetLeaderEnd(new Reference(nearestElement.Element), newLeaderEnd.Add(displacement));
+                    newTag.SetLeaderElbow(new Reference(nearestElement.Element),
+                        newLeaderElbow.Add(displacement));
+                }
+                else
+                {
+                    // Создаем новую марку
+                    newTag = IndependentTag.Create(
+                        _doc, // документ
+                        tagData.TagTypeId, // тип марки
+                        _doc.ActiveView.Id, // id вида
+                        new Reference(nearestElement.Element), // ссылка на элемент
+                        tagData.HasLeader, // наличие выноски
+                        tagData.Orientation, // ориентация
+                        newTagHead // позиция марки
+                    );
+                    newTag.TagHeadPosition = newTagHead;
+                    // Если есть выноска, устанавливаем её точки
 
-                        // Если есть выноска, устанавливаем её точки
-                        if (tagData.HasLeader)
-                        {
-                            newTag.TagHeadPosition = newTagHead.Add(displacement);
-                            newTag.LeaderEndCondition = tagData.LeaderEndCondition;
-                            newTag.SetLeaderEnd(new Reference(nearestElement.Element), newLeaderEnd.Add(displacement));
-                            newTag.SetLeaderElbow(new Reference(nearestElement.Element),
-                                newLeaderElbow.Add(displacement));
-                        }
-                    }
-                    else
-                    {
-                        // Создаем новую марку
-                        newTag = IndependentTag.Create(
-                            _doc, // документ
-                            tagData.TagTypeId, // тип марки
-                            _doc.ActiveView.Id, // id вида
-                            new Reference(nearestElement.Element), // ссылка на элемент
-                            tagData.HasLeader, // наличие выноски
-                            tagData.Orientation, // ориентация
-                            newTagHead // позиция марки
-                        );
-
-                        // Если есть выноска, устанавливаем её точки
-                        if (tagData.HasLeader)
-                        {
-                            newTag.TagHeadPosition = newTagHead;
-                            newTag.LeaderEndCondition = tagData.LeaderEndCondition;
-                            newTag.SetLeaderEnd(new Reference(nearestElement.Element), newLeaderEnd);
-                            newTag.SetLeaderElbow(new Reference(nearestElement.Element), newLeaderElbow);
-                        }
-                    }
+                    if (!tagData.HasLeader) continue;
+                    newTag.LeaderEndCondition = tagData.LeaderEndCondition;
+                    newTag.SetLeaderEnd(new Reference(nearestElement.Element), newLeaderEnd);
+                    newTag.SetLeaderElbow(new Reference(nearestElement.Element), newLeaderElbow);
                 }
             }
-
             trans2.Commit();
         }
         catch (Autodesk.Revit.Exceptions.OperationCanceledException)
@@ -267,7 +258,7 @@ public class CopyAnnotationsServices
         {
             return locationPoint.Point;
         }
-        else if (location is LocationCurve locationCurve)
+        if (location is LocationCurve locationCurve)
         {
             return (locationCurve.Curve as Line)?.Origin;
         }

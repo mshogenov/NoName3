@@ -28,7 +28,8 @@ public class ElementModel
         {
             return locationPoint.Point;
         }
-        else if (location is LocationCurve locationCurve)
+
+        if (location is LocationCurve locationCurve)
         {
             return (locationCurve.Curve as Line)?.Origin;
         }
