@@ -45,18 +45,18 @@ public class CopyAnnotationsServices
             {
                 if (tagData != null)
                 {
-                    var searchPoint = GetElementPosition(tagData.TaggedElements.FirstOrDefault().Element) +translationVector2;
+                    var searchPoint = tagData.TaggedElements.FirstOrDefault().Position+translationVector;
                     var newLeaderEnd = tagData.LeaderEnd + translationVector2;
                     var newTagHead = tagData.TagHeadPosition + translationVector2;
                     var newLeaderElbow = tagData.LeaderElbow + translationVector2;
-                    var nearestElement = FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory);
-
+                    var nearestElement = new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory));
+ 
                     // Создаем новую марку
                     IndependentTag newTag = IndependentTag.Create(
                         _doc, // документ
                         tagData.TagTypeId, // тип марки
                         _doc.ActiveView.Id, // id вида
-                        new Reference(nearestElement), // ссылка на элемент
+                        new Reference(nearestElement.Element), // ссылка на элемент
                         tagData.HasLeader, // наличие выноски
                         tagData.Orientation, // ориентация
                         newTagHead // позиция марки
@@ -67,10 +67,10 @@ public class CopyAnnotationsServices
                     {
                         newTag.TagHeadPosition = newTagHead;
                         newTag.LeaderEndCondition = tagData.LeaderEndCondition;
-                        newTag.SetLeaderEnd(new Reference(nearestElement), newLeaderEnd);
+                        newTag.SetLeaderEnd(new Reference(nearestElement.Element), newLeaderEnd);
                         if (tagData.LeaderElbow != null)
                         {
-                            newTag.SetLeaderElbow(new Reference(nearestElement), newLeaderElbow);
+                            newTag.SetLeaderElbow(new Reference(nearestElement.Element), newLeaderElbow);
                         }
                     }
                 }

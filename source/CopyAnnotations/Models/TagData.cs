@@ -4,7 +4,7 @@ public class TagData
 {
     public ElementId Id { get; set; }
     public ElementId TagTypeId { get; set; }
-    public List<TaggedElementModel> TaggedElements { get; set; } = [];
+    public List<ElementModel> TaggedElements { get; set; } = [];
     public XYZ TagHeadPosition { get; set; }
     public bool HasLeader { get; set; }
     public XYZ RelativeLeaderEnd { get; set; }
@@ -28,7 +28,7 @@ public class TagData
         {
             foreach (var taggedElementId in taggedElementIds)
             {
-                TaggedElements.Add(new TaggedElementModel(doc.GetElement(taggedElementId.HostElementId)));
+                TaggedElements.Add(new ElementModel(doc.GetElement(taggedElementId.HostElementId)));
             }
         }
         if (TaggedElements is { Count: > 0 })
