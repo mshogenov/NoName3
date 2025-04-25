@@ -7,9 +7,8 @@ public class TagData
     public List<TaggedElementModel> TaggedElements { get; set; } = [];
     public XYZ TagHeadPosition { get; set; }
     public bool HasLeader { get; set; }
-    public XYZ RelativePosition { get; set; }
-    public XYZ RelativeLeaderEnd { get; set; } // Позиция конца выноски относительно базовой точки
-    public XYZ LeaderVector { get; set; } // Вектор направления выноски от позиции марки
+    public XYZ RelativeLeaderEnd { get; set; }
+    public XYZ LeaderVector { get; set; } 
     public TagOrientation Orientation { get; set; }
     public XYZ LeaderElbow { get; set; }
     public XYZ LeaderEnd { get; set; }
@@ -32,7 +31,6 @@ public class TagData
                 TaggedElements.Add(new TaggedElementModel(doc.GetElement(taggedElementId.HostElementId)));
             }
         }
-
         if (TaggedElements is { Count: > 0 })
         {
             LeaderEnd = tag.GetLeaderEnd(TaggedElements.FirstOrDefault()?.Reference);
@@ -42,12 +40,5 @@ public class TagData
         Orientation = tag.TagOrientation;
         LeaderEndCondition = tag.LeaderEndCondition;
         LeaderVector = LeaderEnd - TagHeadPosition;
-    }
-
-    public void GetRelativePositions(XYZ position)
-    {
-        RelativePosition = TagHeadPosition - position;
-        RelativeLeaderEnd = LeaderEnd - position;
-        RelativeLeaderElbow = LeaderElbow - position;
     }
 }

@@ -15,38 +15,67 @@ public class CopyAnnotationsServices
         try
         {
             List<Reference> selectedTagRefs = GetCopyTags().ToList();
+            var originalTagRefs = _uidoc.Selection.PickObject(ObjectType.Element,
+                new TagSelectionFilter(), "Выберите исходную марку для копирования");
             XYZ sourceBasePoint = GetPoint("Выберите исходный опорный элемент");
             XYZ targetBasePoint = GetPoint("Выберите целевой опорный элемент");
+            var originalTag = new TagData(_doc.GetElement(originalTagRefs) as IndependentTag);
             var tagsData = GetTagsData(selectedTagRefs);
             // Вычисляем вектор перемещения между опорными элементами
             XYZ translationVector = targetBasePoint - sourceBasePoint;
             using Transaction trans = new Transaction(_doc, "Копирование марок");
             trans.Start();
+            ElementId copiedTagId = ElementTransformUtils.CopyElement(
+                _doc,
+                originalTag.Id,
+                translationVector
+            ).First();
+            trans.Commit();
+            XYZ translationVector2 = null;
+            if (copiedTagId != null)
+            {
+                var copyTag = new TagData(_doc.GetElement(copiedTagId) as IndependentTag);
+                translationVector2 = (originalTag.TagHeadPosition - copyTag.TagHeadPosition).Multiply(-1);
+            }
+
+            using Transaction trans2 = new Transaction(_doc, "Копирование марок2");
+            trans2.Start();
+            tagsData.RemoveAll(t => t.Id == originalTag.Id);
             foreach (TagData tagData in tagsData)
             {
                 if (tagData != null)
                 {
-                    // Рассчитываем новую позицию марки
-                    XYZ newPosition = tagData.TagHeadPosition + translationVector;
-                    // Определяем категорию маркируемого элемента
-                    // Находим ближайший элемент в новой позиции
-                    Element nearestElement = FindNearestElement(newPosition, tagData.TagCategory);
-                    // Корректируем положение марки до копирования
-                    // XYZ correctedPosition = GetCorrectedPosition(nearestElement, newPosition);
+                    var newLeaderEnd = tagData.LeaderEnd + translationVector2;
+                    var newTagHead = tagData.TagHeadPosition + translationVector2;
+                    var newLeaderElbow = tagData.LeaderElbow + translationVector2;
+                    var nearestElement = FindNearestElementOfCategory(_doc, newLeaderEnd, tagData.TagCategory);
 
-                    // Вычисляем скорректированный вектор перемещения
-                    // XYZ correctedTranslationVector = correctedPosition - currentPosition;
+                    // Создаем новую марку
+                    IndependentTag newTag = IndependentTag.Create(
+                        _doc, // документ
+                        tagData.TagTypeId, // тип марки
+                        _doc.ActiveView.Id, // id вида
+                        new Reference(nearestElement), // ссылка на элемент
+                        tagData.HasLeader, // наличие выноски
+                        tagData.Orientation, // ориентация
+                        newTagHead // позиция марки
+                    );
 
-                    // Копируем марку с использованием скорректированного вектора
-                    ElementId copiedTagId = ElementTransformUtils.CopyElement(
-                        _doc,
-                        tagData.Id,
-                        translationVector
-                    ).First();
+                    // Если есть выноска, устанавливаем её точки
+                    if (tagData.HasLeader)
+                    {
+                        newTag.TagHeadPosition = newTagHead;
+                        newTag.LeaderEndCondition = tagData.LeaderEndCondition;
+                        newTag.SetLeaderEnd(new Reference(nearestElement), newLeaderEnd);
+                        if (tagData.LeaderElbow != null)
+                        {
+                            newTag.SetLeaderElbow(new Reference(nearestElement), newLeaderElbow);
+                        }
+                    }
                 }
             }
 
-            trans.Commit();
+            trans2.Commit();
         }
         catch (Autodesk.Revit.Exceptions.OperationCanceledException)
         {
@@ -231,14 +260,14 @@ public class CopyAnnotationsServices
     {
         Reference reference = _uidoc.Selection.PickObject(ObjectType.Element,
             status);
-        // Element element = _doc.GetElement(reference);
-        // XYZ point = GetElementPosition(element);
-        // if (point == null)
-        // {
-        //     TaskDialog.Show("Ошибка", "Не удалось определить положение элемента.");
-        // }
+        Element element = _doc.GetElement(reference);
+        XYZ point = GetElementPosition(element);
+        if (point == null)
+        {
+            TaskDialog.Show("Ошибка", "Не удалось определить положение элемента.");
+        }
 
-        return reference.GlobalPoint;
+        return point;
     }
 
     private IList<Reference> GetCopyTags()
@@ -249,11 +278,11 @@ public class CopyAnnotationsServices
     }
 
     // Метод для поиска ближайшего элемента указанной категории
-    private Element FindNearestElementOfCategory(Document doc, XYZ searchPoint, Category category)
+    private Element FindNearestElementOfCategory(Document doc, XYZ searchPoint, BuiltInCategory category)
     {
         // Получаем все элементы указанной категории в активном виде
         FilteredElementCollector collector = new FilteredElementCollector(doc, doc.ActiveView.Id);
-        collector.OfCategoryId(category.Id);
+        collector.OfCategory(category);
 
         Element nearestElement = null;
         double minDistance = double.MaxValue;
