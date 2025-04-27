@@ -7,6 +7,7 @@
                        xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
                        d:DataContext="{d:DesignInstance Type=viewModels:NumberingViewModel}"
                        mc:Ignorable="d"
+                       Background="{DynamicResource WindowBackgroundBrush}"
                        xmlns:comverter="clr-namespace:PositionNumbering.Views.Converters"
                        Title="Нумеровать по позиции"
                        WindowStartupLocation="CenterScreen"
@@ -26,7 +27,6 @@
     <!-- Содержимое окна -->
     <Grid
         Style="{DynamicResource Grid}">
-
         <Grid.RowDefinitions>
             <RowDefinition Height="2*" />
             <RowDefinition Height="*" />
@@ -40,16 +40,15 @@
             <Button Content="Добавить группу"
                     Command="{Binding AddGroupCommand}"
                     Style="{DynamicResource AddButtonStyle}"
-                    Margin="5 5"
                     HorizontalAlignment="Left" />
             <!-- Список групп -->
             <ScrollViewer Grid.Row="1"
                           VerticalScrollBarVisibility="Auto"
-                          Margin="5 0">
+                          Margin="0 5">
                 <ItemsControl ItemsSource="{Binding NumberingGroups}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border BorderBrush="LightGray"
+                            <Border 
                                     Style="{DynamicResource BorderFolding}"
                                     Margin="0,0,0,10"
                                     Padding="5">
@@ -79,9 +78,9 @@
                                                 Style="{DynamicResource DeleteButtonStyle}"
                                                 ToolTip="Удалить группу"
                                                 CommandParameter="{Binding}" />
-                                      
+
                                     </Grid>
-                                    <Separator Grid.Row="1"  Style="{DynamicResource ShadowSeparator}"/> 
+                                    <Separator Grid.Row="1" Style="{DynamicResource ShadowSeparator}" />
                                     <!-- Список систем в группе -->
                                     <ItemsControl Grid.Row="2"
                                                   ItemsSource="{Binding Systems}">
@@ -99,7 +98,7 @@
                                                             Command="{Binding DataContext.RemoveFromGroupCommand, 
                                                           RelativeSource={RelativeSource AncestorType=Window}}"
                                                             CommandParameter="{Binding}" />
-                                                  </Grid>
+                                                </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -111,7 +110,7 @@
                                             Command="{Binding DataContext.AddSystemsCommand, 
                                           RelativeSource={RelativeSource AncestorType=Window}}"
                                             CommandParameter="{Binding RelativeSource={RelativeSource Self}}" />
-                                   
+
                                 </Grid>
                             </Border>
                         </DataTemplate>
@@ -121,12 +120,12 @@
 
         </Grid>
         <GroupBox Grid.Row="1" Header="Список доступных систем"
-                  Style="{DynamicResource GroupBoxStyle}" Grid.Column="0" Margin="5,5,5,5">
+                  Style="{DynamicResource GroupBoxStyle}" Grid.Column="0" Margin="0 5">
             <ListView ItemsSource="{Binding AvailableSystems}"
                       Grid.Row="1"
                       Style="{DynamicResource ListViewStyle }"
                       PreviewMouseDown="UIElement_OnPreviewMouseDown">
-             
+
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <TextBlock Text="{Binding Name}"
@@ -138,8 +137,7 @@
 
         <!-- Кнопки внизу -->
         <DockPanel Grid.Row="2"
-                   HorizontalAlignment="Right"
-                   Margin="0,5,0,5">
+                   HorizontalAlignment="Right">
 
             <Button Content="Нумеровать"
                     HorizontalAlignment="Right"
@@ -153,11 +151,11 @@
                     Command="{Binding CloseCommand}"
                     CommandParameter="{Binding  RelativeSource={RelativeSource AncestorType=Window}}"
                     Style="{DynamicResource OutlineCloseButtonStyle}"
-                    Margin="10,0,5,0" />
+                    Margin="10,0,0,0" />
         </DockPanel>
 
         <!-- Общий Popup -->
-       
+
         <Popup
             Style="{DynamicResource ModernPopupStyle}"
             Grid.Row="0"
@@ -182,12 +180,11 @@
                     <ListView Grid.Row="0"
                               Style="{DynamicResource ListViewStyle}"
                               ItemsSource="{Binding AvailableSystems}"
-                              MaxHeight="300"
-                              >
-                   
+                              MaxHeight="300">
+
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                         
+
                                 <CheckBox
                                     Style="{DynamicResource JellyCheckboxStyle}"
                                     IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}">
@@ -198,19 +195,19 @@
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
-                    <Separator 
-                        Grid.Row="1" 
-                        Style="{DynamicResource ShadowSeparator}"/>
+                    <Separator
+                        Grid.Row="1"
+                        Style="{DynamicResource ShadowSeparator}" />
                     <StackPanel Grid.Row="2"
                                 Orientation="Horizontal"
                                 HorizontalAlignment="Left"
                                 Margin="5">
-                  
+
                         <Button
                             Style="{DynamicResource SelectAllButton}"
                             Command="{Binding SelectAllSystemsCommand}"
                             Margin="0,0,5,0" />
-                    
+
                         <Button
                             Style="{DynamicResource ClearSelectionButton}"
                             Margin="0 0 5 0"
@@ -222,7 +219,7 @@
                                 Background="Transparent"
                                 Orientation="Horizontal"
                                 HorizontalAlignment="Right"
-                                Margin="0,5,0,0">
+                               >
                         <Button Content="Добавить"
                                 Style="{DynamicResource CommonButtonStyle2}"
                                 Command="{Binding AddSelectedSystemsCommand}"
