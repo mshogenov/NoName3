@@ -9,6 +9,7 @@
     xmlns:model="clr-namespace:UpdatingParameters.Models"
     xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
     WindowStartupLocation="CenterScreen"
+    Background="{DynamicResource WindowBackgroundBrush}"
     d:DataContext="{d:DesignInstance Type=vm:UpdatingParametersViewModel}"
     mc:Ignorable="d"
     Width="1300" Height="800"
@@ -28,7 +29,7 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid Style="{DynamicResource Grid}">
+    <Grid >
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="auto" />
             <ColumnDefinition Width="Auto" />

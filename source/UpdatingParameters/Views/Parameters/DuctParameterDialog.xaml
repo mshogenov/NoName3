@@ -6,7 +6,7 @@
                        xmlns:local="clr-namespace:UpdatingParameters.Views.Parameters"
                        xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
                        mc:Ignorable="d"
-                       Background="{DynamicResource ContentBrush}"
+                       Background="{DynamicResource WindowBackgroundBrush}"
                        Title="Параметры воздуховода"
                        SizeToContent="Height"
                        Width="400"
@@ -21,8 +21,11 @@
             </d:ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-    <Grid
-        Margin="10">
+    <Border 
+      
+        Margin="7"
+        Style="{DynamicResource BorderContentStyle}">
+         <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
@@ -45,7 +48,7 @@
             Text="Материал:"
             Grid.Row="0" />
         <TextBox Grid.Row="0"
-                
+
                  Style="{DynamicResource ModernTextBoxStyle}"
                  Tag="Обязательное поле"
                  Grid.Column="1"
@@ -80,8 +83,8 @@
             Style="{DynamicResource TextBlockStyle}" />
         <TextBox Grid.Row="3" Grid.Column="1"
                  Style="{DynamicResource ModernTextBoxStyle}"
-                 Text="{Binding InternalInsulation}" 
-                 Margin="0 5 0 5"/>
+                 Text="{Binding InternalInsulation}"
+                 Margin="0 5 0 5" />
 
         <TextBlock Text="Размер:"
                    VerticalAlignment="Center"
@@ -99,7 +102,7 @@
             Grid.Row="5"
             Grid.Column="0"
             Style="{DynamicResource TextBlockStyle}" />
-        <TextBox Grid.Row="5" 
+        <TextBox Grid.Row="5"
                  Grid.Column="1"
                  Tag="Обязательное поле"
                  Margin="0 5 0 5"
@@ -124,4 +127,6 @@
                     Click="CancelButton_Click" />
         </StackPanel>
     </Grid>
+    </Border>
+   
 </views:BaseRevitWindow>
