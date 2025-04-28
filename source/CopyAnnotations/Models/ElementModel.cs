@@ -31,7 +31,8 @@ public class ElementModel
 
         if (location is LocationCurve locationCurve)
         {
-            return (locationCurve.Curve as Line)?.Origin;
+            // Вариант 1: используя Evaluate
+            return (locationCurve.Curve as Line)?.Evaluate(0.5, true);
         }
 
         // Если точки расположения нет, используем центр ограничивающего бокса

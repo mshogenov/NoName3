@@ -53,7 +53,7 @@ public class CopyAnnotationsServices
                     var nearestElement =
                         new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory));
                     IndependentTag newTag;
-                    if (!ArePointsEqual(searchPoint, nearestElement.Position, 0.01))
+                    if (!ArePointsEqual(searchPoint, nearestElement.Position, 0.1))
                     {
                         var displacement = nearestElement.Position.Subtract(searchPoint);
                         // Создаем новую марку
@@ -137,9 +137,7 @@ public class CopyAnnotationsServices
                     var newTagHead = tagData.TagHeadPosition + translationVector2;
 
                     // Создаем многоэлементную марку
-                    using (Transaction multiTagTx = new Transaction(_doc, "Создание многоэлементной марки"))
-                    {
-                        multiTagTx.Start();
+                
 
                         // Создаем первую марку с первой выноской
                         IndependentTag newTag = IndependentTag.Create(
@@ -188,9 +186,7 @@ public class CopyAnnotationsServices
                                 }
                             }
                         }
-
-                        multiTagTx.Commit();
-                    }
+                  
                 }
                 trans2.Commit();
             }
@@ -218,7 +214,7 @@ public class CopyAnnotationsServices
             return false;
 
         // Вычисляем расстояние между точками
-        double distance = point1.DistanceTo(point2);
+        double distance = point1.DistanceTo(point2).ToMillimeters();
 
         // Возвращаем true, если расстояние меньше или равно заданной погрешности
         return distance <= tolerance;
