@@ -7,14 +7,11 @@ public class TagData
     public List<ElementModel> TaggedElements { get; set; } = [];
     public XYZ TagHeadPosition { get; set; }
     public bool HasLeader { get; set; }
-    public XYZ RelativeLeaderEnd { get; set; }
-    public XYZ LeaderVector { get; set; } 
     public TagOrientation Orientation { get; set; }
-    public XYZ LeaderElbow { get; set; }
-    public XYZ LeaderEnd { get; set; }
+    public List<XYZ> LeadersElbow { get; set; } = [];
+    public List<XYZ> LeadersEnd { get; set; } = [];
     public BuiltInCategory TagCategory { get; set; }
     public LeaderEndCondition LeaderEndCondition { get; set; }
-    public XYZ RelativeLeaderElbow { get; set; }
 
     public TagData(IndependentTag tag)
     {
@@ -31,14 +28,16 @@ public class TagData
                 TaggedElements.Add(new ElementModel(doc.GetElement(taggedElementId.HostElementId)));
             }
         }
+        foreach (var taggedElement in TaggedElements)
+        {
+            LeadersEnd.Add(tag.GetLeaderEnd(taggedElement.Reference));
+            LeadersElbow.Add(tag.GetLeaderElbow(taggedElement.Reference));
+        }
         if (TaggedElements is { Count: > 0 })
         {
-            LeaderEnd = tag.GetLeaderEnd(TaggedElements.FirstOrDefault()?.Reference);
-            LeaderElbow = tag.GetLeaderElbow(TaggedElements.FirstOrDefault()?.Reference);
             TagCategory = (BuiltInCategory)TaggedElements.FirstOrDefault()?.Category;
         }
         Orientation = tag.TagOrientation;
         LeaderEndCondition = tag.LeaderEndCondition;
-        LeaderVector = LeaderEnd - TagHeadPosition;
     }
 }
