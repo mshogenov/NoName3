@@ -10,29 +10,69 @@ public partial class Riser : ObservableObject
     public XYZ Location { get; set; }
     [ObservableProperty] private string _newNumberRiser;
     public MEPSystemType MepSystemType { get; set; }
-  
     public List<ElementId> ElementIds { get; set; } = [];
     public double? TotalLength { get; set; }
-
     public List<Pipe> Pipes { get; set; } = [];
     public bool Ignored { get; set; }
+
+    // Новое свойство
+    public bool HasValidGaps { get; private set; }
 
     public Riser(IGrouping<Element, Pipe> pipesGroups)
     {
         if (!pipesGroups.Any()) return;
+
+        // Сортируем трубы по Z координате (снизу вверх)
+        var sortedPipes = pipesGroups
+            .OrderBy(p => 
+            {
+                var curve = ((LocationCurve)p.Location).Curve;
+                var startZ = curve.GetEndPoint(0).Z;
+                var endZ = curve.GetEndPoint(1).Z;
+                return Math.Min(startZ, endZ); // берем самую нижнюю точку трубы
+            })
+            .ToList();
+        // Проверяем разрывы между последовательными трубами
+        HasValidGaps = true;
+        for (int i = 0; i < sortedPipes.Count - 1; i++)
+        {
+            var currentPipe = sortedPipes[i];
+            var nextPipe = sortedPipes[i + 1];
+
+            var curve1 = ((LocationCurve)currentPipe.Location).Curve;
+            var curve2 = ((LocationCurve)nextPipe.Location).Curve;
+
+            // Все возможные комбинации точек
+            var gap1 = Math.Abs(curve2.GetEndPoint(0).Z - curve1.GetEndPoint(1).Z).ToMillimeters(); // конец-начало
+            var gap2 = Math.Abs(curve2.GetEndPoint(1).Z - curve1.GetEndPoint(0).Z).ToMillimeters(); // начало-конец
+            var gap3 = Math.Abs(curve2.GetEndPoint(1).Z - curve1.GetEndPoint(1).Z).ToMillimeters(); // конец-конец
+            var gap4 = Math.Abs(curve2.GetEndPoint(0).Z - curve1.GetEndPoint(0).Z).ToMillimeters(); // начало-начало
+
+            // Если все разрывы больше 2000, помечаем как недопустимый
+            if (gap1 > 2000 && gap2 > 2000 && gap3 > 2000 && gap4 > 2000)
+            {
+                HasValidGaps = false;
+                break;
+            }
+        }
+
+        if (!HasValidGaps) return;
+
+        // Остальной код инициализации...
         Id = Guid.NewGuid();
+        Pipes = new List<Pipe>();
+        ElementIds = new List<ElementId>();
+
         foreach (var pipe in pipesGroups)
         {
             Pipes.Add(pipe);
             ElementIds.Add(pipe.Id);
-           
         }
 
         if (Pipes == null) return;
 
         Location = ((LocationCurve)pipesGroups.FirstOrDefault()?.Location)?.Curve.GetEndPoint(0);
-        TotalLength =
-            Pipes.Sum(x => x.FindParameter(BuiltInParameter.CURVE_ELEM_LENGTH)?.AsDouble().ToMillimeters());
+        TotalLength = Pipes.Sum(x => x.FindParameter(BuiltInParameter.CURVE_ELEM_LENGTH)?.AsDouble().ToMillimeters());
         MepSystemType = GetPipingSystemType(Pipes.FirstOrDefault());
         CountPipes = pipesGroups.Count();
         Number = GetNumberRiser();
@@ -49,8 +89,8 @@ public partial class Riser : ObservableObject
         {
             Pipes.Add(pipe);
             ElementIds.Add(pipe.Id);
-          
         }
+
         if (Pipes.Count <= 0) return;
         Location = ((LocationCurve)Pipes.FirstOrDefault()?.Location)?.Curve.GetEndPoint(0);
         TotalLength = Pipes.Sum(x => x.FindParameter(BuiltInParameter.CURVE_ELEM_LENGTH)?.AsDouble().ToMillimeters());
