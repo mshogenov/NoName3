@@ -8,8 +8,8 @@ public class TagData
     public XYZ TagHeadPosition { get; set; }
     public bool HasLeader { get; set; }
     public TagOrientation Orientation { get; set; }
-    public List<XYZ> LeadersElbow { get; set; } = [];
-    public List<XYZ> LeadersEnd { get; set; } = [];
+    public List<LeaderElbowModel> LeadersElbow { get; set; } = [];
+    public List<LeaderEndModel> LeadersEnd { get; set; } = [];
     public BuiltInCategory TagCategory { get; set; }
     public LeaderEndCondition LeaderEndCondition { get; set; }
 
@@ -30,8 +30,8 @@ public class TagData
         }
         foreach (var taggedElement in TaggedElements)
         {
-            LeadersEnd.Add(tag.GetLeaderEnd(taggedElement.Reference));
-            LeadersElbow.Add(tag.GetLeaderElbow(taggedElement.Reference));
+            LeadersEnd.Add(new LeaderEndModel(tag,taggedElement));
+            LeadersElbow.Add(new LeaderElbowModel(tag,taggedElement));
         }
         if (TaggedElements is { Count: > 0 })
         {
