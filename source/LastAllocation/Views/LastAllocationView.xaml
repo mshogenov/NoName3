@@ -1,0 +1,53 @@
+﻿<views:BaseRevitWindow
+    x:Class="LastAllocation.Views.LastAllocationView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:viewModel="clr-namespace:LastAllocation.ViewModels"
+    xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
+    mc:Ignorable="d"
+    Background="{DynamicResource WindowBackgroundBrush}"
+    d:DataContext="{d:DesignInstance viewModel:LastAllocationViewModel}"
+    WindowStartupLocation="CenterScreen"
+    Title="Последние выделенные"
+    Height="400"
+    Width="350">
+    <Window.Resources>
+        <ResourceDictionary>
+            <d:ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
+            </d:ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Margin="7">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Border Style="{DynamicResource BorderContentStyle}">
+            <ListBox Grid.Row="0" Margin="0,0,0,5"
+                     Style="{DynamicResource ModernListBoxStyle}"
+                     ItemsSource="{Binding SelectionHistoryItems}"
+                     MouseDoubleClick="Control_OnMouseDoubleClick">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel>
+                            <TextBlock Text="{Binding Path=Name}" Margin="0 0 10 0" />
+                            <TextBlock Text="{Binding Path=Time}" HorizontalAlignment="Left" />
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+        <Button Grid.Row="1" Content="Выход"
+                Margin="0 5 0 0"
+                Click="ButtonCancel_Click"
+                HorizontalAlignment="Right"
+                Style="{DynamicResource OutlineCloseButtonStyle}" />
+
+    </Grid>
+</views:BaseRevitWindow>

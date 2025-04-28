@@ -104,7 +104,7 @@ public class MepElementsCopyServices
                 continue;
 
             currentLevelId = baseLevelParam.AsElementId();
-            if (currentLevelId.IntegerValue < 0 || currentLevelId.Equals(selectedLevelId))
+            if (currentLevelId.Value < 0 || currentLevelId.Equals(selectedLevelId))
                 continue;
 
             // Получаем elevation текущего уровня
@@ -126,18 +126,9 @@ public class MepElementsCopyServices
             // Устанавливаем новый уровень и смещение
             baseLevelParam.Set(selectedLevelId);
             offsetParam.Set(newOffset);
-
-            // Для MEPCurve (труб, воздуховодов и т.д.) обрабатываем также конечную точку
-            // if (elem.Element is MEPCurve mepCurve)
-            // {
-            //     Parameter endLevelParam = mepCurve.get_Parameter(BuiltInParameter.RBS_END_LEVEL_PARAM);
-            //     if (endLevelParam != null && !endLevelParam.IsReadOnly)
-            //     {
-            //         endLevelParam.Set(selectedLevelId);
-            //     }
-            // }
         }
     }
+
 // Вспомогательный метод для получения позиции элемента
     private XYZ GetElementPosition(Element element)
     {
@@ -155,12 +146,14 @@ public class MepElementsCopyServices
                     Curve curve = locationCurve.Curve;
                     return curve?.GetEndPoint(0); // Берем начальную точку кривой
                 }
+
                 return null;
 
             default:
                 return null;
         }
     }
+
     internal XYZ FindFurthestPoint(List<ElementModel> elements, XYZ fromPoint)
     {
         XYZ furthestPoint = null;

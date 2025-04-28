@@ -66,32 +66,57 @@ public class SetNearestLevelBelowServices
 
                 foreach (Element element in mepElements)
                 {
-                    // Проверяем, есть ли у элемента параметр базового уровня
-                    Parameter baseLevelParam;
-                    switch (element)
+                    // Находим ближайший нижний уровень
+                    Level nearestLevelBelow = FindNearestLevelBelow(element, levels);
+                    if (nearestLevelBelow != null)
                     {
-                        case FamilyInstance:
-                            baseLevelParam = element.FindParameter(BuiltInParameter.FAMILY_LEVEL_PARAM); break;
-                        case MEPCurve:
-                            baseLevelParam = element.FindParameter(BuiltInParameter.RBS_START_LEVEL_PARAM); break;
-                        default: return;
-                    }
-
-                    if (baseLevelParam != null && !baseLevelParam.IsReadOnly)
-                    {
-                        // Находим ближайший нижний уровень
-                        Level nearestLevelBelow = FindNearestLevelBelow(element, levels);
-
-                        if (nearestLevelBelow != null)
+                        var nearestLevelBelowId = nearestLevelBelow.Id;
+                        // Получаем elevation выбранного уровня
+                        double newLevelElevation = nearestLevelBelow.Elevation;
+                        // Получаем текущие координаты элемента
+                        XYZ currentPosition = GetElementPosition(element);
+                        if (currentPosition == null)
+                            continue;
+                        // Получаем текущий уровень элемента
+                        ElementId currentLevelId = null;
+                        Parameter baseLevelParam = null;
+                        Parameter offsetParam = null;
+                        switch (element)
                         {
-                            // Устанавливаем базовый уровень
-                            baseLevelParam.Set(nearestLevelBelow.Id);
-                            successCount++;
+                            case FamilyInstance fi:
+                                baseLevelParam = fi.get_Parameter(BuiltInParameter.FAMILY_LEVEL_PARAM);
+                                offsetParam = fi.get_Parameter(BuiltInParameter.INSTANCE_FREE_HOST_OFFSET_PARAM);
+                                break;
+
+                            case MEPCurve curve:
+                                baseLevelParam = curve.get_Parameter(BuiltInParameter.RBS_START_LEVEL_PARAM);
+                                offsetParam = curve.get_Parameter(BuiltInParameter.RBS_OFFSET_PARAM);
+                                break;
                         }
-                        else
-                        {
-                            failCount++;
-                        }
+
+                        if (baseLevelParam == null || offsetParam == null || baseLevelParam.IsReadOnly)
+                            continue;
+                        currentLevelId = baseLevelParam.AsElementId();
+                        if (currentLevelId.Value < 0 || currentLevelId.Equals(nearestLevelBelowId))
+                            continue;
+                        // Получаем elevation текущего уровня
+                        Level currentLevel = _doc.GetElement(currentLevelId) as Level;
+                        if (currentLevel == null)
+                            continue;
+                        double currentLevelElevation = currentLevel.Elevation;
+
+                        // Получаем текущее смещение от уровня
+                        double currentOffset = offsetParam.AsDouble();
+
+                        // Вычисляем абсолютную высоту элемента
+                        double absoluteElevation = currentLevelElevation + currentOffset;
+
+                        // Вычисляем новое смещение от нового уровня
+                        double newOffset = absoluteElevation - newLevelElevation;
+                        // Устанавливаем базовый уровень
+                        baseLevelParam.Set(nearestLevelBelowId);
+                        offsetParam.Set(newOffset);
+                        successCount++;
                     }
                     else
                     {
@@ -114,6 +139,32 @@ public class SetNearestLevelBelowServices
         }
     }
 
+
+    // Вспомогательный метод для получения позиции элемента
+    private XYZ GetElementPosition(Element element)
+    {
+        if (element == null)
+            return null;
+
+        switch (element)
+        {
+            case FamilyInstance fi:
+                return fi.Location is LocationPoint locationPoint ? locationPoint.Point : null;
+
+            case MEPCurve mepCurve:
+                if (mepCurve.Location is LocationCurve locationCurve)
+                {
+                    Curve curve = locationCurve.Curve;
+                    return curve?.GetEndPoint(0); // Берем начальную точку кривой
+                }
+
+                return null;
+
+            default:
+                return null;
+        }
+    }
+
     private List<Element> GetAllMEPElements(Document doc, List<BuiltInCategory> categories)
     {
         List<Element> mepElements = new List<Element>();
@@ -125,29 +176,61 @@ public class SetNearestLevelBelowServices
                 .ToElements());
         }
 
+        // Исключаем вложенные семейства
+        mepElements = mepElements.Where(e =>
+        {
+            // Если элемент - это экземпляр семейства
+            if (e is FamilyInstance familyInstance)
+            {
+                // Убедимся, что у него нет хозяина, если он имеет хост, это вложенное семейство
+                return familyInstance.Host == null;
+            }
+
+            // Если элемент не экземпляр семейства, оставить его
+            return true;
+        }).ToList();
+
         return mepElements;
     }
 
-    private Level FindNearestLevelBelow(Element element, List<Level> sortedLevels)
+    private Level FindNearestLevelBelow(Element element, List<Level> sortedLevels, double maxDistanceAbove = 300)
     {
         double elementZ = GetElementZPosition(element);
 
         if (double.IsNaN(elementZ))
             return null;
 
+        // Конвертируем миллиметры в футы (Revit использует футы)
+        double maxDistanceInFeet = maxDistanceAbove / 304.8;
+
         // Находим ближайший нижний уровень
         Level nearestLevelBelow = null;
+        Level levelAbove = null;
 
+        // Проверяем все уровни
         foreach (Level level in sortedLevels)
         {
+            // Если уровень ниже или равен элементу
             if (level.Elevation <= elementZ)
             {
                 nearestLevelBelow = level;
             }
+            // Если уровень выше элемента
             else
             {
+                // Проверяем, находится ли уровень на указанном расстоянии или меньше над элементом
+                if (level.Elevation - elementZ <= maxDistanceInFeet)
+                {
+                    levelAbove = level;
+                }
                 break;
             }
+        }
+
+        // Если есть уровень в пределах указанного расстояния над элементом, возвращаем его
+        if (levelAbove != null)
+        {
+            return levelAbove;
         }
 
         // Если не найден нижний уровень, берем первый (самый нижний) уровень из списка

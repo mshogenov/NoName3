@@ -114,6 +114,7 @@
     <ItemGroup>
       <ProjectReference Include="..\DesignationOfRisers\DesignationOfRisers.csproj" />
       <ProjectReference Include="..\ElementsTypicalFloor\ElementsTypicalFloor.csproj" />
+      <ProjectReference Include="..\LastAllocation\LastAllocation.csproj" />
       <ProjectReference Include="..\MakeBreak\MakeBreak.csproj" />
       <ProjectReference Include="..\Marking\Marking.csproj" />
       <ProjectReference Include="..\MepElementsCopy\MepElementsCopy.csproj" />
@@ -124,6 +125,10 @@
       <ProjectReference Include="..\SystemModelingComands\SystemModelingCommands.csproj" />
       <ProjectReference Include="..\UpdatingParameters\UpdatingParameters.csproj" />
       <ProjectReference Include="..\ViewOfPipeSystems\ViewOfPipeSystems.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Models\" />
     </ItemGroup>
 
 </Project>

@@ -55,8 +55,6 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
         {
             // Инициализация
             _dataLoader = new JsonDataLoader("MepElementsCopyLevels");
-
-
             // Получаем уровни из Revit
             var levels = new FilteredElementCollector(_doc)
                 .OfClass(typeof(Level))

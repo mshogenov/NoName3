@@ -1,5 +1,7 @@
-﻿using Autodesk.Revit.UI;
+﻿using System.Collections.ObjectModel;
+using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
+using LastAllocation.Models;
 using Nice3point.Revit.Toolkit.External;
 using RevitAddIn2.Commands.CreatingSchematicsCommands;
 using RevitAddIn2.Commands.CreatingSpecificationsCommands;
@@ -16,7 +18,9 @@ namespace RevitAddIn2;
  [UsedImplicitly]
     public class Application : ExternalApplication
     {
-        public static List<ElementId> SelectionHistory { get; } = [];
+        // Заменяем одиночный список историей из 10 списков
+        public static ObservableCollection<SelectionHistoryData> SelectionHistories { get; } = new ();
+        public static int MaxHistories { get; } = 10;
 
         public override void OnStartup()
         {
@@ -28,24 +32,47 @@ namespace RevitAddIn2;
         private void LastAllocation(object? sender, SelectionChangedEventArgs e)
         {
             ICollection<ElementId> currentSelection = e.GetSelectedElements();
-            switch (currentSelection.Count)
-            {
-                case 0:
-                    return;
-                case > 1:
-                {
-                    SelectionHistory.Clear();
-                    // Добавление текущего выделения в историю
-                    foreach (ElementId id in currentSelection)
-                    {
-                        if (!SelectionHistory.Contains(id))
-                        {
-                            SelectionHistory.Add(id);
-                        }
-                    }
+            if (currentSelection.Count <= 1)
+                return;
 
+            // Создаем новый список выделения
+            var newSelection = new List<ElementId>();
+            foreach (ElementId id in currentSelection)
+            {
+                if (!newSelection.Contains(id))
+                {
+                    newSelection.Add(id);
+                }
+            }
+
+            // Проверяем, не совпадает ли новое выделение с уже существующим
+            bool isDuplicate = false;
+            foreach (var historyData in SelectionHistories)
+            {
+                var history = historyData.ElementsIds;
+                if (history.Count == newSelection.Count && 
+                    history.All(newSelection.Contains) && 
+                    newSelection.All(history.Contains))
+                {
+                    isDuplicate = true;
                     break;
                 }
+            }
+
+            // Если это не дубликат, добавляем в историю
+            if (!isDuplicate && newSelection.Count > 0)
+            {
+                // Создаем новый объект SelectionHistoryData с текущим временем
+                var newHistoryData = new SelectionHistoryData(newSelection);
+
+                // Если достигли максимального количества историй, удаляем последнюю
+                if (SelectionHistories.Count >= MaxHistories)
+                {
+                    SelectionHistories.RemoveAt(SelectionHistories.Count - 1);
+                }
+
+                // Добавляем новую историю в начало списка
+                SelectionHistories.Insert(0, newHistoryData);
             }
         }
 
@@ -165,7 +192,7 @@ namespace RevitAddIn2;
 
             #region LastAllocation
 
-            panelSystemModeling.AddPushButton<LastAllocationCommand>("Последнее\nвыделенное")
+            panelSystemModeling.AddPushButton<LastAllocationCommand>("Последние\nвыделенные")
                 .SetImage("/RevitAddIn2;component/Resources/Icons/Последнее выделенное 16.ico")
                 .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Последнее выделенное 32.ico");
 
@@ -264,9 +291,9 @@ namespace RevitAddIn2;
 
             #region SetNearestLevelBelow
 
-            // panelOther.AddPushButton<SetNearestLevelBelowCommand>("Установить\nбазовый уровень")
-            //     .SetImage("/RevitAddIn2;component/Resources/Icons/uroven_mauxlwi8s01i_16.png")
-            //     .SetLargeImage("/RevitAddIn2;component/Resources/Icons/uroven_mauxlwi8s01i_32.png");
+            panelOther.AddPushButton<SetNearestLevelBelowCommand>("Установить\nбазовый уровень")
+                .SetImage("/RevitAddIn2;component/Resources/Icons/uroven_mauxlwi8s01i_16.png")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/uroven_mauxlwi8s01i_32.png");
 
             #endregion
         }

@@ -47,6 +47,7 @@
     <SolidColorBrush x:Key="CheckboxBorderBrush" Color="#bbbbbb" />
     <SolidColorBrush x:Key="SettingsButtonBrush" Color="{StaticResource SilverGray}" />
     <SolidColorBrush x:Key="SelectButtonForegroundBrush" Color="White" />
+    <SolidColorBrush x:Key="ComboBoxBackgroundBrush" Color="{StaticResource LightWindowColor}" />
     
    
  
@@ -57,6 +58,6 @@
     <SolidColorBrush x:Key="ComboBoxDisabledForeground" Color="#888888"/>
     <SolidColorBrush x:Key="ComboBoxArrowFill" Color="{StaticResource LightGrayColor}"/>
     <SolidColorBrush x:Key="ComboBoxDisabledArrowFill" Color="#AAAAAA"/>
-    <SolidColorBrush x:Key="ComboBoxPopupBackground" Color="{StaticResource WindowColor}"/>
+    <SolidColorBrush x:Key="ComboBoxPopupBackground" Color="{StaticResource LightWindowColor}"/>
     <SolidColorBrush x:Key="ComboBoxPopupBorderBrush" Color="#CCCCCC"/>
 </ResourceDictionary>

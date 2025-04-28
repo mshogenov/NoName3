@@ -8,6 +8,7 @@
              xmlns:settings="clr-namespace:UpdatingParameters.ViewModels.Settings"
              d:DataContext="{d:DesignInstance Type=settings:SettingsViewModel}"
              mc:Ignorable="d"
+             Background="{DynamicResource WindowBackgroundBrush}"
              Height="auto" Width="auto">
     <UserControl.Resources>
         <ResourceDictionary>

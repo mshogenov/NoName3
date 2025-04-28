@@ -11,6 +11,7 @@
     xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
     xmlns:controls="clr-namespace:NoNameApi.Views.Controls;assembly=NoNameAPI"
     Height="600" Width="400"
+    Background="{DynamicResource WindowBackgroundBrush}"
     d:DataContext="{d:DesignInstance viewModel:MepElementsCopyLevelsViewModel}"
     WindowStartupLocation="CenterScreen"
     Title="Копировать элементы"
@@ -29,7 +30,7 @@
             <!-- Затем блок MergedDictionaries должен быть полностью отдельным -->
             <d:ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
-                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/LightTheme.xaml" />
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
             </d:ResourceDictionary.MergedDictionaries>
