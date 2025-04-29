@@ -31,7 +31,7 @@ public class MepCurveMdl
 
     private XYZ EndPoint => Curve.GetEndPoint(1);
 
-    private MEPCurve MepCurve { get; }
+    public MEPCurve MepCurve { get; }
 
     public MepCurveMdl(MEPCurve mepCurve)
     {

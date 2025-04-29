@@ -1218,7 +1218,7 @@
 
                         <!-- Контейнер для чекбокса -->
                         <Border x:Name="CheckboxBorder"
-                                Width="24" Height="24"
+                                Width="20" Height="20"
                                 BorderThickness="1"
                                 BorderBrush="{DynamicResource CheckboxBorderBrush}"
                                 Background="Transparent"
@@ -2171,8 +2171,7 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="FontSize" Value="{DynamicResource AppFontFamily}" />
+      <Setter Property="FontSize" Value="{DynamicResource AppFontFamily}" />
         <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
         <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
         <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />

@@ -44,7 +44,7 @@
     <SolidColorBrush x:Key="IsMouseOverButtonBrush" Color="{StaticResource LightDiamondBlue}" />
     <SolidColorBrush x:Key="IsPressedButtonBrush" Color="{StaticResource LightDiamondBlue2}" />
     <SolidColorBrush x:Key="SelectionIndicatorBrush" Color="{StaticResource DiamondBlue}" />
-    <SolidColorBrush x:Key="CheckboxBorderBrush" Color="#bbbbbb" />
+    <SolidColorBrush x:Key="CheckboxBorderBrush" Color="{StaticResource SilverGray}" />
     <SolidColorBrush x:Key="SettingsButtonBrush" Color="{StaticResource SilverGray}" />
     <SolidColorBrush x:Key="SelectButtonForegroundBrush" Color="White" />
     <SolidColorBrush x:Key="ComboBoxBackgroundBrush" Color="{StaticResource LightWindowColor}" />

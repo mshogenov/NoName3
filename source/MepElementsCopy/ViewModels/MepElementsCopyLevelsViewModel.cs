@@ -18,6 +18,8 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
 {
     [ObservableProperty] private List<LevelModel> _selectedLevelModels = [];
     [ObservableProperty] private List<LevelModel> _levelModels = [];
+
+
     private LevelModel _selectedLevelModel;
 
     public LevelModel SelectedLevelModel
@@ -31,13 +33,16 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
         }
     }
 
+
+    [ObservableProperty] private bool _automaticallySetBaseLineIsChecked;
+
+
     private readonly Document _doc = Context.ActiveDocument;
     private readonly UIDocument _uiDoc = Context.ActiveUiDocument;
     private readonly ActionEventHandler _actionEventHandler = new();
     private readonly MepElementsCopyServices _mepElementsCopyServices = new();
     [ObservableProperty] private bool _isStatusVisible;
     [ObservableProperty] private string _statusMessage;
-
     [ObservableProperty] private int _numberOfElementsUpwards;
     [ObservableProperty] private double _distanceUp;
     [ObservableProperty] private int _numberOfElementsDown;
@@ -48,6 +53,7 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
     private Reference _reference;
     private readonly JsonDataLoader _dataLoader;
     private bool _isExecutingMepElementsCopyElevation;
+
 
     public MepElementsCopyLevelsViewModel()
     {
@@ -69,15 +75,20 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
             }
 
             // Загружаем сохраненные настройки
-            var savedSettings = _dataLoader.LoadData<LevelDto>();
-            var checkedLevelIds = savedSettings?.LevelIds ?? new List<long>();
+            var loadSettings = _dataLoader.LoadData<LevelDto>();
+            List<long> loadSettingsLevelIds = [];
+            if (loadSettings != null)
+            {
+                loadSettingsLevelIds = loadSettings.LevelIds ?? new List<long>();
+                AutomaticallySetBaseLineIsChecked = loadSettings.AutomaticallySetBaseLineIsChecked;
+            }
 
             // Создаем модели уровней
             foreach (var level in levels)
             {
                 var levelModel = new LevelModel(level)
                 {
-                    IsChecked = checkedLevelIds.Contains(level.Id.Value)
+                    IsChecked = loadSettingsLevelIds.Contains(level.Id.Value)
                 };
                 _levelModels.Add(levelModel);
             }
@@ -243,7 +254,8 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
 
         var levelDto = new LevelDto
         {
-            LevelIds = selectLevels.Select(x => x.Id.Value).ToList()
+            LevelIds = selectLevels.Select(x => x.Id.Value).ToList(),
+            AutomaticallySetBaseLineIsChecked = AutomaticallySetBaseLineIsChecked
         };
         _actionEventHandler.Raise(_ =>
         {
@@ -258,6 +270,18 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
 
                 int count = mepCurveModels.Count + mepCurveModels.Count;
                 trans.Start();
+                if (AutomaticallySetBaseLineIsChecked)
+                {
+                    List<Element> mepElements = [];
+                    mepElements.AddRange(mepCurveModels.Select(x => x.MepCurve));
+                    mepElements.AddRange(mepElementModels.Select(x => x.Element));
+
+                    foreach (Element element in mepElements)
+                    {
+                        _mepElementsCopyServices.SetBaseLevel(element, LevelModels.Select(x => x.Level).ToList());
+                    }
+                }
+
                 if (count > 50)
                 {
                     var progressBar = new ProgressWindow(selectLevels.Count);
@@ -302,6 +326,25 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
                 _isExecutingMepElementsCopyElevation = false;
             }
         });
+    }
+
+
+    [RelayCommand]
+    private void HighlightAll()
+    {
+        foreach (var levelModel in LevelModels)
+        {
+            levelModel.IsChecked = true;
+        }
+    }
+
+    [RelayCommand]
+    private void Deselect()
+    {
+        foreach (var levelModel in LevelModels)
+        {
+            levelModel.IsChecked = false;
+        }
     }
 
     private bool CanExecuteMepElementsCopyElevation()
@@ -349,6 +392,7 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
 
         return true;
     }
+
     [RelayCommand]
     private void Close(object parameter)
     {
@@ -357,6 +401,7 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
             window.Close();
         }
     }
+
     [RelayCommand]
     private void SetDirection()
     {
