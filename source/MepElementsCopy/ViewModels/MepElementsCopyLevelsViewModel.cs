@@ -18,7 +18,8 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
 {
     [ObservableProperty] private List<LevelModel> _selectedLevelModels = [];
     [ObservableProperty] private List<LevelModel> _levelModels = [];
-
+    [ObservableProperty] private bool _isDirectionSet;
+    [ObservableProperty] private string _directionStatusTooltip="Направление не задано";
 
     private LevelModel _selectedLevelModel;
 
@@ -408,6 +409,8 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
         try
         {
             _reference = _uiDoc.Selection.PickObject(ObjectType.Element);
+            IsDirectionSet = true;
+            DirectionStatusTooltip = "Направление задано";
         }
         catch (OperationCanceledException)
         {

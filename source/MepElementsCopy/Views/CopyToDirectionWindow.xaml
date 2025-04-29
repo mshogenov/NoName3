@@ -4,12 +4,15 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vm="clr-namespace:MepElementsCopy.ViewModels"
+             xmlns:converter="clr-namespace:NoNameApi.Views.Converters;assembly=NoNameAPI"
              d:DataContext="{d:DesignInstance vm:MepElementsCopyLevelsViewModel}"
              xmlns:local="clr-namespace:MepElementsCopy.Views"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="300">
     <UserControl.Resources>
         <ResourceDictionary>
+            <converter:BoolToColorConverter x:Key="BoolToColorConverter" />
+            <converter:BoolToIconConverter x:Key="BoolToIconConverter" />
             <d:ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
@@ -19,8 +22,7 @@
         </ResourceDictionary>
     </UserControl.Resources>
     <Grid
-        Margin="5"
-       >
+        Margin="5">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -39,8 +41,8 @@
                 </Grid.RowDefinitions>
                 <Grid Margin="5">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition  Width="120" />
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <TextBlock
                         Text="Количество:"
@@ -55,8 +57,8 @@
                 <Grid Grid.Row="1"
                       Margin="5">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="120"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0"
                                Text="Расстояние, мм:"
@@ -158,21 +160,39 @@
                         Text="{Binding DistanceByDirection}"
                         Style="{DynamicResource ModernTextBoxStyle}" />
                 </Grid>
-                <Grid Grid.Row="2"
-                      Margin="5">
+                <Grid Grid.Row="2" Margin="5">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="120" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <TextBlock Grid.Column="0"
                                Text="Направление:"
                                Style="{DynamicResource TextBlockStyle}"
-                               VerticalAlignment="Center" 
-                               HorizontalAlignment="Left"/>
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Left" />
+
+
+                    <!-- Индикатор статуса направления -->
+                    <Border Grid.Column="1"
+                            Margin="0,0,10,0"
+                            Width="20"
+                            Height="20"
+                            CornerRadius="10"
+                            ToolTip="{Binding DirectionStatusTooltip}"
+                            Background="{Binding IsDirectionSet, Converter={StaticResource BoolToColorConverter}}">
+                        <TextBlock
+                            Text="{Binding IsDirectionSet, Converter={StaticResource BoolToIconConverter}}"
+                            FontFamily="Segoe MDL2 Assets"
+                            FontSize="12"
+                            Foreground="White"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
+                    </Border>
                     <Button
-                        Grid.Column="1"
-                        Padding="3"
+                        Grid.Column="2"
+                        Padding="4"
                         Content="Задать направление"
                         Command="{Binding SetDirectionCommand}"
                         Style="{DynamicResource CommonButtonStyle2}" />
@@ -180,21 +200,20 @@
 
             </Grid>
         </GroupBox>
-<DockPanel Grid.Row="3"
-           HorizontalAlignment="Right">
-    <!-- Кнопка Копировать -->
-    <Button 
-        Content="Копировать"
-        Command="{Binding CopyByDirectionsCommand}"
-        Style="{DynamicResource CommonButtonStyle2}"
-        HorizontalAlignment="Right"
-    />
-    <Button Content="Закрыть"
-            HorizontalAlignment="Right"
-            Command="{Binding CloseCommand}"
-            CommandParameter="{Binding  RelativeSource={RelativeSource AncestorType=Window}}"
-            Style="{DynamicResource OutlineCloseButtonStyle}"
-            Margin="10,0,0,0" />
-</DockPanel>
-      </Grid>
+        <DockPanel Grid.Row="3"
+                   HorizontalAlignment="Right">
+            <!-- Кнопка Копировать -->
+            <Button
+                Content="Копировать"
+                Command="{Binding CopyByDirectionsCommand}"
+                Style="{DynamicResource CommonButtonStyle2}"
+                HorizontalAlignment="Right" />
+            <Button Content="Закрыть"
+                    HorizontalAlignment="Right"
+                    Command="{Binding CloseCommand}"
+                    CommandParameter="{Binding  RelativeSource={RelativeSource AncestorType=Window}}"
+                    Style="{DynamicResource OutlineCloseButtonStyle}"
+                    Margin="10,0,0,0" />
+        </DockPanel>
+    </Grid>
 </UserControl>

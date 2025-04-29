@@ -10,12 +10,12 @@
     xmlns:converter="clr-namespace:NoNameApi.Views.Converters;assembly=NoNameAPI"
     xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
     xmlns:controls="clr-namespace:NoNameApi.Views.Controls;assembly=NoNameAPI"
-    Height="600" Width="400"
+    Height="600" Width="350"
     Background="{DynamicResource WindowBackgroundBrush}"
     d:DataContext="{d:DesignInstance viewModel:MepElementsCopyLevelsViewModel}"
     WindowStartupLocation="CenterScreen"
     Title="Копировать элементы"
-    MinWidth="300">
+    MinWidth="350">
     <Window.Resources>
         <ResourceDictionary>
             <!-- Сначала все ресурсы, которые не являются словарями -->

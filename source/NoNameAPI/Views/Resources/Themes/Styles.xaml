@@ -1069,8 +1069,7 @@
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
         <Setter Property="Padding" Value="4" />
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
+       <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource GroupBoxContentBrush}" />
         <Setter Property="Template">
             <Setter.Value>
