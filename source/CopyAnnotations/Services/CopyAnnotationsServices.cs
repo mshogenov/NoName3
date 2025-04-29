@@ -195,7 +195,7 @@ public class CopyAnnotationsServices
     /// <param name="point2">Вторая точка</param>
     /// <param name="tolerance">Допустимая погрешность (по умолчанию 0.001)</param>
     /// <returns>True, если точки можно считать равными</returns>
-    private bool ArePointsEqual(XYZ point1, XYZ point2, double tolerance = 300)
+    private bool ArePointsEqual(XYZ point1, XYZ point2, double tolerance = 600)
     {
         if (point1 == null || point2 == null)
             return false;
