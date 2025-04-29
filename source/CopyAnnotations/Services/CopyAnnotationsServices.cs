@@ -15,20 +15,17 @@ public class CopyAnnotationsServices
         try
         {
             List<Reference> selectedTagRefs = GetCopyTags().ToList();
-            var originalTagRefs = _uidoc?.Selection.PickObject(ObjectType.Element,
-                new TagSelectionFilter(), "Выберите исходную марку для копирования");
             XYZ sourceBasePoint = GetPoint("Выберите исходный опорный элемент");
             XYZ targetBasePoint = GetPoint("Выберите целевой опорный элемент");
-            var originalTag = new TagData(_doc.GetElement(originalTagRefs) as IndependentTag);
             var tagsData = GetTagsData(selectedTagRefs);
+            var originalTag = tagsData.FirstOrDefault();
             // Вычисляем вектор перемещения между опорными элементами
             XYZ translationVector = targetBasePoint - sourceBasePoint;
             var copiedTagId = CopiedTag(originalTag, translationVector);
-            tagsData.RemoveAll(t => t.Id == originalTag.Id);
             var translationVector2 = GetTranslationVector(copiedTagId, originalTag);
-
             using Transaction trans2 = new Transaction(_doc, "Копирование марок2");
             trans2.Start();
+            _doc.Delete(copiedTagId);
             CreateTags(tagsData, translationVector2, translationVector);
             trans2.Commit();
         }
@@ -59,7 +56,6 @@ public class CopyAnnotationsServices
                 newTag = CreateTag(tagData, nearestElement, newTagHead, displacement, firstTaggedElement,
                     translationVector2);
             }
-
             Dictionary<ElementModel, ElementModel> dictionary = [];
             XYZ searchPoint2 = null;
             foreach (var taggedElement in tagData.TaggedElements)
@@ -76,7 +72,7 @@ public class CopyAnnotationsServices
                 newTag.AddReferences(dictionary.Values.Select(x => x.Reference).ToList());
                 SetPositionLeaderEnd(tagData, dictionary, searchPoint2, newTag, translationVector2);
                 SetPositionLeaderElbow(tagData, dictionary, searchPoint2, newTag, translationVector2);
-                newTag.MergeElbows = true;
+                newTag.MergeElbows = tagData.MergeElbows;
             }
         }
     }
@@ -195,7 +191,7 @@ public class CopyAnnotationsServices
     /// <param name="point2">Вторая точка</param>
     /// <param name="tolerance">Допустимая погрешность (по умолчанию 0.001)</param>
     /// <returns>True, если точки можно считать равными</returns>
-    private bool ArePointsEqual(XYZ point1, XYZ point2, double tolerance = 600)
+    private bool ArePointsEqual(XYZ point1, XYZ point2, double tolerance = 1000)
     {
         if (point1 == null || point2 == null)
             return false;

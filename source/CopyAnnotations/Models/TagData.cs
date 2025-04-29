@@ -12,6 +12,7 @@ public class TagData
     public List<LeaderEndModel> LeadersEnd { get; set; } = [];
     public BuiltInCategory TagCategory { get; set; }
     public LeaderEndCondition LeaderEndCondition { get; set; }
+    public bool MergeElbows { get; set; }
 
     public TagData(IndependentTag tag)
     {
@@ -19,6 +20,7 @@ public class TagData
         TagHeadPosition = tag.TagHeadPosition;
         HasLeader = tag.HasLeader;
         TagTypeId = tag.GetTypeId();
+        MergeElbows = tag.MergeElbows;
         Document doc = tag.Document;
         ICollection<LinkElementId> taggedElementIds = tag.GetTaggedElementIds();
         if (taggedElementIds is { Count: > 0 })
@@ -40,4 +42,6 @@ public class TagData
         Orientation = tag.TagOrientation;
         LeaderEndCondition = tag.LeaderEndCondition;
     }
+
+   
 }
