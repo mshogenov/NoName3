@@ -23,130 +23,13 @@ public class CopyAnnotationsServices
             var tagsData = GetTagsData(selectedTagRefs);
             // Вычисляем вектор перемещения между опорными элементами
             XYZ translationVector = targetBasePoint - sourceBasePoint;
-            using Transaction trans = new Transaction(_doc, "Копирование марок");
-            trans.Start();
-            ElementId copiedTagId = ElementTransformUtils.CopyElement(
-                _doc,
-                originalTag.Id,
-                translationVector
-            ).First();
-            trans.Commit();
-            XYZ translationVector2 = null;
-            if (copiedTagId != null)
-            {
-                var copyTag = new TagData(_doc.GetElement(copiedTagId) as IndependentTag);
-                translationVector2 = (originalTag.TagHeadPosition - copyTag.TagHeadPosition).Multiply(-1);
-            }
+            var copiedTagId = CopiedTag(originalTag, translationVector);
+            tagsData.RemoveAll(t => t.Id == originalTag.Id);
+            var translationVector2 = GetTranslationVector(copiedTagId, originalTag);
 
             using Transaction trans2 = new Transaction(_doc, "Копирование марок2");
             trans2.Start();
-            tagsData.RemoveAll(t => t.Id == originalTag.Id);
-            foreach (TagData tagData in tagsData)
-            {
-                if (tagData == null) continue;
-                var newTagHead = tagData.TagHeadPosition + translationVector2;
-                var firstTaggedElement = tagData.TaggedElements.FirstOrDefault();
-                var searchPoint = firstTaggedElement.Position + translationVector;
-                var nearestElement =
-                    new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory));
-                var displacement = nearestElement.Position.Subtract(searchPoint);
-                IndependentTag newTag = null;
-                if (ArePointsEqual(searchPoint, nearestElement.Position))
-                {
-                    // Создаем новую марку
-                    newTag = IndependentTag.Create(
-                        _doc, // документ
-                        tagData.TagTypeId, // тип марки
-                        _doc.ActiveView.Id, // id вида
-                        new Reference(nearestElement.Element), // ссылка на элемент
-                        tagData.HasLeader, // наличие выноски
-                        tagData.Orientation, // ориентация
-                        newTagHead.Add(displacement) // позиция марки
-                    );
-                    newTag.TagHeadPosition = newTagHead.Add(displacement);
-                    newTag.LeaderEndCondition = tagData.LeaderEndCondition;
-                    // Если есть выноска, устанавливаем её точки
-                    if (!tagData.HasLeader) continue;
-                    foreach (var leader in tagData.LeadersEnd)
-                    {
-                        if (leader.TaggedElement.Id.Value == firstTaggedElement.Id.Value)
-                        {
-                            newTag.SetLeaderEnd(new Reference(nearestElement.Element),
-                                leader.Position.Add(translationVector2));
-                           
-                        }
-                    }
-
-                    foreach (var leader in tagData.LeadersElbow)
-                    {
-                        if (leader.TaggedElement.Id.Value == firstTaggedElement.Id.Value)
-                        {
-                            newTag.SetLeaderElbow(new Reference(nearestElement.Element),
-                                leader.Position.Add(translationVector2));
-                        }
-                    }
-                }
-
-
-                Dictionary<ElementModel, Reference> dictionary = [];
-                foreach (var taggedElement in tagData.TaggedElements)
-                {
-                    if (taggedElement.Id.Value == firstTaggedElement.Id.Value) continue;
-                    var searchPoint2 = taggedElement.Position + translationVector;
-                    var nearestElement2 =
-                        new ElementModel(FindNearestElementOfCategory(_doc, searchPoint2, tagData.TagCategory));
-                    dictionary.Add(taggedElement, new Reference(nearestElement2.Element));
-                }
-
-                newTag.AddReferences(dictionary.Values.ToList());
-
-                foreach (var leaderEnd in tagData.LeadersEnd)
-                {
-                    foreach (var kvp in dictionary)
-                    {
-                        ElementModel dictionaryKey = kvp.Key;
-                        Reference reference = kvp.Value;
-                
-                        if (leaderEnd.TaggedElement.Id == dictionaryKey.Element.Id)
-                        {
-                            // Передаем reference из найденной пары ключ-значение
-                            newTag.SetLeaderEnd(reference, leaderEnd.Position.Add(translationVector2));
-                            break;
-                        }
-                    }
-                }
-                
-                foreach (var leaderElbow in tagData.LeadersElbow)
-                {
-                    foreach (var kvp in dictionary)
-                    {
-                        ElementModel dictionaryKey = kvp.Key;
-                        Reference reference = kvp.Value;
-                
-                        if (leaderElbow.TaggedElement.Id == dictionaryKey.Element.Id)
-                        {
-                            // Передаем reference из найденной пары ключ-значение
-                            newTag.SetLeaderElbow(reference, leaderElbow.Position.Add(translationVector2));
-                            break;
-                        }
-                    }
-                }
-
-                newTag.MergeElbows = true;
-
-                // XYZ newLeaderEnd = null;
-                // XYZ newLeaderElbow = null;
-                // foreach (var leaderEnd in tagData.LeadersEnd)
-                // {
-                //     if (leaderEnd.TaggedElement.Id == taggedElement.Id)
-                //     {
-                //         newLeaderEnd = leaderEnd.Position + translationVector2;
-                //         newLeaderElbow = leaderEnd.Position + translationVector2;
-                //         break;
-                //     }
-                // }
-            }
-
+            CreateTags(tagsData, translationVector2, translationVector);
             trans2.Commit();
         }
         catch (Autodesk.Revit.Exceptions.OperationCanceledException)
@@ -159,6 +42,152 @@ public class CopyAnnotationsServices
         }
     }
 
+    private void CreateTags(List<TagData> tagsData, XYZ? translationVector2, XYZ translationVector)
+    {
+        foreach (TagData tagData in tagsData)
+        {
+            if (tagData == null) continue;
+            var firstTaggedElement = tagData.TaggedElements.FirstOrDefault();
+            var searchPoint = firstTaggedElement.Position + translationVector;
+            var newTagHead = tagData.TagHeadPosition + translationVector2;
+            var nearestElement =
+                new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory));
+            var displacement = nearestElement.Position.Subtract(searchPoint);
+            IndependentTag? newTag = null;
+            if (ArePointsEqual(searchPoint, nearestElement.Position))
+            {
+                newTag = CreateTag(tagData, nearestElement, newTagHead, displacement, firstTaggedElement,
+                    translationVector2);
+            }
+
+            Dictionary<ElementModel, ElementModel> dictionary = [];
+            XYZ searchPoint2 = null;
+            foreach (var taggedElement in tagData.TaggedElements)
+            {
+                if (taggedElement.Id.Value == firstTaggedElement.Id.Value) continue;
+                searchPoint2 = taggedElement.Position + translationVector;
+                var nearestElement2 =
+                    new ElementModel(FindNearestElementOfCategory(_doc, searchPoint2, tagData.TagCategory));
+                dictionary.Add(taggedElement, nearestElement2);
+            }
+
+            if (newTag != null)
+            {
+                newTag.AddReferences(dictionary.Values.Select(x => x.Reference).ToList());
+                SetPositionLeaderEnd(tagData, dictionary, searchPoint2, newTag, translationVector2);
+                SetPositionLeaderElbow(tagData, dictionary, searchPoint2, newTag, translationVector2);
+                newTag.MergeElbows = true;
+            }
+        }
+    }
+
+    private IndependentTag? CreateTag(TagData tagData, ElementModel nearestElement, XYZ newTagHead, XYZ displacement,
+        ElementModel firstTaggedElement, XYZ? translationVector2)
+    {
+        IndependentTag? newTag;
+        // Создаем новую марку
+        newTag = IndependentTag.Create(
+            _doc, // документ
+            tagData.TagTypeId, // тип марки
+            _doc.ActiveView.Id, // id вида
+            new Reference(nearestElement.Element), // ссылка на элемент
+            tagData.HasLeader, // наличие выноски
+            tagData.Orientation, // ориентация
+            newTagHead.Add(displacement) // позиция марки
+        );
+        newTag.TagHeadPosition = newTagHead.Add(displacement);
+        newTag.LeaderEndCondition = tagData.LeaderEndCondition;
+        // Если есть выноска, устанавливаем её точки
+        if (!tagData.HasLeader) return newTag;
+        foreach (var leader in tagData.LeadersEnd)
+        {
+            if (leader.TaggedElement.Id.Value == firstTaggedElement.Id.Value)
+            {
+                newTag.SetLeaderEnd(new Reference(nearestElement.Element),
+                    leader.Position.Add(displacement).Add(translationVector2));
+            }
+        }
+
+        foreach (var leader in tagData.LeadersElbow)
+        {
+            if (leader.TaggedElement.Id.Value == firstTaggedElement.Id.Value)
+            {
+                newTag.SetLeaderElbow(new Reference(nearestElement.Element),
+                    leader.Position.Add(displacement).Add(translationVector2));
+            }
+        }
+
+        return newTag;
+    }
+
+    private static void SetPositionLeaderElbow(TagData tagData, Dictionary<ElementModel, ElementModel> dictionary,
+        XYZ searchPoint,
+        IndependentTag? newTag, XYZ? translationVector2)
+    {
+        foreach (var leaderElbow in tagData.LeadersElbow)
+        {
+            foreach (var kvp in dictionary)
+            {
+                ElementModel dictionaryKey = kvp.Key;
+                Reference reference = kvp.Value.Reference;
+
+                if (leaderElbow.TaggedElement.Id == dictionaryKey.Element.Id)
+                {
+                    var displacement2 = kvp.Value.Position.Subtract(searchPoint);
+                    // Передаем reference из найденной пары ключ-значение
+                    newTag.SetLeaderElbow(reference, leaderElbow.Position.Add(displacement2).Add(translationVector2));
+                    break;
+                }
+            }
+        }
+    }
+
+    private static void SetPositionLeaderEnd(TagData tagData, Dictionary<ElementModel, ElementModel> dictionary,
+        XYZ searchPoint, IndependentTag? newTag, XYZ? translationVector2)
+    {
+        foreach (var leaderEnd in tagData.LeadersEnd)
+        {
+            foreach (var kvp in dictionary)
+            {
+                ElementModel dictionaryKey = kvp.Key;
+                Reference reference = kvp.Value.Reference;
+
+                if (leaderEnd.TaggedElement.Id == dictionaryKey.Element.Id)
+                {
+                    var displacement = kvp.Value.Position.Subtract(searchPoint);
+                    // Передаем reference из найденной пары ключ-значение
+                    newTag.SetLeaderEnd(reference, leaderEnd.Position.Add(displacement).Add(translationVector2));
+                    break;
+                }
+            }
+        }
+    }
+
+    private XYZ? GetTranslationVector(ElementId copiedTagId, TagData originalTag)
+    {
+        XYZ translationVector2 = null;
+        if (copiedTagId != null)
+        {
+            var copyTag = new TagData(_doc.GetElement(copiedTagId) as IndependentTag);
+            translationVector2 = (originalTag.TagHeadPosition - copyTag.TagHeadPosition).Multiply(-1);
+        }
+
+        return translationVector2;
+    }
+
+    private ElementId CopiedTag(TagData originalTag, XYZ translationVector)
+    {
+        using Transaction trans = new Transaction(_doc, "Копирование марок");
+        trans.Start();
+        ElementId copiedTagId = ElementTransformUtils.CopyElement(
+            _doc,
+            originalTag.Id,
+            translationVector
+        ).First();
+        trans.Commit();
+        return copiedTagId;
+    }
+
     /// <summary>
     /// Проверяет две точки на приблизительное равенство
     /// </summary>
@@ -166,7 +195,7 @@ public class CopyAnnotationsServices
     /// <param name="point2">Вторая точка</param>
     /// <param name="tolerance">Допустимая погрешность (по умолчанию 0.001)</param>
     /// <returns>True, если точки можно считать равными</returns>
-    private bool ArePointsEqual(XYZ point1, XYZ point2, double tolerance = 100)
+    private bool ArePointsEqual(XYZ point1, XYZ point2, double tolerance = 300)
     {
         if (point1 == null || point2 == null)
             return false;
