@@ -44,39 +44,46 @@ public class CopyAnnotationsServices
         foreach (TagData tagData in tagsData)
         {
             if (tagData == null) continue;
+
+            // Коллекция для отслеживания обработанных элементов только в этом TagData
+            HashSet<ElementId> processedElementIdsInCurrentTagData = new HashSet<ElementId>();
+
             var firstTaggedElement = tagData.TaggedElements.FirstOrDefault();
-            var searchPoint = firstTaggedElement.Position + translationVector;
-            var newTagHead = tagData.TagHeadPosition + translationVector2;
-            var nearestElement =
-                new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory));
-            if (nearestElement.Id.Value == 1304357)
-            {
-                TaskDialog.Show("<UNK>", "<UNK> <UNK> <UNK> <UNK> <UNK> <UNK>");
-            }
+            if (firstTaggedElement == null) continue;
 
-            var displacement = nearestElement.Position.Subtract(searchPoint);
-            IndependentTag? newTag = null;
-            if (ArePointsEqual(searchPoint, nearestElement.Position))
-            {
-                newTag = CreateTag(tagData, nearestElement, newTagHead, displacement, firstTaggedElement,
-                    translationVector2);
-            }
+            // Отмечаем первый элемент как обработанный в текущем TagData
+            processedElementIdsInCurrentTagData.Add(firstTaggedElement.Id);
 
+            IndependentTag? newTag = CreateTag(tagData, translationVector2);
             Dictionary<ElementModel, ElementModel> dictionary = [];
-            XYZ searchPoint2 = null;
+
             foreach (var taggedElement in tagData.TaggedElements)
             {
-                if (taggedElement.Id.Value == firstTaggedElement.Id.Value) continue;
-                searchPoint2 = taggedElement.Position + translationVector;
-                var nearestElement2 =
-                    new ElementModel(
-                        FindNearestElementOfCategory(_doc, searchPoint2, tagData.TagCategory));
-                if (nearestElement2.Id.Value == 1304357)
-                {
-                    TaskDialog.Show("<UNK>", "<UNK> <UNK> <UNK> <UNK> <UNK> <UNK>");
-                }
+                // Пропускаем уже обработанные элементы в этом TagData
+                if (processedElementIdsInCurrentTagData.Contains(taggedElement.Id))
+                    continue;
 
-                dictionary.Add(taggedElement, nearestElement2);
+                var searchPoint2 = taggedElement.Position + translationVector2;
+
+                // Ищем ближайший элемент, исключая уже обработанные элементы в текущем TagData
+                var nearestElement = FindNearestElementOfCategory(
+                    _doc,
+                    searchPoint2,
+                    tagData.TagCategory,
+                    processedElementIdsInCurrentTagData);
+
+                // Создаем ElementModel из найденного элемента
+                var nearestElement2 = nearestElement != null
+                    ? new ElementModel(nearestElement)
+                    : null;
+
+                if (nearestElement != null && ArePointsEqual(searchPoint2, nearestElement2.Position))
+                {
+                    dictionary.Add(taggedElement, nearestElement2);
+
+                    // Отмечаем этот элемент как обработанный в текущем TagData
+                    processedElementIdsInCurrentTagData.Add(nearestElement.Id);
+                }
             }
 
             if (newTag != null)
@@ -89,20 +96,29 @@ public class CopyAnnotationsServices
         }
     }
 
-    private IndependentTag? CreateTag(TagData tagData, ElementModel nearestElement, XYZ newTagHead, XYZ displacement,
-        ElementModel firstTaggedElement, XYZ? translationVector2)
+    private IndependentTag? CreateTag(TagData tagData, XYZ? translationVector2)
     {
-        IndependentTag? newTag;
-        // Создаем новую марку
-        newTag = IndependentTag.Create(
-            _doc, // документ
-            tagData.TagTypeId, // тип марки
-            _doc.ActiveView.Id, // id вида
-            new Reference(nearestElement.Element), // ссылка на элемент
-            tagData.HasLeader, // наличие выноски
-            tagData.Orientation, // ориентация
-            newTagHead.Add(displacement) // позиция марки
-        );
+        var firstTaggedElement = tagData.TaggedElements.FirstOrDefault();
+        var searchPoint = firstTaggedElement.Position + translationVector2;
+        var newTagHead = tagData.TagHeadPosition + translationVector2;
+        var nearestElement =
+            new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory));
+        var displacement = nearestElement.Position.Subtract(searchPoint);
+        IndependentTag? newTag = null;
+        if (ArePointsEqual(searchPoint, nearestElement.Position))
+        {
+            // Создаем новую марку
+            newTag = IndependentTag.Create(
+                _doc, // документ
+                tagData.TagTypeId, // тип марки
+                _doc.ActiveView.Id, // id вида
+                new Reference(nearestElement.Element), // ссылка на элемент
+                tagData.HasLeader, // наличие выноски
+                tagData.Orientation, // ориентация
+                newTagHead.Add(displacement) // позиция марки
+            );
+        }
+
         newTag.TagHeadPosition = newTagHead.Add(displacement);
         newTag.LeaderEndCondition = tagData.LeaderEndCondition;
         // Если есть выноска, устанавливаем её точки
@@ -252,17 +268,22 @@ public class CopyAnnotationsServices
     }
 
     /// <summary>
-    /// Находит ближайший элемент указанной категории в пределах заданного расстояния
+    /// Находит ближайший элемент указанной категории, исключая уже обработанные элементы
     /// </summary>
     /// <param name="doc">Текущий документ Revit</param>
     /// <param name="searchPoint">Точка поиска</param>
     /// <param name="category">Категория искомых элементов</param>
+    /// <param name="elementsToExclude">Коллекция ID элементов, которые нужно исключить из поиска</param>
     /// <param name="maxSearchDistance">Максимальное расстояние поиска (по умолчанию - неограниченно)</param>
     /// <returns>Ближайший элемент или null, если ничего не найдено</returns>
-    private Element FindNearestElementOfCategory(Document doc, XYZ searchPoint, BuiltInCategory category,
+    private Element FindNearestElementOfCategory(
+        Document doc,
+        XYZ searchPoint,
+        BuiltInCategory category,
+        ICollection<ElementId> elementsToExclude = null,
         double maxSearchDistance = double.MaxValue)
     {
-        // Получаем все элементы указанной категории в активном виде
+        // Оптимизация: фильтруем только видимые элементы, которые не удалены
         FilteredElementCollector collector = new FilteredElementCollector(doc, doc.ActiveView.Id)
             .OfCategory(category)
             .WhereElementIsNotElementType()
@@ -270,10 +291,16 @@ public class CopyAnnotationsServices
 
         Element nearestElement = null;
         double minDistance = double.MaxValue;
-// Предварительная фильтрация по ограничивающим коробкам
+
+        // Предварительная фильтрация по ограничивающим коробкам
         List<Element> potentialElements = new List<Element>();
+
         foreach (Element element in collector)
         {
+            // Пропускаем элементы из списка исключений
+            if (elementsToExclude != null && elementsToExclude.Contains(element.Id))
+                continue;
+
             BoundingBoxXYZ bb = element.get_BoundingBox(null);
             if (bb != null)
             {
