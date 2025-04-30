@@ -349,15 +349,16 @@ public class CopyAnnotationsServices
     /// <param name="searchPoint">Точка поиска</param>
     /// <param name="category">Категория искомых элементов</param>
     /// <param name="elementsToExclude">Коллекция ID элементов, которые нужно исключить из поиска</param>
-    /// <param name="maxSearchDistance">Максимальное расстояние поиска (по умолчанию - неограниченно)</param>
+    /// <param name="maxSearchDistance">Максимальное расстояние поиска (по умолчанию - 1000 мм)</param>
     /// <returns>Ближайший элемент или null, если ничего не найдено</returns>
     private Element FindNearestElementOfCategory(
         Document doc,
         XYZ searchPoint,
         BuiltInCategory category,
         ICollection<ElementId> elementsToExclude = null,
-        double maxSearchDistance = double.MaxValue)
+        double maxSearchDistance = 1000)
     {
+        maxSearchDistance = maxSearchDistance.ToInches();
         // Оптимизация: фильтруем только видимые элементы, которые не удалены
         FilteredElementCollector collector = new FilteredElementCollector(doc, doc.ActiveView.Id)
             .OfCategory(category)
