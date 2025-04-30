@@ -16,6 +16,7 @@ public class TagData
 
     public TagData(IndependentTag tag)
     {
+        if (tag == null) return;
         Id = tag.Id;
         TagHeadPosition = tag.TagHeadPosition;
         HasLeader = tag.HasLeader;
@@ -30,18 +31,22 @@ public class TagData
                 TaggedElements.Add(new ElementModel(doc.GetElement(taggedElementId.HostElementId)));
             }
         }
-        foreach (var taggedElement in TaggedElements)
+
+        if (HasLeader)
         {
-            LeadersEnd.Add(new LeaderEndModel(tag,taggedElement));
-            LeadersElbow.Add(new LeaderElbowModel(tag,taggedElement));
+            foreach (var taggedElement in TaggedElements)
+            {
+                LeadersEnd.Add(new LeaderEndModel(tag, taggedElement));
+                LeadersElbow.Add(new LeaderElbowModel(tag, taggedElement));
+            }
         }
+
         if (TaggedElements is { Count: > 0 })
         {
             TagCategory = (BuiltInCategory)TaggedElements.FirstOrDefault()?.Category;
         }
+
         Orientation = tag.TagOrientation;
         LeaderEndCondition = tag.LeaderEndCondition;
     }
-
-   
 }

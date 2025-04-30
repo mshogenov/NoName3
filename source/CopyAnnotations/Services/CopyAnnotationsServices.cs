@@ -19,14 +19,36 @@ public class CopyAnnotationsServices
             XYZ targetBasePoint = GetPoint("Выберите целевой опорный элемент");
             var tagsData = GetTagsData(selectedTagRefs);
             var originalTag = tagsData.FirstOrDefault();
+
             // Вычисляем вектор перемещения между опорными элементами
             XYZ translationVector = targetBasePoint - sourceBasePoint;
+
+            // Копируем тег и получаем его ID
             var copiedTagId = CopiedTag(originalTag, translationVector);
-            var translationVector2 = GetTranslationVector(copiedTagId, originalTag);
+            XYZ translationVector2 = null;
+
+            // Начинаем транзакцию
             using Transaction trans2 = new Transaction(_doc, "Копирование марок2");
             trans2.Start();
-            _doc.Delete(copiedTagId);
+
+            // Проверяем, что ID не null и элемент существует в документе
+            if (copiedTagId != null && _doc.GetElement(copiedTagId) != null)
+            {
+                // Получаем вектор трансляции, если можем
+                translationVector2 = GetTranslationVector(copiedTagId, originalTag);
+
+                // Удаляем скопированный элемент
+                _doc.Delete(copiedTagId);
+            }
+            else
+            {
+                // Если не можем получить копию, просто используем основной вектор трансляции
+                translationVector2 = null;
+            }
+
+            // Создаем теги с полученным вектором трансляции (или null, если его не удалось получить)
             CreateTags(tagsData, translationVector2, translationVector);
+
             trans2.Commit();
         }
         catch (Autodesk.Revit.Exceptions.OperationCanceledException)
@@ -99,36 +121,70 @@ public class CopyAnnotationsServices
     private IndependentTag? CreateTag(TagData tagData, XYZ? translationVector2)
     {
         var firstTaggedElement = tagData.TaggedElements.FirstOrDefault();
-        var searchPoint = firstTaggedElement.Position + translationVector2;
-        var newTagHead = tagData.TagHeadPosition + translationVector2;
-        var nearestElement =
-            new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory));
+        if (firstTaggedElement == null)
+            return null;
+
+        // Используем вектор трансляции или нулевой вектор, если он null
+        XYZ vector = translationVector2 ?? XYZ.Zero;
+
+        var searchPoint = firstTaggedElement.Position + vector;
+        var newTagHead = tagData.TagHeadPosition + vector;
+
+        var nearestElement = new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory));
+        if (nearestElement.Element == null)
+            return null;
+
         var displacement = nearestElement.Position.Subtract(searchPoint);
         IndependentTag? newTag = null;
+
         if (ArePointsEqual(searchPoint, nearestElement.Position))
         {
-            // Создаем новую марку
-            newTag = IndependentTag.Create(
-                _doc, // документ
-                tagData.TagTypeId, // тип марки
-                _doc.ActiveView.Id, // id вида
-                new Reference(nearestElement.Element), // ссылка на элемент
-                tagData.HasLeader, // наличие выноски
-                tagData.Orientation, // ориентация
-                newTagHead.Add(displacement) // позиция марки
-            );
+            try
+            {
+                // Создаем новую марку
+                newTag = IndependentTag.Create(
+                    _doc, // документ
+                    tagData.TagTypeId, // тип марки
+                    _doc.ActiveView.Id, // id вида
+                    new Reference(nearestElement.Element), // ссылка на элемент
+                    tagData.HasLeader, // наличие выноски
+                    tagData.Orientation, // ориентация
+                    newTagHead.Add(displacement) // позиция марки
+                );
+            }
+            catch (Exception ex)
+            {
+                // Обработка возможных ошибок при создании тега
+                TaskDialog.Show("Ошибка создания тега", ex.Message);
+                return null;
+            }
         }
+
+        if (newTag == null)
+            return null;
 
         newTag.TagHeadPosition = newTagHead.Add(displacement);
         newTag.LeaderEndCondition = tagData.LeaderEndCondition;
+
         // Если есть выноска, устанавливаем её точки
-        if (!tagData.HasLeader) return newTag;
+        if (!tagData.HasLeader)
+            return newTag;
+
         foreach (var leader in tagData.LeadersEnd)
         {
             if (leader.TaggedElement.Id.Value == firstTaggedElement.Id.Value)
             {
-                newTag.SetLeaderEnd(new Reference(nearestElement.Element),
-                    leader.Position.Add(displacement).Add(translationVector2));
+                try
+                {
+                    newTag.SetLeaderEnd(
+                        new Reference(nearestElement.Element),
+                        leader.Position.Add(displacement).Add(vector)
+                    );
+                }
+                catch (Exception)
+                {
+                    // Пропускаем ошибки при установке конца лидера
+                }
             }
         }
 
@@ -136,8 +192,17 @@ public class CopyAnnotationsServices
         {
             if (leader.TaggedElement.Id.Value == firstTaggedElement.Id.Value)
             {
-                newTag.SetLeaderElbow(new Reference(nearestElement.Element),
-                    leader.Position.Add(displacement).Add(translationVector2));
+                try
+                {
+                    newTag.SetLeaderElbow(
+                        new Reference(nearestElement.Element),
+                        leader.Position.Add(displacement).Add(vector)
+                    );
+                }
+                catch (Exception)
+                {
+                    // Пропускаем ошибки при установке локтя лидера
+                }
             }
         }
 
@@ -194,6 +259,16 @@ public class CopyAnnotationsServices
         if (copiedTagId != null)
         {
             var copyTag = new TagData(_doc.GetElement(copiedTagId) as IndependentTag);
+            if (copyTag == null) return null;
+
+            // Добавляем проверки на null для TagHeadPosition
+            if (originalTag.TagHeadPosition == null || copyTag.TagHeadPosition == null)
+            {
+                // Если какая-то из позиций равна null, возвращаем null или используем альтернативу
+                return null;
+            }
+
+            // Теперь можно безопасно выполнить вычитание
             translationVector2 = (originalTag.TagHeadPosition - copyTag.TagHeadPosition).Multiply(-1);
         }
 
