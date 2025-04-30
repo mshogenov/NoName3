@@ -49,6 +49,11 @@ public class CopyAnnotationsServices
             var newTagHead = tagData.TagHeadPosition + translationVector2;
             var nearestElement =
                 new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory));
+            if (nearestElement.Id.Value == 1304357)
+            {
+                TaskDialog.Show("<UNK>", "<UNK> <UNK> <UNK> <UNK> <UNK> <UNK>");
+            }
+
             var displacement = nearestElement.Position.Subtract(searchPoint);
             IndependentTag? newTag = null;
             if (ArePointsEqual(searchPoint, nearestElement.Position))
@@ -56,6 +61,7 @@ public class CopyAnnotationsServices
                 newTag = CreateTag(tagData, nearestElement, newTagHead, displacement, firstTaggedElement,
                     translationVector2);
             }
+
             Dictionary<ElementModel, ElementModel> dictionary = [];
             XYZ searchPoint2 = null;
             foreach (var taggedElement in tagData.TaggedElements)
@@ -63,15 +69,21 @@ public class CopyAnnotationsServices
                 if (taggedElement.Id.Value == firstTaggedElement.Id.Value) continue;
                 searchPoint2 = taggedElement.Position + translationVector;
                 var nearestElement2 =
-                    new ElementModel(FindNearestElementOfCategory(_doc, searchPoint2, tagData.TagCategory));
+                    new ElementModel(
+                        FindNearestElementOfCategory(_doc, searchPoint2, tagData.TagCategory));
+                if (nearestElement2.Id.Value == 1304357)
+                {
+                    TaskDialog.Show("<UNK>", "<UNK> <UNK> <UNK> <UNK> <UNK> <UNK>");
+                }
+
                 dictionary.Add(taggedElement, nearestElement2);
             }
 
             if (newTag != null)
             {
                 newTag.AddReferences(dictionary.Values.Select(x => x.Reference).ToList());
-                SetPositionLeaderEnd(tagData, dictionary, searchPoint2, newTag, translationVector2);
-                SetPositionLeaderElbow(tagData, dictionary, searchPoint2, newTag, translationVector2);
+                SetPositionLeaderElbow(tagData, dictionary, newTag, translationVector2);
+                SetPositionLeaderEnd(tagData, dictionary, newTag, translationVector2);
                 newTag.MergeElbows = tagData.MergeElbows;
             }
         }
@@ -117,7 +129,6 @@ public class CopyAnnotationsServices
     }
 
     private static void SetPositionLeaderElbow(TagData tagData, Dictionary<ElementModel, ElementModel> dictionary,
-        XYZ searchPoint,
         IndependentTag? newTag, XYZ? translationVector2)
     {
         foreach (var leaderElbow in tagData.LeadersElbow)
@@ -129,6 +140,7 @@ public class CopyAnnotationsServices
 
                 if (leaderElbow.TaggedElement.Id == dictionaryKey.Element.Id)
                 {
+                    var searchPoint = leaderElbow.TaggedElement.Position + translationVector2;
                     var displacement2 = kvp.Value.Position.Subtract(searchPoint);
                     // Передаем reference из найденной пары ключ-значение
                     newTag.SetLeaderElbow(reference, leaderElbow.Position.Add(displacement2).Add(translationVector2));
@@ -139,7 +151,7 @@ public class CopyAnnotationsServices
     }
 
     private static void SetPositionLeaderEnd(TagData tagData, Dictionary<ElementModel, ElementModel> dictionary,
-        XYZ searchPoint, IndependentTag? newTag, XYZ? translationVector2)
+        IndependentTag? newTag, XYZ? translationVector2)
     {
         foreach (var leaderEnd in tagData.LeadersEnd)
         {
@@ -150,6 +162,7 @@ public class CopyAnnotationsServices
 
                 if (leaderEnd.TaggedElement.Id == dictionaryKey.Element.Id)
                 {
+                    var searchPoint = leaderEnd.TaggedElement.Position + translationVector2;
                     var displacement = kvp.Value.Position.Subtract(searchPoint);
                     // Передаем reference из найденной пары ключ-значение
                     newTag.SetLeaderEnd(reference, leaderEnd.Position.Add(displacement).Add(translationVector2));
@@ -208,8 +221,7 @@ public class CopyAnnotationsServices
         List<TagData> tagsData = [];
         foreach (Reference tagRef in selectedTagRefs)
         {
-            IndependentTag tag = _doc.GetElement(tagRef) as IndependentTag;
-            if (tag != null)
+            if (_doc.GetElement(tagRef) is IndependentTag tag)
             {
                 tagsData.Add(new TagData(tag));
             }
@@ -239,33 +251,172 @@ public class CopyAnnotationsServices
         return selectedTagRefs;
     }
 
-    // Метод для поиска ближайшего элемента указанной категории
-    private Element FindNearestElementOfCategory(Document doc, XYZ searchPoint, BuiltInCategory category)
+    /// <summary>
+    /// Находит ближайший элемент указанной категории в пределах заданного расстояния
+    /// </summary>
+    /// <param name="doc">Текущий документ Revit</param>
+    /// <param name="searchPoint">Точка поиска</param>
+    /// <param name="category">Категория искомых элементов</param>
+    /// <param name="maxSearchDistance">Максимальное расстояние поиска (по умолчанию - неограниченно)</param>
+    /// <returns>Ближайший элемент или null, если ничего не найдено</returns>
+    private Element FindNearestElementOfCategory(Document doc, XYZ searchPoint, BuiltInCategory category,
+        double maxSearchDistance = double.MaxValue)
     {
         // Получаем все элементы указанной категории в активном виде
-        FilteredElementCollector collector = new FilteredElementCollector(doc, doc.ActiveView.Id);
-        collector.OfCategory(category);
+        FilteredElementCollector collector = new FilteredElementCollector(doc, doc.ActiveView.Id)
+            .OfCategory(category)
+            .WhereElementIsNotElementType()
+            .WhereElementIsViewIndependent();
 
         Element nearestElement = null;
         double minDistance = double.MaxValue;
-
+// Предварительная фильтрация по ограничивающим коробкам
+        List<Element> potentialElements = new List<Element>();
         foreach (Element element in collector)
         {
-            // Получаем все возможные точки элемента
-            List<XYZ> elementPoints = GetElementPoints(element);
-
-            foreach (XYZ point in elementPoints)
+            BoundingBoxXYZ bb = element.get_BoundingBox(null);
+            if (bb != null)
             {
-                double distance = searchPoint.DistanceTo(point);
-                if (distance < minDistance)
+                // Расширяем ограничивающую коробку на величину maxSearchDistance
+                XYZ expandedMin = new XYZ(
+                    bb.Min.X - maxSearchDistance,
+                    bb.Min.Y - maxSearchDistance,
+                    bb.Min.Z - maxSearchDistance);
+
+                XYZ expandedMax = new XYZ(
+                    bb.Max.X + maxSearchDistance,
+                    bb.Max.Y + maxSearchDistance,
+                    bb.Max.Z + maxSearchDistance);
+
+                // Проверяем, находится ли точка поиска внутри расширенной коробки
+                if (IsPointInBox(searchPoint, expandedMin, expandedMax))
                 {
-                    minDistance = distance;
-                    nearestElement = element;
+                    potentialElements.Add(element);
                 }
+            }
+            else
+            {
+                // Если нет ограничивающей коробки, добавляем элемент для дальнейшей проверки
+                potentialElements.Add(element);
+            }
+        }
+
+        // Обрабатываем только потенциально подходящие элементы
+        foreach (Element element in potentialElements)
+        {
+            double distance = GetMinDistanceToElement(element, searchPoint);
+
+            // Проверяем, что расстояние в пределах заданного диапазона
+            if (distance < minDistance && distance <= maxSearchDistance)
+            {
+                minDistance = distance;
+                nearestElement = element;
             }
         }
 
         return nearestElement;
+    }
+
+    /// <summary>
+    /// Находит все элементы указанной категории в пределах заданного расстояния
+    /// </summary>
+    /// <returns>Список элементов с их расстояниями, отсортированный по возрастанию расстояния</returns>
+    private List<(Element Element, double Distance)> FindElementsInRange(
+        Document doc,
+        XYZ searchPoint,
+        BuiltInCategory category,
+        double maxSearchDistance)
+    {
+        FilteredElementCollector collector = new FilteredElementCollector(doc, doc.ActiveView.Id)
+            .OfCategory(category)
+            .WhereElementIsNotElementType()
+            .WhereElementIsViewIndependent();
+
+        List<(Element Element, double Distance)> result = new List<(Element, double)>();
+
+        foreach (Element element in collector)
+        {
+            double distance = GetMinDistanceToElement(element, searchPoint);
+
+            if (distance <= maxSearchDistance)
+            {
+                result.Add((element, distance));
+            }
+        }
+
+        // Сортируем результаты по расстоянию (от ближайшего к дальнему)
+        return result.OrderBy(item => item.Distance).ToList();
+    }
+
+    /// <summary>
+    /// Проверяет, находится ли точка внутри прямоугольной области
+    /// </summary>
+    private bool IsPointInBox(XYZ point, XYZ min, XYZ max)
+    {
+        return
+            point.X >= min.X && point.X <= max.X &&
+            point.Y >= min.Y && point.Y <= max.Y &&
+            point.Z >= min.Z && point.Z <= max.Z;
+    }
+
+// Новый метод для расчета минимального расстояния до элемента
+    private double GetMinDistanceToElement(Element element, XYZ searchPoint)
+    {
+        List<XYZ> elementPoints = GetElementPoints(element);
+
+        if (elementPoints.Count == 0)
+            return double.MaxValue;
+
+        return elementPoints.Min(point => searchPoint.DistanceTo(point));
+    }
+
+
+// Новый метод для рекурсивной обработки геометрии
+    private void ProcessGeometryElement(GeometryElement geomElem, List<XYZ> points)
+    {
+        foreach (GeometryObject geomObj in geomElem)
+        {
+            if (geomObj is Solid solid && solid.Volume > 0)
+            {
+                // Добавляем точки только для непустых солидов
+                foreach (Edge edge in solid.Edges)
+                {
+                    points.Add(edge.AsCurve().GetEndPoint(0));
+                    points.Add(edge.AsCurve().GetEndPoint(1));
+                }
+
+                // Добавляем точки из центров граней для более точного поиска
+                foreach (Face face in solid.Faces)
+                {
+                    // Находим "центр тяжести" грани
+                    BoundingBoxUV boundingBox = face.GetBoundingBox();
+                    UV centerUV = new UV(
+                        (boundingBox.Min.U + boundingBox.Max.U) / 2,
+                        (boundingBox.Min.V + boundingBox.Max.V) / 2
+                    );
+                    XYZ centerPoint = face.Evaluate(centerUV);
+                    points.Add(centerPoint);
+                }
+            }
+            else if (geomObj is Curve curve)
+            {
+                // Обрабатываем все типы кривых, не только линии
+                points.Add(curve.GetEndPoint(0));
+                points.Add(curve.GetEndPoint(1));
+
+                // Добавляем середину кривой
+                points.Add(curve.Evaluate(0.5, true));
+            }
+            else if (geomObj is Point point)
+            {
+                points.Add(point.Coord);
+            }
+            else if (geomObj is GeometryInstance instance)
+            {
+                // Обрабатываем вложенную геометрию
+                ProcessGeometryElement(instance.GetInstanceGeometry(), points);
+            }
+        }
     }
 
     private List<XYZ> GetElementPoints(Element element)
@@ -274,56 +425,75 @@ public class CopyAnnotationsServices
 
         if (element == null)
             return points;
-
-        // Получаем геометрию элемента
-        GeometryElement geomElem = element.get_Geometry(new Options());
-        if (geomElem != null)
+        try
         {
-            foreach (GeometryObject geomObj in geomElem)
+            Options options = new Options
             {
-                if (geomObj is Solid solid)
+                ComputeReferences = false,
+                DetailLevel = ViewDetailLevel.Medium
+            };
+
+            GeometryElement geomElem = element.get_Geometry(options);
+            if (geomElem != null)
+            {
+                // Рекурсивно обрабатываем геометрию, включая вложенные элементы
+                ProcessGeometryElement(geomElem, points);
+            }
+
+            if (geomElem != null)
+            {
+                foreach (GeometryObject geomObj in geomElem)
                 {
-                    // Добавляем все вершины солида
-                    foreach (Edge edge in solid.Edges)
+                    if (geomObj is Solid solid)
                     {
-                        points.Add(edge.AsCurve().GetEndPoint(0));
-                        points.Add(edge.AsCurve().GetEndPoint(1));
+                        // Добавляем все вершины солида
+                        foreach (Edge edge in solid.Edges)
+                        {
+                            points.Add(edge.AsCurve().GetEndPoint(0));
+                            points.Add(edge.AsCurve().GetEndPoint(1));
+                        }
+                    }
+                    else if (geomObj is Line line)
+                    {
+                        points.Add(line.GetEndPoint(0));
+                        points.Add(line.GetEndPoint(1));
+                    }
+                    else if (geomObj is Point point)
+                    {
+                        points.Add(point.Coord);
                     }
                 }
-                else if (geomObj is Line line)
-                {
-                    points.Add(line.GetEndPoint(0));
-                    points.Add(line.GetEndPoint(1));
-                }
-                else if (geomObj is Point point)
-                {
-                    points.Add(point.Coord);
-                }
             }
-        }
 
-        // Добавляем точку расположения
-        Location location = element.Location;
-        if (location is LocationPoint locationPoint)
-        {
-            points.Add(locationPoint.Point);
-        }
-        else if (location is LocationCurve locationCurve)
-        {
-            points.Add(locationCurve.Curve.GetEndPoint(0));
-            points.Add(locationCurve.Curve.GetEndPoint(1));
-        }
+            // Добавляем точку расположения
+            Location location = element.Location;
+            if (location is LocationPoint locationPoint)
+            {
+                points.Add(locationPoint.Point);
+            }
+            else if (location is LocationCurve locationCurve)
+            {
+                points.Add(locationCurve.Curve.GetEndPoint(0));
+                points.Add(locationCurve.Curve.GetEndPoint(1));
+            }
 
-        // Добавляем точки ограничивающего бокса
-        BoundingBoxXYZ bb = element.get_BoundingBox(null);
-        if (bb != null)
-        {
-            points.Add(bb.Min);
-            points.Add(bb.Max);
-            points.Add((bb.Min + bb.Max) * 0.5); // центр
-        }
+            // Добавляем точки ограничивающего бокса
+            BoundingBoxXYZ bb = element.get_BoundingBox(null);
+            if (bb != null)
+            {
+                points.Add(bb.Min);
+                points.Add(bb.Max);
+                points.Add((bb.Min + bb.Max) * 0.5); // центр
+            }
 
-        return points.Distinct().ToList();
+            return points.Count <= 1 ? points : new HashSet<XYZ>(points, new XYZEqualityComparer()).ToList();
+        }
+        catch (Exception ex)
+        {
+            // Добавление обработки ошибок
+            TaskDialog.Show("Ошибка", $"Не удалось получить точки элемента: {ex.Message}");
+            return points;
+        }
     }
 
     // Метод для получения позиции элемента
