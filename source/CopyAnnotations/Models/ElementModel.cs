@@ -2,37 +2,35 @@ namespace CopyAnnotations.Models;
 
 public class ElementModel
 {
-    public ElementId Id { get; set; }
-    public Reference Reference { get; set; }
+    public ElementId? Id { get; set; }
+    public Reference? Reference { get; set; }
     public BuiltInCategory Category { get; set; }
-    public Element Element { get; set; }
-    public XYZ Position { get; set; }
+    public Element? Element { get; set; }
+    public XYZ? Position { get; set; }
 
-    public ElementModel(Element element)
+    public ElementModel(Element? element)
     {
-        Element = element;
         if (element == null) return;
+        Element = element;
         Id = element.Id;
         Reference = new Reference(element);
         Category = (BuiltInCategory)element.Category.Id.Value;
         Position = GetElementPosition(element);
     }
-    private XYZ GetElementPosition(Element element)
+
+    private XYZ? GetElementPosition(Element? element)
     {
         if (element == null)
             return null;
-
         // Пробуем получить точку расположения
         Location location = element.Location;
-        if (location is LocationPoint locationPoint)
+        switch (location)
         {
-            return locationPoint.Point;
-        }
-
-        if (location is LocationCurve locationCurve)
-        {
-            // Вариант 1: используя Evaluate
-            return (locationCurve.Curve as Line)?.Evaluate(0.5, true);
+            case LocationPoint locationPoint:
+                return locationPoint.Point;
+            case LocationCurve locationCurve:
+                // Вариант 1: используя Evaluate
+                return (locationCurve.Curve as Line)?.Evaluate(0.5, true);
         }
 
         // Если точки расположения нет, используем центр ограничивающего бокса
