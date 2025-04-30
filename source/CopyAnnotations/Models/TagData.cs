@@ -16,7 +16,7 @@ public class TagData
 
     public TagData(IndependentTag tag)
     {
-        if (tag == null) return;
+       if (tag == null) return;
         Id = tag.Id;
         TagHeadPosition = tag.TagHeadPosition;
         HasLeader = tag.HasLeader;

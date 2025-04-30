@@ -22,10 +22,16 @@ public class CopyAnnotationsServices
             // Вычисляем вектор перемещения между опорными элементами
             XYZ translationVector = targetBasePoint - sourceBasePoint;
             var copiedTagId = CopiedTag(originalTag, translationVector);
-            var translationVector2 = GetTranslationVector(copiedTagId, originalTag);
+            XYZ translationVector2 = null;
+            
             using Transaction trans2 = new Transaction(_doc, "Копирование марок2");
             trans2.Start();
-            _doc.Delete(copiedTagId);
+            if (copiedTagId != null)
+            {
+                translationVector2 = GetTranslationVector(copiedTagId, originalTag);
+                _doc.Delete(copiedTagId);
+            }
+         
             CreateTags(tagsData, translationVector2, translationVector);
             trans2.Commit();
         }
@@ -58,7 +64,7 @@ public class CopyAnnotationsServices
             IndependentTag? newTag = null;
             if (ArePointsEqual(searchPoint, nearestElement.Position))
             {
-                newTag = CreateTag(tagData, nearestElement, newTagHead, displacement, firstTaggedElement,
+                newTag = CreateTag(tagData,
                     translationVector2);
             }
 
@@ -89,20 +95,47 @@ public class CopyAnnotationsServices
         }
     }
 
-    private IndependentTag? CreateTag(TagData tagData, ElementModel nearestElement, XYZ newTagHead, XYZ displacement,
-        ElementModel firstTaggedElement, XYZ? translationVector2)
+    private IndependentTag? CreateTag(TagData tagData, XYZ? translationVector2)
     {
-        IndependentTag? newTag;
-        // Создаем новую марку
-        newTag = IndependentTag.Create(
-            _doc, // документ
-            tagData.TagTypeId, // тип марки
-            _doc.ActiveView.Id, // id вида
-            new Reference(nearestElement.Element), // ссылка на элемент
-            tagData.HasLeader, // наличие выноски
-            tagData.Orientation, // ориентация
-            newTagHead.Add(displacement) // позиция марки
-        );
+        
+        var firstTaggedElement = tagData.TaggedElements.FirstOrDefault();
+        if (firstTaggedElement == null)
+            return null;
+        // Используем вектор трансляции или нулевой вектор, если он null
+        XYZ vector = translationVector2 ?? XYZ.Zero;
+
+        var searchPoint = firstTaggedElement.Position + vector;
+        var newTagHead = tagData.TagHeadPosition + vector;
+        var nearestElement = new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory));
+        if (nearestElement.Element == null)
+            return null;
+        var displacement = nearestElement.Position.Subtract(searchPoint);
+        IndependentTag? newTag=null;
+        if (ArePointsEqual(searchPoint, nearestElement.Position))
+        {
+            try
+            {
+                // Создаем новую марку
+                newTag = IndependentTag.Create(
+                    _doc, // документ
+                    tagData.TagTypeId, // тип марки
+                    _doc.ActiveView.Id, // id вида
+                    new Reference(nearestElement.Element), // ссылка на элемент
+                    tagData.HasLeader, // наличие выноски
+                    tagData.Orientation, // ориентация
+                    newTagHead.Add(displacement) // позиция марки
+                );
+            }
+            catch (Exception ex)
+            {
+                // Обработка возможных ошибок при создании тега
+                TaskDialog.Show("Ошибка создания тега", ex.Message);
+                return null;
+            }
+        }
+        if (newTag == null)
+            return null;
+      
         newTag.TagHeadPosition = newTagHead.Add(displacement);
         newTag.LeaderEndCondition = tagData.LeaderEndCondition;
         // Если есть выноска, устанавливаем её точки
@@ -111,8 +144,17 @@ public class CopyAnnotationsServices
         {
             if (leader.TaggedElement.Id.Value == firstTaggedElement.Id.Value)
             {
-                newTag.SetLeaderEnd(new Reference(nearestElement.Element),
-                    leader.Position.Add(displacement).Add(translationVector2));
+                try
+                {
+                    newTag.SetLeaderEnd(
+                        new Reference(nearestElement.Element),
+                        leader.Position.Add(displacement).Add(vector)
+                    );
+                }
+                catch (Exception)
+                {
+                    // Пропускаем ошибки при установке конца лидера
+                }
             }
         }
 
@@ -120,8 +162,17 @@ public class CopyAnnotationsServices
         {
             if (leader.TaggedElement.Id.Value == firstTaggedElement.Id.Value)
             {
-                newTag.SetLeaderElbow(new Reference(nearestElement.Element),
-                    leader.Position.Add(displacement).Add(translationVector2));
+                try
+                {
+                    newTag.SetLeaderElbow(
+                        new Reference(nearestElement.Element),
+                        leader.Position.Add(displacement).Add(vector)
+                    );
+                }
+                catch (Exception)
+                {
+                    // Пропускаем ошибки при установке локтя лидера
+                }
             }
         }
 
@@ -178,6 +229,14 @@ public class CopyAnnotationsServices
         if (copiedTagId != null)
         {
             var copyTag = new TagData(_doc.GetElement(copiedTagId) as IndependentTag);
+            if (copyTag == null) return null;
+
+            // Добавляем проверки на null для TagHeadPosition
+            if (originalTag.TagHeadPosition == null || copyTag.TagHeadPosition == null)
+            {
+                // Если какая-то из позиций равна null, возвращаем null или используем альтернативу
+                return null;
+            }
             translationVector2 = (originalTag.TagHeadPosition - copyTag.TagHeadPosition).Multiply(-1);
         }
 
@@ -257,11 +316,12 @@ public class CopyAnnotationsServices
     /// <param name="doc">Текущий документ Revit</param>
     /// <param name="searchPoint">Точка поиска</param>
     /// <param name="category">Категория искомых элементов</param>
-    /// <param name="maxSearchDistance">Максимальное расстояние поиска (по умолчанию - неограниченно)</param>
+    /// <param name="maxSearchDistance">Максимальное расстояние поиска (по умолчанию - 1000 мм)</param>
     /// <returns>Ближайший элемент или null, если ничего не найдено</returns>
     private Element FindNearestElementOfCategory(Document doc, XYZ searchPoint, BuiltInCategory category,
-        double maxSearchDistance = double.MaxValue)
+        double maxSearchDistance = 1000)
     {
+        maxSearchDistance = maxSearchDistance.ToInches();
         // Получаем все элементы указанной категории в активном виде
         FilteredElementCollector collector = new FilteredElementCollector(doc, doc.ActiveView.Id)
             .OfCategory(category)
