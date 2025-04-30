@@ -12,30 +12,42 @@ public class CopyAnnotationsServices
 
     public void CopyAnnotations()
     {
+        List<Reference> selectedTagRefs = [];
+        XYZ sourceBasePoint = null;
+        XYZ targetBasePoint = null;
         try
         {
-            List<Reference> selectedTagRefs = GetCopyTags().ToList();
-            XYZ sourceBasePoint = GetPoint("Выберите исходный опорный элемент");
-            XYZ targetBasePoint = GetPoint("Выберите целевой опорный элемент");
-            var tagsData = GetTagsData(selectedTagRefs);
-            var originalTag = tagsData.FirstOrDefault();
-            if (originalTag == null) return;
-            // Вычисляем вектор перемещения между опорными элементами
-            XYZ translationVector = targetBasePoint - sourceBasePoint;
-            using TransactionGroup tg = new TransactionGroup(_doc, "Копирование аннотаций");
-            tg.Start();
-            using Transaction trans = new Transaction(_doc, "Копирование первой аннотации");
-            trans.Start();
-            ElementId copiedTagId = CopiedTag(originalTag, translationVector);
-            if (copiedTagId == null)
-            {
-                trans.RollBack();
-                tg.RollBack();
-                TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
-                return;
-            }
+            selectedTagRefs = GetCopyTags().ToList();
+            sourceBasePoint = GetPoint("Выберите исходный опорный элемент");
+            targetBasePoint = GetPoint("Выберите целевой опорный элемент");
+        }
+        catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+        {
+            // Пользователь отменил операцию
+        }
 
-            trans.Commit();
+        var tagsData = GetTagsData(selectedTagRefs);
+        var originalTag = tagsData.FirstOrDefault();
+        if (originalTag == null) return;
+        // Вычисляем вектор перемещения между опорными элементами
+        XYZ translationVector = targetBasePoint - sourceBasePoint;
+        using TransactionGroup tg = new TransactionGroup(_doc, "Копирование аннотаций");
+        tg.Start();
+
+        using Transaction trans = new Transaction(_doc, "Копирование первой аннотации");
+        trans.Start();
+        ElementId copiedTagId = CopiedTag(originalTag, translationVector);
+        if (copiedTagId == null)
+        {
+            trans.RollBack();
+            tg.RollBack();
+            TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
+            return;
+        }
+
+        trans.Commit();
+        if (tagsData.Count > 1)
+        {
             using Transaction trans2 = new Transaction(_doc, "Копирование остальных аннотаций");
             trans2.Start();
             if (copiedTagId != null && _doc?.GetElement(copiedTagId) != null)
@@ -55,16 +67,9 @@ public class CopyAnnotationsServices
             }
 
             trans2.Commit();
-            tg.Commit();
         }
-        catch (Autodesk.Revit.Exceptions.OperationCanceledException)
-        {
-            // Пользователь отменил операцию
-        }
-        catch (Exception ex)
-        {
-            TaskDialog.Show("Ошибка", ex.Message);
-        }
+
+        tg.Commit();
     }
 
     private void CreateTags(List<TagData> tagsData, XYZ? translationVector)
