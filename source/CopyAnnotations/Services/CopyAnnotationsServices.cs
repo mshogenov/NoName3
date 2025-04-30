@@ -19,36 +19,14 @@ public class CopyAnnotationsServices
             XYZ targetBasePoint = GetPoint("Выберите целевой опорный элемент");
             var tagsData = GetTagsData(selectedTagRefs);
             var originalTag = tagsData.FirstOrDefault();
-
             // Вычисляем вектор перемещения между опорными элементами
             XYZ translationVector = targetBasePoint - sourceBasePoint;
-
-            // Копируем тег и получаем его ID
             var copiedTagId = CopiedTag(originalTag, translationVector);
-            XYZ translationVector2 = null;
-
-            // Начинаем транзакцию
+            var translationVector2 = GetTranslationVector(copiedTagId, originalTag);
             using Transaction trans2 = new Transaction(_doc, "Копирование марок2");
             trans2.Start();
-
-            // Проверяем, что ID не null и элемент существует в документе
-            if (copiedTagId != null && _doc.GetElement(copiedTagId) != null)
-            {
-                // Получаем вектор трансляции, если можем
-                translationVector2 = GetTranslationVector(copiedTagId, originalTag);
-
-                // Удаляем скопированный элемент
-                _doc.Delete(copiedTagId);
-            }
-            else
-            {
-                // Если не можем получить копию, просто используем основной вектор трансляции
-                translationVector2 = null;
-            }
-
-            // Создаем теги с полученным вектором трансляции (или null, если его не удалось получить)
+            _doc.Delete(copiedTagId);
             CreateTags(tagsData, translationVector2, translationVector);
-
             trans2.Commit();
         }
         catch (Autodesk.Revit.Exceptions.OperationCanceledException)
@@ -66,46 +44,39 @@ public class CopyAnnotationsServices
         foreach (TagData tagData in tagsData)
         {
             if (tagData == null) continue;
-
-            // Коллекция для отслеживания обработанных элементов только в этом TagData
-            HashSet<ElementId> processedElementIdsInCurrentTagData = new HashSet<ElementId>();
-
             var firstTaggedElement = tagData.TaggedElements.FirstOrDefault();
-            if (firstTaggedElement == null) continue;
+            var searchPoint = firstTaggedElement.Position + translationVector;
+            var newTagHead = tagData.TagHeadPosition + translationVector2;
+            var nearestElement =
+                new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory));
+            if (nearestElement.Id.Value == 1304357)
+            {
+                TaskDialog.Show("<UNK>", "<UNK> <UNK> <UNK> <UNK> <UNK> <UNK>");
+            }
 
-            // Отмечаем первый элемент как обработанный в текущем TagData
-            processedElementIdsInCurrentTagData.Add(firstTaggedElement.Id);
+            var displacement = nearestElement.Position.Subtract(searchPoint);
+            IndependentTag? newTag = null;
+            if (ArePointsEqual(searchPoint, nearestElement.Position))
+            {
+                newTag = CreateTag(tagData, nearestElement, newTagHead, displacement, firstTaggedElement,
+                    translationVector2);
+            }
 
-            IndependentTag? newTag = CreateTag(tagData, translationVector2);
             Dictionary<ElementModel, ElementModel> dictionary = [];
-
+            XYZ searchPoint2 = null;
             foreach (var taggedElement in tagData.TaggedElements)
             {
-                // Пропускаем уже обработанные элементы в этом TagData
-                if (processedElementIdsInCurrentTagData.Contains(taggedElement.Id))
-                    continue;
-
-                var searchPoint2 = taggedElement.Position + translationVector2;
-
-                // Ищем ближайший элемент, исключая уже обработанные элементы в текущем TagData
-                var nearestElement = FindNearestElementOfCategory(
-                    _doc,
-                    searchPoint2,
-                    tagData.TagCategory,
-                    processedElementIdsInCurrentTagData);
-
-                // Создаем ElementModel из найденного элемента
-                var nearestElement2 = nearestElement != null
-                    ? new ElementModel(nearestElement)
-                    : null;
-
-                if (nearestElement != null && ArePointsEqual(searchPoint2, nearestElement2.Position))
+                if (taggedElement.Id.Value == firstTaggedElement.Id.Value) continue;
+                searchPoint2 = taggedElement.Position + translationVector;
+                var nearestElement2 =
+                    new ElementModel(
+                        FindNearestElementOfCategory(_doc, searchPoint2, tagData.TagCategory));
+                if (nearestElement2.Id.Value == 1304357)
                 {
-                    dictionary.Add(taggedElement, nearestElement2);
-
-                    // Отмечаем этот элемент как обработанный в текущем TagData
-                    processedElementIdsInCurrentTagData.Add(nearestElement.Id);
+                    TaskDialog.Show("<UNK>", "<UNK> <UNK> <UNK> <UNK> <UNK> <UNK>");
                 }
+
+                dictionary.Add(taggedElement, nearestElement2);
             }
 
             if (newTag != null)
@@ -118,73 +89,30 @@ public class CopyAnnotationsServices
         }
     }
 
-    private IndependentTag? CreateTag(TagData tagData, XYZ? translationVector2)
+    private IndependentTag? CreateTag(TagData tagData, ElementModel nearestElement, XYZ newTagHead, XYZ displacement,
+        ElementModel firstTaggedElement, XYZ? translationVector2)
     {
-        var firstTaggedElement = tagData.TaggedElements.FirstOrDefault();
-        if (firstTaggedElement == null)
-            return null;
-
-        // Используем вектор трансляции или нулевой вектор, если он null
-        XYZ vector = translationVector2 ?? XYZ.Zero;
-
-        var searchPoint = firstTaggedElement.Position + vector;
-        var newTagHead = tagData.TagHeadPosition + vector;
-
-        var nearestElement = new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory));
-        if (nearestElement.Element == null)
-            return null;
-
-        var displacement = nearestElement.Position.Subtract(searchPoint);
-        IndependentTag? newTag = null;
-
-        if (ArePointsEqual(searchPoint, nearestElement.Position))
-        {
-            try
-            {
-                // Создаем новую марку
-                newTag = IndependentTag.Create(
-                    _doc, // документ
-                    tagData.TagTypeId, // тип марки
-                    _doc.ActiveView.Id, // id вида
-                    new Reference(nearestElement.Element), // ссылка на элемент
-                    tagData.HasLeader, // наличие выноски
-                    tagData.Orientation, // ориентация
-                    newTagHead.Add(displacement) // позиция марки
-                );
-            }
-            catch (Exception ex)
-            {
-                // Обработка возможных ошибок при создании тега
-                TaskDialog.Show("Ошибка создания тега", ex.Message);
-                return null;
-            }
-        }
-
-        if (newTag == null)
-            return null;
-
+        IndependentTag? newTag;
+        // Создаем новую марку
+        newTag = IndependentTag.Create(
+            _doc, // документ
+            tagData.TagTypeId, // тип марки
+            _doc.ActiveView.Id, // id вида
+            new Reference(nearestElement.Element), // ссылка на элемент
+            tagData.HasLeader, // наличие выноски
+            tagData.Orientation, // ориентация
+            newTagHead.Add(displacement) // позиция марки
+        );
         newTag.TagHeadPosition = newTagHead.Add(displacement);
         newTag.LeaderEndCondition = tagData.LeaderEndCondition;
-
         // Если есть выноска, устанавливаем её точки
-        if (!tagData.HasLeader)
-            return newTag;
-
+        if (!tagData.HasLeader) return newTag;
         foreach (var leader in tagData.LeadersEnd)
         {
             if (leader.TaggedElement.Id.Value == firstTaggedElement.Id.Value)
             {
-                try
-                {
-                    newTag.SetLeaderEnd(
-                        new Reference(nearestElement.Element),
-                        leader.Position.Add(displacement).Add(vector)
-                    );
-                }
-                catch (Exception)
-                {
-                    // Пропускаем ошибки при установке конца лидера
-                }
+                newTag.SetLeaderEnd(new Reference(nearestElement.Element),
+                    leader.Position.Add(displacement).Add(translationVector2));
             }
         }
 
@@ -192,17 +120,8 @@ public class CopyAnnotationsServices
         {
             if (leader.TaggedElement.Id.Value == firstTaggedElement.Id.Value)
             {
-                try
-                {
-                    newTag.SetLeaderElbow(
-                        new Reference(nearestElement.Element),
-                        leader.Position.Add(displacement).Add(vector)
-                    );
-                }
-                catch (Exception)
-                {
-                    // Пропускаем ошибки при установке локтя лидера
-                }
+                newTag.SetLeaderElbow(new Reference(nearestElement.Element),
+                    leader.Position.Add(displacement).Add(translationVector2));
             }
         }
 
@@ -259,16 +178,6 @@ public class CopyAnnotationsServices
         if (copiedTagId != null)
         {
             var copyTag = new TagData(_doc.GetElement(copiedTagId) as IndependentTag);
-            if (copyTag == null) return null;
-
-            // Добавляем проверки на null для TagHeadPosition
-            if (originalTag.TagHeadPosition == null || copyTag.TagHeadPosition == null)
-            {
-                // Если какая-то из позиций равна null, возвращаем null или используем альтернативу
-                return null;
-            }
-
-            // Теперь можно безопасно выполнить вычитание
             translationVector2 = (originalTag.TagHeadPosition - copyTag.TagHeadPosition).Multiply(-1);
         }
 
@@ -343,23 +252,17 @@ public class CopyAnnotationsServices
     }
 
     /// <summary>
-    /// Находит ближайший элемент указанной категории, исключая уже обработанные элементы
+    /// Находит ближайший элемент указанной категории в пределах заданного расстояния
     /// </summary>
     /// <param name="doc">Текущий документ Revit</param>
     /// <param name="searchPoint">Точка поиска</param>
     /// <param name="category">Категория искомых элементов</param>
-    /// <param name="elementsToExclude">Коллекция ID элементов, которые нужно исключить из поиска</param>
-    /// <param name="maxSearchDistance">Максимальное расстояние поиска (по умолчанию - 1000 мм)</param>
+    /// <param name="maxSearchDistance">Максимальное расстояние поиска (по умолчанию - неограниченно)</param>
     /// <returns>Ближайший элемент или null, если ничего не найдено</returns>
-    private Element FindNearestElementOfCategory(
-        Document doc,
-        XYZ searchPoint,
-        BuiltInCategory category,
-        ICollection<ElementId> elementsToExclude = null,
-        double maxSearchDistance = 1000)
+    private Element FindNearestElementOfCategory(Document doc, XYZ searchPoint, BuiltInCategory category,
+        double maxSearchDistance = double.MaxValue)
     {
-        maxSearchDistance = maxSearchDistance.ToInches();
-        // Оптимизация: фильтруем только видимые элементы, которые не удалены
+        // Получаем все элементы указанной категории в активном виде
         FilteredElementCollector collector = new FilteredElementCollector(doc, doc.ActiveView.Id)
             .OfCategory(category)
             .WhereElementIsNotElementType()
@@ -367,16 +270,10 @@ public class CopyAnnotationsServices
 
         Element nearestElement = null;
         double minDistance = double.MaxValue;
-
-        // Предварительная фильтрация по ограничивающим коробкам
+// Предварительная фильтрация по ограничивающим коробкам
         List<Element> potentialElements = new List<Element>();
-
         foreach (Element element in collector)
         {
-            // Пропускаем элементы из списка исключений
-            if (elementsToExclude != null && elementsToExclude.Contains(element.Id))
-                continue;
-
             BoundingBoxXYZ bb = element.get_BoundingBox(null);
             if (bb != null)
             {
