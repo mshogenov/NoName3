@@ -26,7 +26,7 @@ public class CopyAnnotationsServices
             tg.Start();
             using Transaction trans = new Transaction(_doc, "Копирование первой аннотации");
             trans.Start();
-            var copiedTagId = CopiedTag(originalTag, translationVector);
+            ElementId? copiedTagId = CopiedTag(originalTag, translationVector);
             if (copiedTagId == null)
             {
                 trans.RollBack();
@@ -38,9 +38,22 @@ public class CopyAnnotationsServices
             trans.Commit();
             using Transaction trans2 = new Transaction(_doc, "Копирование остальных аннотаций");
             trans2.Start();
-            var translationVector2 = GetTranslationVector(copiedTagId, originalTag);
-            _doc?.Delete(copiedTagId);
-            CreateTags(tagsData, translationVector2);
+            if (copiedTagId != null && _doc?.GetElement(copiedTagId) != null)
+            {
+                // Получаем вектор трансляции, если можем
+                var vector = GetTranslationVector(copiedTagId, originalTag);
+                // Удаляем скопированный элемент
+                _doc.Delete(copiedTagId);
+                CreateTags(tagsData, vector);
+            }
+            else
+            {
+                trans2.RollBack();
+                tg.RollBack();
+                TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
+                return;
+            }
+
             trans2.Commit();
             tg.Commit();
         }
@@ -224,17 +237,18 @@ public class CopyAnnotationsServices
             // Если какая-то из позиций равна null, возвращаем null или используем альтернативу
             return null;
         }
+
         translationVector2 = (originalTag.TagHeadPosition - copyTag.TagHeadPosition).Multiply(-1);
         return translationVector2;
     }
 
     private ElementId? CopiedTag(TagData originalTag, XYZ translationVector)
     {
-        ElementId copiedTagId = ElementTransformUtils.CopyElement(
+        ElementId? copiedTagId = ElementTransformUtils.CopyElement(
             _doc,
             originalTag.Id,
             translationVector
-        ).First();
+        ).FirstOrDefault();
         return copiedTagId;
     }
 
