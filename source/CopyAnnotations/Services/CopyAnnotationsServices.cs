@@ -26,7 +26,7 @@ public class CopyAnnotationsServices
             tg.Start();
             using Transaction trans = new Transaction(_doc, "Копирование первой аннотации");
             trans.Start();
-            ElementId? copiedTagId = CopiedTag(originalTag, translationVector);
+            ElementId copiedTagId = CopiedTag(originalTag, translationVector);
             if (copiedTagId == null)
             {
                 trans.RollBack();
@@ -232,7 +232,7 @@ public class CopyAnnotationsServices
         if (copyTag == null) return null;
 
         // Добавляем проверки на null для TagHeadPosition
-        if (originalTag?.TagHeadPosition == null || copyTag?.TagHeadPosition == null)
+        if (originalTag?.TagHeadPosition == null || copyTag.TagHeadPosition == null)
         {
             // Если какая-то из позиций равна null, возвращаем null или используем альтернативу
             return null;
@@ -242,13 +242,13 @@ public class CopyAnnotationsServices
         return translationVector2;
     }
 
-    private ElementId? CopiedTag(TagData originalTag, XYZ translationVector)
+    private ElementId CopiedTag(TagData originalTag, XYZ translationVector)
     {
-        ElementId? copiedTagId = ElementTransformUtils.CopyElement(
+        ElementId copiedTagId = ElementTransformUtils.CopyElement(
             _doc,
             originalTag.Id,
             translationVector
-        ).FirstOrDefault();
+        ).First();
         return copiedTagId;
     }
 
