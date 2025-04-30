@@ -280,6 +280,14 @@ namespace RevitAddIn2;
                 .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Отметка высоты 32.ico");
 
             #endregion
+            
+            #region CopyAnnotations
+
+            panelSystemCreatingSchematics.AddPushButton<CopyAnnotationsCommand>("Копировать\nаннотации")
+                .SetImage("/RevitAddIn2;component/Resources/Icons/kopirovat_v2swjczhusqj_16.png")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/kopirovat_v2swjczhusqj_32.png");
+
+            #endregion
 
             #region ElementsTypicalFloor
 

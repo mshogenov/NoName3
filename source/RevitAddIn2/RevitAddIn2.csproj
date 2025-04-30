@@ -109,9 +109,14 @@
       <Resource Include="Resources\Icons\Обновить виды 32.ico" />
       <None Remove="Resources\Icons\Обновить виды 16.ico" />
       <Resource Include="Resources\Icons\Обновить виды 16.ico" />
+      <None Remove="Resources\Icons\kopirovat_v2swjczhusqj_32.png" />
+      <Resource Include="Resources\Icons\kopirovat_v2swjczhusqj_32.png" />
+      <None Remove="Resources\Icons\kopirovat_v2swjczhusqj_16.png" />
+      <Resource Include="Resources\Icons\kopirovat_v2swjczhusqj_16.png" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\CopyAnnotations\CopyAnnotations.csproj" />
       <ProjectReference Include="..\DesignationOfRisers\DesignationOfRisers.csproj" />
       <ProjectReference Include="..\ElementsTypicalFloor\ElementsTypicalFloor.csproj" />
       <ProjectReference Include="..\LastAllocation\LastAllocation.csproj" />
