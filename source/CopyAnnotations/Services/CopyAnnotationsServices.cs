@@ -23,11 +23,13 @@ public class CopyAnnotationsServices
         }
         catch (Autodesk.Revit.Exceptions.OperationCanceledException)
         {
-            // Пользователь отменил операцию
+            return;
+          
         }
 
         List<TagModel> tagModels = [];
         List<TextNoteModel> textNoteModels = [];
+        List<AnnotationSymbol> annotationSymbols = [];
         foreach (Reference tagRef in selectedTagRefs)
         {
             if (_doc?.GetElement(tagRef) is IndependentTag tag)
@@ -38,6 +40,11 @@ public class CopyAnnotationsServices
             if (_doc?.GetElement(tagRef) is TextNote textNote)
             {
                 textNoteModels.Add(new TextNoteModel(textNote));
+            }
+
+            if (_doc?.GetElement(tagRef) is AnnotationSymbol annotationSymbol)
+            {
+                annotationSymbols.Add(annotationSymbol);
             }
         }
 
@@ -94,6 +101,18 @@ public class CopyAnnotationsServices
             foreach (var textNote in textNoteModels)
             {
                 ElementId copiedTagId = CopiedTag(textNote.TextNote, translationVector);
+            }
+
+            trans.Commit();
+        }
+
+        if (annotationSymbols.Any())
+        {
+            using Transaction trans = new Transaction(_doc, "Копирование текстовых примечаний");
+            trans.Start();
+            foreach (var annotationSymbol in annotationSymbols)
+            {
+                ElementId copiedTagId = CopiedTag(annotationSymbol, translationVector);
             }
 
             trans.Commit();
