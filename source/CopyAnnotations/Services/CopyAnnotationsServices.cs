@@ -30,6 +30,7 @@ public class CopyAnnotationsServices
         List<TagModel> tagModels = [];
         List<TextNoteModel> textNoteModels = [];
         List<AnnotationSymbol> annotationSymbols = [];
+        List<DimensionModel> dimensionModels = [];
         foreach (Reference tagRef in selectedTagRefs)
         {
             if (_doc?.GetElement(tagRef) is IndependentTag tag)
@@ -37,6 +38,10 @@ public class CopyAnnotationsServices
                 tagModels.Add(new TagModel(tag));
             }
 
+            if (_doc?.GetElement(tagRef) is Dimension dimension)
+            {
+                dimensionModels.Add(new DimensionModel(dimension));
+            }
             if (_doc?.GetElement(tagRef) is TextNote textNote)
             {
                 textNoteModels.Add(new TextNoteModel(textNote));
@@ -108,7 +113,7 @@ public class CopyAnnotationsServices
 
         if (annotationSymbols.Any())
         {
-            using Transaction trans = new Transaction(_doc, "Копирование текстовых примечаний");
+            using Transaction trans = new Transaction(_doc, "Копирование обозначений");
             trans.Start();
             foreach (var annotationSymbol in annotationSymbols)
             {
