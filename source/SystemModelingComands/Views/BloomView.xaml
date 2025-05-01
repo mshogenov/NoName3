@@ -9,6 +9,7 @@
     xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
     mc:Ignorable="d"
     Width="500"
+    Background="{DynamicResource WindowBackgroundBrush}"
     SizeToContent="Height"
     MaxHeight="800"
     WindowStartupLocation="Manual"
@@ -20,7 +21,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
-                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/LightTheme.xaml" />
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
@@ -28,7 +29,7 @@
     </Window.Resources>
 
     <Grid
-        Style="{StaticResource Grid}">
+       >
         <Grid.RowDefinitions>
             <RowDefinition Height="5*" />
             <RowDefinition Height="Auto" />

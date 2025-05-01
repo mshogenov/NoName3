@@ -117,6 +117,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
 
     private ProgressWindow _progressWindow;
     private readonly DataStorageFactory _storageFactory;
+    private readonly SettingsManager _settingsManager;
 
 
     public UpdatingParametersViewModel()
@@ -153,6 +154,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
         _parametersDataStorage = _storageFactory.GetStorage<ParametersDataStorage>();
         AllocationDataStorages(collector);
         InitializeViewModels();
+        _settingsManager = new SettingsManager(_storageFactory);
     }
 
     private void AllocationDataStorages(IList<Element> collector)

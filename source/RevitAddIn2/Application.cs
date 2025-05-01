@@ -189,15 +189,6 @@ namespace RevitAddIn2;
 
             #endregion
 
-
-            #region LastAllocation
-
-            panelSystemModeling.AddPushButton<LastAllocationCommand>("Последние\nвыделенные")
-                .SetImage("/RevitAddIn2;component/Resources/Icons/Последнее выделенное 16.ico")
-                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Последнее выделенное 32.ico");
-
-            #endregion
-
             #region RoomsInSpaces
 
             panelSystemModeling.AddPushButton<RoomsInSpacesCommand>("Помещения в\nпространства")
@@ -295,6 +286,13 @@ namespace RevitAddIn2;
                 .SetImage("/RevitAddIn2;component/Resources/Icons/Элементы типового этажа 16.ico")
                 .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Элементы типового этажа 32.ico");
 
+            #endregion
+            
+            #region LastAllocation
+
+            panelOther.AddPushButton<LastAllocationCommand>("Последние\nвыделенные")
+                .SetImage("/RevitAddIn2;component/Resources/Icons/Последнее выделенное 16.ico")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Последнее выделенное 32.ico");
             #endregion
 
             #region SetNearestLevelBelow

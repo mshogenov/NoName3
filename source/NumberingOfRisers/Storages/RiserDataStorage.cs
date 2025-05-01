@@ -15,6 +15,8 @@ public class RiserDataStorage
         var verticalPipesAlongLocations = verticalPipes.GroupBy(p => p, new PipeIEqualityComparer()).ToList();
         Risers = verticalPipesAlongLocations
             .Select(verticalPipesAlongLocation => new Riser(verticalPipesAlongLocation))
-            .Where(x => x.TotalLength > totalLengthRiser).ToList().OrderBy(x => x.Number).ToList();
+            .Where(x => x.TotalLength > totalLengthRiser && x.HasValidGaps) // Добавлена проверка HasValidGaps
+            .OrderBy(x => x.Number)
+            .ToList();
     }
 }

@@ -7,18 +7,19 @@
     xmlns:viewModel="clr-namespace:MepElementsCopy.ViewModels"
     xmlns:local="clr-namespace:MepElementsCopy.Views"
     mc:Ignorable="d"
-    xmlns:converter="clr-namespace:MepElementsCopy.Views.Converters"
+    xmlns:converter="clr-namespace:NoNameApi.Views.Converters;assembly=NoNameAPI"
     xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
     xmlns:controls="clr-namespace:NoNameApi.Views.Controls;assembly=NoNameAPI"
-    Height="600" Width="400"
+    Height="600" Width="350"
     Background="{DynamicResource WindowBackgroundBrush}"
     d:DataContext="{d:DesignInstance viewModel:MepElementsCopyLevelsViewModel}"
     WindowStartupLocation="CenterScreen"
     Title="Копировать элементы"
-    MinWidth="300">
+    MinWidth="350">
     <Window.Resources>
         <ResourceDictionary>
             <!-- Сначала все ресурсы, которые не являются словарями -->
+            <converter:InverseBoolVisibilityConverter x:Key="InverseBoolVisibilityConverter" />
             <converter:BoolVisibilityConverter x:Key="BoolVisibilityConverter" />
             <Storyboard x:Key="NotificationFadeIn">
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.3" />
@@ -42,8 +43,6 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <TabControl
-
-            Margin="5"
             Style="{DynamicResource TabControlStyle}">
             <TabItem Header="Копировать по уровням"
                      Style="{DynamicResource TabItemStyle}">
@@ -53,45 +52,78 @@
                         <RowDefinition Height="2*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
+                    <Border>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <CheckBox Content="Автоматически устанавливать базовый уровень"
+                                      IsChecked="{Binding AutomaticallySetBaseLineIsChecked }"
+                                      x:Name="AutomaticallySetBaseLineCheckBox"
+                                      Style="{DynamicResource JellyCheckboxStyle}" />
+                            <GroupBox Grid.Row="1"
+                                      Visibility="{Binding IsChecked, ElementName=AutomaticallySetBaseLineCheckBox, 
+                                      Converter={StaticResource InverseBoolVisibilityConverter}}"
+                                      Margin="0 5"
+                                      Header="Установить базовый уровень"
+                                      Style="{DynamicResource GroupBoxStyle}">
+                                <StackPanel>
+                                    <ComboBox ItemsSource="{Binding LevelModels}"
+                                              SelectedItem="{Binding SelectedLevelModel, UpdateSourceTrigger=PropertyChanged,Mode=TwoWay}"
+                                              Style="{DynamicResource ModernComboBoxStyle}"
+                                              Margin="0,0,0,5">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Name}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
 
-                    <GroupBox Grid.Row="0"
-                              Margin="5"
-                              Header="Установить базовый уровень"
-                              Style="{DynamicResource GroupBoxStyle}">
-                        <StackPanel>
-                            <ComboBox ItemsSource="{Binding LevelModels}"
-                                      SelectedItem="{Binding SelectedLevelModel, UpdateSourceTrigger=PropertyChanged,Mode=TwoWay}"
-                                      Style="{DynamicResource ModernComboBoxStyle}"
-                                      Margin="0,0,0,5">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Name}" />
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
+                                    <Button Content="Установить уровень"
+                                            Padding="3"
+                                            Command="{Binding SetBaseLevelCommand}"
+                                            Style="{DynamicResource CommonButtonStyle2}" />
+                                </StackPanel>
+                            </GroupBox>
+                        </Grid>
 
-                            <Button Content="Установить уровень"
-                                    Padding="3"
-                                    Command="{Binding SetBaseLevelCommand}"
-                                    Style="{DynamicResource CommonButtonStyle2}" />
-                        </StackPanel>
-                    </GroupBox>
+                    </Border>
 
                     <GroupBox Grid.Row="1"
-                              Header="Уровни"
-                              Margin="5 0 5 5"
+                              Header="Выбрать уровни:"
+                              Margin="0 5"
+                              Padding="0"
                               Style="{DynamicResource GroupBoxStyle}">
-                        <ListView ItemsSource="{Binding LevelModels}"
-                                  Style="{DynamicResource ListViewStyle}"
-                                  ScrollViewer.VerticalScrollBarVisibility="Auto">
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <CheckBox Content="{Binding Path=Name}"
-                                              IsChecked="{Binding Path=IsChecked}"
-                                              Style="{DynamicResource JellyCheckboxStyle}" />
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <ListView ItemsSource="{Binding LevelModels}"
+                                      Style="{DynamicResource ListViewStyle}"
+                                      ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding Path=Name}"
+                                                  IsChecked="{Binding Path=IsChecked,UpdateSourceTrigger=PropertyChanged}"
+                                                  Style="{DynamicResource JellyCheckboxStyle}" />
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                            <Separator Grid.Row="1" Style="{DynamicResource ShadowSeparator}"
+                                       Margin="5 0"/>
+                            <DockPanel Grid.Row="2" VerticalAlignment="Top" Margin="5 0 ">
+                                <Button Command="{Binding HighlightAllCommand}"
+                                        Style="{DynamicResource SelectAllButton}">
+                                </Button>
+                                <Button Command="{Binding DeselectCommand}"
+                                        Style="{DynamicResource ClearSelectionButton}">
+                                </Button>
+                            </DockPanel>
+                        </Grid>
+
                     </GroupBox>
                     <DockPanel Grid.Row="2"
                                HorizontalAlignment="Right">
@@ -106,7 +138,7 @@
                                 Command="{Binding CloseCommand}"
                                 CommandParameter="{Binding  RelativeSource={RelativeSource AncestorType=Window}}"
                                 Style="{DynamicResource OutlineCloseButtonStyle}"
-                                Margin="10,0,5,0" />
+                                Margin="10,0,0,0" />
                     </DockPanel>
 
                 </Grid>
@@ -118,7 +150,7 @@
             </TabItem>
         </TabControl>
         <StatusBar Grid.Row="1"
-                   Margin="5"
+                   Margin="0 5"
                    Style="{DynamicResource StatusBarStyle}">
             <TextBlock
                 Style="{DynamicResource TextBlockStyle}"
