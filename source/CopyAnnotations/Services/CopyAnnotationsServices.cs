@@ -26,56 +26,85 @@ public class CopyAnnotationsServices
             // Пользователь отменил операцию
         }
 
-        var tagsData = GetTagsData(selectedTagRefs);
-        var originalTag = tagsData.FirstOrDefault();
-        if (originalTag == null) return;
+        List<TagModel> tagModels = [];
+        List<TextNoteModel> textNoteModels = [];
+        foreach (Reference tagRef in selectedTagRefs)
+        {
+            if (_doc?.GetElement(tagRef) is IndependentTag tag)
+            {
+                tagModels.Add(new TagModel(tag));
+            }
+
+            if (_doc?.GetElement(tagRef) is TextNote textNote)
+            {
+                textNoteModels.Add(new TextNoteModel(textNote));
+            }
+        }
         // Вычисляем вектор перемещения между опорными элементами
         XYZ translationVector = targetBasePoint - sourceBasePoint;
         using TransactionGroup tg = new TransactionGroup(_doc, "Копирование аннотаций");
         tg.Start();
-
-        using Transaction trans = new Transaction(_doc, "Копирование первой аннотации");
-        trans.Start();
-        ElementId copiedTagId = CopiedTag(originalTag, translationVector);
-        if (copiedTagId == null)
+        if (tagModels.Any())
         {
-            trans.RollBack();
-            tg.RollBack();
-            TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
-            return;
-        }
+            var originalTag = tagModels.FirstOrDefault();
+            if (originalTag == null) return;
+          
 
-        trans.Commit();
-        if (tagsData.Count > 1)
-        {
-            using Transaction trans2 = new Transaction(_doc, "Копирование остальных аннотаций");
-            trans2.Start();
-            if (copiedTagId != null && _doc?.GetElement(copiedTagId) != null)
+            using Transaction trans = new Transaction(_doc, "Копирование первой аннотации");
+            trans.Start();
+            ElementId copiedTagId = CopiedTag(originalTag.IndependentTag, translationVector);
+            if (copiedTagId == null)
             {
-                // Получаем вектор трансляции, если можем
-                var vector = GetTranslationVector(copiedTagId, originalTag);
-                // Удаляем скопированный элемент
-                _doc.Delete(copiedTagId);
-                CreateTags(tagsData, vector);
-            }
-            else
-            {
-                trans2.RollBack();
+                trans.RollBack();
                 tg.RollBack();
                 TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
                 return;
             }
 
-            trans2.Commit();
+            trans.Commit();
+            if (tagModels.Count > 1)
+            {
+                using Transaction trans2 = new Transaction(_doc, "Копирование марок");
+                trans2.Start();
+                if (copiedTagId != null && _doc?.GetElement(copiedTagId) != null)
+                {
+                    // Получаем вектор трансляции, если можем
+                    var vector = GetTranslationVector(copiedTagId, originalTag);
+                    // Удаляем скопированный элемент
+                    _doc.Delete(copiedTagId);
+                    CreateTags(tagModels, vector);
+                }
+                else
+                {
+                    trans2.RollBack();
+                    tg.RollBack();
+                    TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
+                    return;
+                }
+
+                trans2.Commit();
+            }
+        }
+
+        if (textNoteModels.Any())
+        {
+            using Transaction trans = new Transaction(_doc, "Копирование текстовых примечаний");
+            trans.Start();
+            foreach (var textNote in textNoteModels)
+            {
+                ElementId copiedTagId = CopiedTag(textNote.TextNote, translationVector);
+            }
+
+            trans.Commit();
         }
 
         tg.Commit();
     }
 
-    private void CreateTags(List<TagData> tagsData, XYZ? translationVector)
+    private void CreateTags(List<TagModel> tagsData, XYZ? translationVector)
     {
         if (!tagsData.Any() || translationVector == null) return;
-        foreach (TagData tagData in tagsData)
+        foreach (TagModel tagData in tagsData)
         {
             HashSet<ElementId?> processedElementIdsInCurrentTagData = [];
             var firstTaggedElement = tagData.TaggedElements.FirstOrDefault();
@@ -110,17 +139,17 @@ public class CopyAnnotationsServices
         }
     }
 
-    private IndependentTag? CreateTag(TagData tagData, XYZ? translationVector2)
+    private IndependentTag? CreateTag(TagModel tagModel, XYZ? translationVector2)
     {
-        var firstTaggedElement = tagData.TaggedElements.FirstOrDefault();
+        var firstTaggedElement = tagModel.TaggedElements.FirstOrDefault();
         if (firstTaggedElement == null)
             return null;
         // Используем вектор трансляции или нулевой вектор, если он null
         XYZ vector = translationVector2 ?? XYZ.Zero;
 
         var searchPoint = firstTaggedElement.Position + vector;
-        var newTagHead = tagData.TagHeadPosition + vector;
-        var nearestElement = new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, tagData.TagCategory));
+        var newTagHead = tagModel.TagHeadPosition + vector;
+        var nearestElement = new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, tagModel.TagCategory));
         if (nearestElement.Element == null || nearestElement.Position == null)
             return null;
         var displacement = nearestElement.Position.Subtract(searchPoint);
@@ -132,11 +161,11 @@ public class CopyAnnotationsServices
                 // Создаем новую марку
                 newTag = IndependentTag.Create(
                     _doc, // документ
-                    tagData.TagTypeId, // тип марки
+                    tagModel.TagTypeId, // тип марки
                     _doc?.ActiveView.Id, // id вида
                     new Reference(nearestElement.Element), // ссылка на элемент
-                    tagData.HasLeader, // наличие выноски
-                    tagData.Orientation, // ориентация
+                    tagModel.HasLeader, // наличие выноски
+                    tagModel.Orientation, // ориентация
                     newTagHead.Add(displacement) // позиция марки
                 );
             }
@@ -152,10 +181,10 @@ public class CopyAnnotationsServices
             return null;
 
         newTag.TagHeadPosition = newTagHead.Add(displacement);
-        newTag.LeaderEndCondition = tagData.LeaderEndCondition;
+        newTag.LeaderEndCondition = tagModel.LeaderEndCondition;
         // Если есть выноска, устанавливаем её точки
-        if (!tagData.HasLeader) return newTag;
-        foreach (var leader in tagData.LeadersEnd)
+        if (!tagModel.HasLeader) return newTag;
+        foreach (var leader in tagModel.LeadersEnd)
         {
             if (leader.TaggedElement.Id?.Value != firstTaggedElement.Id?.Value) continue;
             try
@@ -171,7 +200,7 @@ public class CopyAnnotationsServices
             }
         }
 
-        foreach (var leader in tagData.LeadersElbow)
+        foreach (var leader in tagModel.LeadersElbow)
         {
             if (leader.TaggedElement.Id?.Value != firstTaggedElement.Id?.Value) continue;
             try
@@ -190,10 +219,10 @@ public class CopyAnnotationsServices
         return newTag;
     }
 
-    private static void SetPositionLeaderElbow(TagData tagData, Dictionary<ElementModel, ElementModel> dictionary,
+    private static void SetPositionLeaderElbow(TagModel tagModel, Dictionary<ElementModel, ElementModel> dictionary,
         IndependentTag? newTag, XYZ? translationVector2)
     {
-        foreach (var leaderElbow in tagData.LeadersElbow)
+        foreach (var leaderElbow in tagModel.LeadersElbow)
         {
             foreach (var kvp in dictionary)
             {
@@ -210,10 +239,10 @@ public class CopyAnnotationsServices
         }
     }
 
-    private static void SetPositionLeaderEnd(TagData tagData, Dictionary<ElementModel, ElementModel> dictionary,
+    private static void SetPositionLeaderEnd(TagModel tagModel, Dictionary<ElementModel, ElementModel> dictionary,
         IndependentTag? newTag, XYZ? translationVector2)
     {
-        foreach (var leaderEnd in tagData.LeadersEnd)
+        foreach (var leaderEnd in tagModel.LeadersEnd)
         {
             foreach (var kvp in dictionary)
             {
@@ -229,11 +258,11 @@ public class CopyAnnotationsServices
         }
     }
 
-    private XYZ? GetTranslationVector(ElementId? copiedTagId, TagData? originalTag)
+    private XYZ? GetTranslationVector(ElementId? copiedTagId, TagModel? originalTag)
     {
         XYZ? translationVector2 = null;
         if (copiedTagId == null) return translationVector2;
-        TagData copyTag = new TagData(_doc.GetElement(copiedTagId) as IndependentTag);
+        TagModel copyTag = new TagModel(_doc.GetElement(copiedTagId) as IndependentTag);
         if (copyTag == null) return null;
 
         // Добавляем проверки на null для TagHeadPosition
@@ -247,7 +276,7 @@ public class CopyAnnotationsServices
         return translationVector2;
     }
 
-    private ElementId CopiedTag(TagData originalTag, XYZ translationVector)
+    private ElementId CopiedTag(Element originalTag, XYZ translationVector)
     {
         ElementId copiedTagId = ElementTransformUtils.CopyElement(
             _doc,
@@ -276,18 +305,22 @@ public class CopyAnnotationsServices
         return distance <= tolerance;
     }
 
-    private List<TagData> GetTagsData(List<Reference> selectedTagRefs)
+    private void GetTagsData(List<Reference> selectedTagRefs)
     {
-        List<TagData> tagsData = [];
+        List<TagModel> tagsData = [];
+        List<TextNoteModel> textNoteModels = [];
         foreach (Reference tagRef in selectedTagRefs)
         {
             if (_doc?.GetElement(tagRef) is IndependentTag tag)
             {
-                tagsData.Add(new TagData(tag));
+                tagsData.Add(new TagModel(tag));
+            }
+
+            if (_doc?.GetElement(tagRef) is TextNote textNote)
+            {
+                textNoteModels.Add(new TextNoteModel(textNote));
             }
         }
-
-        return tagsData;
     }
 
     private XYZ GetPoint(string status)

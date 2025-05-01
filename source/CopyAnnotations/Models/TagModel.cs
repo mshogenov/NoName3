@@ -1,7 +1,8 @@
 namespace CopyAnnotations.Models;
 
-public class TagData
+public class TagModel
 {
+    public IndependentTag IndependentTag { get; set; }
     public ElementId Id { get; set; }
     public ElementId TagTypeId { get; set; }
     public List<ElementModel> TaggedElements { get; set; } = [];
@@ -14,9 +15,10 @@ public class TagData
     public LeaderEndCondition LeaderEndCondition { get; set; }
     public bool MergeElbows { get; set; }
 
-    public TagData(IndependentTag tag)
+    public TagModel(IndependentTag tag)
     {
-       if (tag == null) return;
+        if (tag == null) return;
+        IndependentTag = tag;
         Id = tag.Id;
         TagHeadPosition = tag.TagHeadPosition;
         HasLeader = tag.HasLeader;
