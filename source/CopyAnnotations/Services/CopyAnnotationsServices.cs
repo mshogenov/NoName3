@@ -24,7 +24,6 @@ public class CopyAnnotationsServices
         catch (Autodesk.Revit.Exceptions.OperationCanceledException)
         {
             return;
-          
         }
 
         List<TagModel> tagModels = [];
@@ -42,6 +41,7 @@ public class CopyAnnotationsServices
             {
                 dimensionModels.Add(new DimensionModel(dimension));
             }
+
             if (_doc?.GetElement(tagRef) is TextNote textNote)
             {
                 textNoteModels.Add(new TextNoteModel(textNote));
@@ -55,14 +55,13 @@ public class CopyAnnotationsServices
 
         // Вычисляем вектор перемещения между опорными элементами
         XYZ translationVector = targetBasePoint - sourceBasePoint;
+        XYZ vector = null;
         using TransactionGroup tg = new TransactionGroup(_doc, "Копирование аннотаций");
         tg.Start();
         if (tagModels.Any())
         {
             var originalTag = tagModels.FirstOrDefault();
             if (originalTag == null) return;
-
-
             using Transaction trans = new Transaction(_doc, "Копирование первой аннотации");
             trans.Start();
             ElementId copiedTagId = CopiedTag(originalTag.IndependentTag, translationVector);
@@ -82,7 +81,7 @@ public class CopyAnnotationsServices
                 if (copiedTagId != null && _doc?.GetElement(copiedTagId) != null)
                 {
                     // Получаем вектор трансляции, если можем
-                    var vector = GetTranslationVector(copiedTagId, originalTag);
+                    vector = GetTranslationVectorTag(copiedTagId, originalTag);
                     // Удаляем скопированный элемент
                     _doc.Delete(copiedTagId);
                     CreateTags(tagModels, vector);
@@ -96,6 +95,53 @@ public class CopyAnnotationsServices
                 }
 
                 trans2.Commit();
+            }
+        }
+
+        if (dimensionModels.Any())
+        {
+            if (vector == null)
+            {
+                var originalDimension = dimensionModels.FirstOrDefault();
+                if (originalDimension == null) return;
+                using Transaction trans = new Transaction(_doc, "Копирование первой аннотации");
+                trans.Start();
+                ElementId copiedTagId = CopiedTag(originalDimension.Dimension, translationVector);
+                if (copiedTagId == null)
+                {
+                    trans.RollBack();
+                    tg.RollBack();
+                    TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
+                    return;
+                }
+
+                trans.Commit();
+                if (dimensionModels.Count > 1)
+                {
+                    using Transaction trans2 = new Transaction(_doc, "Копирование марок");
+                    trans2.Start();
+                    if (copiedTagId != null && _doc?.GetElement(copiedTagId) != null)
+                    {
+                        // Получаем вектор трансляции, если можем
+                        vector = GetTranslationVectorDimension(copiedTagId, originalDimension);
+                        // Удаляем скопированный элемент
+                        _doc.Delete(copiedTagId);
+                        CreateDimensions(dimensionModels, vector);
+                    }
+                    else
+                    {
+                        trans2.RollBack();
+                        tg.RollBack();
+                        TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
+                        return;
+                    }
+
+                    trans2.Commit();
+                }
+            }
+            else
+            {
+                CreateDimensions(dimensionModels, vector);
             }
         }
 
@@ -161,6 +207,20 @@ public class CopyAnnotationsServices
             SetPositionLeaderElbow(tagData, dictionary, newTag, translationVector);
             SetPositionLeaderEnd(tagData, dictionary, newTag, translationVector);
             newTag.MergeElbows = tagData.MergeElbows;
+        }
+    }
+
+    private void CreateDimensions(List<DimensionModel> dimensionModels, XYZ? translationVector)
+    {
+        if (!dimensionModels.Any() || translationVector == null) return;
+        foreach (DimensionModel dimensionModel in dimensionModels)
+        {
+            HashSet<ElementId?> processedElementIdsInCurrentTagData = [];
+            var firstTaggedElement = dimensionModel.References.FirstOrDefault().TaggedElement;
+            if (firstTaggedElement == null) continue;
+            // Отмечаем первый элемент как обработанный в текущем TagData
+            processedElementIdsInCurrentTagData.Add(firstTaggedElement.Id);
+            Dimension? newTag = CreateDimension(dimensionModel, translationVector);
         }
     }
 
@@ -249,6 +309,122 @@ public class CopyAnnotationsServices
         return newTag;
     }
 
+    private Dimension? CreateDimension(DimensionModel dimensionModel, XYZ? translationVector)
+    {
+        var firstTaggedElement = dimensionModel.References.FirstOrDefault().TaggedElement;
+        if (firstTaggedElement == null)
+            return null;
+        // Используем вектор трансляции или нулевой вектор, если он null
+        XYZ vector = translationVector;
+
+        var searchPoint = firstTaggedElement.Position + vector;
+
+        // 1. Получаем ссылки из сохраненной модели
+        ReferenceArray references = new ReferenceArray();
+        foreach (ReferenceDimensionModel refModel in dimensionModel.References)
+        {
+            Reference reference = GetReferenceFromModel(_doc, refModel);
+            if (reference != null)
+            {
+                references.Append(reference);
+            }
+        }
+        Line dimensionLine = CreateDimensionLine(dimensionModel.Segments);
+        Dimension newDimension = _doc.Create.NewDimension(Context.ActiveView, dimensionLine, references,
+            dimensionModel.DimensionType);
+
+        // var newTagHead = dimensionModel.Segments.FirstOrDefault().TextPosition + vector;
+        // var nearestElement =
+        //     new ElementModel(FindNearestElementOfCategory(_doc, searchPoint, dimensionModel.TagCategory));
+        // if (nearestElement.Element == null || nearestElement.Position == null)
+        //     return null;
+        // var displacement = nearestElement.Position.Subtract(searchPoint);
+        // Dimension? newDimension = null;
+        // if (ArePointsEqual(searchPoint, nearestElement.Position))
+        // {
+        //     try
+        //     {
+        //         newDimension = _doc.Create.NewDimension(Context.ActiveView, dimensionLine, references,
+        //             dimensionModel.DimensionType);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         // Обработка возможных ошибок при создании тега
+        //         TaskDialog.Show("Ошибка создания тега", ex.Message);
+        //         return null;
+        //     }
+        // }
+        //
+        // if (newDimension == null)
+        //     return null;
+
+        return newDimension;
+    }
+
+    /// <summary>
+    /// Получает ссылку из сохраненной модели
+    /// </summary>
+    private Reference GetReferenceFromModel(Document doc, ReferenceDimensionModel refModel)
+    {
+        if (refModel.TaggedElement == null || refModel.TaggedElement.Id == null)
+            return null;
+
+        // Получаем элемент по Id
+        Element element = doc.GetElement(refModel.TaggedElement.Id);
+        if (element == null)
+            return null;
+
+        // В зависимости от типа ссылки и элемента, получаем соответствующую Reference
+        switch (refModel.ElementReferenceType)
+        {
+            case ElementReferenceType.REFERENCE_TYPE_NONE:
+                return new Reference(element);
+
+            case ElementReferenceType.REFERENCE_TYPE_SURFACE:
+                // Для поверхностных ссылок пытаемся получить референс от грани
+                return new Reference(element);
+
+            case ElementReferenceType.REFERENCE_TYPE_CUT_EDGE:
+                // Для рёберных ссылок пытаемся получить референс от ребра
+                return new Reference(element);
+
+            default:
+                return new Reference(element);
+        }
+    }
+
+    /// <summary>
+    /// Создает линию для размера на основе сохраненных сегментов
+    /// </summary>
+    private Line CreateDimensionLine(List<DimensionSegmentModel> segments)
+    {
+        if (segments == null || segments.Count < 1)
+            return null;
+
+        // Используем первый и последний сегмент для определения направления линии
+        // или точки начала и конца, если сегментов несколько
+        XYZ startPoint, endPoint;
+
+        if (segments.Count == 1)
+        {
+            // Для одного сегмента используем точку Origin и пытаемся определить направление
+            startPoint = segments[0].Origin;
+
+            // Примерно определяем конечную точку по TextPosition
+            XYZ direction = segments[0].TextPosition - segments[0].Origin;
+            direction = direction.Normalize();
+            endPoint = startPoint + direction * 5.0; // 5 единиц длина линии размера (примерно)
+        }
+        else
+        {
+            // Для нескольких сегментов используем первый и последний
+            startPoint = segments.First().Origin;
+            endPoint = segments.Last().Origin;
+        }
+
+        return Line.CreateBound(startPoint, endPoint);
+    }
+
     private static void SetPositionLeaderElbow(TagModel tagModel, Dictionary<ElementModel, ElementModel> dictionary,
         IndependentTag? newTag, XYZ? translationVector2)
     {
@@ -290,7 +466,7 @@ public class CopyAnnotationsServices
         }
     }
 
-    private XYZ? GetTranslationVector(ElementId? copiedTagId, TagModel? originalTag)
+    private XYZ? GetTranslationVectorTag(ElementId? copiedTagId, TagModel? originalTag)
     {
         XYZ? translationVector2 = null;
         if (copiedTagId == null) return translationVector2;
@@ -305,6 +481,25 @@ public class CopyAnnotationsServices
         }
 
         translationVector2 = (originalTag.TagHeadPosition - copyTag.TagHeadPosition).Multiply(-1);
+        return translationVector2;
+    }
+
+    private XYZ? GetTranslationVectorDimension(ElementId? copiedTagId, DimensionModel? dimensionModel)
+    {
+        XYZ? translationVector2 = null;
+        if (copiedTagId == null) return translationVector2;
+        DimensionModel copyDimension = new DimensionModel(_doc.GetElement(copiedTagId) as Dimension);
+        if (copyDimension == null) return null;
+
+        // Добавляем проверки на null для TagHeadPosition
+        if (dimensionModel?.Segments.First().Origin == null || copyDimension.Segments.First().Origin == null)
+        {
+            // Если какая-то из позиций равна null, возвращаем null или используем альтернативу
+            return null;
+        }
+
+        translationVector2 =
+            (dimensionModel.Segments.First().Origin - copyDimension.Segments.First().Origin).Multiply(-1);
         return translationVector2;
     }
 
