@@ -40,6 +40,7 @@ public class CopyAnnotationsServices
                 textNoteModels.Add(new TextNoteModel(textNote));
             }
         }
+
         // Вычисляем вектор перемещения между опорными элементами
         XYZ translationVector = targetBasePoint - sourceBasePoint;
         using TransactionGroup tg = new TransactionGroup(_doc, "Копирование аннотаций");
@@ -48,7 +49,7 @@ public class CopyAnnotationsServices
         {
             var originalTag = tagModels.FirstOrDefault();
             if (originalTag == null) return;
-          
+
 
             using Transaction trans = new Transaction(_doc, "Копирование первой аннотации");
             trans.Start();
@@ -189,10 +190,12 @@ public class CopyAnnotationsServices
             if (leader.TaggedElement.Id?.Value != firstTaggedElement.Id?.Value) continue;
             try
             {
-                newTag.SetLeaderEnd(
-                    new Reference(nearestElement.Element),
-                    leader.Position.Add(displacement).Add(vector)
-                );
+                if (tagModel.LeaderEndCondition == LeaderEndCondition.Free)
+                {
+                    newTag.SetLeaderEnd(
+                        new Reference(nearestElement.Element),
+                        leader.Position.Add(displacement).Add(vector));
+                }
             }
             catch (Exception)
             {
@@ -205,10 +208,13 @@ public class CopyAnnotationsServices
             if (leader.TaggedElement.Id?.Value != firstTaggedElement.Id?.Value) continue;
             try
             {
-                newTag.SetLeaderElbow(
-                    new Reference(nearestElement.Element),
-                    leader.Position.Add(displacement).Add(vector)
-                );
+                if (tagModel.LeaderEndCondition == LeaderEndCondition.Free)
+                {
+                    newTag.SetLeaderElbow(
+                        new Reference(nearestElement.Element),
+                        leader.Position.Add(displacement).Add(vector)
+                    );
+                }
             }
             catch (Exception)
             {
@@ -224,6 +230,7 @@ public class CopyAnnotationsServices
     {
         foreach (var leaderElbow in tagModel.LeadersElbow)
         {
+            if (tagModel.LeaderEndCondition != LeaderEndCondition.Free) continue;
             foreach (var kvp in dictionary)
             {
                 ElementModel dictionaryKey = kvp.Key;
@@ -244,6 +251,7 @@ public class CopyAnnotationsServices
     {
         foreach (var leaderEnd in tagModel.LeadersEnd)
         {
+            if (tagModel.LeaderEndCondition != LeaderEndCondition.Free) continue;
             foreach (var kvp in dictionary)
             {
                 ElementModel dictionaryKey = kvp.Key;
