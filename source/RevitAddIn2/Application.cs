@@ -79,8 +79,8 @@ namespace RevitAddIn2;
         private void CreateRibbon()
         {
             var panelSystemModeling = Application.CreatePanel("Моделирование", "Фигня");
-            var panelSystemCreatingSchematics = Application.CreatePanel("Схемы", "Фигня");
-            var panelFormationOfSpecification = Application.CreatePanel("Спецификации", "Фигня");
+            var panelSystemCreatingSchematics = Application.CreatePanel("Оформление", "Фигня");
+            var panelFormationOfSpecification = Application.CreatePanel("Спецификация", "Фигня");
             var panelOther = Application.CreatePanel("Прочее", "Фигня");
 
             #region Bloom

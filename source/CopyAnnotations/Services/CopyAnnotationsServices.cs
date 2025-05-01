@@ -175,40 +175,93 @@ public class CopyAnnotationsServices
     private void CreateTags(List<TagModel> tagsData, XYZ? translationVector)
     {
         if (!tagsData.Any() || translationVector == null) return;
+
         foreach (TagModel tagData in tagsData)
         {
             HashSet<ElementId?> processedElementIdsInCurrentTagData = [];
             var firstTaggedElement = tagData.TaggedElements.FirstOrDefault();
             if (firstTaggedElement == null) continue;
+
             // Отмечаем первый элемент как обработанный в текущем TagData
             processedElementIdsInCurrentTagData.Add(firstTaggedElement.Id);
             IndependentTag? newTag = CreateTag(tagData, translationVector);
+
+            if (newTag == null) continue;
+
             Dictionary<ElementModel, ElementModel> dictionary = [];
             foreach (var taggedElement in tagData.TaggedElements)
             {
                 // Пропускаем уже обработанные элементы в этом TagData
                 if (processedElementIdsInCurrentTagData.Contains(taggedElement.Id))
                     continue;
+
                 var searchPoint = taggedElement.Position + translationVector;
+
                 // Ищем ближайший элемент, исключая уже обработанные элементы в текущем TagData
                 ElementModel nearestElement = new ElementModel(FindNearestElementOfCategory(
                     _doc,
                     searchPoint,
                     tagData.TagCategory,
                     processedElementIdsInCurrentTagData));
+
                 if (nearestElement.Element == null || !ArePointsEqual(searchPoint, nearestElement.Position)) continue;
-                dictionary.Add(taggedElement, nearestElement);
-                // Отмечаем этот элемент как обработанный в текущем TagData
-                processedElementIdsInCurrentTagData.Add(nearestElement.Id);
+
+                // Проверяем, не имеет ли элемент уже тег
+                if (!IsElementAlreadyTagged(nearestElement.Element, _doc.ActiveView))
+                {
+                    dictionary.Add(taggedElement, nearestElement);
+                    // Отмечаем этот элемент как обработанный в текущем TagData
+                    processedElementIdsInCurrentTagData.Add(nearestElement.Id);
+                }
             }
 
-            if (newTag == null) continue;
-            newTag.AddReferences(dictionary.Values.Select(x => x.Reference).ToList());
-            SetPositionLeaderElbow(tagData, dictionary, newTag, translationVector);
-            SetPositionLeaderEnd(tagData, dictionary, newTag, translationVector);
-            newTag.MergeElbows = tagData.MergeElbows;
+            // Добавляем ссылки только если есть валидные элементы для добавления
+            if (dictionary.Count > 0)
+            {
+                try
+                {
+                    var referencesToAdd = dictionary.Values
+                        .Select(x => x.Reference)
+                        .ToList();
+
+                    if (referencesToAdd.Count > 0)
+                    {
+                        newTag.AddReferences(referencesToAdd);
+                        SetPositionLeaderElbow(tagData, dictionary, newTag, translationVector);
+                        SetPositionLeaderEnd(tagData, dictionary, newTag, translationVector);
+                        newTag.MergeElbows = tagData.MergeElbows;
+                    }
+                }
+                catch (Autodesk.Revit.Exceptions.ArgumentException ex)
+                {
+                    // Обрабатываем ошибку и продолжаем работу
+                    TaskDialog.Show("Предупреждение", $"Не удалось добавить ссылки к тегу: {ex.Message}");
+                }
+            }
         }
     }
+
+// Проверка, имеет ли элемент уже тег в текущем виде
+    private bool IsElementAlreadyTagged(Element element, View view)
+    {
+        if (element == null) return true;
+
+        // Получаем все теги в текущем виде
+        FilteredElementCollector collector = new FilteredElementCollector(_doc, view.Id)
+            .OfClass(typeof(IndependentTag));
+
+        foreach (IndependentTag tag in collector)
+        {
+            // Проверяем, ссылается ли тег на наш элемент
+            if (tag.GetTaggedReferences().Any(r => r.ElementId == element.Id))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 
     private void CreateDimensions(List<DimensionModel> dimensionModels, XYZ? translationVector)
     {
@@ -329,6 +382,7 @@ public class CopyAnnotationsServices
                 references.Append(reference);
             }
         }
+
         Line dimensionLine = CreateDimensionLine(dimensionModel.Segments);
         Dimension newDimension = _doc.Create.NewDimension(Context.ActiveView, dimensionLine, references,
             dimensionModel.DimensionType);
