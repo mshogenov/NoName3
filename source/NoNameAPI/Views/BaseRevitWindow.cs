@@ -10,7 +10,50 @@ namespace NoNameApi.Views;
 
 public class BaseRevitWindow : Window
 {
-   protected BaseRevitWindow()
+    // Свойства для управления видимостью кнопок
+    public bool ShowMinimizeButton
+    {
+        get => (bool)GetValue(ShowMinimizeButtonProperty);
+        set => SetValue(ShowMinimizeButtonProperty, value);
+    }
+
+    public static readonly DependencyProperty ShowMinimizeButtonProperty =
+        DependencyProperty.Register(
+            nameof(ShowMinimizeButton),
+            typeof(bool),
+            typeof(BaseRevitWindow),
+            new PropertyMetadata(false, OnShowMinimizeButtonChanged));
+
+    private static void OnShowMinimizeButtonChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is BaseRevitWindow window && window.GetTemplateChild("MinimizeButton") is Button button)
+        {
+            button.Visibility = (bool)e.NewValue ? Visibility.Visible : Visibility.Collapsed;
+        }
+    }
+
+    public bool ShowMaximizeButton
+    {
+        get => (bool)GetValue(ShowMaximizeButtonProperty);
+        set => SetValue(ShowMaximizeButtonProperty, value);
+    }
+
+    public static readonly DependencyProperty ShowMaximizeButtonProperty =
+        DependencyProperty.Register(
+            nameof(ShowMaximizeButton),
+            typeof(bool),
+            typeof(BaseRevitWindow),
+            new PropertyMetadata(false, OnShowMaximizeButtonChanged));
+
+    private static void OnShowMaximizeButtonChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is BaseRevitWindow window && window.GetTemplateChild("MaximizeButton") is Button button)
+        {
+            button.Visibility = (bool)e.NewValue ? Visibility.Visible : Visibility.Collapsed;
+        }
+    }
+
+    protected BaseRevitWindow()
     {
         try
         {
@@ -46,15 +89,12 @@ public class BaseRevitWindow : Window
             return false;
         }
     }
-
-
     private bool _stylesLoaded;
 
     protected void LoadWindowTemplate()
     {
         if (_stylesLoaded) return;
-
-        // Обновляем текущую тему в менеджере
+      // Обновляем текущую тему в менеджере
         RevitThemeManager.UpdateCurrentTheme();
 
         // Получаем словарь ресурсов текущей темы
@@ -74,7 +114,8 @@ public class BaseRevitWindow : Window
         {
             Template = Resources["CustomWindowTemplate"] as ControlTemplate;
         }
-
+        ShowMinimizeButton = false;
+        ShowMaximizeButton = false;
         _stylesLoaded = true;
     }
 
@@ -104,91 +145,120 @@ public class BaseRevitWindow : Window
         source?.AddHook(WndProc);
     }
 
-   private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
-{
-    const int WM_NCHITTEST = 0x0084;
-    const int HTLEFT = 10;
-    const int HTRIGHT = 11;
-    const int HTTOP = 12;
-    const int HTTOPLEFT = 13;
-    const int HTTOPRIGHT = 14;
-    const int HTBOTTOM = 15;
-    const int HTBOTTOMLEFT = 16;
-    const int HTBOTTOMRIGHT = 17;
-
-    // Ширина невидимой рамки для изменения размера
-    const int borderWidth = 8;
-    // Смещение области изменения размера (отрицательное значение смещает наружу)
-    const int offsetBorder = -4; 
-
-    if (msg != WM_NCHITTEST) return IntPtr.Zero;
-    Point ptScreen = new Point(
-        (int)(lParam) & 0xFFFF,
-        (int)(lParam) >> 16
-    );
-
-    Point ptClient = PointFromScreen(ptScreen);
-
-    // Проверяем, находится ли курсор в области изменения размера
-    // Используем смещение, чтобы сдвинуть область ближе к границе
-    if (ptClient.X <= borderWidth + offsetBorder)
+// Методы для включения/отключения кнопок
+    public void EnableMinimizeButton()
     {
+        ShowMinimizeButton = true;
+    }
+
+    public void DisableMinimizeButton()
+    {
+        ShowMinimizeButton = false;
+    }
+
+    public void EnableMaximizeButton()
+    {
+        ShowMaximizeButton = true;
+    }
+
+    public void DisableMaximizeButton()
+    {
+        ShowMaximizeButton = false;
+    }
+
+    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        const int WM_NCHITTEST = 0x0084;
+        const int HTLEFT = 10;
+        const int HTRIGHT = 11;
+        const int HTTOP = 12;
+        const int HTTOPLEFT = 13;
+        const int HTTOPRIGHT = 14;
+        const int HTBOTTOM = 15;
+        const int HTBOTTOMLEFT = 16;
+        const int HTBOTTOMRIGHT = 17;
+
+        // Ширина невидимой рамки для изменения размера
+        const int borderWidth = 8;
+        // Смещение области изменения размера (отрицательное значение смещает наружу)
+        const int offsetBorder = -4;
+
+        if (msg != WM_NCHITTEST) return IntPtr.Zero;
+        Point ptScreen = new Point(
+            (int)(lParam) & 0xFFFF,
+            (int)(lParam) >> 16
+        );
+
+        Point ptClient = PointFromScreen(ptScreen);
+
+        // Проверяем, находится ли курсор в области изменения размера
+        // Используем смещение, чтобы сдвинуть область ближе к границе
+        if (ptClient.X <= borderWidth + offsetBorder)
+        {
+            if (ptClient.Y <= borderWidth + offsetBorder)
+            {
+                handled = true;
+                return (IntPtr)HTTOPLEFT;
+            }
+
+            if (ptClient.Y >= ActualHeight - (borderWidth + offsetBorder))
+            {
+                handled = true;
+                return (IntPtr)HTBOTTOMLEFT;
+            }
+
+            handled = true;
+            return (IntPtr)HTLEFT;
+        }
+
+        if (ptClient.X >= ActualWidth - (borderWidth + offsetBorder))
+        {
+            if (ptClient.Y <= borderWidth + offsetBorder)
+            {
+                handled = true;
+                return (IntPtr)HTTOPRIGHT;
+            }
+
+            if (ptClient.Y >= ActualHeight - (borderWidth + offsetBorder))
+            {
+                handled = true;
+                return (IntPtr)HTBOTTOMRIGHT;
+            }
+
+            handled = true;
+            return (IntPtr)HTRIGHT;
+        }
+
         if (ptClient.Y <= borderWidth + offsetBorder)
         {
             handled = true;
-            return (IntPtr)HTTOPLEFT;
+            return (IntPtr)HTTOP;
         }
 
-        if (ptClient.Y >= ActualHeight - (borderWidth + offsetBorder))
-        {
-            handled = true;
-            return (IntPtr)HTBOTTOMLEFT;
-        }
-
+        if (!(ptClient.Y >= ActualHeight - (borderWidth + offsetBorder))) return IntPtr.Zero;
         handled = true;
-        return (IntPtr)HTLEFT;
+        return (IntPtr)HTBOTTOM;
     }
-
-    if (ptClient.X >= ActualWidth - (borderWidth + offsetBorder))
-    {
-        if (ptClient.Y <= borderWidth + offsetBorder)
-        {
-            handled = true;
-            return (IntPtr)HTTOPRIGHT;
-        }
-
-        if (ptClient.Y >= ActualHeight - (borderWidth + offsetBorder))
-        {
-            handled = true;
-            return (IntPtr)HTBOTTOMRIGHT;
-        }
-
-        handled = true;
-        return (IntPtr)HTRIGHT;
-    }
-
-    if (ptClient.Y <= borderWidth + offsetBorder)
-    {
-        handled = true;
-        return (IntPtr)HTTOP;
-    }
-
-    if (!(ptClient.Y >= ActualHeight - (borderWidth + offsetBorder))) return IntPtr.Zero;
-    handled = true;
-    return (IntPtr)HTBOTTOM;
-}
 
     public override void OnApplyTemplate()
     {
         base.OnApplyTemplate();
-        // Привязываем обработчики к кнопкам управления окном
-        if (GetTemplateChild("MinimizeButton") is Button minimizeButton)
+
+        // Находим кнопки по их именам в шаблоне
+        Button minimizeButton = GetTemplateChild("MinimizeButton") as Button;
+        Button maximizeButton = GetTemplateChild("MaximizeButton") as Button;
+        Button closeButton = GetTemplateChild("CloseButton") as Button;
+
+        // Устанавливаем видимость кнопок в соответствии с флагами
+        if (minimizeButton != null)
         {
+            minimizeButton.Visibility = ShowMinimizeButton ? Visibility.Visible : Visibility.Collapsed;
             minimizeButton.Click += (_, _) => WindowState = WindowState.Minimized;
         }
 
-        if (GetTemplateChild("MaximizeButton") is Button maximizeButton)
+        if (maximizeButton != null)
         {
+            maximizeButton.Visibility = ShowMaximizeButton ? Visibility.Visible : Visibility.Collapsed;
             maximizeButton.Click += (_, _) =>
             {
                 WindowState = (WindowState == WindowState.Maximized)
@@ -200,7 +270,7 @@ public class BaseRevitWindow : Window
             };
         }
 
-        if (GetTemplateChild("CloseButton") is Button closeButton)
+        if (closeButton != null)
         {
             closeButton.Click += (_, _) => Close();
         }

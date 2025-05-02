@@ -10,15 +10,11 @@ public class CopyAnnotationsServices
     private readonly UIDocument? _uidoc = Context.ActiveUiDocument;
     private readonly Document? _doc = Context.ActiveDocument;
 
-    public void CopyAnnotations()
+    public void CopyAnnotations(List<Reference> selectedTagRefs, XYZ sourceBasePoint)
     {
-        List<Reference> selectedTagRefs = [];
-        XYZ sourceBasePoint = null;
-        XYZ targetBasePoint = null;
+        XYZ? targetBasePoint = null;
         try
         {
-            selectedTagRefs = GetCopyTags().ToList();
-            sourceBasePoint = GetPoint("Выберите исходный опорный элемент");
             targetBasePoint = GetPoint("Выберите целевой опорный элемент");
         }
         catch (Autodesk.Revit.Exceptions.OperationCanceledException)
@@ -29,7 +25,7 @@ public class CopyAnnotationsServices
         List<TagModel> tagModels = [];
         List<TextNoteModel> textNoteModels = [];
         List<AnnotationSymbol> annotationSymbols = [];
-        List<DimensionModel> dimensionModels = [];
+        // List<DimensionModel> dimensionModels = [];
         foreach (Reference tagRef in selectedTagRefs)
         {
             if (_doc?.GetElement(tagRef) is IndependentTag tag)
@@ -37,10 +33,10 @@ public class CopyAnnotationsServices
                 tagModels.Add(new TagModel(tag));
             }
 
-            if (_doc?.GetElement(tagRef) is Dimension dimension)
-            {
-                dimensionModels.Add(new DimensionModel(dimension));
-            }
+            // if (_doc?.GetElement(tagRef) is Dimension dimension)
+            // {
+            //     dimensionModels.Add(new DimensionModel(dimension));
+            // }
 
             if (_doc?.GetElement(tagRef) is TextNote textNote)
             {
@@ -55,7 +51,6 @@ public class CopyAnnotationsServices
 
         // Вычисляем вектор перемещения между опорными элементами
         XYZ translationVector = targetBasePoint - sourceBasePoint;
-        XYZ vector = null;
         using TransactionGroup tg = new TransactionGroup(_doc, "Копирование аннотаций");
         tg.Start();
         if (tagModels.Any())
@@ -81,7 +76,7 @@ public class CopyAnnotationsServices
                 if (copiedTagId != null && _doc?.GetElement(copiedTagId) != null)
                 {
                     // Получаем вектор трансляции, если можем
-                    vector = GetTranslationVectorTag(copiedTagId, originalTag);
+                    var vector = GetTranslationVectorTag(copiedTagId, originalTag);
                     // Удаляем скопированный элемент
                     _doc.Delete(copiedTagId);
                     CreateTags(tagModels, vector);
@@ -98,52 +93,53 @@ public class CopyAnnotationsServices
             }
         }
 
-        if (dimensionModels.Any())
-        {
-            if (vector == null)
-            {
-                var originalDimension = dimensionModels.FirstOrDefault();
-                if (originalDimension == null) return;
-                using Transaction trans = new Transaction(_doc, "Копирование первой аннотации");
-                trans.Start();
-                ElementId copiedTagId = CopiedTag(originalDimension.Dimension, translationVector);
-                if (copiedTagId == null)
-                {
-                    trans.RollBack();
-                    tg.RollBack();
-                    TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
-                    return;
-                }
-
-                trans.Commit();
-                if (dimensionModels.Count > 1)
-                {
-                    using Transaction trans2 = new Transaction(_doc, "Копирование марок");
-                    trans2.Start();
-                    if (copiedTagId != null && _doc?.GetElement(copiedTagId) != null)
-                    {
-                        // Получаем вектор трансляции, если можем
-                        vector = GetTranslationVectorDimension(copiedTagId, originalDimension);
-                        // Удаляем скопированный элемент
-                        _doc.Delete(copiedTagId);
-                        CreateDimensions(dimensionModels, vector);
-                    }
-                    else
-                    {
-                        trans2.RollBack();
-                        tg.RollBack();
-                        TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
-                        return;
-                    }
-
-                    trans2.Commit();
-                }
-            }
-            else
-            {
-                CreateDimensions(dimensionModels, vector);
-            }
-        }
+        // if (dimensionModels.Any())
+        // {
+        //     if (vector == null)
+        //     {
+        //         var originalDimension = dimensionModels.FirstOrDefault();
+        //         if (originalDimension == null) return;
+        //         using Transaction trans = new Transaction(_doc, "Копирование первой аннотации");
+        //         trans.Start();
+        //         Dimension? newTag = CreateDimension(originalDimension, translationVector);
+        //         // ElementId copiedTagId = CopiedTag(originalDimension.Dimension, translationVector);
+        //         // if (copiedTagId == null)
+        //         // {
+        //         //     trans.RollBack();
+        //         //     tg.RollBack();
+        //         //     TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
+        //         //     return;
+        //         // }
+        //
+        //         trans.Commit();
+        //         // if (dimensionModels.Count > 1)
+        //         // {
+        //         //     using Transaction trans2 = new Transaction(_doc, "Копирование марок");
+        //         //     trans2.Start();
+        //         //     if (copiedTagId != null && _doc?.GetElement(copiedTagId) != null)
+        //         //     {
+        //         //         // Получаем вектор трансляции, если можем
+        //         //         vector = GetTranslationVectorDimension(copiedTagId, originalDimension);
+        //         //         // Удаляем скопированный элемент
+        //         //         _doc.Delete(copiedTagId);
+        //         //         CreateDimensions(dimensionModels, vector);
+        //         //     }
+        //         //     else
+        //         //     {
+        //         //         trans2.RollBack();
+        //         //         tg.RollBack();
+        //         //         TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
+        //         //         return;
+        //         //     }
+        //         //
+        //         //     trans2.Commit();
+        //         // }
+        //     }
+        //     else
+        //     {
+        //         CreateDimensions(dimensionModels, vector);
+        //     }
+        // }
 
         if (textNoteModels.Any())
         {
@@ -362,16 +358,14 @@ public class CopyAnnotationsServices
         return newTag;
     }
 
-    private Dimension? CreateDimension(DimensionModel dimensionModel, XYZ? translationVector)
+    private Dimension? CreateDimension(DimensionModel dimensionModel, XYZ? vector)
     {
         var firstTaggedElement = dimensionModel.References.FirstOrDefault().TaggedElement;
         if (firstTaggedElement == null)
             return null;
         // Используем вектор трансляции или нулевой вектор, если он null
-        XYZ vector = translationVector;
 
         var searchPoint = firstTaggedElement.Position + vector;
-
         // 1. Получаем ссылки из сохраненной модели
         ReferenceArray references = new ReferenceArray();
         foreach (ReferenceDimensionModel refModel in dimensionModel.References)
@@ -441,6 +435,10 @@ public class CopyAnnotationsServices
             case ElementReferenceType.REFERENCE_TYPE_CUT_EDGE:
                 // Для рёберных ссылок пытаемся получить референс от ребра
                 return new Reference(element);
+            case ElementReferenceType.REFERENCE_TYPE_LINEAR:
+
+                return new Reference(element);
+
 
             default:
                 return new Reference(element);
@@ -604,12 +602,12 @@ public class CopyAnnotationsServices
         }
     }
 
-    private XYZ GetPoint(string status)
+    public XYZ? GetPoint(string status)
     {
         Reference reference = _uidoc.Selection.PickObject(ObjectType.Element,
             status);
         Element element = _doc.GetElement(reference);
-        XYZ point = GetElementPosition(element);
+        XYZ? point = GetElementPosition(element);
         if (point == null)
         {
             TaskDialog.Show("Ошибка", "Не удалось определить положение элемента.");
@@ -618,7 +616,7 @@ public class CopyAnnotationsServices
         return point;
     }
 
-    private IList<Reference> GetCopyTags()
+    public IList<Reference> GetCopyTags()
     {
         IList<Reference> selectedTagRefs = _uidoc.Selection.PickObjects(ObjectType.Element,
             new TagSelectionFilter(), "Выберите марки для копирования");
@@ -875,7 +873,7 @@ public class CopyAnnotationsServices
     }
 
     // Метод для получения позиции элемента
-    private XYZ GetElementPosition(Element element)
+    private XYZ? GetElementPosition(Element element)
     {
         if (element == null)
             return null;
