@@ -1,12 +1,98 @@
-<Window x:Class="ViewOfPipeSystems.Views.ViewOfPipeSystemWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:local="clr-namespace:ViewOfPipeSystems.Views"
-        mc:Ignorable="d"
-        Title="ViewOfPipeSystemWindow" Height="450" Width="800">
-    <Grid>
-        
+<views:BaseRevitWindow x:Class="ViewOfPipeSystems.Views.ViewOfPipeSystemWindow"
+                       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                       xmlns:local="clr-namespace:ViewOfPipeSystems.Views"
+                       xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
+                       xmlns:models="clr-namespace:ViewOfPipeSystems.Model"
+                       xmlns:vm="clr-namespace:ViewOfPipeSystems.ViewModels"
+                       mc:Ignorable="d"
+                      xmlns:converter="clr-namespace:NoNameApi.Views.Converters;assembly=NoNameAPI"
+                       d:DataContext="{d:DesignInstance vm:ViewOfPipeSystemsVM }"
+                       Background="{DynamicResource WindowBackgroundBrush}"
+                       Title="ViewOfPipeSystemWindow" Height="450" Width="500">
+    <Window.Resources>
+        <ResourceDictionary>
+            <converter:BoolVisibilityConverter x:Key="BoolVisibilityConverter"/>
+            <d:ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
+            </d:ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Style="{DynamicResource Grid}">
+      <Grid.RowDefinitions>
+          <RowDefinition/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+        <TreeView
+            ItemsSource="{Binding MepSystemTypeModels}"
+            Margin="10"
+            VerticalAlignment="Top"
+            Height="300"
+            MaxHeight="300"
+            ScrollViewer.VerticalScrollBarVisibility="Auto">
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate DataType="{x:Type models:MEPSystemTypeModel}"
+                                          ItemsSource="{Binding MEPSystemModels , UpdateSourceTrigger=PropertyChanged}">
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox IsChecked="{Binding IsChecked}" />
+                        <TextBlock Text="{Binding Abbreviation}" />
+
+                    </StackPanel>
+                    <HierarchicalDataTemplate.ItemTemplate>
+                        <DataTemplate DataType="{x:Type models:MEPSystemModel}">
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox IsChecked="{Binding IsChecked}" />
+                                <TextBlock Text="{Binding Name}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </HierarchicalDataTemplate.ItemTemplate>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+        <DockPanel Grid.Row="1" HorizontalAlignment="Right">
+            <Button Content="Создать виды"
+                    Command="{Binding CreateViewsCommand }"/>
+            <Button Content="Закрыть" Margin="10 0 0 0"/>
+        </DockPanel>
+         <Grid
+            Style="{DynamicResource Grid2}"
+            Grid.Row="2"
+              
+              Visibility="{Binding IsVisibilityMissingParameters,
+                  Converter={StaticResource BoolVisibilityConverter}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.ColumnSpan="2"
+                       Style="{DynamicResource TextBlockStyle}"
+                       Margin="5"
+                       Text="В документе отсутствует параметр(ы):" />
+            <Grid Grid.Row="1"
+                  Margin="0 5"
+                  Visibility="{Binding IsVisibilityMissingParametersADSK_Система_Имя
+                      ,Converter={StaticResource BoolVisibilityConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    Style="{DynamicResource TextBlockStyle}"
+                    Grid.Column="0"
+                    TextWrapping="Wrap"
+                    Text="{Binding ParamADSK_Система_Имя}" />
+             
+            </Grid>
+            
+
+        </Grid>
     </Grid>
-</Window>
+</views:BaseRevitWindow>

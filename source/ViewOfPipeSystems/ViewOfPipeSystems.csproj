@@ -45,5 +45,8 @@
         <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="$(RevitVersion).*" />
         <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="$(RevitVersion).*" />
     </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\NoNameAPI\NoNameAPI.csproj" />
+    </ItemGroup>
 
 </Project>

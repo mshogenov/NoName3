@@ -1,6 +1,7 @@
 ﻿
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
+using ViewOfPipeSystems.Model;
 using Binding = Autodesk.Revit.DB.Binding;
 using View = Autodesk.Revit.DB.View;
 
@@ -43,62 +44,7 @@ public class ViewOfPipeSystemsServices
             .ToElements();
     }
 
-    public void ViewOfPipeSystems()
-    {
-        if (_activeView is not View3D && _activeView is not ViewPlan)
-        {
-            TaskDialog.Show("Информация", "Откройте 3D вид или план для срабатывания команды");
-            return;
-        }
-
-        // Получение всех механических систем
-        var mechanicalSystems = new FilteredElementCollector(_doc)
-            .OfClass(typeof(MEPSystem))
-            .Cast<MEPSystem>()
-            .ToList();
-        var existingViews = new FilteredElementCollector(_doc)
-            .OfClass(typeof(View))
-            .Cast<View>()
-            .GroupBy(v => v.Name, StringComparer.OrdinalIgnoreCase) // Группируем по имени
-            .Select(g => g.First()) // Берем первый из попавших в группу
-            .ToDictionary(v => v.Name, v => v.Id, StringComparer.OrdinalIgnoreCase);
-
-        var existingFilters = new FilteredElementCollector(_doc)
-            .OfClass(typeof(ParameterFilterElement))
-            .Cast<ParameterFilterElement>()
-            .ToDictionary(f => f.Name, f => f, StringComparer.OrdinalIgnoreCase);
-
-        using Transaction tr = new(_doc, "Виды систем");
-        tr.Start();
-        try
-        {
-            SubTransaction sT = new SubTransaction(_doc);
-            //Проверка существования параметра
-            if (!IsSharedParameterBound(_doc, SetParamName))
-            {
-                TaskDialog.Show("Информации", $"В проекте отсутствует параметр {SetParamName}.");
-                return;
-            }
-
-            CheckAndBindParameter(_doc, SetParamName, sT);
-
-            foreach (var element in _elements)
-            {
-                CopyParameterMep(Context.ActiveDocument, element, GetParamName, SetParamName);
-            }
-
-            ProcessMepSystems(mechanicalSystems, existingViews, existingFilters);
-
-            tr.Commit();
-            TaskDialog.Show("Информация", "Виды созданы");
-        }
-        catch (Exception e)
-        {
-            TaskDialog.Show("Ошибка", e.Message);
-        }
-    }
-
-    private void ProcessMepSystems(List<MEPSystem> mechanicalSystems,Dictionary<string, ElementId> existingViews,
+    public void ProcessMepSystems(List<MEPSystemModel> mechanicalSystems,Dictionary<string, ElementId> existingViews,
         Dictionary<string, ParameterFilterElement> existingFilters)
     {
         foreach (var mepSystem in mechanicalSystems)
@@ -108,7 +54,7 @@ public class ViewOfPipeSystemsServices
             // Получение или создание вида
             if (!existingViews.TryGetValue(viewName, out _))
             {
-                CreateAndSetupNewView(mepSystem, viewName, existingViews, existingFilters);
+                CreateAndSetupNewView(mepSystem.MEPSystem, viewName, existingViews, existingFilters);
             }
         }
     }

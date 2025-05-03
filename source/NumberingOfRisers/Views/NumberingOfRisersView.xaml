@@ -21,7 +21,6 @@
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
             </d:ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-
     </Window.Resources>
     <Grid Margin="7">
         <Grid.RowDefinitions>
