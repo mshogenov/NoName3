@@ -51,13 +51,13 @@ public class CopyAnnotationsServices
 
         // Вычисляем вектор перемещения между опорными элементами
         XYZ translationVector = targetBasePoint - sourceBasePoint;
-        using TransactionGroup tg = new TransactionGroup(_doc, "Копирование аннотаций");
+        using Transaction tg = new Transaction(_doc, "Копирование аннотаций");
         tg.Start();
         if (tagModels.Any())
         {
             var originalTag = tagModels.FirstOrDefault();
             if (originalTag == null) return;
-            using Transaction trans = new Transaction(_doc, "Копирование первой аннотации");
+            using SubTransaction trans = new SubTransaction(_doc);
             trans.Start();
             ElementId copiedTagId = CopiedTag(originalTag.IndependentTag, translationVector);
             if (copiedTagId == null)
@@ -71,8 +71,6 @@ public class CopyAnnotationsServices
             trans.Commit();
             if (tagModels.Count > 1)
             {
-                using Transaction trans2 = new Transaction(_doc, "Копирование марок");
-                trans2.Start();
                 if (copiedTagId != null && _doc?.GetElement(copiedTagId) != null)
                 {
                     // Получаем вектор трансляции, если можем
@@ -83,13 +81,10 @@ public class CopyAnnotationsServices
                 }
                 else
                 {
-                    trans2.RollBack();
                     tg.RollBack();
                     TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
                     return;
                 }
-
-                trans2.Commit();
             }
         }
 
@@ -143,26 +138,18 @@ public class CopyAnnotationsServices
 
         if (textNoteModels.Any())
         {
-            using Transaction trans = new Transaction(_doc, "Копирование текстовых примечаний");
-            trans.Start();
             foreach (var textNote in textNoteModels)
             {
                 ElementId copiedTagId = CopiedTag(textNote.TextNote, translationVector);
             }
-
-            trans.Commit();
         }
 
         if (annotationSymbols.Any())
         {
-            using Transaction trans = new Transaction(_doc, "Копирование обозначений");
-            trans.Start();
             foreach (var annotationSymbol in annotationSymbols)
             {
                 ElementId copiedTagId = CopiedTag(annotationSymbol, translationVector);
             }
-
-            trans.Commit();
         }
 
         tg.Commit();
@@ -604,9 +591,9 @@ public class CopyAnnotationsServices
 
     public XYZ? GetPoint(string status)
     {
-        Reference reference = _uidoc.Selection.PickObject(ObjectType.Element,
+        Reference? reference = _uidoc?.Selection.PickObject(ObjectType.Element,
             status);
-        Element element = _doc.GetElement(reference);
+        Element? element = _doc?.GetElement(reference);
         XYZ? point = GetElementPosition(element);
         if (point == null)
         {
@@ -616,9 +603,9 @@ public class CopyAnnotationsServices
         return point;
     }
 
-    public IList<Reference> GetCopyTags()
+    public IList<Reference>? GetCopyTags()
     {
-        IList<Reference> selectedTagRefs = _uidoc.Selection.PickObjects(ObjectType.Element,
+        IList<Reference>? selectedTagRefs = _uidoc?.Selection.PickObjects(ObjectType.Element,
             new TagSelectionFilter(), "Выберите марки для копирования");
         return selectedTagRefs;
     }
@@ -873,7 +860,7 @@ public class CopyAnnotationsServices
     }
 
     // Метод для получения позиции элемента
-    private XYZ? GetElementPosition(Element element)
+    private XYZ? GetElementPosition(Element? element)
     {
         if (element == null)
             return null;
