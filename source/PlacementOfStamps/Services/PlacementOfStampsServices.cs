@@ -1,5 +1,7 @@
 using Autodesk.Revit.DB.Plumbing;
+using Autodesk.Revit.UI;
 using PlacementOfStamps.Models;
+using Rectangle = PlacementOfStamps.Models.Rectangle;
 
 namespace PlacementOfStamps.Services;
 
@@ -169,6 +171,7 @@ public class PlacementOfStampsServices
                 if (newTag != null) return newTag;
             }
         }
+
         return null;
     }
 
@@ -382,9 +385,9 @@ public class PlacementOfStampsServices
             .Cast<IndependentTag>()
             .ToList();
         var existingTags = existingAnnotations
-            .Select(existingAnnotation => new TagModels(existingAnnotation))
+            .Select(existingAnnotation => new TagModel(existingAnnotation))
             .ToList();
-
+      
         var tagModelsEnumerable = existingTags
             .Where(x => x.Name == selectedTag.Name).ToList();
         if (tagModelsEnumerable.Any())
@@ -393,13 +396,14 @@ public class PlacementOfStampsServices
             {
                 foreach (var tag in tagModelsEnumerable)
                 {
-                    if (tag.TaggedLocalElements.Any(x=>x.Id.Value==element.Id.Value))
+                    if (tag.TaggedLocalElements.Any(x => x.Id.Value == element.Id.Value))
                     {
                         pipeModels.Remove(element);
                     }
                 }
             }
         }
+
         var pipeTagsInfo = GetPipeTags(selectedTag, existingAnnotations, activeView);
         var pipesSortered = pipeModels.OrderBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).X)
             .ThenBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).Y);
@@ -435,10 +439,162 @@ public class PlacementOfStampsServices
         }
     }
 
-    private Dictionary<ElementId, List<TagModels>> GetPipeTags(FamilySymbol selectedTag,
+    public void TestTagBoundingBoxes(IndependentTag tag)
+    {
+        // Получить текущий документ и активный вид
+        Document doc = Context.Document;
+        View activeView = doc.ActiveView;
+// Получаем BoundingBox в view coordinates
+        BoundingBoxXYZ bbox = tag.get_BoundingBox(activeView);
+        Create3DBoxForVerification(doc, bbox);
+        Create2DBoxForVerification(doc, activeView, bbox);
+    }
+
+    public void Create2DBoxForVerification(Document doc, View view, BoundingBoxXYZ bbox)
+    {
+        // Получаем размеры
+        double width = bbox.Max.X - bbox.Min.X;
+        double height = bbox.Max.Y - bbox.Min.Y;
+
+        // Создаем линии, образующие прямоугольник
+        Line line1 = Line.CreateBound(bbox.Min, new XYZ(bbox.Max.X, bbox.Min.Y, bbox.Min.Z));
+        Line line2 = Line.CreateBound(new XYZ(bbox.Max.X, bbox.Min.Y, bbox.Min.Z), bbox.Max);
+        Line line3 = Line.CreateBound(bbox.Max, new XYZ(bbox.Min.X, bbox.Max.Y, bbox.Max.Z));
+        Line line4 = Line.CreateBound(new XYZ(bbox.Min.X, bbox.Max.Y, bbox.Max.Z), bbox.Min);
+
+// Создаем DetailLine для каждой линии
+        DetailCurve detailLine1 = doc.Create.NewDetailCurve(view, line1);
+        DetailCurve detailLine2 = doc.Create.NewDetailCurve(view, line2);
+        DetailCurve detailLine3 = doc.Create.NewDetailCurve(view, line3);
+        DetailCurve detailLine4 = doc.Create.NewDetailCurve(view, line4);
+    }
+
+    public void Create3DBoxForVerification(Document doc, BoundingBoxXYZ boundingBox)
+    {
+        // Создаем геометрию бокса
+        Solid boxSolid = CreateBoxSolid(boundingBox);
+
+        // Создаем DirectShape для отображения геометрии
+        DirectShape ds = DirectShape.CreateElement(doc, new ElementId(BuiltInCategory.OST_GenericModel));
+
+        // Устанавливаем форму
+        ds.SetShape(new GeometryObject[] { boxSolid });
+
+        // Применяем прозрачность для лучшей видимости
+        OverrideGraphicSettings ogs = new OverrideGraphicSettings();
+        ogs.SetSurfaceTransparency(70);
+        ogs.SetProjectionLineColor(new Color(255, 0, 0)); // Красный цвет
+
+        // Применяем настройки отображения к элементу во всех видах
+        foreach (View view in new FilteredElementCollector(doc).OfClass(typeof(View)))
+        {
+            doc.ActiveView.SetElementOverrides(ds.Id, ogs);
+        }
+    }
+
+// Вспомогательный метод для создания Solid в форме бокса
+    private Solid CreateBoxSolid(BoundingBoxXYZ boundingBox)
+    {
+        // Получаем координаты углов бокса
+        XYZ min = boundingBox.Min;
+        XYZ max = boundingBox.Max;
+
+        // Создаем точки для построения нижней грани
+        XYZ pt0 = new XYZ(min.X, min.Y, min.Z);
+        XYZ pt1 = new XYZ(max.X, min.Y, min.Z);
+        XYZ pt2 = new XYZ(max.X, max.Y, min.Z);
+        XYZ pt3 = new XYZ(min.X, max.Y, min.Z);
+
+        // Создаем нижнюю грань
+        CurveLoop baseLoop = new CurveLoop();
+        baseLoop.Append(Line.CreateBound(pt0, pt1));
+        baseLoop.Append(Line.CreateBound(pt1, pt2));
+        baseLoop.Append(Line.CreateBound(pt2, pt3));
+        baseLoop.Append(Line.CreateBound(pt3, pt0));
+
+        // Создаем Solid путем выдавливания нижней грани
+        double height = max.Z - min.Z;
+        IList<CurveLoop> loopList = new List<CurveLoop>() { baseLoop };
+        return GeometryCreationUtilities.CreateExtrusionGeometry(loopList, XYZ.BasisZ, height);
+    }
+
+    public BoundingBoxXYZ Get3DTagBoundingBox(IndependentTag tag, Document doc)
+    {
+        // Получаем BoundingBox тега в модельном пространстве
+        BoundingBoxXYZ boundingBox = tag.get_BoundingBox(Context.ActiveView);
+
+        // Если BoundingBox не существует, пробуем получить его через геометрию
+        if (boundingBox == null)
+        {
+            Options options = new Options();
+            options.ComputeReferences = true;
+            options.DetailLevel = ViewDetailLevel.Fine;
+
+            GeometryElement geomElem = tag.get_Geometry(options);
+            if (geomElem != null)
+            {
+                // Создаем новый BoundingBox
+                boundingBox = new BoundingBoxXYZ();
+                boundingBox.Min = new XYZ(double.MaxValue, double.MaxValue, double.MaxValue);
+                boundingBox.Max = new XYZ(double.MinValue, double.MinValue, double.MinValue);
+
+                foreach (GeometryObject geomObj in geomElem)
+                {
+                    if (geomObj is Solid solid)
+                    {
+                        BoundingBoxXYZ solidBox = solid.GetBoundingBox();
+                        if (solidBox != null)
+                        {
+                            // Расширяем границы для включения этого объекта
+                            boundingBox.Min = new XYZ(
+                                Math.Min(boundingBox.Min.X, solidBox.Min.X),
+                                Math.Min(boundingBox.Min.Y, solidBox.Min.Y),
+                                Math.Min(boundingBox.Min.Z, solidBox.Min.Z));
+
+                            boundingBox.Max = new XYZ(
+                                Math.Max(boundingBox.Max.X, solidBox.Max.X),
+                                Math.Max(boundingBox.Max.Y, solidBox.Max.Y),
+                                Math.Max(boundingBox.Max.Z, solidBox.Max.Z));
+                        }
+                    }
+                }
+            }
+        }
+
+        return boundingBox;
+    }
+
+   
+
+// Вспомогательный класс для хранения 2D границ
+    public class Rectangle
+    {
+        public XYZ Min { get; set; }
+        public XYZ Max { get; set; }
+
+        public Rectangle(XYZ min, XYZ max)
+        {
+            Min = min;
+            Max = max;
+        }
+
+        // Получить ширину прямоугольника
+        public double Width
+        {
+            get { return Max.X - Min.X; }
+        }
+
+        // Получить высоту прямоугольника
+        public double Height
+        {
+            get { return Max.Y - Min.Y; }
+        }
+    }
+
+    private Dictionary<ElementId, List<TagModel>> GetPipeTags(FamilySymbol selectedTag,
         List<IndependentTag> existingAnnotations, View activeView)
     {
-        Dictionary<ElementId, List<TagModels>> pipeTagsInfo = new Dictionary<ElementId, List<TagModels>>();
+        Dictionary<ElementId, List<TagModel>> pipeTagsInfo = new Dictionary<ElementId, List<TagModel>>();
         // Минимальная допустимая длина кривой для операций
         double shortCurveTolerance = Context.Application.ShortCurveTolerance; // Минимальная длина кривой
 
@@ -497,7 +653,7 @@ public class PlacementOfStampsServices
                     }
                 }
 
-                pipeTagsInfo[pipe.Id].Add(new TagModels(tag)
+                pipeTagsInfo[pipe.Id].Add(new TagModel(tag)
                 {
                     BoundingBox = tagBoundingBox,
                     Distance = distanceAlongCurve,
@@ -533,7 +689,7 @@ public class PlacementOfStampsServices
     /// <param name="pipeTaggedPositions"></param>
     /// <returns>Позиция для размещения марки или null, если подходящая позиция не найдена</returns>
     private List<XYZ> FindOptimalTagLocation(PipeMdl pipe, FamilySymbol tagSymbol,
-        Dictionary<ElementId, List<TagModels>> pipeTaggedPositions)
+        Dictionary<ElementId, List<TagModel>> pipeTaggedPositions)
     {
         // Конвертируйте в футы (внутренняя единица Revit)
         double interval = UnitUtils.ConvertToInternalUnits(3000, UnitTypeId.Millimeters);
@@ -542,7 +698,7 @@ public class PlacementOfStampsServices
         if (pipe.Lenght % interval != 0) numberOfTags++;
 
         // Получаем список существующих марок на этой трубе
-        List<TagModels> existingTags = [];
+        List<TagModel> existingTags = [];
         if (pipeTaggedPositions.TryGetValue(pipe.Id, out var pos))
         {
             existingTags = pos;
@@ -562,7 +718,7 @@ public class PlacementOfStampsServices
 
 
     private List<XYZ> GetPositionInterval(FamilySymbol tagSymbol, int numberOfTags, double interval,
-        List<TagModels> existingTags, PipeMdl pipe)
+        List<TagModel> existingTags, PipeMdl pipe)
     {
         List<XYZ> positions = [];
         // Итерация по количеству марок
@@ -597,7 +753,7 @@ public class PlacementOfStampsServices
             }
 
             // Проверяем наличие марки другого типа
-            TagModels existingTag = null;
+            TagModel existingTag = null;
             bool differentTagExists = existingTags.Any(tagInfo =>
             {
                 if (!(Math.Abs(tagInfo.Distance - distance) < interval) ||
@@ -625,7 +781,7 @@ public class PlacementOfStampsServices
     }
 
 
-    private XYZ GetPosition(FamilySymbol tagSymbol, List<TagModels> existingTags, PipeMdl pipe)
+    private XYZ GetPosition(FamilySymbol tagSymbol, List<TagModel> existingTags, PipeMdl pipe)
     {
         XYZ tagPoint;
 
@@ -656,7 +812,7 @@ public class PlacementOfStampsServices
             return position;
         }
 
-        TagModels existingTag = null;
+        TagModel existingTag = null;
         // Проверяем наличие марки другого типа
         bool differentTagExists = existingTags.Any(tagInfo =>
         {
@@ -695,7 +851,7 @@ public class PlacementOfStampsServices
     }
 
     // Метод для поиска свободной позиции для марки
-    private XYZ FindFreeTagPosition(XYZ originalPosition, TagModels existingTag, PipeMdl pipe)
+    private XYZ FindFreeTagPosition(XYZ originalPosition, TagModel existingTag, PipeMdl pipe)
     {
         // Максимальное количество попыток смещения для каждой позиции
         int maxAttempts = 1;
@@ -763,7 +919,7 @@ public class PlacementOfStampsServices
     }
 
     // Метод для проверки, занята ли позиция маркой
-    private bool IsPositionOccupied(XYZ position, TagModels existingTag, PipeMdl pipe)
+    private bool IsPositionOccupied(XYZ position, TagModel existingTag, PipeMdl pipe)
     {
         // Вычисляем расстояние по параметру кривой до существующей марки
         double existingDistance = existingTag.Parameter;
