@@ -14,123 +14,123 @@ public class PlacementOfStampsServices
     private const double ElbowOffset = 1.0;
     private const double MinTagSpacing = 0.5;
 
-    public void PlacementMarksPipesOuterDiameters(Document doc, List<PipeMdl> pipeMdls,
-        View activeView, FamilySymbol selectedTag)
-    {
-        var elements = pipeMdls.Where(pipe => pipe.IsPipesOuterDiameter);
-        // Получаем все существующие марки на активном виде
-        var existingAnnotations = GetExistingAnnotations(doc, activeView).Cast<IndependentTag>().ToList();
-        var pipeTagsInfo = GetPipeTags(selectedTag, existingAnnotations, activeView);
-        List<BoundingBoxXYZ> existingTagBounds = new List<BoundingBoxXYZ>();
-        var pipesSortered = elements.OrderBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).X)
-            .ThenBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).Y);
-
-        bool flag = false;
-        foreach (var pipe in pipesSortered)
-        {
-            if (pipe.Lenght.ToMillimeters() is > 500 and < 4000 && flag)
-            {
-                flag = false;
-                continue;
-            }
-
-            if (activeView.ViewType == ViewType.FloorPlan && pipe.IsRiser)
-            {
-                continue;
-            }
-
-//             //Получаем свободное пространство вокруг трубы
-//             // Определение центральной точки трубы
-//             XYZ midPoint = pipe.Curve.Evaluate(0.5, true);
-//             double searchRadius = UnitUtils.ConvertToInternalUnits(5000,UnitTypeId.Millimeters); // Радиус поиска в метрах
-//                 //  Создание сферы (если работаете в 3D) или прямоугольника (для 2D-вида)
-//                 XYZ minPoint = new XYZ(midPoint.X - searchRadius, midPoint.Y - searchRadius, midPoint.Z);
-//                 XYZ maxPoint = new XYZ(midPoint.X + searchRadius, midPoint.Y + searchRadius, midPoint.Z);
-//                 // Создание BoundingBoxXYZ для области поиска
-//                 BoundingBoxXYZ searchAreaBox = new BoundingBoxXYZ
-//                 {
-//                     Min = minPoint,
-//                     Max = maxPoint,
-//                     Transform = Transform.Identity
-//                 };
-//                 Outline outline = new Outline(searchAreaBox.Min, searchAreaBox.Max);
-//                 // Создание фильтра пересечения bounding box
-//                 BoundingBoxIntersectsFilter bboxFilter = new BoundingBoxIntersectsFilter(outline);
-// List<TagInfo> existingTags = new List<TagInfo>();
-// foreach (var existingAnnotation in existingAnnotations)
-// {
-//     existingTags.Add(new TagInfo(existingAnnotation as IndependentTag)
+//     public void PlacementMarksPipesOuterDiameters(Document doc, List<PipeMdl> pipeMdls,
+//         View activeView, FamilySymbol selectedTag)
 //     {
-//         BoundingBox = existingAnnotation.get_BoundingBox(activeView)
-//     });
-// }    
-// // Сбор элементов, пересекающихся с прямоугольной областью
-//             // Определяем категории для труб
-//             var pipeCategories = new BuiltInCategory[] { BuiltInCategory.OST_PipeCurves };
+//         var elements = pipeMdls.Where(pipe => pipe.IsPipesOuterDiameter);
+//         // Получаем все существующие марки на активном виде
+//         var existingAnnotations = GetExistingAnnotations(doc, activeView).Cast<IndependentTag>().ToList();
+//         var pipeTagsInfo = GetPipeTags(existingAnnotations, activeView);
+//         List<BoundingBoxXYZ> existingTagBounds = new List<BoundingBoxXYZ>();
+//         var pipesSortered = elements.OrderBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).X)
+//             .ThenBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).Y);
 //
-//             // Определяем категории для аннотаций (можно добавить нужные категории)
-//             var annotationCategories = new[]
+//         bool flag = false;
+//         foreach (var pipe in pipesSortered)
+//         {
+//             if (pipe.Lenght.ToMillimeters() is > 500 and < 4000 && flag)
 //             {
-//                 BuiltInCategory.OST_GenericAnnotation, 
-//                 BuiltInCategory.OST_TextNotes,        
-//                 BuiltInCategory.OST_Tags,
-//                 BuiltInCategory.OST_PipeTags
-//                 
-//             };
+//                 flag = false;
+//                 continue;
+//             }
 //
-//             // Создаем фильтр по категориям труб и аннотаций
-//             ElementMulticategoryFilter categoryFilter = new ElementMulticategoryFilter(pipeCategories.Concat(annotationCategories).ToList());
+//             if (activeView.ViewType == ViewType.FloorPlan && pipe.IsRiser)
+//             {
+//                 continue;
+//             }
 //
-//             // Собираем элементы
-//             var collector = new FilteredElementCollector(doc)
-//                 .WherePasses(bboxFilter)
-//                 .WhereElementIsNotElementType()
-//                 .WherePasses(categoryFilter)
-//                 .Where(e => e.Id != pipe.Id); // Исключаем выбранную трубу
-
-
-            XYZ midPoint = pipe.Curve.Evaluate(0.5, true);
-            Reference pipeRef = new Reference(pipe.Pipe);
-            IndependentTag newTag =
-                TryPlaceTagWithMultipleStrategies(doc, activeView, selectedTag, pipeRef, midPoint, existingTagBounds);
-
-            if (newTag != null)
-            {
-                newTag.LeaderEndCondition = LeaderEndCondition.Free;
-                newTag.TagHeadPosition = new XYZ(midPoint.X + 3, midPoint.Y + 2, midPoint.Z);
-                existingTagBounds.Add(newTag.get_BoundingBox(activeView));
-            }
-
-            // //  Определяем область вокруг точки для проверки свободного пространства
-            //   double checkRadius = 0.5; // В метрах, измените по необходимости
-            //   BoundingBoxXYZ bbox = new BoundingBoxXYZ
-            //   {
-            //       Min = new XYZ(midPoint.X - checkRadius, midPoint.Y - checkRadius, 0),
-            //       Max = new XYZ(midPoint.X + checkRadius, midPoint.Y + checkRadius, 0)
-            //   };
-            //   Outline outline = new Outline(bbox.Min, bbox.Max);
-            //  // Создаем фильтр для элементов, пересекающих заданную область
-            //   BoundingBoxIntersectsFilter bboxFilter = new BoundingBoxIntersectsFilter(outline);
-            //  // Шаг 4: Вычисление позиций марки для текущей трубы
-            //   List<XYZ> tagLocations =
-            //       FindOptimalTagLocation(pipe, selectedTag, pipeTagsInfo);
-            //   var collector = new FilteredElementCollector(doc, activeView.Id)
-            //       .WherePasses(bboxFilter)
-            //       .WhereElementIsNotElementType();
-            //   if (tagLocations.Count == 0) continue;
-            //  // Создание марки
-            //       Reference reference = new Reference(pipe.Pipe);
-            //       if (tagLocation == null) continue;
-            //       IndependentTag pipeTag = IndependentTag.Create(doc, selectedTag.Id, activeView.Id,
-            //           reference, true, TagOrientation.Horizontal, tagLocation);
-            //       existingAnnotations.Add(pipeTag);
-            //       pipeTag.LeaderEndCondition = LeaderEndCondition.Free;
-            //       pipeTag.TagHeadPosition = new XYZ(tagLocation.X + 3, tagLocation.Y + 2, tagLocation.Z);
-            //       // pipeTag.SetLeaderElbow(reference,new XYZ(pipeTag.TagHeadPosition.X, pipeTag.TagHeadPosition.Y,pipeTag.TagHeadPosition.Z));
-            //   
-            flag = true;
-        }
-    }
+// //             //Получаем свободное пространство вокруг трубы
+// //             // Определение центральной точки трубы
+// //             XYZ midPoint = pipe.Curve.Evaluate(0.5, true);
+// //             double searchRadius = UnitUtils.ConvertToInternalUnits(5000,UnitTypeId.Millimeters); // Радиус поиска в метрах
+// //                 //  Создание сферы (если работаете в 3D) или прямоугольника (для 2D-вида)
+// //                 XYZ minPoint = new XYZ(midPoint.X - searchRadius, midPoint.Y - searchRadius, midPoint.Z);
+// //                 XYZ maxPoint = new XYZ(midPoint.X + searchRadius, midPoint.Y + searchRadius, midPoint.Z);
+// //                 // Создание BoundingBoxXYZ для области поиска
+// //                 BoundingBoxXYZ searchAreaBox = new BoundingBoxXYZ
+// //                 {
+// //                     Min = minPoint,
+// //                     Max = maxPoint,
+// //                     Transform = Transform.Identity
+// //                 };
+// //                 Outline outline = new Outline(searchAreaBox.Min, searchAreaBox.Max);
+// //                 // Создание фильтра пересечения bounding box
+// //                 BoundingBoxIntersectsFilter bboxFilter = new BoundingBoxIntersectsFilter(outline);
+// // List<TagInfo> existingTags = new List<TagInfo>();
+// // foreach (var existingAnnotation in existingAnnotations)
+// // {
+// //     existingTags.Add(new TagInfo(existingAnnotation as IndependentTag)
+// //     {
+// //         BoundingBox = existingAnnotation.get_BoundingBox(activeView)
+// //     });
+// // }    
+// // // Сбор элементов, пересекающихся с прямоугольной областью
+// //             // Определяем категории для труб
+// //             var pipeCategories = new BuiltInCategory[] { BuiltInCategory.OST_PipeCurves };
+// //
+// //             // Определяем категории для аннотаций (можно добавить нужные категории)
+// //             var annotationCategories = new[]
+// //             {
+// //                 BuiltInCategory.OST_GenericAnnotation, 
+// //                 BuiltInCategory.OST_TextNotes,        
+// //                 BuiltInCategory.OST_Tags,
+// //                 BuiltInCategory.OST_PipeTags
+// //                 
+// //             };
+// //
+// //             // Создаем фильтр по категориям труб и аннотаций
+// //             ElementMulticategoryFilter categoryFilter = new ElementMulticategoryFilter(pipeCategories.Concat(annotationCategories).ToList());
+// //
+// //             // Собираем элементы
+// //             var collector = new FilteredElementCollector(doc)
+// //                 .WherePasses(bboxFilter)
+// //                 .WhereElementIsNotElementType()
+// //                 .WherePasses(categoryFilter)
+// //                 .Where(e => e.Id != pipe.Id); // Исключаем выбранную трубу
+//
+//
+//             XYZ midPoint = pipe.Curve.Evaluate(0.5, true);
+//             Reference pipeRef = new Reference(pipe.Pipe);
+//             IndependentTag newTag =
+//                 TryPlaceTagWithMultipleStrategies(doc, activeView, selectedTag, pipeRef, midPoint, existingTagBounds);
+//
+//             if (newTag != null)
+//             {
+//                 newTag.LeaderEndCondition = LeaderEndCondition.Free;
+//                 newTag.TagHeadPosition = new XYZ(midPoint.X + 3, midPoint.Y + 2, midPoint.Z);
+//                 existingTagBounds.Add(newTag.get_BoundingBox(activeView));
+//             }
+//
+//             // //  Определяем область вокруг точки для проверки свободного пространства
+//             //   double checkRadius = 0.5; // В метрах, измените по необходимости
+//             //   BoundingBoxXYZ bbox = new BoundingBoxXYZ
+//             //   {
+//             //       Min = new XYZ(midPoint.X - checkRadius, midPoint.Y - checkRadius, 0),
+//             //       Max = new XYZ(midPoint.X + checkRadius, midPoint.Y + checkRadius, 0)
+//             //   };
+//             //   Outline outline = new Outline(bbox.Min, bbox.Max);
+//             //  // Создаем фильтр для элементов, пересекающих заданную область
+//             //   BoundingBoxIntersectsFilter bboxFilter = new BoundingBoxIntersectsFilter(outline);
+//             //  // Шаг 4: Вычисление позиций марки для текущей трубы
+//             //   List<XYZ> tagLocations =
+//             //       FindOptimalTagLocation(pipe, selectedTag, pipeTagsInfo);
+//             //   var collector = new FilteredElementCollector(doc, activeView.Id)
+//             //       .WherePasses(bboxFilter)
+//             //       .WhereElementIsNotElementType();
+//             //   if (tagLocations.Count == 0) continue;
+//             //  // Создание марки
+//             //       Reference reference = new Reference(pipe.Pipe);
+//             //       if (tagLocation == null) continue;
+//             //       IndependentTag pipeTag = IndependentTag.Create(doc, selectedTag.Id, activeView.Id,
+//             //           reference, true, TagOrientation.Horizontal, tagLocation);
+//             //       existingAnnotations.Add(pipeTag);
+//             //       pipeTag.LeaderEndCondition = LeaderEndCondition.Free;
+//             //       pipeTag.TagHeadPosition = new XYZ(tagLocation.X + 3, tagLocation.Y + 2, tagLocation.Z);
+//             //       // pipeTag.SetLeaderElbow(reference,new XYZ(pipeTag.TagHeadPosition.X, pipeTag.TagHeadPosition.Y,pipeTag.TagHeadPosition.Z));
+//             //   
+//             flag = true;
+//         }
+//     }
 
     private IndependentTag TryPlaceTagWithMultipleStrategies(Document doc, View view, FamilySymbol tagType,
         Reference pipeRef, XYZ basePoint, List<BoundingBoxXYZ> existingTagBounds)
@@ -335,66 +335,63 @@ public class PlacementOfStampsServices
                  box1.Max.Y < box2.Min.Y || box1.Min.Y > box2.Max.Y);
     }
 
-    public void PlacementMarksPipeInsulation(Document doc, List<PipeMdl> pipeMdls, View activeView,
-        FamilySymbol selectedTag)
-    {
-        var elements = pipeMdls.Where(pipe => pipe.IsInsulation);
-        // Получаем все существующие марки на активном виде
-        var existingAnnotations = GetExistingAnnotations(doc, activeView).Cast<IndependentTag>().ToList();
-        var pipeTagsInfo = GetPipeTags(selectedTag, existingAnnotations, activeView);
-
-        var pipesSortered = elements.OrderBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).X)
-            .ThenBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).Y);
-
-        bool flag = false;
-        foreach (var pipe in pipesSortered)
-        {
-            if (pipe.Lenght.ToMillimeters() is > 500 and < 4000 && flag)
-            {
-                flag = false;
-                continue;
-            }
-
-            if (activeView.ViewType == ViewType.FloorPlan && pipe.IsRiser)
-            {
-                continue;
-            }
-
-            // Шаг 4: Вычисление позиций марки для текущей трубы
-            List<XYZ> tagLocations =
-                FindOptimalTagLocation(pipe, selectedTag, pipeTagsInfo);
-            if (tagLocations.Count == 0) continue;
-            // Создание марки
-            foreach (var tagLocation in tagLocations)
-            {
-                if (tagLocation == null) continue;
-                IndependentTag pipeTag = IndependentTag.Create(doc, selectedTag.Id, activeView.Id,
-                    new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagLocation);
-                existingAnnotations.Add(pipeTag);
-            }
-
-            flag = true;
-        }
-    }
+    // public void PlacementMarksPipeInsulation(Document doc, List<PipeMdl> pipeMdls, View activeView,
+    //     FamilySymbol selectedTag)
+    // {
+    //     var elements = pipeMdls.Where(pipe => pipe.IsInsulation);
+    //     // Получаем все существующие марки на активном виде
+    //     var existingAnnotations = GetExistingAnnotations(doc, activeView).Cast<IndependentTag>().ToList();
+    //     var pipeTagsInfo = GetPipeTags(existingAnnotations, activeView);
+    //
+    //     var pipesSortered = elements.OrderBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).X)
+    //         .ThenBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).Y);
+    //
+    //     bool flag = false;
+    //     foreach (var pipe in pipesSortered)
+    //     {
+    //         if (pipe.Lenght.ToMillimeters() is > 500 and < 4000 && flag)
+    //         {
+    //             flag = false;
+    //             continue;
+    //         }
+    //
+    //         if (activeView.ViewType == ViewType.FloorPlan && pipe.IsRiser)
+    //         {
+    //             continue;
+    //         }
+    //
+    //         // Шаг 4: Вычисление позиций марки для текущей трубы
+    //         List<XYZ> tagLocations =
+    //             FindOptimalTagLocation(pipe, selectedTag, pipeTagsInfo);
+    //         if (tagLocations.Count == 0) continue;
+    //         // Создание марки
+    //         foreach (var tagLocation in tagLocations)
+    //         {
+    //             if (tagLocation == null) continue;
+    //             IndependentTag pipeTag = IndependentTag.Create(doc, selectedTag.Id, activeView.Id,
+    //                 new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagLocation);
+    //             existingAnnotations.Add(pipeTag);
+    //         }
+    //
+    //         flag = true;
+    //     }
+    // }
 
     public void PlacementMarksSystemAbbreviation(Document doc, List<PipeMdl> pipeModels, View activeView,
         FamilySymbol selectedTag)
     {
         // Получаем все существующие марки на активном виде
-        var existingAnnotations = GetExistingAnnotations(doc, activeView)
-            .Cast<IndependentTag>()
+        var existingTags = GetExistingAnnotations(doc, activeView)
+            .Cast<IndependentTag>().Select(existingAnnotation => new TagModel(existingAnnotation))
             .ToList();
-        var existingTags = existingAnnotations
-            .Select(existingAnnotation => new TagModel(existingAnnotation))
-            .ToList();
-      
-        var tagModelsEnumerable = existingTags
+
+        var existingSelectedTags = existingTags
             .Where(x => x.Name == selectedTag.Name).ToList();
-        if (tagModelsEnumerable.Any())
+        if (existingSelectedTags.Any())
         {
             foreach (var element in pipeModels.ToList())
             {
-                foreach (var tag in tagModelsEnumerable)
+                foreach (var tag in existingSelectedTags)
                 {
                     if (tag.TaggedLocalElements.Any(x => x.Id.Value == element.Id.Value))
                     {
@@ -404,7 +401,7 @@ public class PlacementOfStampsServices
             }
         }
 
-        var pipeTagsInfo = GetPipeTags(selectedTag, existingAnnotations, activeView);
+        var pipeTagsInfo = GetPipeTags(existingTags, activeView);
         var pipesSortered = pipeModels.OrderBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).X)
             .ThenBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).Y);
 
@@ -432,7 +429,7 @@ public class PlacementOfStampsServices
                 if (tagLocation == null) continue;
                 IndependentTag pipeTag = IndependentTag.Create(doc, selectedTag.Id, activeView.Id,
                     new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagLocation);
-                existingAnnotations.Add(pipeTag);
+                existingTags.Add(new TagModel(pipeTag));
             }
 
             flag = true;
@@ -564,7 +561,6 @@ public class PlacementOfStampsServices
         return boundingBox;
     }
 
-   
 
 // Вспомогательный класс для хранения 2D границ
     public class Rectangle
@@ -591,26 +587,22 @@ public class PlacementOfStampsServices
         }
     }
 
-    private Dictionary<ElementId, List<TagModel>> GetPipeTags(FamilySymbol selectedTag,
-        List<IndependentTag> existingAnnotations, View activeView)
+    private Dictionary<ElementId, List<TagModel>> GetPipeTags(List<TagModel> existingAnnotations, View activeView)
     {
         Dictionary<ElementId, List<TagModel>> pipeTagsInfo = new Dictionary<ElementId, List<TagModel>>();
         // Минимальная допустимая длина кривой для операций
         double shortCurveTolerance = Context.Application.ShortCurveTolerance; // Минимальная длина кривой
 
-        foreach (var element in existingAnnotations)
+        foreach (var tagModel in existingAnnotations)
         {
-            // Безопасное приведение элемента к IndependentTag
-            if (element is not IndependentTag tag) continue;
-            var taggedElements = tag.GetTaggedLocalElements();
+            var taggedElements = tagModel.IndependentTag.GetTaggedLocalElements();
             foreach (var taggedElement in taggedElements)
             {
                 // Пропустить недействительные элементы или элементы, не являющиеся трубами
                 if (taggedElement?.Id == ElementId.InvalidElementId || taggedElement is not Pipe pipe) continue;
-                XYZ tagPosition = tag.TagHeadPosition;
                 if (pipe.Location is not LocationCurve pipeLocation) continue;
                 Curve pipeCurve = pipeLocation.Curve;
-                IntersectionResult result = pipeCurve.Project(tagPosition);
+                IntersectionResult result = pipeCurve.Project(tagModel.TagHeadPosition);
                 double parameter = result.Parameter;
 
                 if (!pipeTagsInfo.ContainsKey(pipe.Id))
@@ -618,7 +610,7 @@ public class PlacementOfStampsServices
                     pipeTagsInfo[pipe.Id] = [];
                 }
 
-                BoundingBoxXYZ tagBoundingBox = tag.get_BoundingBox(activeView);
+
                 double startParam = pipeCurve.GetEndParameter(0);
                 double endParam = parameter;
 
@@ -653,9 +645,8 @@ public class PlacementOfStampsServices
                     }
                 }
 
-                pipeTagsInfo[pipe.Id].Add(new TagModel(tag)
+                pipeTagsInfo[pipe.Id].Add(new TagModel(tagModel.IndependentTag)
                 {
-                    BoundingBox = tagBoundingBox,
                     Distance = distanceAlongCurve,
                 });
             }

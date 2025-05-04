@@ -3,7 +3,7 @@ namespace PlacementOfStamps.Models;
 public class TagModel
 {
     public IndependentTag TagElement { get; set; }
-    public XYZ TagPosition { get; set; }
+    public XYZ TagHeadPosition { get; set; }
     public double Parameter { get; set; }
     public List<ElementModel> TaggedElements { get; set; } = [];
     public ElementId TagTypeId { get; set; }
@@ -11,19 +11,26 @@ public class TagModel
     public string Name { get; set; }
     public BoundingBoxXYZ BoundingBox { get; set; }
     public double Distance { get; set; }
+
+
     public Rectangle Rectangle { get; set; }
+    public IndependentTag IndependentTag { get; set; }
+
     // public List<LeaderElbowModel> LeadersElbow { get; set; } = [];
     // public List<LeaderEndModel> LeadersEnd { get; set; } = [];
     public ICollection<Element> TaggedLocalElements { get; set; } = [];
 
     public TagModel(IndependentTag tag)
     {
+        if (tag == null) return;
+        IndependentTag = tag;
         Document doc = tag.Document;
         TagElement = tag;
         Name = tag.Name;
-        TagPosition = tag.TagHeadPosition;
+        TagHeadPosition = tag.TagHeadPosition;
         HasLeader = tag.HasLeader;
         TagTypeId = tag.GetTypeId();
+        BoundingBox = tag.get_BoundingBox(doc.ActiveView);
         foreach (var taggedLocalElement in tag.GetTaggedLocalElements())
         {
             TaggedLocalElements.Add(taggedLocalElement);

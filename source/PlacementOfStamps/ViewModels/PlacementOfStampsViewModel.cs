@@ -11,7 +11,7 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
     [ObservableProperty] private bool _pipesOuterDiametersIsChecked;
     [ObservableProperty] private FamilySymbol _pipesOuterDiameterMarkSelected;
     [ObservableProperty] private HashSet<Element> _pipeMarks;
-    [ObservableProperty] private bool _systemAbbreviationIsChecked;
+    [ObservableProperty] private bool _systemAbbreviationIsChecked=true;
     [ObservableProperty] private FamilySymbol _systemAbbreviationMarkSelected;
     [ObservableProperty] private bool _pipeInsulationIsChecked;
     [ObservableProperty] private FamilySymbol _pipeInsulationMarkSelected;
@@ -79,10 +79,10 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
         tr.Start();
         try
         {
-            if (PipesOuterDiametersIsChecked)
-            {
-                _placementOfStampsServices.PlacementMarksPipesOuterDiameters(_doc, pipeMdls, activeView,PipesOuterDiameterMarkSelected);
-            }
+            // if (PipesOuterDiametersIsChecked)
+            // {
+            //     _placementOfStampsServices.PlacementMarksPipesOuterDiameters(_doc, pipeMdls, activeView,PipesOuterDiameterMarkSelected);
+            // }
 
             if (SystemAbbreviationIsChecked)
             {
@@ -90,11 +90,11 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
                     SystemAbbreviationMarkSelected);
             }
 
-            if (PipeInsulationIsChecked)
-            {
-                _placementOfStampsServices.PlacementMarksPipeInsulation(_doc, pipeMdls, activeView,
-                    PipeInsulationMarkSelected);
-            }
+            // if (PipeInsulationIsChecked)
+            // {
+            //     _placementOfStampsServices.PlacementMarksPipeInsulation(_doc, pipeMdls, activeView,
+            //         PipeInsulationMarkSelected);
+            // }
 
             tr.Commit();
         }

@@ -57,35 +57,35 @@
                 </Grid.RowDefinitions>
 
                 <!-- Первая строка -->
-                <CheckBox Grid.Column="0" Grid.Row="0"
-                          Style="{StaticResource FormCheckBoxStyle}"
-                          IsChecked="{Binding PipesOuterDiametersIsChecked}" />
-                <TextBlock Grid.Column="1" Grid.Row="0"
-                           Style="{StaticResource FormTextBlockStyle}"
-                           Text="Трубы: Днар" />
-                <ComboBox Grid.Column="2" Grid.Row="0"
-                          Style="{StaticResource FormComboBoxStyle}"
-                          ItemsSource="{Binding PipeMarks}"
-                          SelectedItem="{Binding PipesOuterDiameterMarkSelected}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Name}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
+                <!-- <CheckBox Grid.Column="0" Grid.Row="0" -->
+                <!--           Style="{StaticResource FormCheckBoxStyle}" -->
+                <!--           IsChecked="{Binding PipesOuterDiametersIsChecked}" /> -->
+                <!-- <TextBlock Grid.Column="1" Grid.Row="0" -->
+                <!--            Style="{StaticResource FormTextBlockStyle}" -->
+                <!--            Text="Трубы: Днар" /> -->
+                <!-- <ComboBox Grid.Column="2" Grid.Row="0" -->
+                <!--           Style="{StaticResource FormComboBoxStyle}" -->
+                <!--           ItemsSource="{Binding PipeMarks}" -->
+                <!--           SelectedItem="{Binding PipesOuterDiameterMarkSelected}"> -->
+                <!--     <ComboBox.ItemTemplate> -->
+                <!--         <DataTemplate> -->
+                <!--             <TextBlock Text="{Binding Name}" /> -->
+                <!--         </DataTemplate> -->
+                <!--     </ComboBox.ItemTemplate> -->
+                <!-- </ComboBox> -->
 
 
                 <!-- Вторая строка -->
-                <CheckBox Grid.Column="0" Grid.Row="1"
-                          Style="{StaticResource FormCheckBoxStyle}"
-                          IsChecked="{Binding PipesDNIsChecked}" />
-                <TextBlock Grid.Column="1" Grid.Row="1"
-                           Style="{StaticResource FormTextBlockStyle}"
-                           Text="Трубы: DN" />
-                <ComboBox Grid.Column="2" Grid.Row="1"
-                          Style="{StaticResource FormComboBoxStyle}"
-                          ItemsSource="{Binding PipeMarks}"
-                          SelectedItem="{Binding SelectedPipeMarkDN}" />
+                <!-- <CheckBox Grid.Column="0" Grid.Row="1" -->
+                <!--           Style="{StaticResource FormCheckBoxStyle}" -->
+                <!--           IsChecked="{Binding PipesDNIsChecked}" /> -->
+                <!-- <TextBlock Grid.Column="1" Grid.Row="1" -->
+                <!--            Style="{StaticResource FormTextBlockStyle}" -->
+                <!--            Text="Трубы: DN" /> -->
+                <!-- <ComboBox Grid.Column="2" Grid.Row="1" -->
+                <!--           Style="{StaticResource FormComboBoxStyle}" -->
+                <!--           ItemsSource="{Binding PipeMarks}" -->
+                <!--           SelectedItem="{Binding SelectedPipeMarkDN}" /> -->
 
                 <!-- Третья строка -->
                 <CheckBox Grid.Column="0" Grid.Row="2"
@@ -105,22 +105,22 @@
                     </ComboBox.ItemTemplate>
                 </ComboBox>
                 <!-- Четвертая строка -->
-                <CheckBox Grid.Column="0" Grid.Row="3"
-                          Style="{StaticResource FormCheckBoxStyle}"
-                          IsChecked="{Binding PipeInsulationIsChecked}" />
-                <TextBlock Grid.Column="1" Grid.Row="3"
-                           Style="{StaticResource FormTextBlockStyle}"
-                           Text="Изоляция труб" />
-                <ComboBox Grid.Column="2" Grid.Row="3"
-                          Style="{StaticResource FormComboBoxStyle}"
-                          ItemsSource="{Binding PipeMarks}"
-                          SelectedItem="{Binding PipeInsulationMarkSelected}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Name}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
+                <!-- <CheckBox Grid.Column="0" Grid.Row="3" -->
+                <!--           Style="{StaticResource FormCheckBoxStyle}" -->
+                <!--           IsChecked="{Binding PipeInsulationIsChecked}" /> -->
+                <!-- <TextBlock Grid.Column="1" Grid.Row="3" -->
+                <!--            Style="{StaticResource FormTextBlockStyle}" -->
+                <!--            Text="Изоляция труб" /> -->
+                <!-- <ComboBox Grid.Column="2" Grid.Row="3" -->
+                <!--           Style="{StaticResource FormComboBoxStyle}" -->
+                <!--           ItemsSource="{Binding PipeMarks}" -->
+                <!--           SelectedItem="{Binding PipeInsulationMarkSelected}"> -->
+                <!--     <ComboBox.ItemTemplate> -->
+                <!--         <DataTemplate> -->
+                <!--             <TextBlock Text="{Binding Name}" /> -->
+                <!--         </DataTemplate> -->
+                <!--     </ComboBox.ItemTemplate> -->
+                <!-- </ComboBox> -->
             </Grid>
         </Border>
 
