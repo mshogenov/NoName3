@@ -1,10 +1,10 @@
 namespace MepElementsCopy.Models;
 
-public class LevelModel
+public partial class LevelModel : ObservableObject
 {
     public Level Level { get; set; }
     public string Name { get; set; }
-    public bool IsChecked { get; set; }
+    [ObservableProperty] private bool _isChecked;
     public ElementId Id { get; set; }
     public double Elevation { get; set; }
 

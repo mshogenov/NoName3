@@ -23,7 +23,7 @@ public class DuctParametersDataStorage : IDataStorage
 
         using Stream stream = assembly.GetManifestResourceStream(resourceName);
         if (stream == null)
-            throw new Exception($"Ресурс {resourceName} не найден.");
+            throw new Exception($"Ресурс {resourceName} не найден. Проверьте путь и убедитесь, что файл добавлен как Embedded Resource.");
         using StreamReader reader = new StreamReader(stream);
         string json = reader.ReadToEnd();
         DuctParameters = JsonConvert.DeserializeObject<List<DuctParameters>>(json);

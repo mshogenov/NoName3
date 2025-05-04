@@ -1,0 +1,132 @@
+﻿<views:BaseRevitWindow
+    x:Class="CopyAnnotations.Views.CopyAnnotationsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:viewModels="clr-namespace:CopyAnnotations.ViewModels"
+    xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
+    xmlns:converters="clr-namespace:NoNameApi.Views.Converters;assembly=NoNameAPI"
+    mc:Ignorable="d"
+    d:DataContext="{d:DesignInstance viewModels:CopyAnnotationsViewModel}"
+    Background="{DynamicResource WindowBackgroundBrush}"
+    Title="Скопировать марки"
+    SizeToContent="Height"
+    Width="350">
+    <Window.Resources>
+        <ResourceDictionary>
+            <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
+            <converters:BoolToIconConverter x:Key="BoolToIconConverter" />
+            <d:ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
+            </d:ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Style="{DynamicResource Grid}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Border
+            Style="{DynamicResource BorderContentStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Секция выбора марок -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0"
+                               VerticalAlignment="Center"
+                               Style="{DynamicResource TextBlockStyle}">
+                        <Run Text="Выбрано марок: " />
+                        <Run Text="{Binding SelectedTagRefsCount, Mode=OneWay}" />
+                        <Run Text=" шт." />
+                    </TextBlock>
+                    <Button Grid.Row="0" Grid.Column="1"
+                            Content="Выбрать марки"
+                            Style="{DynamicResource CommonButtonStyle2}"
+                            Command="{Binding SelectedAnnotationsCommand}"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}" />
+                </Grid>
+                <!-- Секция выбора базовой точки -->
+                <Grid Grid.Row="1" Margin="0,0,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <DockPanel>
+                        <!-- Заголовок секции базовой точки -->
+                        <TextBlock 
+                                   Text="Базовая точка:"
+                                   VerticalAlignment="Center"
+                                   Style="{DynamicResource TextBlockStyle}" />
+
+                        <!-- Статус выбора базовой точки -->
+                        <Border 
+                            Margin="10 0"
+                                HorizontalAlignment="Left"
+                                Width="20"
+                                Height="20"
+                                CornerRadius="10"
+                                ToolTip="{Binding BasePointStatusTooltip}"
+                                Background="{Binding IsBasePointSet, Converter={StaticResource BoolToColorConverter}}">
+                            <TextBlock
+                                Text="{Binding IsBasePointSet, Converter={StaticResource BoolToIconConverter}}"
+                                FontFamily="Segoe MDL2 Assets"
+                                FontSize="12"
+                                Foreground="White"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                        </Border>
+                    </DockPanel>
+
+
+                    <Button Grid.Row="0" Grid.Column="2"
+                            Style="{DynamicResource CommonButtonStyle2}"
+                            Content="Выбрать базовую точку"
+                            MinWidth="130"
+                            Command="{Binding SelectBasePointCommand}"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}" />
+                </Grid>
+            </Grid>
+
+        </Border>
+
+        <!-- Кнопки действий -->
+        <DockPanel Grid.Row="1" HorizontalAlignment="Right"
+                   Margin="0 7 0 0">
+
+            <Button
+                Style="{DynamicResource CommonButtonStyle2}"
+                Content="Копировать"
+                MinWidth="100"
+                Command="{Binding CopyAnnotationsCommand}"
+                Margin="0,0,10,0"
+                IsDefault="True" />
+
+            <Button
+                Style="{DynamicResource OutlineCloseButtonStyle}"
+                Content="Закрыть"
+
+                Click="ButtonClose_OnClick"
+                IsCancel="True" />
+        </DockPanel>
+    </Grid>
+</views:BaseRevitWindow>

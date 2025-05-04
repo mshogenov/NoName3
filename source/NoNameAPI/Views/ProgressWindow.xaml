@@ -26,47 +26,48 @@
 
     <Border
         Style="{DynamicResource BorderFolding}"
-        Margin="10">
+        Margin="7">
+        <Grid Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid>
+                <TextBlock Text="Выполнение операции"
+                           Style="{DynamicResource TextBlockStyle}"
+                           FontSize="20"
+                           FontWeight="SemiBold"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Top"
+                           Margin="0,0,0,20" />
 
-        <Grid Margin="20">
+                <!-- Прогресс бар -->
+                <ProgressBar x:Name="ProgressBar"
+                             Style="{DynamicResource ModernProgressBar}"
+                             Height="8"
+                             Margin="0,50,0,0"
+                             VerticalAlignment="Top" />
+
+                <!-- Процент выполнения -->
+                <TextBlock x:Name="ProgressText"
+                           Style="{DynamicResource TextBlockStyle}"
+                           TextAlignment="Center"
+                           FontSize="16"
+                           Margin="0,70,0,0"
+                           VerticalAlignment="Top" />
+                <!-- Текущая задача -->
+                <TextBlock x:Name="CurrentTaskText"
+                           Style="{DynamicResource TextBlockStyle}"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           Margin="0,100,0,0"
+                           VerticalAlignment="Top" />
+
+            </Grid>
             <!-- Заголовок -->
-            <TextBlock Text="Выполнение операции"
-                       Style="{DynamicResource TextBlockStyle}"
-                       FontSize="20"
-                       FontWeight="SemiBold"
-
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Top"
-                       Margin="0,0,0,20" />
-
-            <!-- Прогресс бар -->
-            <ProgressBar x:Name="ProgressBar"
-                         Style="{DynamicResource ModernProgressBar}"
-                         Height="8"
-                         Margin="0,50,0,0"
-                         VerticalAlignment="Top" />
-
-            <!-- Процент выполнения -->
-            <TextBlock x:Name="ProgressText"
-                       Style="{DynamicResource TextBlockStyle}"
-                       FontSize="16"
-                       Foreground="#333333"
-                       TextAlignment="Center"
-                       Margin="0,70,0,0"
-                       VerticalAlignment="Top" />
-
-            <!-- Текущая задача -->
-            <TextBlock x:Name="CurrentTaskText"
-                       Style="{DynamicResource TextBlockStyle}"
-                       FontSize="14"
-                       Foreground="#666666"
-                       TextAlignment="Center"
-                       TextWrapping="Wrap"
-                       Margin="0,100,0,0"
-                       VerticalAlignment="Top" />
-
-            <!-- Кнопка отмены -->
-            <Button x:Name="CancelButton"
+            <Grid Grid.Row="1">
+                <!-- Кнопка отмены -->
+                <Button
                     Content="Отмена"
                     Style="{DynamicResource CommonButtonStyle2}"
                     Width="100"
@@ -75,6 +76,8 @@
                     HorizontalAlignment="Center"
                     Margin="0,20,0,0"
                     Click="CancelButton_Click" />
+            </Grid>
+
         </Grid>
     </Border>
 </views:BaseRevitWindow>

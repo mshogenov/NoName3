@@ -4,7 +4,7 @@ public class SelectionHistoryItem
 {
     public int Index { get; set; }
     public int ElementCount { get; set; }
-    public List<ElementId> SelectionHistories { get; set; }
+    public List<ElementId> ElementIds { get; set; }
     public string Name { get; set; }
     public string Time { get; set; }
     public DateTime SelectionTime { get; set; }
@@ -13,7 +13,7 @@ public class SelectionHistoryItem
     {
         Index = index;
         ElementCount = selectionHistoryData.ElementsIds.Count;
-        SelectionHistories = selectionHistoryData.ElementsIds;
+        ElementIds = selectionHistoryData.ElementsIds;
         SelectionTime = selectionHistoryData.Time; // Записываем текущее время
         UpdateName(); // Обновляем имя с учетом времени
     }

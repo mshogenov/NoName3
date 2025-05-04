@@ -345,4 +345,27 @@ public static class Helpers
 
         return (group, created);
     }
+    /// <summary>
+    /// Получает список выделенных элементов в активном документе
+    /// </summary>
+    /// <returns>Список выделенных элементов</returns>
+    public static List<Element> GetSelectedElements(UIDocument uiDoc)
+    {
+        Document doc = uiDoc.Document;
+        // Получаем IDs выделенных элементов
+        ICollection<ElementId> selectedIds = uiDoc.Selection.GetElementIds();
+
+        // Преобразуем IDs в элементы
+        List<Element> selectedElements = [];
+        foreach (ElementId id in selectedIds)
+        {
+            Element elem = doc.GetElement(id);
+            if (elem != null)
+            {
+                selectedElements.Add(elem);
+            }
+        }
+
+        return selectedElements;
+    }
 }

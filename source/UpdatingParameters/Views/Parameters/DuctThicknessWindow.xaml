@@ -7,6 +7,7 @@
                        xmlns:parameters="clr-namespace:UpdatingParameters.ViewModels.Parameters"
                        xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
                        mc:Ignorable="d"
+                       Background="{DynamicResource WindowBackgroundBrush}"
                        WindowStartupLocation="CenterScreen"
                        Title="Параметры воздуховодов" Height="800" Width="1200"
                        d:DataContext="{d:DesignInstance parameters:DuctThicknessViewModel }">
@@ -29,9 +30,9 @@
         </Grid.RowDefinitions>
 
         <!-- Панель инструментов -->
-        <Border Margin="5"
+        <Border Margin="0 5"
                 Style="{DynamicResource BorderContentStyle}"
-                CornerRadius="5">
+                >
             <StackPanel Margin="5" Background="Transparent" Orientation="Horizontal">
                 <StackPanel.Resources>
                     <Style TargetType="Button">
@@ -151,7 +152,7 @@
 
         <!-- Таблица данных -->
         <DataGrid
-            Margin="5"
+           
             Grid.Row="1"
             ItemsSource="{Binding DuctParameters}"
             SelectedItem="{Binding SelectedParameter}"
