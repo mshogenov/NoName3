@@ -26,7 +26,7 @@ public sealed partial class BloomView : BaseRevitWindow, INotifyPropertyChanged
         }
     }
 
-    
+
     public MEPCurveType MepCurveType { get; private set; }
     private string _message;
 
@@ -49,7 +49,7 @@ public sealed partial class BloomView : BaseRevitWindow, INotifyPropertyChanged
         Connector[] source = SystemModelingServices.ConnectorArrayUnused(selectedElement);
         switch (selectedElement?.Category.BuiltInCategory)
         {
-            case BuiltInCategory.OST_DuctFitting:
+            case BuiltInCategory.OST_DuctFitting or BuiltInCategory.OST_DuctAccessory:
                 var ductTypes = new FilteredElementCollector(doc).OfClass(typeof(DuctType))
                     .WhereElementIsElementType()
                     .Cast<MEPCurveType>().OrderBy(x => x.Name).ToList();
@@ -65,7 +65,7 @@ public sealed partial class BloomView : BaseRevitWindow, INotifyPropertyChanged
                     if (connector.Shape == ConnectorProfileType.Oval)
                     {
                         MepCurveTypes.AddRange(ductTypes.Where(d =>
-                            d.FamilyName == "Воздуховод круглого сечения"));
+                            d.FamilyName == "Воздуховод овального сечения"));
                         break;
                     }
 
@@ -78,7 +78,7 @@ public sealed partial class BloomView : BaseRevitWindow, INotifyPropertyChanged
                 }
 
                 break;
-            case BuiltInCategory.OST_PipeFitting:
+            case BuiltInCategory.OST_PipeFitting or BuiltInCategory.OST_PipeAccessory:
                 MepCurveTypes = new FilteredElementCollector(doc).OfClass(typeof(PipeType))
                     .WhereElementIsElementType()
                     .Cast<MEPCurveType>().OrderBy(x => x.Name).ToList();

@@ -14,10 +14,10 @@ namespace SystemModelingCommands.Services
         private readonly Document _doc = Context.ActiveDocument;
         private readonly UIDocument _uiDoc = Context.ActiveUiDocument;
 
-        public void Bloom()
+        public void InsertPipe()
         {
             // Создаем фильтр для проверки
-            FittingSelectionFilter filter = new FittingSelectionFilter();
+            FittingAndAccessorySelectionFilter filter = new FittingAndAccessorySelectionFilter();
             Element selectedElement = null;
             // Проверка, есть ли выбранный элемент до запуска скрипта
             var selectedIds = Context.ActiveUiDocument?.Selection.GetElementIds();
@@ -1370,7 +1370,7 @@ namespace SystemModelingCommands.Services
                 return;
             foreach (Connector connector in source)
             {
-                if (connector.Domain == Domain.DomainPiping || connector.Domain == Domain.DomainHvac)
+                if (connector.Domain is Domain.DomainPiping or Domain.DomainHvac)
                 {
                     if (connector.Domain == Domain.DomainPiping)
                     {
@@ -1860,20 +1860,15 @@ namespace SystemModelingCommands.Services
 
         public static Connector[] ConnectorArrayUnused(Element element)
         {
-            if (element == null)
-                return null;
-            // Проверяем, поддерживает ли элемент MEPModel и ConnectorManager
-            if (element is MEPCurve mepCurve)
+            return element switch
             {
-                return mepCurve.ConnectorManager.UnusedConnectors.Cast<Connector>().ToArray();
-            }
-
-            if (element is FamilyInstance familyInstance && familyInstance.MEPModel != null)
-            {
-                return familyInstance.MEPModel.ConnectorManager.UnusedConnectors.Cast<Connector>().ToArray();
-            }
-
-            return null;
+               // Проверяем, поддерживает ли элемент MEPModel и ConnectorManager
+                MEPCurve mepCurve => mepCurve.ConnectorManager.UnusedConnectors.Cast<Connector>().ToArray(),
+                FamilyInstance { MEPModel: not null } familyInstance => familyInstance.MEPModel.ConnectorManager
+                    .UnusedConnectors.Cast<Connector>()
+                    .ToArray(),
+                _ => null
+            };
         }
 
         public static Connector[] ConnectorArray(Element element)

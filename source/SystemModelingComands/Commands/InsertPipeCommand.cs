@@ -2,15 +2,16 @@
 using Nice3point.Revit.Toolkit.External;
 using SystemModelingCommands.Services;
 
-namespace RevitAddIn2.Commands.SystemModelingCommands;
+
+namespace SystemModelingCommands.Commands;
 
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
-public class BloomCommand : ExternalCommand
+public class InsertPipeCommand : ExternalCommand
 {
     public override void Execute()
     {
         SystemModelingServices systemModelingServices = new();
-        systemModelingServices.Bloom();
+        systemModelingServices.InsertPipe();
     }
 }

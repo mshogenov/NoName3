@@ -83,9 +83,9 @@ namespace RevitAddIn2;
             var panelFormationOfSpecification = Application.CreatePanel("Спецификация", "Фигня");
             var panelOther = Application.CreatePanel("Прочее", "Фигня");
 
-            #region Bloom
+            #region InsertPipe
 
-            var bloomCommandButton = panelSystemModeling.AddPushButton<BloomCommand>("Вставить трубу")
+            var bloomCommandButton = panelSystemModeling.AddPushButton<InsertPipeCommand>("Вставить трубу")
                 .SetImage("/RevitAddIn2;component/Resources/Icons/Bloom16.ico")
                 .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Bloom32.png");
             ((PushButton)bloomCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
