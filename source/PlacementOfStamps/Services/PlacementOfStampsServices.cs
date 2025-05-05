@@ -384,7 +384,6 @@ public class PlacementOfStampsServices
         var existingTags = GetExistingAnnotations(doc, activeView)
             .Cast<IndependentTag>().Select(existingAnnotation => new TagModel(existingAnnotation))
             .ToList();
-
         var existingSelectedTags = existingTags
             .Where(x => x.Name == selectedTag.Name).ToList();
         if (existingSelectedTags.Any())
@@ -401,12 +400,12 @@ public class PlacementOfStampsServices
             }
         }
 
-        var pipeTagsInfo = GetPipeTags(existingTags, activeView);
-        var pipesSortered = pipeModels.OrderBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).X)
+        var pipeTagsInfo = GetPipeTags(existingTags);
+        var pipesSort = pipeModels.OrderBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).X)
             .ThenBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).Y);
 
         bool flag = false;
-        foreach (var pipe in pipesSortered)
+        foreach (var pipe in pipesSort)
         {
             if (pipe.Lenght.ToMillimeters() is > 500 and < 4000 && flag)
             {
@@ -562,97 +561,103 @@ public class PlacementOfStampsServices
     }
 
 
-// Вспомогательный класс для хранения 2D границ
-    public class Rectangle
+    private Dictionary<ElementId, List<TagModel>> GetPipeTags(List<TagModel> existingAnnotations)
     {
-        public XYZ Min { get; set; }
-        public XYZ Max { get; set; }
-
-        public Rectangle(XYZ min, XYZ max)
-        {
-            Min = min;
-            Max = max;
-        }
-
-        // Получить ширину прямоугольника
-        public double Width
-        {
-            get { return Max.X - Min.X; }
-        }
-
-        // Получить высоту прямоугольника
-        public double Height
-        {
-            get { return Max.Y - Min.Y; }
-        }
-    }
-
-    private Dictionary<ElementId, List<TagModel>> GetPipeTags(List<TagModel> existingAnnotations, View activeView)
-    {
-        Dictionary<ElementId, List<TagModel>> pipeTagsInfo = new Dictionary<ElementId, List<TagModel>>();
-        // Минимальная допустимая длина кривой для операций
-        double shortCurveTolerance = Context.Application.ShortCurveTolerance; // Минимальная длина кривой
-
+        var pipeTagsInfo = new Dictionary<ElementId, List<TagModel>>();
         foreach (var tagModel in existingAnnotations)
         {
-            var taggedElements = tagModel.IndependentTag.GetTaggedLocalElements();
-            foreach (var taggedElement in taggedElements)
+            foreach (var taggedElement in tagModel.TaggedElements)
             {
-                // Пропустить недействительные элементы или элементы, не являющиеся трубами
-                if (taggedElement?.Id == ElementId.InvalidElementId || taggedElement is not Pipe pipe) continue;
-                if (pipe.Location is not LocationCurve pipeLocation) continue;
+                // Проверка валидности элемента и типа элемента
+                if (!IsValidPipeElement(taggedElement.Element, out Pipe pipe, out LocationCurve pipeLocation))
+                    continue;
+
+                // Получение кривой трубы и проекции положения тега на кривую
                 Curve pipeCurve = pipeLocation.Curve;
-                IntersectionResult result = pipeCurve.Project(tagModel.TagHeadPosition);
+                if (!TryGetProjectionOnPipe(pipeCurve, tagModel.TagHeadPosition, out IntersectionResult result))
+                    continue;
+
                 double parameter = result.Parameter;
 
+                // Добавление записи для трубы, если её еще нет в словаре
                 if (!pipeTagsInfo.ContainsKey(pipe.Id))
                 {
-                    pipeTagsInfo[pipe.Id] = [];
+                    pipeTagsInfo[pipe.Id] = new List<TagModel>();
                 }
 
-
-                double startParam = pipeCurve.GetEndParameter(0);
-                double endParam = parameter;
-
-                // Проверка порядка параметров
-                if (startParam > endParam)
-                {
-                    (startParam, endParam) = (endParam, startParam);
-                }
-
-                // Проверяем, чтобы параметры имели допустимое расстояние
-                double distanceAlongCurve;
-
-                if (Math.Abs(startParam - endParam) < shortCurveTolerance)
-                {
-                    // Если параметры слишком близки, вычисляем расстояние напрямую
-                    XYZ startPoint = pipeCurve.Evaluate(startParam, false);
-                    XYZ endPoint = pipeCurve.Evaluate(endParam, false);
-                    distanceAlongCurve = startPoint.DistanceTo(endPoint);
-                }
-                else
-                {
-                    // Если параметры корректны, ограничиваем кривую
-                    Curve partialCurve = pipeCurve.Clone();
-                    try
-                    {
-                        partialCurve.MakeBound(startParam, endParam);
-                        distanceAlongCurve = partialCurve.Length;
-                    }
-                    catch
-                    {
-                        continue;
-                    }
-                }
-
-                pipeTagsInfo[pipe.Id].Add(new TagModel(tagModel.IndependentTag)
-                {
-                    Distance = distanceAlongCurve,
-                });
+                // Вычисление расстояния от начала трубы до точки проекции тега
+                double distanceAlongCurve = CalculateDistanceAlongPipe(pipeCurve, parameter);
+                tagModel.Distance = distanceAlongCurve;
+                
+                pipeTagsInfo[pipe.Id].Add(tagModel);
             }
         }
 
         return pipeTagsInfo;
+    }
+
+    /// Проверка валидности элемента как трубы
+    private bool IsValidPipeElement(Element taggedElement, out Pipe pipe, out LocationCurve pipeLocation)
+    {
+        pipe = null;
+        pipeLocation = null;
+
+        if (taggedElement.Id == ElementId.InvalidElementId || !(taggedElement is Pipe))
+            return false;
+
+        pipe = taggedElement as Pipe;
+        pipeLocation = pipe.Location as LocationCurve;
+
+        return pipeLocation != null;
+    }
+
+    /// Попытка получить проекцию точки на кривую
+    private bool TryGetProjectionOnPipe(Curve pipeCurve, XYZ pointToProject, out IntersectionResult result)
+    {
+        result = null;
+        try
+        {
+            result = pipeCurve.Project(pointToProject);
+            return result != null;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    /// Вычисление расстояния вдоль трубы от начала до параметра
+    private double CalculateDistanceAlongPipe(Curve pipeCurve, double parameter)
+    {
+        double startParam = pipeCurve.GetEndParameter(0);
+        double endParam = parameter;
+
+        // Проверка порядка параметров
+        if (startParam > endParam)
+        {
+            (startParam, endParam) = (endParam, startParam);
+        }
+
+        // Проверка минимального расстояния
+        if (Math.Abs(startParam - endParam) < 0.001)
+        {
+            XYZ startPoint = pipeCurve.Evaluate(startParam, false);
+            XYZ endPoint = pipeCurve.Evaluate(endParam, false);
+            return startPoint.DistanceTo(endPoint);
+        }
+
+        // Вычисление длины части кривой
+        try
+        {
+            Curve partialCurve = pipeCurve.Clone();
+            partialCurve.MakeBound(startParam, endParam);
+            return partialCurve.Length;
+        }
+        catch (Exception)
+        {
+            // В случае ошибки при создании ограниченной кривой
+            return 0.0;
+        }
     }
 
     /// <summary>
@@ -672,11 +677,8 @@ public class PlacementOfStampsServices
     /// <summary>
     /// Находит оптимальную позицию для размещения марки, избегая перекрытий
     /// </summary>
-    /// <param name="doc">Документ Revit</param>
-    /// <param name="view">Текущее представление</param>
     /// <param name="pipe">Труба для маркировки</param>
     /// <param name="tagSymbol">Семейство символа тега</param>
-    /// <param name="existingAnnotations">Список существующих аннотаций для проверки перекрытий</param>
     /// <param name="pipeTaggedPositions"></param>
     /// <returns>Позиция для размещения марки или null, если подходящая позиция не найдена</returns>
     private List<XYZ> FindOptimalTagLocation(PipeMdl pipe, FamilySymbol tagSymbol,
