@@ -131,8 +131,7 @@ namespace SystemModelingCommands.Services
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
             Element element = _doc.GetElement(selectedReference);
-            var curve = (element?.Location as LocationCurve)?.Curve;
-            var direction = (curve as Line)?.Direction;
+
             XYZ globalPoint = selectedReference.GlobalPoint;
             Connector[] cA = ConnectorArrayUnused(element);
             if (cA == null)
@@ -166,8 +165,7 @@ namespace SystemModelingCommands.Services
                     DrawConduit(_doc, selectedReference, globalPoint, connector, origin, end,
                         level);
                 else if (element != null && element.Category.Id.Value == -2008000)
-                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end,
-                        direction);
+                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end);
                 else if (element != null && element.Category.Id.Value == -2008044)
                     DrawPipeWithElbow(_doc, selectedReference, globalPoint, connector, origin,
                         end, true);
@@ -184,8 +182,6 @@ namespace SystemModelingCommands.Services
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
             Element element = _doc.GetElement(selectedReference);
-            var curve = (element?.Location as LocationCurve)?.Curve;
-            var direction = (curve as Line)?.Direction;
             XYZ globalPoint = selectedReference.GlobalPoint;
             Connector[] cA = ConnectorArrayUnused(element);
             if (cA == null)
@@ -221,8 +217,7 @@ namespace SystemModelingCommands.Services
                     DrawConduit(_doc, selectedReference, globalPoint, connector, origin, end,
                         level);
                 else if (element != null && element.Category.Id.Value == -2008000)
-                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end,
-                        direction);
+                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end);
                 else if (element != null && element.Category.Id.Value == -2008044)
                     DrawPipeWithElbow(_doc, selectedReference, globalPoint, connector, origin,
                         end, true);
@@ -239,8 +234,6 @@ namespace SystemModelingCommands.Services
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
             Element element = _doc.GetElement(selectedReference);
-            var curve = (element?.Location as LocationCurve)?.Curve;
-            var direction = (curve as Line)?.Direction;
             XYZ globalPoint = selectedReference.GlobalPoint;
             Connector[] cA = ConnectorArrayUnused(element);
             if (cA == null)
@@ -274,7 +267,7 @@ namespace SystemModelingCommands.Services
                 else if (element != null && element.Category.Id.Value == -2008132)
                     DrawConduit(_doc, selectedReference, globalPoint, connector, origin, end, level);
                 else if (element != null && element.Category.Id.Value == -2008000)
-                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end, direction);
+                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end);
                 else if (element != null && element.Category.Id.Value == -2008044)
                     DrawPipeWithElbow(_doc, selectedReference, globalPoint, connector, origin, end, true);
                 transaction.Commit();
@@ -290,8 +283,6 @@ namespace SystemModelingCommands.Services
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
             Element element = _doc.GetElement(selectedReference);
-            var curve = (element?.Location as LocationCurve)?.Curve;
-            var direction = (curve as Line)?.Direction;
             XYZ globalPoint = selectedReference.GlobalPoint;
             Connector[] cA = ConnectorArrayUnused(element);
             if (cA == null)
@@ -321,8 +312,7 @@ namespace SystemModelingCommands.Services
                     DrawConduit(_doc, selectedReference, globalPoint, connector, origin, end,
                         level);
                 else if (element != null && element.Category.BuiltInCategory == BuiltInCategory.OST_DuctCurves)
-                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end,
-                        direction);
+                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end);
                 else if (element != null && element.Category.BuiltInCategory == BuiltInCategory.OST_PipeCurves)
                     DrawPipeWithElbow(_doc, selectedReference, globalPoint, connector, origin,
                         end, true);
@@ -392,8 +382,6 @@ namespace SystemModelingCommands.Services
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
             Element element = Context.ActiveDocument?.GetElement(selectedReference);
-            var curve = (element?.Location as LocationCurve)?.Curve;
-            var direction = (curve as Line)?.Direction;
             XYZ globalPoint = selectedReference?.GlobalPoint;
             Connector[] connectors = ConnectorArrayUnused(element);
             if (connectors == null)
@@ -432,7 +420,7 @@ namespace SystemModelingCommands.Services
                     case BuiltInCategory.OST_DuctCurves:
                         DrawDuct(Context.ActiveDocument, selectedReference, globalPoint,
                             connector,
-                            origin, end, direction);
+                            origin, end);
                         break;
                     case BuiltInCategory.OST_PipeCurves:
                         DrawPipeWithElbow(Context.ActiveDocument, selectedReference, globalPoint,
@@ -469,8 +457,6 @@ namespace SystemModelingCommands.Services
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
             Element element = _doc.GetElement(selectedReference);
-            var curve = (element?.Location as LocationCurve)?.Curve;
-            var direction = (curve as Line)?.Direction;
             XYZ globalPoint = selectedReference.GlobalPoint;
             Connector[] cA = ConnectorArrayUnused(element);
             if (cA == null)
@@ -499,7 +485,7 @@ namespace SystemModelingCommands.Services
                             level);
                         break;
                     case BuiltInCategory.OST_DuctCurves:
-                        DrawDuct(_doc, selectedReference, globalPoint, connector, origin, endPoint, direction);
+                        DrawDuct(_doc, selectedReference, globalPoint, connector, origin, endPoint);
                         break;
                     case BuiltInCategory.OST_PipeCurves:
                         DrawPipeWithElbow(_doc, selectedReference, globalPoint, connector, origin,
@@ -1061,7 +1047,7 @@ namespace SystemModelingCommands.Services
         }
 
         public static void DrawDuct(Document doc, Reference selectedReference, XYZ selectedPoint,
-            Connector closestConnector, XYZ start, XYZ end, XYZ dir)
+            Connector closestConnector, XYZ start, XYZ end)
         {
             if (doc == null || selectedReference == null || selectedPoint == null ||
                 closestConnector == null || start == null || end == null)
@@ -1071,29 +1057,32 @@ namespace SystemModelingCommands.Services
 
             try
             {
-                if (doc.GetElement(selectedReference) is not Duct element)
+                Duct element = doc.GetElement(selectedReference) as Duct;
+                if (element == null)
                 {
                     TaskDialog.Show("Ошибка", "Выбранный элемент не является воздуховодом.");
                     return;
                 }
 
-                const double scalingFactor = 1.2; // Этот коэффициент можно настроить по необходимости
+                var curve = element.Location as LocationCurve;
+                var direction = (curve.Curve as Line).Direction;
+                const double scalingFactor = 12; // Этот коэффициент можно настроить по необходимости
 
                 // Вычисляем вектор направления от start до end
-                XYZ direction = end - start;
-                double length = direction.GetLength();
+                XYZ directionVector = end - start;
+                double length = directionVector.GetLength();
 
-                if (length == 0)
+                if (length <= 0)
                 {
                     TaskDialog.Show("Предупреждение", "Начальная и конечная точки совпадают. Воздуховод не создан.");
                     return;
                 }
 
                 // Нормализуем вектор направления
-                XYZ unitDirection = direction.Normalize();
+                XYZ unitDirection = directionVector.Normalize();
 
-                // Определяем новую конечную точку, увеличив длину на дополнительную длину
-                XYZ adjustedEnd = end + unitDirection * scalingFactor;
+                // Определяем новую конечную точку увеличив длину на дополнительную длину
+                XYZ adjustedEnd = end + unitDirection;
 
                 DuctType ductType = element.DuctType;
                 MechanicalSystemType mechanicalSystem = GetMechanicalSystem(doc, closestConnector);
@@ -1129,18 +1118,20 @@ namespace SystemModelingCommands.Services
                         Parameter widthParamNewDuct = newDuct.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM);
                         Parameter heightParamNewDuct = newDuct.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM);
 
-
-                        if (Math.Abs(dir.X) >= 0)
+                        if (direction != null && Math.Abs(direction.X) >  0.0001)
                         {
-                            widthParamNewDuct?.Set(height);
-                            heightParamNewDuct?.Set(width);
+                            if (widthParamNewDuct != null && !widthParamNewDuct.IsReadOnly)
+                                widthParamNewDuct.Set(height);
+
+                            if (heightParamNewDuct != null && !heightParamNewDuct.IsReadOnly)
+                                heightParamNewDuct.Set(width);
                         }
                         else
                         {
-                            if (widthParamNewDuct != null && !widthParamNewDuct.IsReadOnly)
+                            if (widthParamNewDuct is { IsReadOnly: false })
                                 widthParamNewDuct.Set(width);
 
-                            if (heightParamNewDuct != null && !heightParamNewDuct.IsReadOnly)
+                            if (heightParamNewDuct is { IsReadOnly: false })
                                 heightParamNewDuct.Set(height);
                         }
 
@@ -1862,7 +1853,7 @@ namespace SystemModelingCommands.Services
         {
             return element switch
             {
-               // Проверяем, поддерживает ли элемент MEPModel и ConnectorManager
+                // Проверяем, поддерживает ли элемент MEPModel и ConnectorManager
                 MEPCurve mepCurve => mepCurve.ConnectorManager.UnusedConnectors.Cast<Connector>().ToArray(),
                 FamilyInstance { MEPModel: not null } familyInstance => familyInstance.MEPModel.ConnectorManager
                     .UnusedConnectors.Cast<Connector>()
