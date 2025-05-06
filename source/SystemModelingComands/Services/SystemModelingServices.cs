@@ -317,7 +317,6 @@ namespace SystemModelingCommands.Services
                     DrawPipeWithElbow(_doc, selectedReference, globalPoint, connector, origin,
                         end, true);
 
-
                 transaction.Commit();
             }
             catch (Exception e)
@@ -1063,11 +1062,6 @@ namespace SystemModelingCommands.Services
                     TaskDialog.Show("Ошибка", "Выбранный элемент не является воздуховодом.");
                     return;
                 }
-
-                var curve = element.Location as LocationCurve;
-                var direction = (curve.Curve as Line).Direction;
-                const double scalingFactor = 12; // Этот коэффициент можно настроить по необходимости
-
                 // Вычисляем вектор направления от start до end
                 XYZ directionVector = end - start;
                 double length = directionVector.GetLength();
@@ -1117,23 +1111,11 @@ namespace SystemModelingCommands.Services
 
                         Parameter widthParamNewDuct = newDuct.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM);
                         Parameter heightParamNewDuct = newDuct.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM);
+                        if (widthParamNewDuct is { IsReadOnly: false })
+                            widthParamNewDuct.Set(width);
 
-                        if (direction != null && Math.Abs(direction.X) >  0.0001)
-                        {
-                            if (widthParamNewDuct != null && !widthParamNewDuct.IsReadOnly)
-                                widthParamNewDuct.Set(height);
-
-                            if (heightParamNewDuct != null && !heightParamNewDuct.IsReadOnly)
-                                heightParamNewDuct.Set(width);
-                        }
-                        else
-                        {
-                            if (widthParamNewDuct is { IsReadOnly: false })
-                                widthParamNewDuct.Set(width);
-
-                            if (heightParamNewDuct is { IsReadOnly: false })
-                                heightParamNewDuct.Set(height);
-                        }
+                        if (heightParamNewDuct is { IsReadOnly: false })
+                            heightParamNewDuct.Set(height);
 
                         break;
 
@@ -1146,7 +1128,7 @@ namespace SystemModelingCommands.Services
                         }
 
                         Parameter diameterParam = newDuct.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM);
-                        if (diameterParam != null && !diameterParam.IsReadOnly)
+                        if (diameterParam is { IsReadOnly: false })
                         {
                             diameterParam.Set(diameter);
                         }
@@ -1158,25 +1140,17 @@ namespace SystemModelingCommands.Services
                         return;
                 }
 
-                // Проверка необходимости поворота нового воздуховода
-                if (Math.Abs(start.X - end.X) >= 1 || Math.Abs(start.Y - end.Y) > 1)
+                if (Math.Abs(start.X - end.X) < 0.001 && Math.Abs(start.Y - end.Y) < 0.001)
                 {
-                    // Получаем направление коннектора
                     XYZ basisZ = closestConnector.CoordinateSystem.BasisZ;
-                    XYZ yAxis = new XYZ(0.0, 1.0, 0.0);
-                    double angle = basisZ.AngleTo(yAxis);
-
-                    // Определяем знак угла на основе скалярного произведения и координат
-                    if (basisZ.DotProduct(yAxis) > 0.0 && basisZ.X > 1.0)
+                    XYZ source = new XYZ(0.0, 1.0, 0.0);
+                    double angle = basisZ.AngleTo(source);
+                    if (basisZ.DotProduct(source) > 0.0 && basisZ.X > 1.0)
                         angle = -angle;
-
-                    // Создаём ось вращения
-                    Line rotationAxis = Line.CreateBound(start, end);
+                    Line bound = Line.CreateBound(start, end);
                     if (start.Z > end.Z)
-                        rotationAxis = Line.CreateBound(end, start);
-
-                    // Поворачиваем новый воздуховод
-                    ElementTransformUtils.RotateElement(doc, newDuct.Id, rotationAxis, angle);
+                        bound = Line.CreateBound(end, start);
+                    ElementTransformUtils.RotateElement(doc, newDuct.Id, bound, angle);
                 }
 
                 // Создаём отвод между коннекторами
@@ -1184,11 +1158,8 @@ namespace SystemModelingCommands.Services
                 if (newElbow == null)
                 {
                     TaskDialog.Show("Ошибка", "Не удалось создать отвод между воздуховодами.");
-                    return;
+                   
                 }
-
-                // Обновляем документ
-                doc.Regenerate();
             }
             catch (Exception ex)
             {
