@@ -33,6 +33,7 @@ public partial class ViewOfPipeSystemsVM : ObservableObject
         {
             IsVisibilityMissingParameters = true;
         }
+        
 
         _viewOfPipeSystemsServices = new ViewOfPipeSystemsServices();
         // Получаем все используемые системы в проекте
@@ -89,6 +90,7 @@ public partial class ViewOfPipeSystemsVM : ObservableObject
             tr.Start();
             try
             {
+                
                 _viewOfPipeSystemsServices.ProcessMepSystems(selectedMepSystem,existingViews,existingFilters);
                 tr.Commit();
             }
