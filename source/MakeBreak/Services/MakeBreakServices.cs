@@ -21,8 +21,44 @@ public class MakeBreakServices
             // Сохраняем оригинальные точки для дальнейших расчетов
             XYZ originalPoint1 = new XYZ(point1.X, point1.Y, point1.Z);
             // Получаем трубу по ID
-            ElementId pipeId = selectReference1.ElementId;
-            Pipe originalPipe = _doc.GetElement(pipeId) as Pipe;
+            ElementId selectReferenceId = selectReference1.ElementId;
+            Pipe originalPipe = null;
+            var selectedElement = _doc.GetElement(selectReferenceId);
+            switch (selectedElement)
+            {
+                case Pipe pipe:
+                    originalPipe = pipe;
+                    break;
+                case DisplacementElement displacementElement:
+                {
+                    var displacementElementIds = displacementElement.GetDisplacedElementIds();
+
+                    foreach (ElementId displacedId in displacementElementIds)
+                    {
+                        Element element = _doc.GetElement(displacedId);
+
+                        // Проверяем, является ли элемент трубой
+                        if (element is not Pipe pipe) continue;
+                        // Получаем геометрию трубы
+                        BoundingBoxXYZ bounding = pipe.get_BoundingBox(_doc.ActiveView);
+                        var contains = bounding.Contains(point1);
+                        if (!contains) continue;
+                        // Нашли трубу, которая проходит через точку
+                        originalPipe = pipe;
+                        break;
+                    }
+
+                    break;
+                }
+            }
+
+            // Проверяем, нашли ли мы трубу
+            if (originalPipe == null)
+            {
+                TaskDialog.Show("Ошибка", "Не удалось найти трубу в указанной точке");
+                return;
+            }
+
             using TransactionGroup tg = new TransactionGroup(_doc, "Сделать разрыв");
             try
             {
@@ -30,7 +66,7 @@ public class MakeBreakServices
                 using Transaction transaction = new Transaction(_doc, "Вставка первой муфты");
                 transaction.Start();
                 // Разрезаем трубу в первой точке
-                ElementId firstSplitPipeId = PlumbingUtils.BreakCurve(_doc, pipeId, point1);
+                ElementId firstSplitPipeId = PlumbingUtils.BreakCurve(_doc, originalPipe.Id, point1);
                 if (firstSplitPipeId == ElementId.InvalidElementId)
                 {
                     TaskDialog.Show("Ошибка", "Не удалось разрезать трубу в первой точке.");
@@ -59,6 +95,7 @@ public class MakeBreakServices
                     tg.RollBack();
                     return;
                 }
+
                 XYZ point2 = refPipe2.GlobalPoint;
                 // Проверяем минимальное расстояние между точками
                 double distanceBetweenPoints = point1.DistanceTo(point2).ToMillimeters();
@@ -96,6 +133,7 @@ public class MakeBreakServices
                     secondCutPipeId = dist1 < dist2 ? originalPipe?.Id : secondPipe?.Id;
                 }
 
+                Pipe midPipe = null;
                 // Получаем центральную линию трубы
                 if (_doc.GetElement(secondCutPipeId) is Pipe pipeToCut)
                 {
@@ -126,7 +164,7 @@ public class MakeBreakServices
                     }
 
                     // Определяем среднюю трубу между двумя точками разреза
-                    Pipe midPipe = null;
+
                     if (secondCutPipeId != null && originalPipe != null && secondCutPipeId.Equals(originalPipe.Id))
                     {
                         midPipe = DetermineMidPipeByDistance(pipeToCut, thirdPipe, originalPoint1, originalPoint2);
@@ -140,6 +178,15 @@ public class MakeBreakServices
                 }
 
                 trans2.Commit();
+                // if (selectedElement is DisplacementElement displacement)
+                // {
+                //     CreateEnhancedDisplacement(_doc, new List<ElementId>()
+                //     {
+                //         originalPipe.Id,
+                //         secondCutPipeId,
+                //     }, new XYZ(0, 0, 50), null, null);
+                // }
+
                 tg.Assimilate();
             }
             catch (Exception ex)
@@ -148,6 +195,188 @@ public class MakeBreakServices
             }
         }
     }
+
+    /// <summary>
+    /// Создает новый DisplacementElement с добавлением новых элементов, используя расширенные параметры
+    /// </summary>
+    /// <param name="doc">Документ Revit</param>
+    /// <param name="elementsToDisplace">ID новых элементов для смещения</param>
+    /// <param name="displacement">Вектор смещения</param>
+    /// <param name="ownerView">3D вид, который будет владельцем DisplacementElement (может быть null для использования активного вида)</param>
+    /// <param name="parentDisplacementElement">Родительский DisplacementElement (может быть null)</param>
+    /// <returns>Новый созданный DisplacementElement</returns>
+    public static DisplacementElement CreateEnhancedDisplacement(
+        Document doc,
+        ICollection<ElementId> elementsToDisplace,
+        XYZ displacement,
+        View ownerView = null,
+        DisplacementElement parentDisplacementElement = null)
+    {
+        DisplacementElement newDisplacement = null;
+        using Transaction transaction = new Transaction(doc, "Create New Displacement Element");
+        try
+        {
+            transaction.Start();
+            // Если вид не указан, попробуем найти активный 3D вид
+            if (ownerView == null)
+            {
+                UIDocument uidoc = new UIDocument(doc);
+                View activeView = doc.ActiveView;
+
+                // Проверяем, является ли активный вид 3D видом
+                if (activeView.ViewType == ViewType.ThreeD)
+                {
+                    ownerView = activeView;
+                }
+                else
+                {
+                    // Ищем первый доступный 3D вид
+                    FilteredElementCollector viewCollector = new FilteredElementCollector(doc);
+                    viewCollector.OfClass(typeof(View3D));
+
+                    foreach (View3D view3D in viewCollector)
+                    {
+                        if (!view3D.IsTemplate)
+                        {
+                            ownerView = view3D;
+                            break;
+                        }
+                    }
+
+                    // Если 3D вид не найден, создаем новый
+                    if (ownerView == null)
+                    {
+                        ViewFamilyType viewFamilyType = new FilteredElementCollector(doc)
+                            .OfClass(typeof(ViewFamilyType))
+                            .Cast<ViewFamilyType>()
+                            .FirstOrDefault(v => v.ViewFamily == ViewFamily.ThreeDimensional);
+
+                        if (viewFamilyType != null)
+                        {
+                            View3D view3D = View3D.CreateIsometric(doc, viewFamilyType.Id);
+                            ownerView = view3D;
+                        }
+                        else
+                        {
+                            throw new Exception("Не удалось найти или создать 3D вид");
+                        }
+                    }
+                }
+            }
+
+            // Проверяем, что у нас есть вектор смещения
+            if (displacement == null)
+            {
+                displacement = new XYZ(0, 0, 0);
+            }
+
+            // Создаем новый DisplacementElement с расширенными параметрами
+            if (elementsToDisplace.Count > 0)
+            {
+                newDisplacement = DisplacementElement.Create(
+                    doc,
+                    elementsToDisplace,
+                    displacement,
+                    ownerView,
+                    parentDisplacementElement);
+            }
+
+            transaction.Commit();
+        }
+        catch (Exception ex)
+        {
+            TaskDialog.Show("Ошибка", "Ошибка при создании DisplacementElement: " + ex.Message);
+        }
+
+
+        return newDisplacement;
+    }
+
+    /// <summary>
+    /// Создает новый DisplacementElement на основе существующего с добавлением новых элементов
+    /// </summary>
+    /// <summary>
+    /// Создает новый DisplacementElement на основе существующего с добавлением новых элементов
+    /// </summary>
+    public static DisplacementElement AddElementsToExistingDisplacement(
+        Document doc,
+        DisplacementElement existingDisplacement,
+        ICollection<ElementId> newElementIds)
+    {
+        if (existingDisplacement == null)
+        {
+            throw new ArgumentNullException("existingDisplacement",
+                "Существующий DisplacementElement не может быть null");
+        }
+
+        // Получаем существующие элементы
+        ICollection<ElementId> existingElementIds = existingDisplacement.GetDisplacedElementIds();
+
+        // Создаем объединенный список элементов
+        List<ElementId> combinedElementIds = new List<ElementId>(existingElementIds);
+        foreach (ElementId id in newElementIds)
+        {
+            if (!combinedElementIds.Contains(id))
+            {
+                combinedElementIds.Add(id);
+            }
+        }
+
+        // Получаем вектор смещения из существующего DisplacementElement
+        XYZ displacement = existingDisplacement.GetRelativeDisplacement();
+
+        // Получаем владельца (3D вид)
+        View ownerView = existingDisplacement.OwnerViewId != ElementId.InvalidElementId
+            ? doc.GetElement(existingDisplacement.OwnerViewId) as View
+            : null;
+
+
+        // Удаляем старый DisplacementElement и создаем новый
+        DisplacementElement newDisplacement = null;
+
+
+        try
+        {
+            // Удаляем старый DisplacementElement
+            doc.Delete(existingDisplacement.Id);
+
+            // Создаем новый DisplacementElement с объединенными элементами
+            newDisplacement = DisplacementElement.Create(
+                doc,
+                combinedElementIds,
+                displacement,
+                ownerView,
+                null);
+        }
+        catch (Exception ex)
+        {
+            TaskDialog.Show("Ошибка", "Ошибка при добавлении элементов: " + ex.Message);
+        }
+
+        return newDisplacement;
+    }
+
+// Изменение элементов в существующем DisplacementElement
+    public static void UpdateDisplacementElements(Document doc, DisplacementElement displacementElement,
+        ICollection<ElementId> newElementIds)
+    {
+        // Получаем текущие смещённые элементы
+        ICollection<ElementId> currentElementIds = displacementElement.GetDisplacedElementIds();
+
+        // Если нужно добавить элементы к существующим, создаём комбинированный список
+        ICollection<ElementId> combinedElementIds = new List<ElementId>(currentElementIds);
+        foreach (ElementId id in newElementIds)
+        {
+            if (!combinedElementIds.Contains(id))
+            {
+                combinedElementIds.Add(id);
+            }
+        }
+
+        // Устанавливаем новый список элементов
+        displacementElement.SetDisplacedElementIds(combinedElementIds);
+    }
+
 
     private void SetParameterBreak(Pipe pipe)
     {
@@ -432,7 +661,7 @@ public class MakeBreakServices
         return (startPoint + endPoint) * 0.5;
     }
 
-    // <summary>
+// <summary>
 
     /// <summary>
     /// Находит тип семейства "Разрыв" среди доступных фитингов
