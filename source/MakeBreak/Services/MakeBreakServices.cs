@@ -15,27 +15,27 @@ public class MakeBreakServices
     {
         while (true)
         {
-            var refPipe1 = SelectReference("Выберите первую точку на трубе", new PipeSelectionFilter());
-            if (refPipe1 == null) return;
-            XYZ point1 = refPipe1.GlobalPoint;
+            var selectReference1 = SelectReference("Выберите первую точку на трубе", new SelectionFilter());
+            if (selectReference1 == null) return;
+            XYZ point1 = selectReference1.GlobalPoint;
             // Сохраняем оригинальные точки для дальнейших расчетов
             XYZ originalPoint1 = new XYZ(point1.X, point1.Y, point1.Z);
             // Получаем трубу по ID
-            ElementId pipeId = refPipe1.ElementId;
+            ElementId pipeId = selectReference1.ElementId;
             Pipe originalPipe = _doc.GetElement(pipeId) as Pipe;
-            using Transaction transaction = new Transaction(_doc, "Сделать разрыв");
+            using TransactionGroup tg = new TransactionGroup(_doc, "Сделать разрыв");
             try
             {
+                tg.Start();
+                using Transaction transaction = new Transaction(_doc, "Вставка первой муфты");
                 transaction.Start();
-                using SubTransaction subTransaction = new SubTransaction(_doc);
-                subTransaction.Start();
                 // Разрезаем трубу в первой точке
                 ElementId firstSplitPipeId = PlumbingUtils.BreakCurve(_doc, pipeId, point1);
                 if (firstSplitPipeId == ElementId.InvalidElementId)
                 {
                     TaskDialog.Show("Ошибка", "Не удалось разрезать трубу в первой точке.");
-                    subTransaction.RollBack();
                     transaction.RollBack();
+                    tg.RollBack();
                     return;
                 }
 
@@ -45,15 +45,20 @@ public class MakeBreakServices
                 if (firstCoupling == null)
                 {
                     TaskDialog.Show("Предупреждение", "Не удалось создать муфту в первой точке.");
-                    subTransaction.RollBack();
                     transaction.RollBack();
+                    tg.RollBack();
                     return;
                 }
 
-                subTransaction.Commit();
-                using SubTransaction subTransaction2 = new SubTransaction(_doc);
-                subTransaction2.Start();
-                Reference refPipe2 = SelectReference("Выберите вторую точку на трубе", new PipeSelectionFilter());
+                transaction.Commit();
+                using Transaction trans2 = new Transaction(_doc, "Вставка второй муфты");
+                trans2.Start();
+                Reference refPipe2 = SelectReference("Выберите вторую точку на трубе", new SelectionFilter());
+                if (refPipe2 == null)
+                {
+                    tg.RollBack();
+                    return;
+                }
                 XYZ point2 = refPipe2.GlobalPoint;
                 // Проверяем минимальное расстояние между точками
                 double distanceBetweenPoints = point1.DistanceTo(point2).ToMillimeters();
@@ -64,8 +69,8 @@ public class MakeBreakServices
                     TaskDialog.Show("Предупреждение",
                         $"Выбранные точки расположены слишком близко друг к другу (расстояние: {distanceBetweenPoints} миллиметров). " +
                         $"Минимальное допустимое расстояние: {minimumDistance} миллиметров. " + "Операция отменена.");
-                    subTransaction2.RollBack();
-                    transaction.RollBack();
+                    trans2.RollBack();
+                    tg.RollBack();
                     return;
                 }
 
@@ -101,8 +106,8 @@ public class MakeBreakServices
                     if (result == null)
                     {
                         TaskDialog.Show("Ошибка", "Не удалось спроецировать точку на трубу.");
-                        subTransaction2.RollBack();
-                        transaction.RollBack();
+                        trans2.RollBack();
+                        tg.RollBack();
                         return;
                     }
 
@@ -115,8 +120,8 @@ public class MakeBreakServices
                     if (secondCoupling == null)
                     {
                         TaskDialog.Show("Предупреждение", "Не удалось создать муфту во второй точке.");
-                        subTransaction2.RollBack();
-                        transaction.RollBack();
+                        trans2.RollBack();
+                        tg.RollBack();
                         return;
                     }
 
@@ -134,8 +139,8 @@ public class MakeBreakServices
                     SetParameterBreak(midPipe);
                 }
 
-                subTransaction2.Commit();
-                transaction.Commit();
+                trans2.Commit();
+                tg.Assimilate();
             }
             catch (Exception ex)
             {
