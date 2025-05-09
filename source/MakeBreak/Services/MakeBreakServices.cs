@@ -3,6 +3,7 @@ using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using MakeBreak.Filters;
 
+
 namespace MakeBreak.Services;
 
 public class MakeBreakServices
@@ -14,27 +15,27 @@ public class MakeBreakServices
     {
         while (true)
         {
+            var refPipe1 = SelectReference("Выберите первую точку на трубе", new PipeSelectionFilter());
+            if (refPipe1 == null) return;
+            XYZ point1 = refPipe1.GlobalPoint;
+            // Сохраняем оригинальные точки для дальнейших расчетов
+            XYZ originalPoint1 = new XYZ(point1.X, point1.Y, point1.Z);
+            // Получаем трубу по ID
+            ElementId pipeId = refPipe1.ElementId;
+            Pipe originalPipe = _doc.GetElement(pipeId) as Pipe;
+            using Transaction transaction = new Transaction(_doc, "Сделать разрыв");
             try
             {
-                // Запрашиваем у пользователя выбрать две точки на трубе
-                Reference refPipe1 = _uidoc.Selection.PickObject(ObjectType.Element, new PipeSelectionFilter(), "Выберите первую точку на трубе");
-                XYZ point1 = refPipe1.GlobalPoint;
-                using TransactionGroup tg = new TransactionGroup(_doc, "Сделать разрыв");
-                tg.Start();
-                using Transaction trans = new Transaction(_doc, "Вставка первой муфты");
-                trans.Start();
-                // Получаем трубу по ID
-                ElementId pipeId = refPipe1.ElementId;
-                Pipe originalPipe = _doc.GetElement(pipeId) as Pipe;
-                // Сохраняем оригинальные точки для дальнейших расчетов
-                XYZ originalPoint1 = new XYZ(point1.X, point1.Y, point1.Z);
+                transaction.Start();
+                using SubTransaction subTransaction = new SubTransaction(_doc);
+                subTransaction.Start();
                 // Разрезаем трубу в первой точке
                 ElementId firstSplitPipeId = PlumbingUtils.BreakCurve(_doc, pipeId, point1);
                 if (firstSplitPipeId == ElementId.InvalidElementId)
                 {
                     TaskDialog.Show("Ошибка", "Не удалось разрезать трубу в первой точке.");
-                    trans.RollBack();
-                    tg.RollBack();
+                    subTransaction.RollBack();
+                    transaction.RollBack();
                     return;
                 }
 
@@ -44,26 +45,27 @@ public class MakeBreakServices
                 if (firstCoupling == null)
                 {
                     TaskDialog.Show("Предупреждение", "Не удалось создать муфту в первой точке.");
-                    trans.RollBack();
-                    tg.RollBack();
+                    subTransaction.RollBack();
+                    transaction.RollBack();
                     return;
                 }
 
-                trans.Commit();
-
-                using Transaction trans2 = new Transaction(_doc, "Вставка второй муфты");
-                trans2.Start();
-                Reference refPipe2 = _uidoc.Selection.PickObject(ObjectType.Element, new PipeSelectionFilter(), "Выберите вторую точку на трубе");
+                subTransaction.Commit();
+                using SubTransaction subTransaction2 = new SubTransaction(_doc);
+                subTransaction2.Start();
+                Reference refPipe2 = SelectReference("Выберите вторую точку на трубе", new PipeSelectionFilter());
                 XYZ point2 = refPipe2.GlobalPoint;
                 // Проверяем минимальное расстояние между точками
                 double distanceBetweenPoints = point1.DistanceTo(point2).ToMillimeters();
-                const double minimumDistance = 50; //мм
+                const double minimumDistance = 20; //мм
 
                 if (distanceBetweenPoints < minimumDistance)
                 {
-                    TaskDialog.Show("Предупреждение", $"Выбранные точки расположены слишком близко друг к другу (расстояние: {distanceBetweenPoints} миллиметров). " + $"Минимальное допустимое расстояние: {minimumDistance} миллиметров. " + "Операция отменена.");
-                    trans2.RollBack();
-                    tg.RollBack();
+                    TaskDialog.Show("Предупреждение",
+                        $"Выбранные точки расположены слишком близко друг к другу (расстояние: {distanceBetweenPoints} миллиметров). " +
+                        $"Минимальное допустимое расстояние: {minimumDistance} миллиметров. " + "Операция отменена.");
+                    subTransaction2.RollBack();
+                    transaction.RollBack();
                     return;
                 }
 
@@ -99,23 +101,22 @@ public class MakeBreakServices
                     if (result == null)
                     {
                         TaskDialog.Show("Ошибка", "Не удалось спроецировать точку на трубу.");
-                        trans2.RollBack();
-                        tg.RollBack();
+                        subTransaction2.RollBack();
+                        transaction.RollBack();
                         return;
                     }
 
                     XYZ projectedPoint = result.XYZPoint;
                     // Теперь используем спроецированную точку для разрезания
                     ElementId thirdPipeId = PlumbingUtils.BreakCurve(_doc, secondCutPipeId, projectedPoint);
-                    Pipe cutPipe = _doc.GetElement(secondCutPipeId) as Pipe;
                     Pipe thirdPipe = _doc.GetElement(thirdPipeId) as Pipe;
                     // Создаем муфту между разрезанными частями (используя "Разрыв")
-                    FamilyInstance secondCoupling = CreateCouplingBetweenPipes(cutPipe, thirdPipe, familySymbol);
+                    FamilyInstance secondCoupling = CreateCouplingBetweenPipes(pipeToCut, thirdPipe, familySymbol);
                     if (secondCoupling == null)
                     {
                         TaskDialog.Show("Предупреждение", "Не удалось создать муфту во второй точке.");
-                        trans2.RollBack();
-                        tg.RollBack();
+                        subTransaction2.RollBack();
+                        transaction.RollBack();
                         return;
                     }
 
@@ -123,42 +124,64 @@ public class MakeBreakServices
                     Pipe midPipe = null;
                     if (secondCutPipeId != null && originalPipe != null && secondCutPipeId.Equals(originalPipe.Id))
                     {
-                        midPipe = DetermineMidPipeByDistance(cutPipe, thirdPipe, originalPoint1, originalPoint2);
+                        midPipe = DetermineMidPipeByDistance(pipeToCut, thirdPipe, originalPoint1, originalPoint2);
                     }
                     else if (secondCutPipeId != null && secondPipe != null && secondCutPipeId.Equals(secondPipe.Id))
                     {
-                        midPipe = DetermineMidPipeByDistance(cutPipe, thirdPipe, originalPoint1, originalPoint2);
+                        midPipe = DetermineMidPipeByDistance(pipeToCut, thirdPipe, originalPoint1, originalPoint2);
                     }
-                    var activeView = _uidoc.ActiveView;
-                    switch (activeView.ViewType)
-                    {
-                        case ViewType.ThreeD:
-                        {
-                            Parameter commentParam = midPipe?.FindParameter("msh_Разрыв");
-                            commentParam?.Set(true);
-                            break;
-                        }
-                        case ViewType.FloorPlan:
-                        {
-                            Parameter commentParam = midPipe?.FindParameter("msh_Разрыв_План");
-                            commentParam?.Set(true);
-                            break;
-                        }
-                    }
+
+                    SetParameterBreak(midPipe);
                 }
 
-                trans2.Commit();
-                tg.Commit();
-            }
-            catch (Autodesk.Revit.Exceptions.OperationCanceledException)
-            {
-               return;
+                subTransaction2.Commit();
+                transaction.Commit();
             }
             catch (Exception ex)
             {
                 TaskDialog.Show("Ошибка", "Произошла ошибка: " + ex.Message);
             }
         }
+    }
+
+    private void SetParameterBreak(Pipe pipe)
+    {
+        var activeView = pipe.Document.ActiveView;
+        switch (activeView.ViewType)
+        {
+            case ViewType.ThreeD:
+            {
+                Parameter commentParam = pipe?.FindParameter("msh_Разрыв");
+                commentParam?.Set(true);
+                break;
+            }
+            case ViewType.FloorPlan:
+            {
+                Parameter commentParam = pipe?.FindParameter("msh_Разрыв_План");
+                commentParam?.Set(true);
+                break;
+            }
+        }
+    }
+
+    private Reference SelectReference(string statusPrompt, ISelectionFilter selectionFilter)
+    {
+        try
+        {
+            Reference refPipe1 = _uidoc.Selection.PickObject(ObjectType.Element, selectionFilter,
+                statusPrompt);
+            return refPipe1;
+        }
+        catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+        {
+            return null;
+        }
+        catch (Exception e)
+        {
+            TaskDialog.Show("Ошибка", "Произошла ошибка: " + e.Message);
+        }
+
+        return null;
     }
 
     private FamilyInstance CreateCouplingBetweenPipes(Pipe pipe1, Pipe pipe2, FamilySymbol familySymbol)

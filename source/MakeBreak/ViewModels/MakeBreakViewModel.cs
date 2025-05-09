@@ -13,8 +13,7 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     private readonly MakeBreakServices _makeBreakServices = new();
     private readonly FamilySymbol _familySymbol;
     private readonly Document _doc = Context.ActiveDocument;
-    [ObservableProperty] private string _statusText = "Готов к работе";
-    private const string _parameterRupture = "msh_Разрыв";
+   private const string _parameterRupture = "msh_Разрыв";
     // Добавьте поле для отслеживания состояния выполнения команды
     private bool _isExecutingMakeBreak = false;
 
@@ -25,12 +24,7 @@ public sealed partial class MakeBreakViewModel : ObservableObject
         BuiltInCategory.OST_PipeCurves,
     ];
 
-// Метод для обновления статуса
-    public void UpdateStatus(string message, bool isSuccess)
-    {
-        StatusText = message;
-        StatusColor = isSuccess ? "#2ECC71" : "#E74C3C";
-    }
+
 
     public MakeBreakViewModel()
     {
