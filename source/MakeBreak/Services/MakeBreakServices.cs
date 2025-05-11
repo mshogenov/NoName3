@@ -86,6 +86,7 @@ public class MakeBreakServices
                     return;
                 }
 
+               
                 transaction.Commit();
                 using Transaction trans2 = new Transaction(_doc, "Вставка второй муфты");
                 trans2.Start();
@@ -134,6 +135,7 @@ public class MakeBreakServices
                 }
 
                 Pipe midPipe = null;
+                FamilyInstance secondCoupling = null;
                 // Получаем центральную линию трубы
                 if (_doc.GetElement(secondCutPipeId) is Pipe pipeToCut)
                 {
@@ -154,7 +156,7 @@ public class MakeBreakServices
                     ElementId thirdPipeId = PlumbingUtils.BreakCurve(_doc, secondCutPipeId, projectedPoint);
                     Pipe thirdPipe = _doc.GetElement(thirdPipeId) as Pipe;
                     // Создаем муфту между разрезанными частями (используя "Разрыв")
-                    FamilyInstance secondCoupling = CreateCouplingBetweenPipes(pipeToCut, thirdPipe, familySymbol);
+                    secondCoupling = CreateCouplingBetweenPipes(pipeToCut, thirdPipe, familySymbol);
                     if (secondCoupling == null)
                     {
                         TaskDialog.Show("Предупреждение", "Не удалось создать муфту во второй точке.");
@@ -177,15 +179,20 @@ public class MakeBreakServices
                     SetParameterBreak(midPipe);
                 }
 
+                if (selectedElement is DisplacementElement displacement)
+                {
+                    ICollection<ElementId> newElementIds = new List<ElementId>()
+                    {
+                        midPipe.Id,
+                        secondPipe.Id,
+                        secondCoupling.Id,
+                        firstCoupling.Id
+                    };
+                    AddElementsToExistingDisplacement(_doc, displacement, newElementIds);
+                }
+
                 trans2.Commit();
-                // if (selectedElement is DisplacementElement displacement)
-                // {
-                //     CreateEnhancedDisplacement(_doc, new List<ElementId>()
-                //     {
-                //         originalPipe.Id,
-                //         secondCutPipeId,
-                //     }, new XYZ(0, 0, 50), null, null);
-                // }
+
 
                 tg.Assimilate();
             }
