@@ -86,7 +86,48 @@ public class MakeBreakServices
                     return;
                 }
 
-               
+                if (selectedElement is DisplacementElement displacement1)
+                {
+                    // Проверяем, можно ли смещать элементы и не смещены ли они уже
+                    List<ElementId> validElementIds = new List<ElementId>();
+
+
+                    if (DisplacementElement.IsAllowedAsDisplacedElement(originalPipe) &&
+                        !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, originalPipe.Id))
+                    {
+                        validElementIds.Add(originalPipe.Id);
+                    }
+
+                    if (DisplacementElement.IsAllowedAsDisplacedElement(secondPipe) &&
+                        !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, secondPipe.Id))
+                    {
+                        validElementIds.Add(secondPipe.Id);
+                    }
+
+                    // Проверяем secondCoupling
+                    if (DisplacementElement.IsAllowedAsDisplacedElement(firstCoupling) &&
+                        !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, firstCoupling.Id))
+                    {
+                        validElementIds.Add(firstCoupling.Id);
+                    }
+
+                    // Создаем смещение только если есть валидные элементы
+                    if (validElementIds.Count > 0)
+                    {
+                        DisplacementElement.Create(
+                            _doc,
+                            validElementIds,
+                            new XYZ(),
+                            Context.ActiveView,
+                            displacement1);
+                    }
+                    else
+                    {
+                        // Выводим сообщение, что элементы не могут быть смещены
+                        TaskDialog.Show("Ошибка", "Выбранные элементы не могут быть смещены или уже смещены.");
+                    }
+                }
+
                 transaction.Commit();
                 using Transaction trans2 = new Transaction(_doc, "Вставка второй муфты");
                 trans2.Start();
@@ -135,6 +176,7 @@ public class MakeBreakServices
                 }
 
                 Pipe midPipe = null;
+                Pipe thirdPipe = null;
                 FamilyInstance secondCoupling = null;
                 // Получаем центральную линию трубы
                 if (_doc.GetElement(secondCutPipeId) is Pipe pipeToCut)
@@ -154,7 +196,7 @@ public class MakeBreakServices
                     XYZ projectedPoint = result.XYZPoint;
                     // Теперь используем спроецированную точку для разрезания
                     ElementId thirdPipeId = PlumbingUtils.BreakCurve(_doc, secondCutPipeId, projectedPoint);
-                    Pipe thirdPipe = _doc.GetElement(thirdPipeId) as Pipe;
+                    thirdPipe = _doc.GetElement(thirdPipeId) as Pipe;
                     // Создаем муфту между разрезанными частями (используя "Разрыв")
                     secondCoupling = CreateCouplingBetweenPipes(pipeToCut, thirdPipe, familySymbol);
                     if (secondCoupling == null)
@@ -179,21 +221,62 @@ public class MakeBreakServices
                     SetParameterBreak(midPipe);
                 }
 
-                if (selectedElement is DisplacementElement displacement)
-                {
-                    ICollection<ElementId> newElementIds = new List<ElementId>()
-                    {
-                        midPipe.Id,
-                        secondPipe.Id,
-                        secondCoupling.Id,
-                        firstCoupling.Id
-                    };
-                    AddElementsToExistingDisplacement(_doc, displacement, newElementIds);
-                }
 
                 trans2.Commit();
+                Transaction tr = new Transaction(_doc, "dfdf");
+                tr.Start();
+                if (selectedElement is DisplacementElement displacement)
+                {
+                    // Проверяем, можно ли смещать элементы и не смещены ли они уже
+                    List<ElementId> validElementIds = new List<ElementId>();
+                    if (DisplacementElement.IsAllowedAsDisplacedElement(originalPipe) &&
+                        !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, originalPipe.Id))
+                    {
+                        validElementIds.Add(originalPipe.Id);
+                    }
+                    if (DisplacementElement.IsAllowedAsDisplacedElement(thirdPipe) &&
+                        !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, thirdPipe.Id))
+                    {
+                        validElementIds.Add(thirdPipe.Id);
+                    }
+                    // Проверяем midPipe
+                    if (DisplacementElement.IsAllowedAsDisplacedElement(midPipe) &&
+                        !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, midPipe.Id))
+                    {
+                        validElementIds.Add(midPipe.Id);
+                    }
 
+                    if (DisplacementElement.IsAllowedAsDisplacedElement(secondPipe) &&
+                        !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, secondPipe.Id))
+                    {
+                        validElementIds.Add(secondPipe.Id);
+                    }
 
+                    // Проверяем secondCoupling
+                    if (DisplacementElement.IsAllowedAsDisplacedElement(secondCoupling) &&
+                        !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, secondCoupling.Id))
+                    {
+                        validElementIds.Add(secondCoupling.Id);
+                    }
+
+                    // Создаем смещение только если есть валидные элементы
+                    if (validElementIds.Count > 0)
+                    {
+                        DisplacementElement.Create(
+                            _doc,
+                            validElementIds,
+                            new XYZ(),
+                            Context.ActiveView,
+                            displacement);
+                    }
+                    else
+                    {
+                        // Выводим сообщение, что элементы не могут быть смещены
+                        TaskDialog.Show("Ошибка", "Выбранные элементы не могут быть смещены или уже смещены.");
+                    }
+                }
+
+                tr.Commit();
                 tg.Assimilate();
             }
             catch (Exception ex)
