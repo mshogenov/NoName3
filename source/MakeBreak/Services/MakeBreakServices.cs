@@ -22,35 +22,7 @@ public class MakeBreakServices
             XYZ originalPoint1 = new XYZ(point1.X, point1.Y, point1.Z);
             // Получаем трубу по ID
             ElementId selectReferenceId = selectReference1.ElementId;
-            Pipe originalPipe = null;
-            var selectedElement = _doc.GetElement(selectReferenceId);
-            switch (selectedElement)
-            {
-                case Pipe pipe:
-                    originalPipe = pipe;
-                    break;
-                case DisplacementElement displacementElement:
-                {
-                    var displacementElementIds = displacementElement.GetDisplacedElementIds();
-
-                    foreach (ElementId displacedId in displacementElementIds)
-                    {
-                        Element element = _doc.GetElement(displacedId);
-
-                        // Проверяем, является ли элемент трубой
-                        if (element is not Pipe pipe) continue;
-                        // Получаем геометрию трубы
-                        BoundingBoxXYZ bounding = pipe.get_BoundingBox(_doc.ActiveView);
-                        var contains = bounding.Contains(point1);
-                        if (!contains) continue;
-                        // Нашли трубу, которая проходит через точку
-                        originalPipe = pipe;
-                        break;
-                    }
-
-                    break;
-                }
-            }
+            Pipe originalPipe = GetOriginalPipe(selectReferenceId, point1);
 
             // Проверяем, нашли ли мы трубу
             if (originalPipe == null)
@@ -194,6 +166,41 @@ public class MakeBreakServices
                 TaskDialog.Show("Ошибка", "Произошла ошибка: " + ex.Message);
             }
         }
+    }
+
+    private Pipe GetOriginalPipe(ElementId selectReferenceId, XYZ point1)
+    {
+        Pipe originalPipe = null;
+        Element selectedElement = _doc.GetElement(selectReferenceId);
+        switch (selectedElement)
+        {
+            case Pipe pipe:
+                originalPipe = pipe;
+                break;
+            case DisplacementElement displacementElement:
+            {
+                var displacementElementIds = displacementElement.GetDisplacedElementIds();
+
+                foreach (ElementId displacedId in displacementElementIds)
+                {
+                    Element element = _doc.GetElement(displacedId);
+
+                    // Проверяем, является ли элемент трубой
+                    if (element is not Pipe pipe) continue;
+                    // Получаем геометрию трубы
+                    BoundingBoxXYZ bounding = pipe.get_BoundingBox(_doc.ActiveView);
+                    var contains = bounding.Contains(point1);
+                    if (!contains) continue;
+                    // Нашли трубу, которая проходит через точку
+                    originalPipe = pipe;
+                    break;
+                }
+
+                break;
+            }
+        }
+
+        return originalPipe;
     }
 
     /// <summary>
