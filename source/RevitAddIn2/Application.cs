@@ -78,10 +78,10 @@ namespace RevitAddIn2;
 
         private void CreateRibbon()
         {
-            var panelSystemModeling = Application.CreatePanel("Моделирование", "Фигня");
-            var panelSystemCreatingSchematics = Application.CreatePanel("Оформление", "Фигня");
-            var panelFormationOfSpecification = Application.CreatePanel("Спецификация", "Фигня");
-            var panelOther = Application.CreatePanel("Прочее", "Фигня");
+            var panelSystemModeling = Application.CreatePanel("Моделирование", "RevitAddIn");
+            var panelSystemCreatingSchematics = Application.CreatePanel("Оформление", "RevitAddIn");
+            var panelFormationOfSpecification = Application.CreatePanel("Спецификация", "RevitAddIn");
+            var panelOther = Application.CreatePanel("Прочее", "RevitAddIn");
 
             #region InsertPipe
 
