@@ -89,7 +89,7 @@ public class MakeBreakServices
                 using Transaction transaction = new Transaction(_doc, "Вставка первой муфты");
                 transaction.Start();
                 // Разрезаем трубу в первой точке
-                ElementId firstSplitPipeId = PlumbingUtils.BreakCurve(_doc, originalPipe.Id, breakPt);
+                ElementId firstSplitPipeId = CustomBreakPipe(_doc, originalPipe.Id, breakPt);
                 // if (firstSplitPipeId == ElementId.InvalidElementId)
                 // {
                 //     TaskDialog.Show("Ошибка", "Не удалось разрезать трубу в первой точке.");
@@ -308,7 +308,207 @@ public class MakeBreakServices
             }
         }
     }
+/// <summary>
+/// Собственная реализация разрезания трубы, работающая независимо от ориентации трубы
+/// </summary>
+/// <param name="doc">Документ Revit</param>
+/// <param name="pipeId">ID трубы для разрезания</param>
+/// <param name="point">Точка разрезания</param>
+/// <returns>ID одной из новых труб или InvalidElementId в случае ошибки</returns>
+public ElementId CustomBreakPipe(Document doc, ElementId pipeId, XYZ point)
+{
+    // Получаем трубу по ID
+    Pipe originalPipe = doc.GetElement(pipeId) as Pipe;
+    if (originalPipe == null)
+    {
+        TaskDialog.Show("Ошибка", "Элемент не является трубой");
+        return ElementId.InvalidElementId;
+    }
 
+    try
+    {
+        // Получаем геометрию трубы
+        LocationCurve locCrv = originalPipe.Location as LocationCurve;
+        if (locCrv == null)
+        {
+            TaskDialog.Show("Ошибка", "Труба не имеет геометрии кривой");
+            return ElementId.InvalidElementId;
+        }
+
+        Curve pipeCurve = locCrv.Curve;
+
+        // Получаем начальную и конечную точки трубы
+        XYZ startPoint = pipeCurve.GetEndPoint(0);
+        XYZ endPoint = pipeCurve.GetEndPoint(1);
+
+        // Проецируем точку на кривую, чтобы гарантировать, что точка разреза находится на трубе
+        IntersectionResult result = pipeCurve.Project(point);
+        if (result == null)
+        {
+            TaskDialog.Show("Ошибка", "Не удалось спроецировать точку на трубу");
+            return ElementId.InvalidElementId;
+        }
+
+        XYZ breakPoint = result.XYZPoint;
+
+        // Убедимся, что точка разреза не слишком близко к концам трубы
+        double minDistanceFromEnd = 0.05 * startPoint.DistanceTo(endPoint); // 5% от длины трубы
+
+        if (breakPoint.DistanceTo(startPoint) < minDistanceFromEnd)
+        {
+            // Если точка слишком близко к началу, сместим ее
+            XYZ direction = (endPoint - startPoint).Normalize();
+            breakPoint = startPoint + direction * minDistanceFromEnd;
+        }
+        else if (breakPoint.DistanceTo(endPoint) < minDistanceFromEnd)
+        {
+            // Если точка слишком близко к концу, сместим ее
+            XYZ direction = (endPoint - startPoint).Normalize();
+            breakPoint = endPoint - direction * minDistanceFromEnd;
+        }
+
+        // Получаем важные параметры исходной трубы
+        PipeType pipeType = originalPipe.PipeType;
+        ElementId pipeTypeId = pipeType.Id;
+        ElementId levelId = originalPipe.ReferenceLevel.Id;
+        ElementId systemTypeId = originalPipe.MEPSystem != null ? originalPipe.MEPSystem.GetTypeId() : null;
+
+        // Создаем две новые трубы
+        Pipe pipe1 = null;
+        Pipe pipe2 = null;
+
+        // Пробуем стандартный метод создания труб
+        try
+        {
+            if (systemTypeId != null)
+            {
+                pipe1 = Pipe.Create(doc, systemTypeId, pipeTypeId, levelId, startPoint, breakPoint);
+                pipe2 = Pipe.Create(doc, systemTypeId, pipeTypeId, levelId, breakPoint, endPoint);
+            }
+           
+        }
+        catch (Exception ex)
+        {
+            TaskDialog.Show("Ошибка", $"Не удалось создать новые трубы: {ex.Message}");
+            return ElementId.InvalidElementId;
+        }
+
+        if (pipe1 == null || pipe2 == null)
+        {
+            TaskDialog.Show("Ошибка", "Не удалось создать новые трубы");
+            return ElementId.InvalidElementId;
+        }
+
+        // Копируем все доступные параметры с исходной трубы на новые трубы
+        CopyPipeParameters(originalPipe, pipe1);
+        CopyPipeParameters(originalPipe, pipe2);
+
+        // Если у исходной трубы были соединения
+        // Создаем новые соединения для новых труб
+        // Этот шаг может потребовать более сложной логики в зависимости от вашего проекта
+
+        // Удаляем исходную трубу
+        doc.Delete(pipeId);
+
+        // Коннекторы нужно соединить, если есть соседние элементы
+        ConnectPipeIfNeeded(doc, pipe1, pipe2);
+
+        // Возвращаем ID одной из новых труб (обычно первой)
+        return pipe1.Id;
+    }
+    catch (Exception ex)
+    {
+        TaskDialog.Show("Ошибка в CustomBreakPipe", $"Произошла ошибка: {ex.Message}");
+        return ElementId.InvalidElementId;
+    }
+}
+
+/// <summary>
+/// Копирует параметры с исходной трубы на новую
+/// </summary>
+private void CopyPipeParameters(Pipe source, Pipe target)
+{
+    try
+    {
+        // Копируем диаметр
+        Parameter sourceDiameter = source.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
+        if (sourceDiameter != null && !sourceDiameter.IsReadOnly)
+        {
+            Parameter targetDiameter = target.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
+            if (targetDiameter != null)
+            {
+                targetDiameter.Set(sourceDiameter.AsDouble());
+            }
+        }
+
+        // Копируем уровень смещения
+        Parameter sourceOffset = source.get_Parameter(BuiltInParameter.RBS_OFFSET_PARAM);
+        if (sourceOffset != null && !sourceOffset.IsReadOnly)
+        {
+            Parameter targetOffset = target.get_Parameter(BuiltInParameter.RBS_OFFSET_PARAM);
+            if (targetOffset != null)
+            {
+                targetOffset.Set(sourceOffset.AsDouble());
+            }
+        }
+
+      
+
+        // Можно добавить копирование других необходимых параметров
+    }
+    catch (Exception ex)
+    {
+        // Обрабатываем ошибки копирования параметров
+        TaskDialog.Show("Предупреждение", $"Некоторые параметры не были скопированы: {ex.Message}");
+    }
+}
+
+/// <summary>
+/// Соединяет трубы если необходимо
+/// </summary>
+private void ConnectPipeIfNeeded(Document doc, Pipe pipe1, Pipe pipe2)
+{
+    try
+    {
+        // Получаем наборы коннекторов для обеих труб
+        ConnectorSet pipe1Connectors = pipe1.ConnectorManager.Connectors;
+        ConnectorSet pipe2Connectors = pipe2.ConnectorManager.Connectors;
+
+        // Находим ближайшие коннекторы для соединения
+        Connector pipe1EndConnector = null;
+        Connector pipe2StartConnector = null;
+
+        foreach (Connector c1 in pipe1Connectors)
+        {
+            foreach (Connector c2 in pipe2Connectors)
+            {
+                if (c1.Origin.DistanceTo(c2.Origin) < 0.001) // Если коннекторы близки
+                {
+                    pipe1EndConnector = c1;
+                    pipe2StartConnector = c2;
+                    break;
+                }
+            }
+
+            if (pipe1EndConnector != null)
+                break;
+        }
+
+        // Соединяем трубы, если нашли подходящие коннекторы
+        if (pipe1EndConnector != null && pipe2StartConnector != null)
+        {
+            // Используем коннектор для создания соединения
+            pipe1EndConnector.ConnectTo(pipe2StartConnector);
+
+            // Или создаем соединение с помощью API соединений
+            // doc.Create.NewElbowFitting(pipe1EndConnector, pipe2StartConnector);
+        }
+    }
+    catch (Exception ex)
+    {
+        TaskDialog.Show("Предупреждение", $"Не удалось соединить трубы: {ex.Message}");
+    }
+}
     private Pipe GetOriginalPipe(Element selectedElement, XYZ pick, out DisplacementElement primaryDisplacement)
     {
         Pipe originalPipe = null;
