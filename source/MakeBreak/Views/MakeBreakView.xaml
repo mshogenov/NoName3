@@ -11,7 +11,7 @@
     Title="Инструмент разрыва труб"
     Height="200"
     Width="350"
-    WindowStartupLocation="Manual"
+  WindowStartupLocation="CenterScreen"
     ResizeMode="NoResize"
     Background="#F5F5F5"
     WindowStyle="None"
