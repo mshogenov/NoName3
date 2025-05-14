@@ -2,6 +2,7 @@ using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using MakeBreak.Filters;
+using MakeBreak.Models;
 
 
 namespace MakeBreak.Services;
@@ -17,27 +18,18 @@ public class MakeBreakServices
         {
             var selectReference1 = SelectReference("Выберите первую точку на трубе", new SelectionFilter());
             if (selectReference1 == null) return;
-            XYZ pick = selectReference1.GlobalPoint;
-            // Сохраняем оригинальные точки для дальнейших расчетов
-            XYZ originalPoint1 = new XYZ(pick.X, pick.Y, pick.Z);
+            XYZ pick1 = selectReference1.GlobalPoint;
             var selectedElement = _doc.GetElement(selectReference1);
-
-            var originalPipe = GetOriginalPipe(selectedElement, pick, out var primaryDisplacement);
+            PipeWrapper originalPipe = GetOriginalPipe(selectedElement, pick1, out var primaryDisplacement);
             // Проверяем, нашли ли мы трубу
             if (originalPipe == null)
             {
                 TaskDialog.Show("Ошибка", "Не удалось найти трубу в указанной точке");
                 return;
             }
-
-            LocationCurve locCrv = (LocationCurve)originalPipe.Location;
-            Curve pipeCurve = locCrv.Curve;
-
             // Проецируем точку клика на кривую трубы
-            IntersectionResult res = primaryDisplacement != null
-                ? pipeCurve.Project(pick - primaryDisplacement.GetRelativeDisplacement())
-                : pipeCurve.Project(pick);
-            XYZ breakPt = res.XYZPoint;
+
+            XYZ breakPt = originalPipe.ProjectPointOntoCurve(pick1, primaryDisplacement);
             using TransactionGroup tg = new TransactionGroup(_doc, "Сделать разрыв");
             try
             {
@@ -122,7 +114,7 @@ public class MakeBreakServices
 
                 XYZ point2 = refPipe2.GlobalPoint;
                 // Проверяем минимальное расстояние между точками
-                double distanceBetweenPoints = pick.DistanceTo(point2).ToMillimeters();
+                double distanceBetweenPoints = pick1.DistanceTo(point2).ToMillimeters();
                 const double minimumDistance = 20; //мм
 
                 if (distanceBetweenPoints < minimumDistance)
@@ -191,11 +183,11 @@ public class MakeBreakServices
 
                     if (secondCutPipeId != null && originalPipe != null && secondCutPipeId.Equals(originalPipe.Id))
                     {
-                        midPipe = DetermineMidPipeByDistance(pipeToCut, thirdPipe, originalPoint1, originalPoint2);
+                        midPipe = DetermineMidPipeByDistance(pipeToCut, thirdPipe, pick1, originalPoint2);
                     }
                     else if (secondCutPipeId != null && secondPipe != null && secondCutPipeId.Equals(secondPipe.Id))
                     {
-                        midPipe = DetermineMidPipeByDistance(pipeToCut, thirdPipe, originalPoint1, originalPoint2);
+                        midPipe = DetermineMidPipeByDistance(pipeToCut, thirdPipe, pick1, originalPoint2);
                     }
 
                     SetParameterBreak(midPipe);
@@ -477,14 +469,14 @@ public class MakeBreakServices
         }
     }
 
-    private Pipe GetOriginalPipe(Element selectedElement, XYZ pick, out DisplacementElement primaryDisplacement)
+    private PipeWrapper GetOriginalPipe(Element selectedElement, XYZ pick, out DisplacementElement primaryDisplacement)
     {
-        Pipe originalPipe = null;
+        PipeWrapper originalPipe = null;
         primaryDisplacement = null;
         switch (selectedElement)
         {
             case Pipe pipe:
-                originalPipe = pipe;
+                originalPipe = new PipeWrapper(pipe);
                 break;
             case DisplacementElement displacementElement:
             {
@@ -502,7 +494,10 @@ public class MakeBreakServices
                     var contains = bounding.Contains(pick);
                     if (!contains) continue;
                     // Нашли трубу, которая проходит через точку
-                    originalPipe = pipe;
+                    originalPipe = new PipeWrapper(pipe)
+                    {
+                        IsDisplacement = true
+                    };
                     break;
                 }
 
@@ -747,7 +742,7 @@ public class MakeBreakServices
         return null;
     }
 
-    private FamilyInstance CreateCouplingBetweenPipes(Pipe pipe1, Pipe pipe2, FamilySymbol familySymbol)
+    private FamilyInstance CreateCouplingBetweenPipes(PipeWrapper pipe1, Pipe pipe2, FamilySymbol familySymbol)
     {
         try
         {
@@ -1043,15 +1038,10 @@ public class MakeBreakServices
         }
     }
 
-    private Connector GetBestOpenConnector(Pipe sourcePipe, Pipe targetPipe)
+    private Connector GetBestOpenConnector(PipeWrapper sourcePipe, Pipe targetPipe)
     {
-        // Получаем все коннекторы
-        ConnectorSet connectors = sourcePipe.ConnectorManager.Connectors;
-        List<Connector> openConnectors = [];
-        openConnectors.AddRange(connectors.Cast<Connector>().Where(connector => !connector.IsConnected));
-
+        List<Connector> openConnectors = sourcePipe.GetOpenConnectors();
         // Собираем все открытые коннекторы
-
         switch (openConnectors.Count)
         {
             case 0:
