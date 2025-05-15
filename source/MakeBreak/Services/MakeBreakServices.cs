@@ -2,6 +2,7 @@ using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using MakeBreak.Filters;
+using MakeBreak.Models;
 
 
 namespace MakeBreak.Services;
@@ -17,63 +18,28 @@ public class MakeBreakServices
         {
             var selectReference1 = SelectReference("Выберите первую точку на трубе", new SelectionFilter());
             if (selectReference1 == null) return;
-            XYZ pick = selectReference1.GlobalPoint;
-            // Сохраняем оригинальные точки для дальнейших расчетов
-            XYZ originalPoint1 = new XYZ(pick.X, pick.Y, pick.Z);
-            // Получаем трубу по ID
-            ElementId selectReferenceId = selectReference1.ElementId;
-            Pipe originalPipe = null;
-            DisplacementElement parantDisplacement = null;
-            var selectedElement = _doc.GetElement(selectReferenceId);
-            switch (selectedElement)
-            {
-                case Pipe pipe:
-                    originalPipe = pipe;
-                    break;
-                case DisplacementElement displacementElement:
-                {
-                   
-                    parantDisplacement = displacementElement;
-                    var displacementElementIds = displacementElement.GetDisplacedElementIds();
-
-                    foreach (ElementId displacedId in displacementElementIds)
-                    {
-                        Element element = _doc.GetElement(displacedId);
-
-                        // Проверяем, является ли элемент трубой
-                        if (element is not Pipe pipe) continue;
-                        // Получаем геометрию трубы
-                        BoundingBoxXYZ bounding = pipe.get_BoundingBox(_doc.ActiveView);
-                        var contains = bounding.Contains(pick);
-                        if (!contains) continue;
-                        // Нашли трубу, которая проходит через точку
-                        originalPipe = pipe;
-                        break;
-                    }
-
-                    break;
-                }
-            }
-
+            XYZ pick1 = selectReference1.GlobalPoint;
+            var selectedElement = _doc.GetElement(selectReference1);
+            PipeWrapper originalPipe = GetOriginalPipe(selectedElement, pick1, out var primaryDisplacement);
             // Проверяем, нашли ли мы трубу
             if (originalPipe == null)
             {
                 TaskDialog.Show("Ошибка", "Не удалось найти трубу в указанной точке");
                 return;
             }
-            LocationCurve locCrv = (LocationCurve)originalPipe.Location;
-            Curve pipeCurve      = locCrv.Curve;   // как правило Line для прямой трубы
+            // Проецируем точку клика на кривую трубы
 
-            IntersectionResult res = pipeCurve.Project(pick);
-            XYZ breakPt = res.XYZPoint;  
+            XYZ breakPt = originalPipe.ProjectPointOntoCurve(pick1, primaryDisplacement);
             using TransactionGroup tg = new TransactionGroup(_doc, "Сделать разрыв");
             try
             {
                 tg.Start();
                 using Transaction transaction = new Transaction(_doc, "Вставка первой муфты");
                 transaction.Start();
-                // Разрезаем трубу в первой точке
+
                 ElementId firstSplitPipeId = PlumbingUtils.BreakCurve(_doc, originalPipe.Id, breakPt);
+                // Разрезаем трубу в первой точке
+
                 if (firstSplitPipeId == ElementId.InvalidElementId)
                 {
                     TaskDialog.Show("Ошибка", "Не удалось разрезать трубу в первой точке.");
@@ -82,9 +48,11 @@ public class MakeBreakServices
                     return;
                 }
 
-                Pipe secondPipe = _doc.GetElement(firstSplitPipeId) as Pipe; // Вторая часть - новая труба
+                PipeWrapper firstSplitPipe =
+                    new PipeWrapper(_doc.GetElement(firstSplitPipeId) as Pipe); // Вторая часть - новая труба
                 // Создаем муфту между первой и второй частью (используя "Разрыв")
-                FamilyInstance firstCoupling = CreateCouplingBetweenPipes(originalPipe, secondPipe, familySymbol);
+                FamilyInstance firstCoupling =
+                    CreateCouplingBetweenPipes(originalPipe, firstSplitPipe, pick1, familySymbol);
                 if (firstCoupling == null)
                 {
                     TaskDialog.Show("Предупреждение", "Не удалось создать муфту в первой точке.");
@@ -98,27 +66,27 @@ public class MakeBreakServices
                 {
                     // Проверяем, можно ли смещать элементы и не смещены ли они уже
                     List<ElementId> validElementIds = new List<ElementId>();
-
-
-                    if (DisplacementElement.IsAllowedAsDisplacedElement(originalPipe) &&
+                
+                
+                    if (DisplacementElement.IsAllowedAsDisplacedElement(originalPipe.Pipe) &&
                         !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, originalPipe.Id))
                     {
                         validElementIds.Add(originalPipe.Id);
                     }
-
-                    if (DisplacementElement.IsAllowedAsDisplacedElement(secondPipe) &&
-                        !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, secondPipe.Id))
+                
+                    if (DisplacementElement.IsAllowedAsDisplacedElement(firstSplitPipe.Pipe) &&
+                        !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, firstSplitPipe.Id))
                     {
-                        validElementIds.Add(secondPipe.Id);
+                        validElementIds.Add(firstSplitPipe.Id);
                     }
-
+                
                     // Проверяем secondCoupling
                     if (DisplacementElement.IsAllowedAsDisplacedElement(firstCoupling) &&
                         !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, firstCoupling.Id))
                     {
                         validElementIds.Add(firstCoupling.Id);
                     }
-
+                
                     // Создаем смещение только если есть валидные элементы
                     if (validElementIds.Count > 0)
                     {
@@ -145,12 +113,12 @@ public class MakeBreakServices
                     tg.RollBack();
                     return;
                 }
-
+                
                 XYZ point2 = refPipe2.GlobalPoint;
                 // Проверяем минимальное расстояние между точками
-                double distanceBetweenPoints = pick.DistanceTo(point2).ToMillimeters();
+                double distanceBetweenPoints = pick1.DistanceTo(point2).ToMillimeters();
                 const double minimumDistance = 20; //мм
-
+                
                 if (distanceBetweenPoints < minimumDistance)
                 {
                     TaskDialog.Show("Предупреждение",
@@ -160,64 +128,72 @@ public class MakeBreakServices
                     tg.RollBack();
                     return;
                 }
-
+                
                 XYZ originalPoint2 = new XYZ(point2.X, point2.Y, point2.Z);
                 // Определяем, какую трубу разрезать для второй точки
-
-                ElementId secondCutPipeId;
-
+                PipeWrapper pipeToCut;
+                
                 // Проверяем, какая из труб после разрезания имеет такой же ElementId или OST_ID как выбранная точка
                 if (originalPipe?.Id.Value == refPipe2.ElementId.Value)
                 {
-                    secondCutPipeId = originalPipe.Id;
+                    pipeToCut = originalPipe;
                 }
-                else if (secondPipe?.Id.Value == refPipe2.ElementId.Value)
+                else if (firstSplitPipe?.Id.Value == refPipe2.ElementId.Value)
                 {
-                    secondCutPipeId = secondPipe.Id;
+                    pipeToCut = firstSplitPipe;
                 }
                 else
                 {
                     // Используем запасной вариант - проверка по расстоянию
-                    double dist1 = DistanceFromPipeToPont(originalPipe, originalPoint2);
-                    double dist2 = DistanceFromPipeToPont(secondPipe, originalPoint2);
-                    secondCutPipeId = dist1 < dist2 ? originalPipe?.Id : secondPipe?.Id;
+                
+                    double dist1 = originalPipe.Curve.Distance(originalPoint2);
+                    double dist2 = firstSplitPipe.Curve.Distance(originalPoint2);
+                    ;
+                    pipeToCut = dist1 < dist2 ? originalPipe : firstSplitPipe;
                 }
-
-                Pipe midPipe = null;
-                Pipe thirdPipe = null;
+                
+                PipeWrapper midPipe = null;
+                PipeWrapper thirdPipe = null;
                 FamilyInstance secondCoupling = null;
                 // Получаем центральную линию трубы
-                if (_doc.GetElement(secondCutPipeId) is Pipe pipeToCut)
+                
+                XYZ projectedPointPipeToCut = null;
+                if (primaryDisplacement != null)
                 {
-                    var projectedPointPipeToCut = GetProjectedPoint(pipeToCut, originalPoint2);
-                    // Теперь используем спроецированную точку для разрезания
-                    ElementId thirdPipeId = PlumbingUtils.BreakCurve(_doc, secondCutPipeId, projectedPointPipeToCut);
-                    thirdPipe = _doc.GetElement(thirdPipeId) as Pipe;
-                    // Создаем муфту между разрезанными частями (используя "Разрыв")
-                    secondCoupling = CreateCouplingBetweenPipes(pipeToCut, thirdPipe, familySymbol);
-                    if (secondCoupling == null)
-                    {
-                        TaskDialog.Show("Предупреждение", "Не удалось создать муфту во второй точке.");
-                        trans2.RollBack();
-                        tg.RollBack();
-                        return;
-                    }
-
-                    // Определяем среднюю трубу между двумя точками разреза
-
-                    if (secondCutPipeId != null && originalPipe != null && secondCutPipeId.Equals(originalPipe.Id))
-                    {
-                        midPipe = DetermineMidPipeByDistance(pipeToCut, thirdPipe, originalPoint1, originalPoint2);
-                    }
-                    else if (secondCutPipeId != null && secondPipe != null && secondCutPipeId.Equals(secondPipe.Id))
-                    {
-                        midPipe = DetermineMidPipeByDistance(pipeToCut, thirdPipe, originalPoint1, originalPoint2);
-                    }
-
-                    SetParameterBreak(midPipe);
+                    projectedPointPipeToCut = GetProjectedPoint(pipeToCut,
+                        originalPoint2 - primaryDisplacement.GetRelativeDisplacement());
                 }
-
-
+                else
+                {
+                    projectedPointPipeToCut = GetProjectedPoint(pipeToCut, originalPoint2);
+                }
+                
+                // Теперь используем спроецированную точку для разрезания
+                ElementId thirdPipeId = PlumbingUtils.BreakCurve(_doc, pipeToCut.Id, projectedPointPipeToCut);
+                thirdPipe = new PipeWrapper(_doc.GetElement(thirdPipeId) as Pipe);
+                // Создаем муфту между разрезанными частями (используя "Разрыв")
+                secondCoupling = CreateCouplingBetweenPipes(pipeToCut, thirdPipe, point2, familySymbol);
+                if (secondCoupling == null)
+                {
+                    TaskDialog.Show("Предупреждение", "Не удалось создать муфту во второй точке.");
+                    trans2.RollBack();
+                    tg.RollBack();
+                    return;
+                }
+                
+                // Определяем среднюю трубу между двумя точками разреза
+                
+                if (pipeToCut != null && originalPipe != null && pipeToCut.Id.Equals(originalPipe.Id))
+                {
+                    midPipe = new PipeWrapper(DetermineMidPipeByDistance(pipeToCut, thirdPipe, pick1, originalPoint2));
+                }
+                else if (pipeToCut != null && firstSplitPipe != null &&
+                         pipeToCut.Id.Equals(firstSplitPipe.Id))
+                {
+                    midPipe = new PipeWrapper(DetermineMidPipeByDistance(pipeToCut, thirdPipe, pick1, originalPoint2));
+                }
+                
+                SetParameterBreak(midPipe.Pipe);
                 trans2.Commit();
                 Transaction tr = new Transaction(_doc, "dfdf");
                 tr.Start();
@@ -225,39 +201,39 @@ public class MakeBreakServices
                 if (selectedElement is DisplacementElement displacement)
                 {
                     // Проверяем, можно ли смещать элементы и не смещены ли они уже
-                    List<ElementId> validElementIds = new List<ElementId>();
-                    if (DisplacementElement.IsAllowedAsDisplacedElement(originalPipe) &&
+                    List<ElementId> validElementIds = [];
+                    if (DisplacementElement.IsAllowedAsDisplacedElement(originalPipe.Pipe) &&
                         !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, originalPipe.Id))
                     {
                         validElementIds.Add(originalPipe.Id);
                     }
-
-                    if (DisplacementElement.IsAllowedAsDisplacedElement(thirdPipe) &&
+                
+                    if (DisplacementElement.IsAllowedAsDisplacedElement(thirdPipe.Pipe) &&
                         !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, thirdPipe.Id))
                     {
                         validElementIds.Add(thirdPipe.Id);
                     }
-
+                
                     // Проверяем midPipe
-                    if (DisplacementElement.IsAllowedAsDisplacedElement(midPipe) &&
+                    if (DisplacementElement.IsAllowedAsDisplacedElement(midPipe.Pipe) &&
                         !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, midPipe.Id))
                     {
                         validElementIds.Add(midPipe.Id);
                     }
-
-                    if (DisplacementElement.IsAllowedAsDisplacedElement(secondPipe) &&
-                        !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, secondPipe.Id))
+                
+                    if (DisplacementElement.IsAllowedAsDisplacedElement(firstSplitPipe.Pipe) &&
+                        !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, firstSplitPipe.Id))
                     {
-                        validElementIds.Add(secondPipe.Id);
+                        validElementIds.Add(firstSplitPipe.Id);
                     }
-
+                
                     // Проверяем secondCoupling
                     if (DisplacementElement.IsAllowedAsDisplacedElement(secondCoupling) &&
                         !DisplacementElement.IsElementDisplacedInView(Context.ActiveView, secondCoupling.Id))
                     {
                         validElementIds.Add(secondCoupling.Id);
                     }
-
+                
                     // Создаем смещение только если есть валидные элементы
                     if (validElementIds.Count > 0)
                     {
@@ -273,15 +249,16 @@ public class MakeBreakServices
                         // Выводим сообщение, что элементы не могут быть смещены
                         TaskDialog.Show("Ошибка", "Выбранные элементы не могут быть смещены или уже смещены.");
                     }
+                
                     MergeDisplacementElements(_doc, new List<DisplacementElement>()
                     {
                         displacementCreate2,
                         displacementCreate1,
-                        parantDisplacement
-                    }, parantDisplacement);
+                        primaryDisplacement
+                    }, primaryDisplacement);
                 }
 
-              
+
                 tr.Commit();
                 tg.Assimilate();
             }
@@ -292,12 +269,250 @@ public class MakeBreakServices
         }
     }
 
-    private static XYZ GetProjectedPoint(Pipe pipeToCut, XYZ originalPoint2)
+    /// <summary>
+    /// Собственная реализация разрезания трубы, работающая независимо от ориентации трубы
+    /// </summary>
+    /// <param name="doc">Документ Revit</param>
+    /// <param name="pipeId">ID трубы для разрезания</param>
+    /// <param name="point">Точка разрезания</param>
+    /// <returns>ID одной из новых труб или InvalidElementId в случае ошибки</returns>
+    public ElementId CustomBreakPipe(Document doc, ElementId pipeId, XYZ point)
     {
-        LocationCurve locationCurve = pipeToCut.Location as LocationCurve;
-        Curve pipeCurve = locationCurve?.Curve;
+        // Получаем трубу по ID
+        Pipe originalPipe = doc.GetElement(pipeId) as Pipe;
+        if (originalPipe == null)
+        {
+            TaskDialog.Show("Ошибка", "Элемент не является трубой");
+            return ElementId.InvalidElementId;
+        }
+
+        try
+        {
+            // Получаем геометрию трубы
+            LocationCurve locCrv = originalPipe.Location as LocationCurve;
+            if (locCrv == null)
+            {
+                TaskDialog.Show("Ошибка", "Труба не имеет геометрии кривой");
+                return ElementId.InvalidElementId;
+            }
+
+            Curve pipeCurve = locCrv.Curve;
+
+            // Получаем начальную и конечную точки трубы
+            XYZ startPoint = pipeCurve.GetEndPoint(0);
+            XYZ endPoint = pipeCurve.GetEndPoint(1);
+
+            // Проецируем точку на кривую, чтобы гарантировать, что точка разреза находится на трубе
+            IntersectionResult result = pipeCurve.Project(point);
+            if (result == null)
+            {
+                TaskDialog.Show("Ошибка", "Не удалось спроецировать точку на трубу");
+                return ElementId.InvalidElementId;
+            }
+
+            XYZ breakPoint = result.XYZPoint;
+
+            // Убедимся, что точка разреза не слишком близко к концам трубы
+            double minDistanceFromEnd = 0.05 * startPoint.DistanceTo(endPoint); // 5% от длины трубы
+
+            if (breakPoint.DistanceTo(startPoint) < minDistanceFromEnd)
+            {
+                // Если точка слишком близко к началу, сместим ее
+                XYZ direction = (endPoint - startPoint).Normalize();
+                breakPoint = startPoint + direction * minDistanceFromEnd;
+            }
+            else if (breakPoint.DistanceTo(endPoint) < minDistanceFromEnd)
+            {
+                // Если точка слишком близко к концу, сместим ее
+                XYZ direction = (endPoint - startPoint).Normalize();
+                breakPoint = endPoint - direction * minDistanceFromEnd;
+            }
+
+            // Получаем важные параметры исходной трубы
+            PipeType pipeType = originalPipe.PipeType;
+            ElementId pipeTypeId = pipeType.Id;
+            ElementId levelId = originalPipe.ReferenceLevel.Id;
+            ElementId systemTypeId = originalPipe.MEPSystem != null ? originalPipe.MEPSystem.GetTypeId() : null;
+
+            // Создаем две новые трубы
+            Pipe pipe1 = null;
+            Pipe pipe2 = null;
+
+            // Пробуем стандартный метод создания труб
+            try
+            {
+                if (systemTypeId != null)
+                {
+                    pipe1 = Pipe.Create(doc, systemTypeId, pipeTypeId, levelId, startPoint, breakPoint);
+                    pipe2 = Pipe.Create(doc, systemTypeId, pipeTypeId, levelId, breakPoint, endPoint);
+                }
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Ошибка", $"Не удалось создать новые трубы: {ex.Message}");
+                return ElementId.InvalidElementId;
+            }
+
+            if (pipe1 == null || pipe2 == null)
+            {
+                TaskDialog.Show("Ошибка", "Не удалось создать новые трубы");
+                return ElementId.InvalidElementId;
+            }
+
+            // Копируем все доступные параметры с исходной трубы на новые трубы
+            CopyPipeParameters(originalPipe, pipe1);
+            CopyPipeParameters(originalPipe, pipe2);
+
+            // Если у исходной трубы были соединения
+            // Создаем новые соединения для новых труб
+            // Этот шаг может потребовать более сложной логики в зависимости от вашего проекта
+
+            // Удаляем исходную трубу
+            doc.Delete(pipeId);
+
+            // Коннекторы нужно соединить, если есть соседние элементы
+            ConnectPipeIfNeeded(doc, pipe1, pipe2);
+
+            // Возвращаем ID одной из новых труб (обычно первой)
+            return pipe1.Id;
+        }
+        catch (Exception ex)
+        {
+            TaskDialog.Show("Ошибка в CustomBreakPipe", $"Произошла ошибка: {ex.Message}");
+            return ElementId.InvalidElementId;
+        }
+    }
+
+    /// <summary>
+    /// Копирует параметры с исходной трубы на новую
+    /// </summary>
+    private void CopyPipeParameters(Pipe source, Pipe target)
+    {
+        try
+        {
+            // Копируем диаметр
+            Parameter sourceDiameter = source.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
+            if (sourceDiameter != null && !sourceDiameter.IsReadOnly)
+            {
+                Parameter targetDiameter = target.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
+                if (targetDiameter != null)
+                {
+                    targetDiameter.Set(sourceDiameter.AsDouble());
+                }
+            }
+
+            // Копируем уровень смещения
+            Parameter sourceOffset = source.get_Parameter(BuiltInParameter.RBS_OFFSET_PARAM);
+            if (sourceOffset != null && !sourceOffset.IsReadOnly)
+            {
+                Parameter targetOffset = target.get_Parameter(BuiltInParameter.RBS_OFFSET_PARAM);
+                if (targetOffset != null)
+                {
+                    targetOffset.Set(sourceOffset.AsDouble());
+                }
+            }
+
+
+            // Можно добавить копирование других необходимых параметров
+        }
+        catch (Exception ex)
+        {
+            // Обрабатываем ошибки копирования параметров
+            TaskDialog.Show("Предупреждение", $"Некоторые параметры не были скопированы: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Соединяет трубы если необходимо
+    /// </summary>
+    private void ConnectPipeIfNeeded(Document doc, Pipe pipe1, Pipe pipe2)
+    {
+        try
+        {
+            // Получаем наборы коннекторов для обеих труб
+            ConnectorSet pipe1Connectors = pipe1.ConnectorManager.Connectors;
+            ConnectorSet pipe2Connectors = pipe2.ConnectorManager.Connectors;
+
+            // Находим ближайшие коннекторы для соединения
+            Connector pipe1EndConnector = null;
+            Connector pipe2StartConnector = null;
+
+            foreach (Connector c1 in pipe1Connectors)
+            {
+                foreach (Connector c2 in pipe2Connectors)
+                {
+                    if (c1.Origin.DistanceTo(c2.Origin) < 0.001) // Если коннекторы близки
+                    {
+                        pipe1EndConnector = c1;
+                        pipe2StartConnector = c2;
+                        break;
+                    }
+                }
+
+                if (pipe1EndConnector != null)
+                    break;
+            }
+
+            // Соединяем трубы, если нашли подходящие коннекторы
+            if (pipe1EndConnector != null && pipe2StartConnector != null)
+            {
+                // Используем коннектор для создания соединения
+                pipe1EndConnector.ConnectTo(pipe2StartConnector);
+
+                // Или создаем соединение с помощью API соединений
+                // doc.Create.NewElbowFitting(pipe1EndConnector, pipe2StartConnector);
+            }
+        }
+        catch (Exception ex)
+        {
+            TaskDialog.Show("Предупреждение", $"Не удалось соединить трубы: {ex.Message}");
+        }
+    }
+
+    private PipeWrapper GetOriginalPipe(Element selectedElement, XYZ pick, out DisplacementElement primaryDisplacement)
+    {
+        PipeWrapper originalPipe = null;
+        primaryDisplacement = null;
+        switch (selectedElement)
+        {
+            case Pipe pipe:
+                originalPipe = new PipeWrapper(pipe);
+                break;
+            case DisplacementElement displacementElement:
+            {
+                primaryDisplacement = displacementElement;
+                var displacementElementIds = displacementElement.GetDisplacedElementIds();
+
+                foreach (ElementId displacedId in displacementElementIds)
+                {
+                    Element element = _doc.GetElement(displacedId);
+
+                    // Проверяем, является ли элемент трубой
+                    if (element is not Pipe pipe) continue;
+                    // Получаем геометрию трубы
+                    BoundingBoxXYZ bounding = pipe.get_BoundingBox(_doc.ActiveView);
+                    var contains = bounding.Contains(pick);
+                    if (!contains) continue;
+                    // Нашли трубу, которая проходит через точку
+                    originalPipe = new PipeWrapper(pipe)
+                    {
+                        IsDisplacement = true
+                    };
+                    break;
+                }
+
+                break;
+            }
+        }
+
+        return originalPipe;
+    }
+
+
+    private static XYZ GetProjectedPoint(PipeWrapper pipeToCut, XYZ originalPoint2)
+    {
         // Проецируем выбранную точку на центральную линию трубы
-        IntersectionResult result = pipeCurve?.Project(originalPoint2);
+        IntersectionResult result = pipeToCut.Curve.Project(originalPoint2);
         XYZ projectedPoint = result?.XYZPoint;
         return projectedPoint;
     }
@@ -524,13 +739,15 @@ public class MakeBreakServices
         return null;
     }
 
-    private FamilyInstance CreateCouplingBetweenPipes(Pipe pipe1, Pipe pipe2, FamilySymbol familySymbol)
+    private FamilyInstance CreateCouplingBetweenPipes(PipeWrapper originalPipe, PipeWrapper splitPipe,
+        XYZ pick1,
+        FamilySymbol familySymbol)
     {
         try
         {
             // Получаем незанятые коннекторы труб
-            Connector conn1 = GetBestOpenConnector(pipe1, pipe2);
-            Connector conn2 = GetBestOpenConnector(pipe2, pipe1);
+            Connector conn1 = GetBestOpenConnector(originalPipe, splitPipe);
+            Connector conn2 = GetBestOpenConnector(splitPipe, originalPipe);
             if (conn1 == null || conn2 == null)
             {
                 TaskDialog.Show("Ошибка", "Не удалось найти открытые коннекторы на трубах.");
@@ -544,27 +761,110 @@ public class MakeBreakServices
                 {
                     familySymbol.Activate();
                 }
-
                 // Вычисляем вектор между коннекторами
                 XYZ connVector = conn2.Origin - conn1.Origin;
                 double distance = connVector.GetLength();
                 // Нормализуем и используем как направление
                 XYZ direction = connVector.Normalize();
-                // Убеждаемся, что направление согласуется с одним из коннекторов
-                if (direction.DotProduct(conn1.CoordinateSystem.BasisZ) < 0)
-                    direction = direction.Negate();
-                // Размещаем в истинной средней точке
                 XYZ midPoint = conn1.Origin + direction * (distance / 2);
                 // Получаем направление системы трубопровода
-                XYZ pipeDirection = 0.5 * (conn1.CoordinateSystem.BasisZ - conn2.CoordinateSystem.BasisZ).Normalize();
-                FamilyInstance newFamilyInstance = _doc.Create.NewFamilyInstance(midPoint, familySymbol, pipeDirection,
-                    pipe1.ReferenceLevel, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
-                SetDiameterFitting(pipe1, newFamilyInstance);
+                XYZ pipeDirection1 = 0.5 * (conn1.CoordinateSystem.BasisZ - conn2.CoordinateSystem.BasisZ).Normalize();
+                // Создаем экземпляр фитинга
+                FamilyInstance newFamilyInstance = _doc.Create.NewFamilyInstance(
+                    pick1,
+                    familySymbol,
+                    originalPipe.ReferenceLevel,
+                    Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
+                SetDiameterFitting(originalPipe, newFamilyInstance);
+
                 // Получение коннекторов фитинга
                 ConnectorSet fittingConnectors = newFamilyInstance.MEPModel.ConnectorManager.Connectors;
+                List<Connector> fittingConnectorsList = fittingConnectors.Cast<Connector>().ToList();
                 List<Connector> connectors = [];
                 connectors.AddRange(fittingConnectors.Cast<Connector>());
+                // Получаем направления коннекторов трубы и фитинга
+                XYZ pipeDirection = conn1.CoordinateSystem.BasisZ;
 
+                // Находим любой пригодный коннектор фитинга
+                Connector fittingConn = fittingConnectorsList.FirstOrDefault();
+                if (fittingConn != null)
+                {
+                    XYZ fittingDirection = fittingConn.CoordinateSystem.BasisZ;
+
+                    // Проверяем ориентацию фитинга относительно трубы
+                    double dotProduct = pipeDirection.DotProduct(fittingDirection);
+
+                    // Если направления противоположны или перпендикулярны, нужно повернуть фитинг
+                    if (dotProduct < 0.7)  // Не совпадают примерно (угол больше ~45 градусов)
+                    {
+                        // Находим ось вращения
+                        XYZ rotationAxis;
+                        if (Math.Abs(dotProduct) < 0.1) // Направления примерно перпендикулярны
+                        {
+                            // Используем векторное произведение для нахождения оси вращения
+                            rotationAxis = pipeDirection.CrossProduct(fittingDirection).Normalize();
+
+                            // Угол поворота - 90 градусов
+                            double angle = Math.PI / 2;
+
+                            if (rotationAxis.GetLength() < 0.001)
+                            {
+                                // Если векторы параллельны (что странно в данном случае),
+                                // используем произвольную ось, перпендикулярную направлению трубы
+                                rotationAxis = pipeDirection.CrossProduct(XYZ.BasisZ);
+                                if (rotationAxis.GetLength() < 0.001)
+                                    rotationAxis = pipeDirection.CrossProduct(XYZ.BasisX);
+                            }
+
+                            Line rotationLine = Line.CreateBound(pick1, pick1 + rotationAxis);
+                            ElementTransformUtils.RotateElement(_doc, newFamilyInstance.Id, rotationLine, angle);
+                        }
+                        else if (dotProduct < 0) // Направления противоположны
+                        {
+                            // Вращаем на 180 градусов вокруг оси, перпендикулярной направлению
+                            rotationAxis = pipeDirection.CrossProduct(XYZ.BasisZ);
+                            if (rotationAxis.GetLength() < 0.001)
+                                rotationAxis = pipeDirection.CrossProduct(XYZ.BasisX);
+
+                            Line rotationLine = Line.CreateBound(pick1, pick1 + rotationAxis);
+                            ElementTransformUtils.RotateElement(_doc, newFamilyInstance.Id, rotationLine, Math.PI);
+                        }
+                    }
+                }
+                // После поворота получаем обновленные коннекторы фитинга
+                // (необходимо повторно получить коннекторы, так как их расположение могло измениться после поворота)
+                fittingConnectors = newFamilyInstance.MEPModel.ConnectorManager.Connectors;
+                fittingConnectorsList = fittingConnectors.Cast<Connector>().ToList();
+
+                // Выбираем наиболее подходящий коннектор фитинга для соединения с conn1
+                Connector bestFittingConn = null;
+                double bestDotProduct = -2.0; // начальное значение меньше минимально возможного (-1)
+                foreach (Connector fc in fittingConnectorsList)
+                {
+                    double dp = fc.CoordinateSystem.BasisZ.DotProduct(pipeDirection);
+                    if (dp > bestDotProduct)
+                    {
+                        bestDotProduct = dp;
+                        bestFittingConn = fc;
+                    }
+                }
+                if (bestFittingConn != null)
+                {
+                    // Перемещаем фитинг так, чтобы совместить коннектор фитинга с коннектором трубы
+                    XYZ fittingConnPoint = bestFittingConn.Origin;
+                    XYZ pipeConnPoint = conn1.Origin;
+
+                    // Вычисляем вектор смещения
+                    XYZ translationVector = pipeConnPoint - fittingConnPoint;
+
+                    // Перемещаем фитинг
+                    ElementTransformUtils.MoveElement(_doc, newFamilyInstance.Id, translationVector);
+
+                    // Соединяем фитинг с трубами
+                    // После перемещения коннекторы должны быть в одной точке
+                    
+                }
+                //
                 if (connectors.Count >= 2)
                 {
                     // Находим лучшие пары коннекторов для соединения
@@ -573,16 +873,16 @@ public class MakeBreakServices
                     connectors.Remove(pair1.Item2);
                     // Находим вторую пару
                     Tuple<Connector, Connector> pair2 = FindBestConnectorMatch(conn2, connectors);
-
+                
                     try
                     {
                         // Соединяем первую пару
                         pair1.Item1.ConnectTo(pair1.Item2);
-
+                
                         // Соединяем вторую пару
                         pair2.Item1.ConnectTo(pair2.Item2);
-
-
+                
+                
                         return newFamilyInstance;
                     }
                     catch (Exception ex)
@@ -601,7 +901,94 @@ public class MakeBreakServices
 
         return null;
     }
+/// <summary>
+/// Соединяет фитинг с двумя трубами через указанные коннекторы
+/// </summary>
+/// <param name="fitting">Фитинг для соединения</param>
+/// <param name="pipeConnector1">Коннектор первой трубы</param>
+/// <param name="pipeConnector2">Коннектор второй трубы</param>
+private void ConnectFittingWithPipes(FamilyInstance fitting, Connector pipeConnector1, Connector pipeConnector2)
+{
+    try
+    {
+        // Получаем коннекторы фитинга
+        ConnectorSet fittingConnectors = fitting.MEPModel.ConnectorManager.Connectors;
 
+        // Находим подходящие коннекторы фитинга для соединения с трубами
+        Connector fittingConnector1 = null;
+        Connector fittingConnector2 = null;
+
+        // Направления коннекторов труб
+        XYZ pipeDirection1 = pipeConnector1.CoordinateSystem.BasisZ;
+        XYZ pipeDirection2 = pipeConnector2.CoordinateSystem.BasisZ;
+
+        // Находим коннекторы фитинга, которые лучше всего соответствуют направлениям коннекторов труб
+        double bestMatch1 = -2.0;
+        double bestMatch2 = -2.0;
+
+        foreach (Connector fc in fittingConnectors)
+        {
+            if (fc.ConnectorType != ConnectorType.End)
+                continue;
+
+            if (fc.IsConnected)
+                continue;
+
+            XYZ fittingDirection = fc.CoordinateSystem.BasisZ;
+
+            // Проверяем соответствие с первым коннектором трубы
+            double dotProduct1 = pipeDirection1.DotProduct(fittingDirection);
+            if (dotProduct1 > bestMatch1)
+            {
+                bestMatch1 = dotProduct1;
+                fittingConnector1 = fc;
+            }
+
+            // Проверяем соответствие со вторым коннектором трубы
+            double dotProduct2 = pipeDirection2.DotProduct(fittingDirection);
+            if (dotProduct2 > bestMatch2)
+            {
+                bestMatch2 = dotProduct2;
+                fittingConnector2 = fc;
+            }
+        }
+
+        // Если нашли подходящие коннекторы, соединяем их
+        if (fittingConnector1 != null && !pipeConnector1.IsConnected)
+        {
+            // Проверяем, что коннекторы находятся достаточно близко друг к другу
+            double distance = fittingConnector1.Origin.DistanceTo(pipeConnector1.Origin);
+            if (distance < 0.1) // допустимое расстояние в футах
+            {
+                // Соединяем коннекторы
+                fittingConnector1.ConnectTo(pipeConnector1);
+            }
+            else
+            {
+                TaskDialog.Show("Предупреждение", $"Коннекторы слишком далеко друг от друга: {distance} футов");
+            }
+        }
+
+        if (fittingConnector2 != null && !pipeConnector2.IsConnected)
+        {
+            // Проверяем, что коннекторы находятся достаточно близко друг к другу
+            double distance = fittingConnector2.Origin.DistanceTo(pipeConnector2.Origin);
+            if (distance < 0.1) // допустимое расстояние в футах
+            {
+                // Соединяем коннекторы
+                fittingConnector2.ConnectTo(pipeConnector2);
+            }
+            else
+            {
+                TaskDialog.Show("Предупреждение", $"Коннекторы слишком далеко друг от друга: {distance} футов");
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        TaskDialog.Show("Ошибка", $"Ошибка при соединении фитинга с трубами: {ex.Message}");
+    }
+}
 
     /// <summary>
     /// Находит наиболее подходящие пары коннекторов для соединения
@@ -699,11 +1086,9 @@ public class MakeBreakServices
         return new Tuple<Connector, Connector>(sourceConnector, bestMatch);
     }
 
-    private static void SetDiameterFitting(Pipe pipe1, FamilyInstance familyInstance)
+    private static void SetDiameterFitting(PipeWrapper pipe, FamilyInstance familyInstance)
     {
-        Parameter pipeDiameterParam = pipe1.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
-        if (pipeDiameterParam is not { HasValue: true }) return;
-        double pipeDiameter = pipeDiameterParam.AsDouble();
+        double? pipeDiameter = pipe.GetDiameter();
         Parameter fittingDiameterParam = null;
         Parameter param = familyInstance.FindParameter("Диаметр");
         if (param is { StorageType: StorageType.Double })
@@ -714,7 +1099,7 @@ public class MakeBreakServices
         if (fittingDiameterParam != null)
         {
             // Устанавливаем диаметр фитинга равный диаметру трубы
-            fittingDiameterParam.Set(pipeDiameter);
+            if (pipeDiameter != null) fittingDiameterParam.Set((double)pipeDiameter);
         }
         else
         {
@@ -730,7 +1115,8 @@ public class MakeBreakServices
     /// <summary>
     /// Объединяет несколько DisplacementElement в один
     /// </summary>
-    public void MergeDisplacementElements(Document doc, IList<DisplacementElement> displacementsToMerge, DisplacementElement primaryDisplacement)
+    public void MergeDisplacementElements(Document doc, IList<DisplacementElement> displacementsToMerge,
+        DisplacementElement primaryDisplacement)
     {
         if (displacementsToMerge == null || displacementsToMerge.Count <= 1)
             return; // Нечего объединять
@@ -739,7 +1125,7 @@ public class MakeBreakServices
         // Собираем все ID смещенных элементов из всех DisplacementElement
         HashSet<ElementId> allDisplacedElementIds = new HashSet<ElementId>();
         View targetView = null;
-      
+
         XYZ displacementVector = primaryDisplacement.GetRelativeDisplacement();
 
         // Сохраняем список всех элементов для проверки
@@ -819,15 +1205,10 @@ public class MakeBreakServices
         }
     }
 
-    private Connector GetBestOpenConnector(Pipe sourcePipe, Pipe targetPipe)
+    private Connector GetBestOpenConnector(PipeWrapper pipe1, PipeWrapper pipe2)
     {
-        // Получаем все коннекторы
-        ConnectorSet connectors = sourcePipe.ConnectorManager.Connectors;
-        List<Connector> openConnectors = [];
-        openConnectors.AddRange(connectors.Cast<Connector>().Where(connector => !connector.IsConnected));
-
+        List<Connector> openConnectors = pipe1.GetOpenConnectors().ToList();
         // Собираем все открытые коннекторы
-
         switch (openConnectors.Count)
         {
             case 0:
@@ -838,7 +1219,7 @@ public class MakeBreakServices
 
         // Если у нас несколько открытых коннекторов, выбираем лучший
         // Получаем центральную точку целевой трубы
-        XYZ targetCenter = GetPipeCenter(targetPipe);
+        XYZ targetCenter = pipe2.GetPipeCenter();
 
         // Выбираем коннектор, ближайший к центру целевой трубы
         openConnectors.Sort((a, b) =>
@@ -847,19 +1228,6 @@ public class MakeBreakServices
         return openConnectors[0];
     }
 
-    /// <summary>
-    /// Получает центральную точку трубы
-    /// </summary>
-    private XYZ GetPipeCenter(Pipe pipe)
-    {
-        if (pipe.Location is not LocationCurve locationCurve)
-            return (pipe.Location as LocationPoint)?.Point ?? XYZ.Zero;
-        Curve curve = locationCurve.Curve;
-        XYZ startPoint = curve.GetEndPoint(0);
-        XYZ endPoint = curve.GetEndPoint(1);
-        // Вычисляем центральную точку
-        return (startPoint + endPoint) * 0.5;
-    }
 
 // <summary>
 
@@ -893,39 +1261,19 @@ public class MakeBreakServices
     /// <summary>
     /// Вычисляет расстояние от трубы до точки
     /// </summary>
-    private double DistanceFromPipeToPont(Pipe pipe, XYZ point)
+    private double DistanceFromPipeToPont(PipeWrapper pipe, XYZ point)
     {
-        // Получаем геометрию трубы
-        LocationCurve location = pipe.Location as LocationCurve;
-        if (location == null)
-        {
-            return double.MaxValue;
-        }
-
-        Curve curve = location.Curve;
-        return curve.Distance(point);
+        return pipe.Curve.Distance(point);
     }
 
     /// <summary>
     /// Определяет среднюю трубу между двумя точками по расстоянию
     /// </summary>
-    private Pipe DetermineMidPipeByDistance(Pipe pipe1, Pipe pipe2, XYZ point1, XYZ point2)
+    private Pipe DetermineMidPipeByDistance(PipeWrapper pipe1, PipeWrapper pipe2, XYZ point1, XYZ point2)
     {
-        // Получаем геометрию труб
-        LocationCurve location1 = pipe1.Location as LocationCurve;
-        LocationCurve location2 = pipe2.Location as LocationCurve;
-
-        if (location1 == null || location2 == null)
-        {
-            return null;
-        }
-
-        Curve curve1 = location1.Curve;
-        Curve curve2 = location2.Curve;
-
         // Вычисляем средние точки каждой трубы
-        XYZ midPoint1 = curve1.Evaluate(0.5, true);
-        XYZ midPoint2 = curve2.Evaluate(0.5, true);
+        XYZ midPoint1 = pipe1.GetPipeCenter();
+        XYZ midPoint2 = pipe2.GetPipeCenter();
 
         // Вычисляем центральную точку между точками разреза
         XYZ midPointBetweenCuts = (point1 + point2) * 0.5;
@@ -935,6 +1283,6 @@ public class MakeBreakServices
         double distance2 = midPoint2.DistanceTo(midPointBetweenCuts);
 
         // Возвращаем трубу, средняя точка которой ближе к центральной точке между разрезами
-        return distance1 < distance2 ? pipe1 : pipe2;
+        return distance1 < distance2 ? pipe1.Pipe : pipe2.Pipe;
     }
 }
