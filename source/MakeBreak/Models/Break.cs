@@ -4,18 +4,22 @@ namespace MakeBreak.Models;
 
 public class Break
 {
-    public XYZ PickPoint { get; set; }
     public Element SelectedElement { get; set; }
     public PipeWrapper TargetPipe { get; set; }
     public XYZ BreakPoint { get; set; }
+    public DisplacementElement PrimaryDisplacement { get; set; }
 
     public Break(Reference selectReference, Document document)
     {
         if (selectReference == null) return;
-        PickPoint = selectReference.GlobalPoint;
+        var pickPoint = selectReference.GlobalPoint;
         SelectedElement = document.GetElement(selectReference);
-        TargetPipe = GetOriginalPipe(SelectedElement, PickPoint, out var primaryDisplacement);
-        BreakPoint = TargetPipe.ProjectPointOntoCurve(PickPoint, primaryDisplacement);
+        TargetPipe = GetOriginalPipe(SelectedElement, pickPoint, out var primaryDisplacement);
+        if (primaryDisplacement != null)
+        {
+            PrimaryDisplacement = primaryDisplacement;
+        }
+        BreakPoint = TargetPipe.ProjectPointOntoCurve(pickPoint, primaryDisplacement);
     }
 
     private PipeWrapper GetOriginalPipe(Element selectedElement, XYZ pick, out DisplacementElement primaryDisplacement)
@@ -44,10 +48,7 @@ public class Break
                     var contains = bounding.Contains(pick);
                     if (!contains) continue;
                     // Нашли трубу, которая проходит через точку
-                    originalPipe = new PipeWrapper(pipe)
-                    {
-                        IsDisplacement = true
-                    };
+                    originalPipe = new PipeWrapper(pipe);
                     break;
                 }
 

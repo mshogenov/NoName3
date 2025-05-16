@@ -5,7 +5,7 @@ namespace MakeBreak.Models;
 public sealed class PipeWrapper
 {
     public Pipe Pipe { get; }
-    public bool IsDisplacement { get; set; }
+  
     public Curve Curve => (Pipe.Location as LocationCurve)?.Curve;
     public ElementId Id { get; }
     public Element ReferenceLevel => Pipe.ReferenceLevel;
