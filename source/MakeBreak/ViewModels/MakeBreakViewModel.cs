@@ -54,14 +54,7 @@ public sealed partial class MakeBreakViewModel : ObservableObject
         {
             try
             {
-                if (_familySymbol != null)
-                {
-                    _makeBreakServices.CreateTwoCouplingsAndSetMidPipeParameter(_familySymbol);
-                }
-                else
-                {
-                    TaskDialog.Show("Информация", "В проекте отсутствует семейство: \"Разрыв\"");
-                }
+                
             }
             catch (Exception ex)
             {
