@@ -29,21 +29,19 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     public MakeBreakViewModel()
     {
         _familySymbol = _makeBreakServices.FindFamily("Разрыв");
-        if (!Helpers.CheckParameterExists(_doc, _parameterRupture))
+        if (Helpers.CheckParameterExists(_doc, _parameterRupture)) return;
+        using Transaction tr = new Transaction(_doc, "Добавить общий параметр");
+        tr.Start();
+        try
         {
-            using Transaction tr = new Transaction(_doc, "Добавить общий параметр");
-            tr.Start();
-            try
-            {
-                var isCreate = Helpers.CreateSharedParameter(_doc, _parameterRupture,
-                    SpecTypeId.Boolean.YesNo, GroupTypeId.Graphics, true, _categories);
-                tr.Commit();
-            }
-            catch (Exception e)
-            {
-                tr.RollBack();
-                MessageBox.Show(e.Message, "Ошибка");
-            }
+            var isCreate = Helpers.CreateSharedParameter(_doc, _parameterRupture,
+                SpecTypeId.Boolean.YesNo, GroupTypeId.Graphics, true, _categories);
+            tr.Commit();
+        }
+        catch (Exception e)
+        {
+            tr.RollBack();
+            MessageBox.Show(e.Message, "Ошибка");
         }
     }
 
@@ -54,7 +52,7 @@ public sealed partial class MakeBreakViewModel : ObservableObject
         {
             try
             {
-                
+                _makeBreakServices.BringBackVisibilityPipe(_familySymbol);
             }
             catch (Exception ex)
             {
