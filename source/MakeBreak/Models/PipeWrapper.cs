@@ -10,8 +10,8 @@ public sealed class PipeWrapper
     public ElementId Id { get; }
     public Element ReferenceLevel => Pipe.ReferenceLevel;
 
-    private IEnumerable<Connector> AllConnectors =>
-        Pipe?.ConnectorManager?.Connectors?.Cast<Connector>() ?? [];
+    public Connector[] AllConnectors =>
+        Pipe?.ConnectorManager?.Connectors?.Cast<Connector>().ToArray() ?? [];
 
 
     public PipeWrapper(Pipe pipe)
@@ -23,7 +23,7 @@ public sealed class PipeWrapper
     public XYZ ProjectPointOntoCurve(XYZ point, DisplacementElement displacement = null)
     {
         IntersectionResult res = displacement != null
-            ? Curve.Project(point - displacement.GetRelativeDisplacement())
+            ? Curve.Project(point - displacement.GetAbsoluteDisplacement())
             : Curve.Project(point);
         return res.XYZPoint;
     }
@@ -43,5 +43,22 @@ public sealed class PipeWrapper
         return pipeDiameterParam.AsDouble();
     }
 
-    public XYZ GetDirection() => (Curve as Line)?.Direction;
+    public XYZ GetDirection() 
+    {
+        Line line = Curve as Line;
+        if (line != null)
+        {
+            return line.Direction;
+        }
+
+        // Если кривая не линия, вычисляем направление между начальной и конечной точками
+        if (Curve != null)
+        {
+            XYZ startPoint = Curve.GetEndPoint(0);
+            XYZ endPoint = Curve.GetEndPoint(1);
+            return (endPoint - startPoint).Normalize();
+        }
+
+        return XYZ.BasisZ; // Возвращаем вертикальное направление как значение по умолчанию
+    }
 }
