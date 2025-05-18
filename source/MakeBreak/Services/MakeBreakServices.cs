@@ -49,9 +49,9 @@ public class MakeBreakServices
                         tg.RollBack();
                         return;
                     }
-
+                    
                     Break break2 = new Break(selectReference2, _doc);
-
+                    
                     // Проверяем минимальное расстояние между точками
                     double distanceBetweenPoints = break1.BreakPoint.DistanceTo(break2.BreakPoint).ToMillimeters();
                     const double minimumDistance = 20; //мм
@@ -64,7 +64,7 @@ public class MakeBreakServices
                         tg.RollBack();
                         return;
                     }
-
+                    
                     // Определяем, какую трубу разрезать для второй точки
                     var secondPipeToCut = GetPipeToCut(break1, firstSplitPipe, break2);
                     using Transaction trans2 = new Transaction(_doc, "Вставка второй муфты");
@@ -77,7 +77,7 @@ public class MakeBreakServices
                         tg.RollBack();
                         return;
                     }
-
+                    
                     var secondSplitPipe = secondBreak.Value.SplitPipe;
                     // Создаем муфту между разрезанными частями (используя "Разрыв")
                     var secondCoupling = secondBreak.Value.Coupling;
@@ -88,7 +88,7 @@ public class MakeBreakServices
                         tg.RollBack();
                         return;
                     }
-
+                    
                     // Определяем среднюю трубу между двумя точками разреза
                     var midPipe = GetMidPipe(secondPipeToCut, break1, secondSplitPipe, break2, firstBreak,
                         firstSplitPipe);
@@ -364,7 +364,7 @@ public class MakeBreakServices
                 }
 
                 // Сортировка коннекторов фитинга для определения, какой из них ближе к какой трубе
-                Connector fittingConn1 = FindBestConnectorMatch(connectors, conn1);
+                Connector fittingConn1 = FindClosestConnector(newFamilyInstance.MEPModel.ConnectorManager, bBreak.BreakPoint);
                 // Вторым коннектором будет любой другой коннектор, отличный от первого
                 Connector fittingConn2 = connectors.FirstOrDefault(c => c.Id != fittingConn1.Id);
 
@@ -380,7 +380,7 @@ public class MakeBreakServices
                 // Перемещаем фитинг к первому коннектору
                 XYZ translationVector = conn1.Origin - fittingConn1.Origin;
                 ElementTransformUtils.MoveElement(_doc, newFamilyInstance.Id, translationVector);
-
+                
                 // Соединяем первую пару коннекторов
                 conn1.ConnectTo(fittingConn1);
                 ElementTransformUtils.MoveElement(_doc, newFamilyInstance.Id, conn2.Origin - fittingConn2.Origin);
@@ -459,7 +459,38 @@ public class MakeBreakServices
             ElementTransformUtils.RotateElement(_doc, attachingElement.Id, rotationLine, angle);
         }
     }
+    private Connector FindClosestConnector(ConnectorManager connectorManager, XYZ pickedPoint)
+    {
+        Connector closestConnector = null;
 
+        // Все соединители элемента
+        var connectors = connectorManager.Connectors.Cast<Connector>();
+
+        double closestDistance = double.MaxValue;
+
+        foreach (Connector connector in connectors)
+        {
+            if (connector.IsConnected)
+            {
+                continue;
+            }
+
+            // Координаты текущего соединителя
+            XYZ connectorOrigin = connector.Origin;
+
+            // Расстояние между выбранной точкой и соединителем
+            double distance = pickedPoint.DistanceTo(connectorOrigin);
+
+            // Проверяем, является ли это расстояние минимальным
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestConnector = connector;
+            }
+        }
+
+        return closestConnector;
+    }
     private Connector FindBestConnectorMatch(List<Connector> fittingConnectors, Connector pipeConnector)
     {
         // Сортировка коннекторов по сходству направления (противоположные направления лучше)
