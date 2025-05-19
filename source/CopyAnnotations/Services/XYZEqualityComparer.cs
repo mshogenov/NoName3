@@ -2,16 +2,23 @@ namespace CopyAnnotations.Services;
 
 public class XYZEqualityComparer : IEqualityComparer<XYZ>
 {
-    private const double Tolerance = 0.001;
+    private readonly double _tolerance;
 
-    public bool Equals(XYZ? x, XYZ? y)
+    public XYZEqualityComparer(double tolerance = 1e-6)
     {
-        if (x == null || y == null)
-            return x == y;
+        _tolerance = tolerance;
+    }
 
-        return Math.Abs(x.X - y.X) < Tolerance &&
-               Math.Abs(x.Y - y.Y) < Tolerance &&
-               Math.Abs(x.Z - y.Z) < Tolerance;
+    public bool Equals(XYZ x, XYZ y)
+    {
+        if (x == null && y == null)
+            return true;
+        if (x == null || y == null)
+            return false;
+
+        return Math.Abs(x.X - y.X) < _tolerance &&
+               Math.Abs(x.Y - y.Y) < _tolerance &&
+               Math.Abs(x.Z - y.Z) < _tolerance;
     }
 
     public int GetHashCode(XYZ obj)
@@ -19,11 +26,14 @@ public class XYZEqualityComparer : IEqualityComparer<XYZ>
         if (obj == null)
             return 0;
 
-        // Округляем до 3 знаков для хеширования
-        return HashCode.Combine(
-            Math.Round(obj.X, 3),
-            Math.Round(obj.Y, 3),
-            Math.Round(obj.Z, 3)
-        );
+        // Упрощенная версия хеш-кода для XYZ
+        unchecked
+        {
+            int hash = 17;
+            hash = hash * 23 + Math.Round(obj.X / _tolerance).GetHashCode();
+            hash = hash * 23 + Math.Round(obj.Y / _tolerance).GetHashCode();
+            hash = hash * 23 + Math.Round(obj.Z / _tolerance).GetHashCode();
+            return hash;
+        }
     }
 }

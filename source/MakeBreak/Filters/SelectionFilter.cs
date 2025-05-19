@@ -3,11 +3,11 @@ using Autodesk.Revit.UI.Selection;
 
 namespace MakeBreak.Filters;
 
-public class PipeSelectionFilter : ISelectionFilter
+public class SelectionFilter : ISelectionFilter
 {
     public bool AllowElement(Element elem)
     {
-        return elem is Pipe;
+        return elem is Pipe or DisplacementElement;
     }
 
     public bool AllowReference(Reference reference, XYZ position)

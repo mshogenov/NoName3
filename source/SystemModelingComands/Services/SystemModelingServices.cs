@@ -14,10 +14,10 @@ namespace SystemModelingCommands.Services
         private readonly Document _doc = Context.ActiveDocument;
         private readonly UIDocument _uiDoc = Context.ActiveUiDocument;
 
-        public void Bloom()
+        public void InsertPipe()
         {
             // Создаем фильтр для проверки
-            FittingSelectionFilter filter = new FittingSelectionFilter();
+            FittingAndAccessorySelectionFilter filter = new FittingAndAccessorySelectionFilter();
             Element selectedElement = null;
             // Проверка, есть ли выбранный элемент до запуска скрипта
             var selectedIds = Context.ActiveUiDocument?.Selection.GetElementIds();
@@ -131,8 +131,7 @@ namespace SystemModelingCommands.Services
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
             Element element = _doc.GetElement(selectedReference);
-            var curve = (element?.Location as LocationCurve)?.Curve;
-            var direction = (curve as Line)?.Direction;
+
             XYZ globalPoint = selectedReference.GlobalPoint;
             Connector[] cA = ConnectorArrayUnused(element);
             if (cA == null)
@@ -166,8 +165,7 @@ namespace SystemModelingCommands.Services
                     DrawConduit(_doc, selectedReference, globalPoint, connector, origin, end,
                         level);
                 else if (element != null && element.Category.Id.Value == -2008000)
-                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end,
-                        direction);
+                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end);
                 else if (element != null && element.Category.Id.Value == -2008044)
                     DrawPipeWithElbow(_doc, selectedReference, globalPoint, connector, origin,
                         end, true);
@@ -184,8 +182,6 @@ namespace SystemModelingCommands.Services
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
             Element element = _doc.GetElement(selectedReference);
-            var curve = (element?.Location as LocationCurve)?.Curve;
-            var direction = (curve as Line)?.Direction;
             XYZ globalPoint = selectedReference.GlobalPoint;
             Connector[] cA = ConnectorArrayUnused(element);
             if (cA == null)
@@ -221,8 +217,7 @@ namespace SystemModelingCommands.Services
                     DrawConduit(_doc, selectedReference, globalPoint, connector, origin, end,
                         level);
                 else if (element != null && element.Category.Id.Value == -2008000)
-                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end,
-                        direction);
+                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end);
                 else if (element != null && element.Category.Id.Value == -2008044)
                     DrawPipeWithElbow(_doc, selectedReference, globalPoint, connector, origin,
                         end, true);
@@ -239,8 +234,6 @@ namespace SystemModelingCommands.Services
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
             Element element = _doc.GetElement(selectedReference);
-            var curve = (element?.Location as LocationCurve)?.Curve;
-            var direction = (curve as Line)?.Direction;
             XYZ globalPoint = selectedReference.GlobalPoint;
             Connector[] cA = ConnectorArrayUnused(element);
             if (cA == null)
@@ -274,7 +267,7 @@ namespace SystemModelingCommands.Services
                 else if (element != null && element.Category.Id.Value == -2008132)
                     DrawConduit(_doc, selectedReference, globalPoint, connector, origin, end, level);
                 else if (element != null && element.Category.Id.Value == -2008000)
-                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end, direction);
+                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end);
                 else if (element != null && element.Category.Id.Value == -2008044)
                     DrawPipeWithElbow(_doc, selectedReference, globalPoint, connector, origin, end, true);
                 transaction.Commit();
@@ -290,8 +283,6 @@ namespace SystemModelingCommands.Services
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
             Element element = _doc.GetElement(selectedReference);
-            var curve = (element?.Location as LocationCurve)?.Curve;
-            var direction = (curve as Line)?.Direction;
             XYZ globalPoint = selectedReference.GlobalPoint;
             Connector[] cA = ConnectorArrayUnused(element);
             if (cA == null)
@@ -321,12 +312,10 @@ namespace SystemModelingCommands.Services
                     DrawConduit(_doc, selectedReference, globalPoint, connector, origin, end,
                         level);
                 else if (element != null && element.Category.BuiltInCategory == BuiltInCategory.OST_DuctCurves)
-                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end,
-                        direction);
+                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end);
                 else if (element != null && element.Category.BuiltInCategory == BuiltInCategory.OST_PipeCurves)
                     DrawPipeWithElbow(_doc, selectedReference, globalPoint, connector, origin,
                         end, true);
-
 
                 transaction.Commit();
             }
@@ -392,8 +381,6 @@ namespace SystemModelingCommands.Services
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
             Element element = Context.ActiveDocument?.GetElement(selectedReference);
-            var curve = (element?.Location as LocationCurve)?.Curve;
-            var direction = (curve as Line)?.Direction;
             XYZ globalPoint = selectedReference?.GlobalPoint;
             Connector[] connectors = ConnectorArrayUnused(element);
             if (connectors == null)
@@ -432,7 +419,7 @@ namespace SystemModelingCommands.Services
                     case BuiltInCategory.OST_DuctCurves:
                         DrawDuct(Context.ActiveDocument, selectedReference, globalPoint,
                             connector,
-                            origin, end, direction);
+                            origin, end);
                         break;
                     case BuiltInCategory.OST_PipeCurves:
                         DrawPipeWithElbow(Context.ActiveDocument, selectedReference, globalPoint,
@@ -469,8 +456,6 @@ namespace SystemModelingCommands.Services
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
             Element element = _doc.GetElement(selectedReference);
-            var curve = (element?.Location as LocationCurve)?.Curve;
-            var direction = (curve as Line)?.Direction;
             XYZ globalPoint = selectedReference.GlobalPoint;
             Connector[] cA = ConnectorArrayUnused(element);
             if (cA == null)
@@ -499,7 +484,7 @@ namespace SystemModelingCommands.Services
                             level);
                         break;
                     case BuiltInCategory.OST_DuctCurves:
-                        DrawDuct(_doc, selectedReference, globalPoint, connector, origin, endPoint, direction);
+                        DrawDuct(_doc, selectedReference, globalPoint, connector, origin, endPoint);
                         break;
                     case BuiltInCategory.OST_PipeCurves:
                         DrawPipeWithElbow(_doc, selectedReference, globalPoint, connector, origin,
@@ -537,125 +522,225 @@ namespace SystemModelingCommands.Services
 
         public void MoveConnectAlign()
         {
-            using Transaction transaction = new(_doc, "Соединить");
+            if (!TryBuildContext(out AlignContext ctx))
+                return;
+            using Transaction tr = new(_doc, "Соединить");
             try
             {
-                transaction.Start();
+                tr.Start();
                 // Шаг 1: Выбор целевого элемента и получение точки
-                ElementModel targetElement =
-                    PickElementWithPoint("Выберите точку на элементе, к которому хотите присоединить");
-                if (targetElement == null) return;
-                // Шаг 2: Выбор присоединяемого элемента и получение точки
-                ElementModel attachingElement =
-                    PickElementWithPoint("Выберите точку на присоединяемом элемент", targetElement.Element);
-                if (attachingElement == null) return;
-                XYZ targetBasisZ = targetElement.ClosestConnector.CoordinateSystem.BasisZ;
-                XYZ attachingBasisZ = attachingElement.ClosestConnector.CoordinateSystem.BasisZ;
-                double dotProduct = targetBasisZ.DotProduct(attachingBasisZ);
-                const double oppositeThreshold = -1.0;
-                XYZ translationVector = targetElement.ClosestConnector.Origin -
-                                        attachingElement.ClosestConnector.Origin;
-                if (Math.Abs(Math.Round(dotProduct, 10) - Math.Round(oppositeThreshold, 10)) < 0.001)
+                if (AreOpposite(ctx.TargetConn, ctx.AttachConn))
                 {
-                    if (attachingElement.Element is Pipe or Duct)
+                    if (!HandleOppositeConnectors(ctx))
                     {
-                        // Показываем диалог выбора действия
-                        TaskDialog dialog = new TaskDialog("Соединить");
-                        dialog.MainInstruction = "Выберите действие";
-                        dialog.MainIcon = TaskDialogIcon.TaskDialogIconNone;
-                        dialog.CommonButtons = TaskDialogCommonButtons.Cancel;
-                        dialog.AddCommandLink(TaskDialogCommandLinkId.CommandLink1, "Удлинить/укоротить трубу");
-                        dialog.AddCommandLink(TaskDialogCommandLinkId.CommandLink2, "Переместить элемент(ы)");
-                        TaskDialogResult tdResult = dialog.Show();
-                        switch (tdResult)
-                        {
-                            case TaskDialogResult.Cancel:
-                                return;
-                            case TaskDialogResult.CommandLink1:
-                                LengthenCurve(attachingElement, targetElement);
-                                // Пересчитываем вектор перемещения после изменения длины
-                                translationVector = targetElement.ClosestConnector.Origin -
-                                                    attachingElement.ClosestConnector.Origin;
-                                ElementTransformUtils.MoveElement(_doc, attachingElement.Id, translationVector);
-                                // 3. Соединяем элементы
-                                attachingElement.ClosestConnector.ConnectTo(targetElement.ClosestConnector);
-                                transaction.Commit();
-                                return;
-                        }
-                    }
-                    else
-                    {
-                        if (GetConnectedConnectors(attachingElement.ConnectorManager).Count > 1)
-                        {
-                            // Показываем диалог выбора действия
-                            TaskDialog dialog = new TaskDialog("Соединить");
-                            dialog.MainInstruction = "Выберите действие";
-                            dialog.MainIcon = TaskDialogIcon.TaskDialogIconNone;
-                            dialog.CommonButtons = TaskDialogCommonButtons.Cancel;
-                            dialog.AddCommandLink(TaskDialogCommandLinkId.CommandLink1,
-                                "Переместить выбранный элемент");
-                            dialog.AddCommandLink(TaskDialogCommandLinkId.CommandLink2, "Переместить все элементы");
-                            TaskDialogResult tdResult = dialog.Show();
-                            switch (tdResult)
-                            {
-                                case TaskDialogResult.Cancel:
-                                    return;
-                                case TaskDialogResult.CommandLink1:
-                                    ElementTransformUtils.MoveElement(_doc, attachingElement.Id, translationVector);
-                                    // 3. Соединяем элементы
-                                    attachingElement.ClosestConnector.ConnectTo(targetElement.ClosestConnector);
-                                    transaction.Commit();
-                                    return;
-                            }
-                        }
-
-                        ElementTransformUtils.MoveElement(_doc, attachingElement.Id, translationVector);
-                        // 3. Соединяем элементы
-                        attachingElement.ClosestConnector.ConnectTo(targetElement.ClosestConnector);
-                        transaction.Commit();
-                        return;
+                        tr.RollBack();
+                        return; // Пользователь нажал Cancel
                     }
                 }
-
-                // Шаг 5: Отключение существующих соединений и сохранение их для восстановления
-                var existingConnections = DisconnectExistingConnections(attachingElement.ConnectorManager);
-                // Шаг 7: Выравнивание соединителей
-                AlignConnectors(targetElement.ClosestConnector, attachingElement.ClosestConnector,
-                    attachingElement.Element);
-                translationVector = targetElement.ClosestConnector.Origin -
-                                    attachingElement.ClosestConnector.Origin;
-                ElementTransformUtils.MoveElement(_doc, attachingElement.Id, translationVector);
-                // Соединение после вращения
-                attachingElement.ClosestConnector.ConnectTo(targetElement.ClosestConnector);
-                // Шаг 8: Восстановление предыдущих соединений
-                if (existingConnections.Any())
+                else
                 {
-                    RestoreConnections(existingConnections);
+                    AlignAndConnect(ctx); // Соосные коннекторы
                 }
 
-                transaction.Commit();
+                tr.Commit();
             }
             catch (Exception e)
             {
                 TaskDialog.Show("Ошибка", e.Message);
-                transaction.RollBack();
+                tr.RollBack();
+            }
+        }
+
+        private bool HandleOppositeConnectors(AlignContext ctx)
+        {
+            // 1. Для труб/каналов – отдельная логика
+            if (ctx.Attach.Element is Pipe or Duct)
+                return HandlePipeOrDuctOpposite(ctx);
+
+            // 2. Для остальных семейств
+            return HandleGenericOpposite(ctx);
+        }
+
+        private bool HandlePipeOrDuctOpposite(AlignContext ctx)
+        {
+            var choice = ShowChoiceDialog(
+                "Соединить",
+                "Выберите действие",
+                ("Удлинить/укоротить трубу", 1),
+                ("Переместить элемент", 2));
+            switch (choice)
+            {
+                case 1: // Удлинить-укоротить
+                    LengthenCurve(ctx.AttachConn, ctx.TargetConn);
+                    XYZ newMove = ctx.TargetConn.Origin - ctx.AttachConn.Origin;
+                    ElementTransformUtils.MoveElement(_doc, ctx.Attach.Id, newMove);
+                    ctx.AttachConn.ConnectTo(ctx.TargetConn);
+                    break;
+
+                case 2: // Переместить
+                    AlignAndConnect(ctx);
+                    break;
+
+                default: return false; // Cancel
+            }
+
+            return true;
+        }
+
+        private bool HandleGenericOpposite(AlignContext ctx)
+        {
+            bool singleConnection = GetConnectedConnectors(ctx.Attach.ConnectorManager).Count == 1;
+            XYZ translationVector = ctx.TargetConn.Origin -
+                                    ctx.AttachConn.Origin;
+            if (singleConnection)
+            {
+                var choice = ShowChoiceDialog(
+                    "Соединить",
+                    "Выберите действие",
+                    ("Переместить выбранный элемент", 1),
+                    ("Переместить все элементы", 2));
+
+                switch (choice)
+                {
+                    case 1:
+                        break;
+
+                    case 2:
+                        AlignAndConnect(ctx); // Пользовательская логика
+                        return true;
+
+                    default:
+                        return false; // Cancel
+                }
+            }
+
+            ElementTransformUtils.MoveElement(_doc, ctx.AttachId, translationVector);
+            // 3. Соединяем элементы
+            ctx.AttachConn.ConnectTo(ctx.TargetConn);
+            return true;
+        }
+
+        private static int ShowChoiceDialog(
+            string title,
+            string instruction,
+            params (string text, int id)[] commands)
+        {
+            var dlg = new TaskDialog(title)
+            {
+                MainInstruction = instruction,
+                MainIcon = TaskDialogIcon.TaskDialogIconNone,
+                CommonButtons = TaskDialogCommonButtons.Cancel
+            };
+
+            foreach (var cmd in commands)
+                dlg.AddCommandLink((TaskDialogCommandLinkId)cmd.id, cmd.text);
+
+            TaskDialogResult res = dlg.Show();
+            return (int)res; // Cancel => 0
+        }
+
+        private void AlignAndConnect(AlignContext ctx)
+        {
+            // Шаг 5: Отключение существующих соединений и сохранение их для восстановления
+            var existingConnections = DisconnectExistingConnections(ctx.Attach.ConnectorManager);
+            // Шаг 7: Выравнивание соединителей
+            AlignConnectors(ctx.TargetConn, ctx.AttachConn,
+                ctx.Attach.Element);
+            var translationVector = ctx.TargetConn.Origin -
+                                    ctx.AttachConn.Origin;
+            ElementTransformUtils.MoveElement(_doc, ctx.AttachId, translationVector);
+            // Соединение после вращения
+            ctx.AttachConn.ConnectTo(ctx.TargetConn);
+            // Шаг 8: Восстановление предыдущих соединений
+            if (existingConnections.Any())
+            {
+                RestoreConnections(existingConnections);
+            }
+        }
+
+        private static bool AreOpposite(Connector c1, Connector c2)
+        {
+            double dot = c1.CoordinateSystem.BasisZ
+                .DotProduct(c2.CoordinateSystem.BasisZ);
+            const double oppositeThreshold = -1.0;
+            return Math.Abs(Math.Round(dot, 10) - Math.Round(oppositeThreshold, 10)) < 0.001;
+        }
+
+        private bool TryBuildContext(out AlignContext ctx)
+        {
+            ctx = default;
+
+            // 1. Элемент-приёмник
+            if (!TryPickElement(
+                    "Выберите точку на элементе, к которому хотите присоединить",
+                    out var target, out var targetPt))
+                return false;
+
+            // 2. Элемент-донор
+            if (!TryPickElement(
+                    "Выберите точку на присоединяемом элементе",
+                    out var attach, out var attachPt,
+                    target.Element))
+                return false;
+
+            // 3. Ближайшие коннекторы
+            var tConn = target.FindClosestFreeConnector(targetPt);
+            var aConn = attach.FindClosestFreeConnector(attachPt);
+
+            if (tConn is null || aConn is null) // нет коннекторов
+                return false;
+
+            ctx = new AlignContext(target, attach, tConn, aConn);
+            return true;
+        }
+
+        private bool TryPickElement(
+            string prompt,
+            out ElementWrapper wrapper,
+            out XYZ pickedPoint,
+            Element elementToExclude = null)
+        {
+            wrapper = null;
+            pickedPoint = null;
+
+            ISelectionFilter filter = new CategorySelectionFilter
+            {
+                SelectedElement = elementToExclude
+            };
+
+            try
+            {
+                Reference r = _uiDoc.Selection.PickObject(
+                    ObjectType.Element,
+                    filter,
+                    prompt);
+
+                pickedPoint = r?.GlobalPoint;
+                wrapper = r == null ? null : new ElementWrapper(_doc.GetElement(r));
+
+                return wrapper != null;
+            }
+            catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+            {
+                // Пользователь нажал Esc
+                return false;
             }
         }
 
         /// <summary>
         /// Если присоединяемый элемент является кривой, то ее длина удлиняется по направлению к соединяемому элементу
         /// </summary>
-        /// <param name="attachingElement"></param>
-        /// <param name="targetElement"></param>
-        private static void LengthenCurve(ElementModel attachingElement, ElementModel targetElement)
+        /// <param name="attachingConnector"></param>
+        /// <param name="targetConnector"></param>
+        private static void LengthenCurve(Connector attachingConnector, Connector targetConnector)
         {
-            if (attachingElement.Element.Location is not LocationCurve locationCurve) return;
+            if (attachingConnector.Owner.Location is not LocationCurve locationCurve) return;
             // 1. Удлиняем трубу
             XYZ startPoint = locationCurve.Curve.GetEndPoint(0);
             XYZ endPoint = locationCurve.Curve.GetEndPoint(1);
 
-            double startDistance = startPoint.DistanceTo(attachingElement.ClosestConnector.Origin);
-            double endDistance = endPoint.DistanceTo(attachingElement.ClosestConnector.Origin);
+            double startDistance = startPoint.DistanceTo(attachingConnector.Origin);
+            double endDistance = endPoint.DistanceTo(attachingConnector.Origin);
 
             // Определяем, какой конец трубы ближе к соединителю элемента
             XYZ pointToExtend;
@@ -672,7 +757,7 @@ namespace SystemModelingCommands.Services
                 pipeDirection = (startPoint - endPoint).Normalize();
 
                 // Вектор от точки удлинения до коннектора целевого элемента
-                XYZ vectorToTarget = targetElement.ClosestConnector.Origin - pointToExtend;
+                XYZ vectorToTarget = targetConnector.Origin - pointToExtend;
 
                 // Расстояние вдоль направления pipeDirection
                 double extensionLength = vectorToTarget.DotProduct(pipeDirection);
@@ -691,7 +776,7 @@ namespace SystemModelingCommands.Services
                 pipeDirection = (endPoint - startPoint).Normalize();
 
                 // Вектор от точки удлинения до коннектора целевого элемента
-                XYZ vectorToTarget = targetElement.ClosestConnector.Origin - pointToExtend;
+                XYZ vectorToTarget = targetConnector.Origin - pointToExtend;
 
                 // Расстояние вдоль направления pipeDirection
                 double extensionLength = vectorToTarget.DotProduct(pipeDirection);
@@ -708,22 +793,6 @@ namespace SystemModelingCommands.Services
             }
 
             locationCurve.Curve = newCurve;
-        }
-
-        private ElementModel PickElementWithPoint(string promptMessage, Element selectedElement = null)
-        {
-            try
-            {
-                ISelectionFilter selectionFilter = new CategorySelectionFilter { SelectedElement = selectedElement };
-                Reference pickedRef =
-                    _uiDoc.Selection.PickObject(ObjectType.Element, selectionFilter, promptMessage);
-
-                return new ElementModel(_doc, pickedRef);
-            }
-            catch (Autodesk.Revit.Exceptions.OperationCanceledException)
-            {
-                return null;
-            }
         }
 
         private List<ConnectorConnection> DisconnectExistingConnections(ConnectorManager connectorManager)
@@ -1061,7 +1130,7 @@ namespace SystemModelingCommands.Services
         }
 
         public static void DrawDuct(Document doc, Reference selectedReference, XYZ selectedPoint,
-            Connector closestConnector, XYZ start, XYZ end, XYZ dir)
+            Connector closestConnector, XYZ start, XYZ end)
         {
             if (doc == null || selectedReference == null || selectedPoint == null ||
                 closestConnector == null || start == null || end == null)
@@ -1071,29 +1140,28 @@ namespace SystemModelingCommands.Services
 
             try
             {
-                if (doc.GetElement(selectedReference) is not Duct element)
+                Duct element = doc.GetElement(selectedReference) as Duct;
+                if (element == null)
                 {
                     TaskDialog.Show("Ошибка", "Выбранный элемент не является воздуховодом.");
                     return;
                 }
 
-                const double scalingFactor = 1.2; // Этот коэффициент можно настроить по необходимости
-
                 // Вычисляем вектор направления от start до end
-                XYZ direction = end - start;
-                double length = direction.GetLength();
+                XYZ directionVector = end - start;
+                double length = directionVector.GetLength();
 
-                if (length == 0)
+                if (length <= 0)
                 {
                     TaskDialog.Show("Предупреждение", "Начальная и конечная точки совпадают. Воздуховод не создан.");
                     return;
                 }
 
                 // Нормализуем вектор направления
-                XYZ unitDirection = direction.Normalize();
+                XYZ unitDirection = directionVector.Normalize();
 
-                // Определяем новую конечную точку, увеличив длину на дополнительную длину
-                XYZ adjustedEnd = end + unitDirection * scalingFactor;
+                // Определяем новую конечную точку увеличив длину на дополнительную длину
+                XYZ adjustedEnd = end + unitDirection;
 
                 DuctType ductType = element.DuctType;
                 MechanicalSystemType mechanicalSystem = GetMechanicalSystem(doc, closestConnector);
@@ -1128,21 +1196,11 @@ namespace SystemModelingCommands.Services
 
                         Parameter widthParamNewDuct = newDuct.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM);
                         Parameter heightParamNewDuct = newDuct.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM);
+                        if (widthParamNewDuct is { IsReadOnly: false })
+                            widthParamNewDuct.Set(width);
 
-
-                        if (Math.Abs(dir.X) >= 0)
-                        {
-                            widthParamNewDuct?.Set(height);
-                            heightParamNewDuct?.Set(width);
-                        }
-                        else
-                        {
-                            if (widthParamNewDuct != null && !widthParamNewDuct.IsReadOnly)
-                                widthParamNewDuct.Set(width);
-
-                            if (heightParamNewDuct != null && !heightParamNewDuct.IsReadOnly)
-                                heightParamNewDuct.Set(height);
-                        }
+                        if (heightParamNewDuct is { IsReadOnly: false })
+                            heightParamNewDuct.Set(height);
 
                         break;
 
@@ -1155,7 +1213,7 @@ namespace SystemModelingCommands.Services
                         }
 
                         Parameter diameterParam = newDuct.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM);
-                        if (diameterParam != null && !diameterParam.IsReadOnly)
+                        if (diameterParam is { IsReadOnly: false })
                         {
                             diameterParam.Set(diameter);
                         }
@@ -1167,25 +1225,17 @@ namespace SystemModelingCommands.Services
                         return;
                 }
 
-                // Проверка необходимости поворота нового воздуховода
-                if (Math.Abs(start.X - end.X) >= 1 || Math.Abs(start.Y - end.Y) > 1)
+                if (Math.Abs(start.X - end.X) < 0.001 && Math.Abs(start.Y - end.Y) < 0.001)
                 {
-                    // Получаем направление коннектора
                     XYZ basisZ = closestConnector.CoordinateSystem.BasisZ;
-                    XYZ yAxis = new XYZ(0.0, 1.0, 0.0);
-                    double angle = basisZ.AngleTo(yAxis);
-
-                    // Определяем знак угла на основе скалярного произведения и координат
-                    if (basisZ.DotProduct(yAxis) > 0.0 && basisZ.X > 1.0)
+                    XYZ source = new XYZ(0.0, 1.0, 0.0);
+                    double angle = basisZ.AngleTo(source);
+                    if (basisZ.DotProduct(source) > 0.0 && basisZ.X > 1.0)
                         angle = -angle;
-
-                    // Создаём ось вращения
-                    Line rotationAxis = Line.CreateBound(start, end);
+                    Line bound = Line.CreateBound(start, end);
                     if (start.Z > end.Z)
-                        rotationAxis = Line.CreateBound(end, start);
-
-                    // Поворачиваем новый воздуховод
-                    ElementTransformUtils.RotateElement(doc, newDuct.Id, rotationAxis, angle);
+                        bound = Line.CreateBound(end, start);
+                    ElementTransformUtils.RotateElement(doc, newDuct.Id, bound, angle);
                 }
 
                 // Создаём отвод между коннекторами
@@ -1193,11 +1243,7 @@ namespace SystemModelingCommands.Services
                 if (newElbow == null)
                 {
                     TaskDialog.Show("Ошибка", "Не удалось создать отвод между воздуховодами.");
-                    return;
                 }
-
-                // Обновляем документ
-                doc.Regenerate();
             }
             catch (Exception ex)
             {
@@ -1370,7 +1416,7 @@ namespace SystemModelingCommands.Services
                 return;
             foreach (Connector connector in source)
             {
-                if (connector.Domain == Domain.DomainPiping || connector.Domain == Domain.DomainHvac)
+                if (connector.Domain is Domain.DomainPiping or Domain.DomainHvac)
                 {
                     if (connector.Domain == Domain.DomainPiping)
                     {
@@ -1860,20 +1906,15 @@ namespace SystemModelingCommands.Services
 
         public static Connector[] ConnectorArrayUnused(Element element)
         {
-            if (element == null)
-                return null;
-            // Проверяем, поддерживает ли элемент MEPModel и ConnectorManager
-            if (element is MEPCurve mepCurve)
+            return element switch
             {
-                return mepCurve.ConnectorManager.UnusedConnectors.Cast<Connector>().ToArray();
-            }
-
-            if (element is FamilyInstance familyInstance && familyInstance.MEPModel != null)
-            {
-                return familyInstance.MEPModel.ConnectorManager.UnusedConnectors.Cast<Connector>().ToArray();
-            }
-
-            return null;
+                // Проверяем, поддерживает ли элемент MEPModel и ConnectorManager
+                MEPCurve mepCurve => mepCurve.ConnectorManager.UnusedConnectors.Cast<Connector>().ToArray(),
+                FamilyInstance { MEPModel: not null } familyInstance => familyInstance.MEPModel.ConnectorManager
+                    .UnusedConnectors.Cast<Connector>()
+                    .ToArray(),
+                _ => null
+            };
         }
 
         public static Connector[] ConnectorArray(Element element)
