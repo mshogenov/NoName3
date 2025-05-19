@@ -1,4 +1,4 @@
-namespace SystemModelingCommands.Models;
+namespace SystemModelingCommands.Model;
 
 public class ConnectedConnectorInfo
 {

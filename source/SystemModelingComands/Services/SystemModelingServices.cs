@@ -4,7 +4,7 @@ using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using SystemModelingCommands.Filters;
-using SystemModelingCommands.Models;
+using SystemModelingCommands.Model;
 using SystemModelingCommands.Views;
 
 namespace SystemModelingCommands.Services

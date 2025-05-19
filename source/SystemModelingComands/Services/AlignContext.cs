@@ -1,4 +1,6 @@
-namespace SystemModelingCommands.Models;
+using SystemModelingCommands.Model;
+
+namespace SystemModelingCommands.Services;
 
 public readonly struct AlignContext
 {
