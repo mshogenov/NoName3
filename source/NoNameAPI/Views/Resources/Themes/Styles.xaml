@@ -1069,7 +1069,7 @@
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
         <Setter Property="Padding" Value="4" />
-       <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
+        <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource GroupBoxContentBrush}" />
         <Setter Property="Template">
             <Setter.Value>
@@ -2170,7 +2170,7 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
-      <Setter Property="FontSize" Value="{DynamicResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource AppFontFamily}" />
         <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
         <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
         <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
@@ -2740,4 +2740,133 @@
                 Focusable="False"
                 Background="{TemplateBinding Background}" />
     </ControlTemplate>
+
+
+    <Style x:Key="ModernTreeViewStyle" TargetType="{x:Type TreeView}">
+        <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="5" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="ItemContainerStyle" Value="{DynamicResource ModernTreeViewItemStyle}" />
+        <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TreeView}">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <ScrollViewer Focusable="False" 
+                                      Style="{DynamicResource CustomScrollViewerStyle}"
+                                      Padding="{TemplateBinding Padding}"
+                                      CanContentScroll="True"
+                                      VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}"
+                                      HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}">
+                            <ItemsPresenter/>
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ModernTreeViewItemStyle" TargetType="{x:Type TreeViewItem}">
+        <Setter Property="Padding" Value="5" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TreeViewItem}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" MinWidth="19" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+
+                        <!-- Expand/Collapse Button -->
+                        <ToggleButton x:Name="Expander"
+                                      ClickMode="Press"
+                                      IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Margin="1,0,1,0">
+                            <ToggleButton.Style>
+                                <Style TargetType="{x:Type ToggleButton}">
+                                    <Setter Property="Focusable" Value="False" />
+                                    <Setter Property="Width" Value="16" />
+                                    <Setter Property="Height" Value="16" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                <Border Width="16" Height="16" Background="Transparent">
+                                                    <Path x:Name="ExpandPath"
+                                                          Fill="{DynamicResource TextBlockColorBrush}"
+                                                          Stroke="{DynamicResource TextBlockColorBrush}"
+                                                          StrokeThickness="1">
+                                                        <Path.Data>
+                                                            <PathGeometry Figures="M 4 7 L 12 7 M 8 3 L 8 11" />
+                                                        </Path.Data>
+                                                    </Path>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter Property="Data" TargetName="ExpandPath">
+                                                            <Setter.Value>
+                                                                <PathGeometry Figures="M 4 7 L 12 7" />
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ToggleButton.Style>
+                        </ToggleButton>
+
+                        <!-- Header content -->
+                        <Border x:Name="Bd" Grid.Row="0" Grid.Column="1"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="3">
+                            <ContentPresenter x:Name="PART_Header"
+                                              ContentSource="Header"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+                        </Border>
+
+                        <!-- Child items -->
+                        <ItemsPresenter x:Name="ItemsHost"
+                                        Grid.Row="1"
+                                        Grid.Column="1"
+                                        Margin="0,1,0,0" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsExpanded" Value="False">
+                            <Setter Property="Visibility" TargetName="ItemsHost" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="HasItems" Value="False">
+                            <Setter Property="Visibility" TargetName="Expander" Value="Hidden" />
+                        </Trigger>
+
+                        <!-- Убираем выделение для IsSelected -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" TargetName="Bd" Value="Transparent" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" TargetName="Bd" Value="{DynamicResource IsMouseOverBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
 </ResourceDictionary>

@@ -11,4 +11,9 @@ public partial class ViewOfPipeSystemWindow
         DataContext = viewModel;
         LoadWindowTemplate();
     }
+
+    private void ButtonClose_OnClick(object sender, RoutedEventArgs e)
+    {
+        Close();
+    }
 }
