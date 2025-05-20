@@ -1415,7 +1415,7 @@
         <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
         <Setter Property="CornerRadius" Value="5" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-        <Setter Property="Padding" Value="3" />
+        <Setter Property="Padding" Value="5" />
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 

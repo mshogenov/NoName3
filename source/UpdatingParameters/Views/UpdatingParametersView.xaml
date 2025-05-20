@@ -40,7 +40,8 @@
         </GridSplitter>
         <Border Grid.Column="0"
                 Margin="0 5 0 0"
-                CornerRadius="0 5 5 0"
+                BorderThickness="0"
+                CornerRadius="0 7 7 7"
                 Style="{DynamicResource BorderContentStyle}">
             <ScrollViewer
                 Style="{DynamicResource ScrollViewerStyle}"

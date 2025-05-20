@@ -36,8 +36,4 @@
       <ProjectReference Include="..\NoNameAPI\NoNameAPI.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Compile Include="Models\AlignContext.cs" />
-    </ItemGroup>
-
 </Project>
