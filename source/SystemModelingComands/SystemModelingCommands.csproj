@@ -22,12 +22,6 @@
         <RevitVersion>2026</RevitVersion>
         <TargetFramework>net8.0-windows</TargetFramework>
     </PropertyGroup>
-    <ItemGroup>
-      <Compile Remove="Models\**" />
-      <EmbeddedResource Remove="Models\**" />
-      <None Remove="Models\**" />
-      <Page Remove="Models\**" />
-    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Nice3point.Revit.Build.Tasks" Version="2.*" />
@@ -40,6 +34,10 @@
 
     <ItemGroup>
       <ProjectReference Include="..\NoNameAPI\NoNameAPI.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Include="Models\AlignContext.cs" />
     </ItemGroup>
 
 </Project>
