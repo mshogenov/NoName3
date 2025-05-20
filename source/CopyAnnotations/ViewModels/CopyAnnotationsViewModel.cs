@@ -42,13 +42,8 @@ public sealed partial class CopyAnnotationsViewModel : ObservableObject
     private readonly ActionEventHandler _actionEventHandler = new();
 
     private XYZ? _sourceBasePoint;
-    private readonly CopyAnnotationsServices _copyAnnotationsServices;
-    private bool _isActive=true;
-
-    public CopyAnnotationsViewModel()
-    {
-        _copyAnnotationsServices = new CopyAnnotationsServices();
-    }
+    private readonly CopyAnnotationsServices _copyAnnotationsServices=new();
+  
 
     [RelayCommand]
     private void SelectedAnnotations(object parameter)

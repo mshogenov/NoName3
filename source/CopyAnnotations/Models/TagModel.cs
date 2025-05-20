@@ -6,7 +6,7 @@ public class TagModel
     public ElementId Id { get; set; }
     public ElementId TagTypeId { get; set; }
     public List<ElementModel> TaggedElements { get; set; } = [];
-    public XYZ TagHeadPosition { get; set; }
+    public XYZ TagHeadPosition => IndependentTag.TagHeadPosition;
     public bool HasLeader { get; set; }
     public TagOrientation Orientation { get; set; }
     public List<LeaderElbowModel> LeadersElbow { get; set; } = [];
@@ -20,7 +20,6 @@ public class TagModel
         if (tag == null) return;
         IndependentTag = tag;
         Id = tag.Id;
-        TagHeadPosition = tag.TagHeadPosition;
         HasLeader = tag.HasLeader;
         TagTypeId = tag.GetTypeId();
         MergeElbows = tag.MergeElbows;

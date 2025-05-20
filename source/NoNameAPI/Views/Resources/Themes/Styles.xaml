@@ -18,74 +18,127 @@
     <FontWeight x:Key="AppFontWeight">Normal</FontWeight>
     <!-- Шаблон для окна -->
     <ControlTemplate x:Key="CustomWindowTemplate" TargetType="{x:Type Window}">
-        <Border
-            BorderBrush="{DynamicResource WindowBorderBrush}"
-            BorderThickness="1"
-            Background="{TemplateBinding Background}">
-            <Grid Margin="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
+        <!-- Основная граница с тенью -->
+        <Border x:Name="MainBorder"
+                BorderBrush="{DynamicResource WindowBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="7">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="7" ShadowDepth="0" Opacity="0.2" />
+            </Border.Effect>
 
-                <!-- Заголовок окна - убираем отступы сверху -->
-                <Grid x:Name="PART_HeaderGrid"
-                      Grid.Row="0"
-                      Background="{DynamicResource WindowBackgroundBrush}"
-                      Height="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Tag.HeaderHeight, FallbackValue=32}">
+            <!-- Внутренний контейнер с фоном -->
+            <Border Background="{TemplateBinding Background}"
+                    CornerRadius="7">
+                <Grid Margin="0">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
 
-                    <!-- Заголовок -->
-                    <DockPanel Grid.Column="0"
-                               LastChildFill="True">
-                        <!-- Добавляем TextBlock с привязкой к Title окна -->
-                        <TextBlock VerticalAlignment="Center"
-                                   Margin="10,0,0,0"
-                                   FontWeight="Medium"
-                                   FontFamily="{StaticResource AppFontFamily}"
-                                   FontSize="13">
-                            <Run Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Title}"
-                                 Foreground="{DynamicResource TitleWindowBrush}" />
-                        </TextBlock>
+                    <!-- Заголовок окна с закругленными верхними углами -->
+                    <Grid x:Name="PART_HeaderGrid"
+                          Grid.Row="0"
+                          Background="{DynamicResource WindowBackgroundBrush}"
+                          Height="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Tag.HeaderHeight, FallbackValue=32}">
+                        <!-- Маска для скругления верхних углов заголовка -->
+                        <Grid.OpacityMask>
+                            <VisualBrush>
+                                <VisualBrush.Visual>
+                                    <Border Background="Black"
+                                            CornerRadius="7,7,0,0"
+                                            Width="{Binding ActualWidth, ElementName=PART_HeaderGrid}"
+                                            Height="{Binding ActualHeight, ElementName=PART_HeaderGrid}" />
+                                </VisualBrush.Visual>
+                            </VisualBrush>
+                        </Grid.OpacityMask>
 
-                        <!-- Если нужен кастомный заголовок, он добавится после текста -->
-                        <ContentPresenter DockPanel.Dock="Right"
-                                          Content="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=HeaderContent}"
-                                          VerticalAlignment="Center" />
-                    </DockPanel>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-                    <!-- Кнопки управления окном -->
-                    <Button x:Name="MinimizeButton"
-                            Grid.Row="0" Grid.Column="1"
-                            Content="&#xE921;"
-                            Style="{DynamicResource WindowButtonStyle}" />
+                        <!-- Заголовок -->
+                        <DockPanel Grid.Column="0"
+                                   LastChildFill="True">
+                            <!-- Добавляем TextBlock с привязкой к Title окна -->
+                            <TextBlock VerticalAlignment="Center"
+                                       Margin="10,0,0,0"
+                                       FontWeight="Medium"
+                                       FontFamily="{StaticResource AppFontFamily}"
+                                       FontSize="13">
+                                <Run Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Title}"
+                                     Foreground="{DynamicResource TitleWindowBrush}" />
+                            </TextBlock>
 
-                    <Button x:Name="MaximizeButton"
-                            Grid.Row="0" Grid.Column="2"
-                            Content="&#xE922;"
+                            <!-- Если нужен кастомный заголовок, он добавится после текста -->
+                            <ContentPresenter DockPanel.Dock="Right"
+                                              Content="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=HeaderContent}"
+                                              VerticalAlignment="Center" />
+                        </DockPanel>
 
-                            Style="{DynamicResource WindowButtonStyle}" />
-                    <Button x:Name="CloseButton"
-                            Grid.Row="0" Grid.Column="3"
-                            Content="&#xE8BB;"
-                            Style="{DynamicResource CloseButtonStyle}" />
+                        <!-- Кнопки управления окном с модифицированными стилями -->
+                        <Button x:Name="MinimizeButton"
+                                Grid.Row="0" Grid.Column="1"
+                                Content="&#xE921;"
+                                Style="{DynamicResource WindowButtonStyle}" />
+
+                        <Button x:Name="MaximizeButton"
+                                Grid.Row="0" Grid.Column="2"
+                                Content="&#xE922;"
+                                Style="{DynamicResource WindowButtonStyle}" />
+
+                        <!-- Кнопка закрытия со скругленным правым верхним углом -->
+                        <Button x:Name="CloseButton"
+                                Grid.Row="0" Grid.Column="3"
+                                Content="&#xE8BB;"
+                                Style="{DynamicResource CloseButtonStyle}">
+                            <!-- Переопределяем шаблон для кнопки закрытия -->
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="ButtonBorder"
+                                            Background="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"
+                                            CornerRadius="0,7,0,0">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="ButtonBorder" Property="Background" Value="#FFE81123" />
+                                            <Setter Property="Foreground" Value="White" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="ButtonBorder" Property="Background" Value="#FF8B0A14" />
+                                            <Setter Property="Foreground" Value="White" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </Grid>
+
+                    <!-- Содержимое окна -->
+                    <ContentPresenter Grid.Row="2" Content="{TemplateBinding Content}" />
                 </Grid>
-
-                <!-- Содержимое окна -->
-                <ContentPresenter Grid.Row="2" Content="{TemplateBinding Content}" />
-
-            </Grid>
+            </Border>
         </Border>
+
+        <ControlTemplate.Triggers>
+            <!-- Триггеры для обработки состояний окна -->
+            <Trigger Property="WindowState" Value="Maximized">
+                <Setter TargetName="MainBorder" Property="CornerRadius" Value="0" />
+                <Setter TargetName="MaximizeButton" Property="Content" Value="&#xE923;" />
+            </Trigger>
+            <Trigger Property="WindowState" Value="Normal">
+                <Setter TargetName="MaximizeButton" Property="Content" Value="&#xE922;" />
+            </Trigger>
+        </ControlTemplate.Triggers>
     </ControlTemplate>
     <!-- Стили для кнопок -->
     <Style x:Key="WindowButtonStyle" TargetType="{x:Type Button}">
@@ -2756,13 +2809,13 @@
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}">
-                        <ScrollViewer Focusable="False" 
+                        <ScrollViewer Focusable="False"
                                       Style="{DynamicResource CustomScrollViewerStyle}"
                                       Padding="{TemplateBinding Padding}"
                                       CanContentScroll="True"
                                       VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}"
                                       HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}">
-                            <ItemsPresenter/>
+                            <ItemsPresenter />
                         </ScrollViewer>
                     </Border>
                 </ControlTemplate>
@@ -2772,7 +2825,7 @@
 
     <Style x:Key="ModernTreeViewItemStyle" TargetType="{x:Type TreeViewItem}">
         <Setter Property="Padding" Value="5" />
-        <Setter Property="Background" Value="{DynamicResource ContentBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
