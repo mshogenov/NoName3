@@ -16,13 +16,14 @@ public partial class ViewOfPipeSystemsVM : ObservableObject
 
     [ObservableProperty] private string _paramADSK_Система_Имя = "ADSK_Система_Имя";
     [ObservableProperty] private bool _isVisibilityMissingParametersADSK_Система_Имя;
-
+    [ObservableProperty] private bool _isStatusVisible;
     private readonly ICollection<BuiltInCategory> _mepSystemCategories =
     [
         BuiltInCategory.OST_PipingSystem,
         BuiltInCategory.OST_DuctSystem
     ];
 
+    [ObservableProperty] private string _statusMessage;
     private readonly ViewOfPipeSystemsServices _viewOfPipeSystemsServices;
 
     public ViewOfPipeSystemsVM()
@@ -93,6 +94,7 @@ public partial class ViewOfPipeSystemsVM : ObservableObject
                 
                 _viewOfPipeSystemsServices.ProcessMepSystems(selectedMepSystem,existingViews,existingFilters);
                 tr.Commit();
+                ShowNotification("Виды созданы");
             }
             catch (Exception e)
             {
@@ -107,4 +109,15 @@ public partial class ViewOfPipeSystemsVM : ObservableObject
     {
         return !IsVisibilityMissingParameters;
     }
+    private async void ShowNotification(string message)
+    {
+        StatusMessage = message;
+        IsStatusVisible = true;
+
+        // Ждем и скрываем статус
+        await Task.Delay(3000);
+        IsStatusVisible = false;
+    }
+
+    
 }

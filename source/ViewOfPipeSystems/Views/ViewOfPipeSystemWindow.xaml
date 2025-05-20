@@ -29,17 +29,17 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
        
         <TextBlock Text="Типы систем:"
-                   Margin="5"
+                   Margin="5  0 0 2"
                    Style="{DynamicResource TextBlockStyle}" />
         <TreeView
             Grid.Row="1"
-            Height="320"
-            ItemsSource="{Binding MepSystemTypeModels}"
+          ItemsSource="{Binding MepSystemTypeModels}"
             Style="{DynamicResource ModernTreeViewStyle}"
-            VerticalAlignment="Top" >
+            >
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type models:MEPSystemTypeModel}"
                                           ItemsSource="{Binding MEPSystemModels , UpdateSourceTrigger=PropertyChanged}">
@@ -64,7 +64,7 @@
         </TreeView>
 
         <DockPanel Grid.Row="2" HorizontalAlignment="Right"
-                   Margin="0 7 0 0">
+                   Margin="0 7 0 7">
             <Button Content="Создать виды"
                     Style="{DynamicResource CommonButtonStyle2}"
                     Command="{Binding CreateViewsCommand }" />
@@ -72,8 +72,9 @@
                     Style="{DynamicResource OutlineCloseButtonStyle}"
                     Click="ButtonClose_OnClick" />
         </DockPanel>
+       
         <Grid
-            Margin="0 7 0 0"
+            Margin="0 0 0 7"
             Style="{DynamicResource Grid2}"
             Grid.Row="3"
 
@@ -105,5 +106,10 @@
 
             </Grid>
         </Grid>
+        <StatusBar Grid.Row="4" Style="{DynamicResource StatusBarStyle}">
+            <TextBlock Text="{Binding StatusMessage}"
+                       Style="{DynamicResource TextBlockStyle}"
+                       Visibility="{Binding Path= IsStatusVisible, Converter={StaticResource BoolVisibilityConverter}}"/>
+        </StatusBar>
     </Grid>
 </views:BaseRevitWindow>

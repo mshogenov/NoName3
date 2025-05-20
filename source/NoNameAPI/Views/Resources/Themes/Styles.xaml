@@ -2772,6 +2772,7 @@
 
     <Style x:Key="ModernTreeViewItemStyle" TargetType="{x:Type TreeViewItem}">
         <Setter Property="Padding" Value="5" />
+        <Setter Property="Background" Value="{DynamicResource ContentBrush}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
