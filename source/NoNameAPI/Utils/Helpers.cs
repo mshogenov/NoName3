@@ -450,4 +450,30 @@ public static class Helpers
 
         return selectedElements;
     }
+
+    /// <summary>
+    /// Получает все вложенные семейства в документе
+    /// </summary>
+    /// <param name="doc"></param>
+    /// <param name="elements"></param>
+    /// <returns></returns>
+    public static IList<Element> GetNestedFamilies(Document doc, IList<FamilyInstance> elements)
+    {
+        var nestedElements = new List<Element>();
+
+        foreach (var element in elements)
+        {
+            var subComponentIds = element.GetSubComponentIds();
+            foreach (var id in subComponentIds)
+            {
+                if (id == null) continue;
+                var subElement = doc.GetElement(id);
+                if (subElement is FamilyInstance)
+                {
+                    nestedElements.Add(subElement);
+                }
+            }
+        }
+        return nestedElements;
+    }
 }
