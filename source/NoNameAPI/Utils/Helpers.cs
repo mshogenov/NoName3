@@ -172,13 +172,14 @@ public static class Helpers
     /// <summary>
     /// Получает список категорий, к которым параметр не привязан
     /// </summary>
-    private static List<BuiltInCategory> GetUnboundCategories(Document doc, string parameterName,
+    private static List<BuiltInCategory> GetUnboundCategories(Document doc, string parameterName, 
         List<BuiltInCategory> mepCategories)
     {
-        List<BuiltInCategory> unboundCategories = [];
+        List<BuiltInCategory> unboundCategories = new List<BuiltInCategory>();
 
         foreach (BuiltInCategory builtInCategory in mepCategories)
         {
+            // Проверяем, НЕ привязан ли параметр к категории
             if (!IsParameterBoundToCategory(doc, parameterName, builtInCategory))
             {
                 unboundCategories.Add(builtInCategory);
@@ -232,33 +233,114 @@ public static class Helpers
     /// Подключает параметр к категориям
     /// </summary>
     /// 
-    public static bool BindParameter(Document doc, string parameterName, List<BuiltInCategory> mepCategories,
-        SubTransaction sT)
+ public static bool BindParameter(Document doc, string parameterName, List<BuiltInCategory> mepCategories,
+    SubTransaction sT)
+{
+    try
     {
-        try
+        // Получаем только НЕпривязанные категории
+        var unboundCategories = GetUnboundCategories(doc, parameterName, mepCategories);
+        if (unboundCategories.Count <= 0) return true; // Все категории уже привязаны
+
+        // Создаем набор категорий для привязки
+        CategorySet categorySet = new CategorySet();
+
+        // Заполняем набор только неподключенными категориями
+        foreach (var unboundCategory in unboundCategories)
         {
-            // Получаем непривязанные категории
-            var unboundCategories = GetUnboundCategories(doc, parameterName, mepCategories);
-            if (unboundCategories.Count <= 0) return true;
-            // Создаем набор категорий для привязки
-            CategorySet categorySet = new();
-            sT.Start();
-            foreach (var unboundCategory in unboundCategories)
-            {
-                Category category = doc.Settings.Categories.get_Item(unboundCategory);
-                if (category != null)
-                    categorySet.Insert(category);
-            }
-            sT.Commit();
-            return true;
+            Category category = Category.GetCategory(doc, new ElementId((int)unboundCategory));
+            if (category != null && category.AllowsBoundParameters)
+                categorySet.Insert(category);
         }
-        catch (Exception ex)
+
+        // Проверяем, что набор категорий не пустой
+        if (categorySet.IsEmpty)
         {
+            return true; // Все категории, которые могут быть привязаны, уже привязаны
+        }
+
+        // Находим существующий параметр
+        BindingMap bindingMap = doc.ParameterBindings;
+        Definition paramDef = null;
+        Binding existingBinding = null;
+
+        // Ищем определение параметра
+        DefinitionBindingMapIterator iterator = bindingMap.ForwardIterator();
+        while (iterator.MoveNext())
+        {
+            Definition def = iterator.Key;
+            if (def != null && def.Name == parameterName)
+            {
+                paramDef = def;
+                existingBinding = (Binding)iterator.Current;
+                break;
+            }
+        }
+
+        sT.Start();
+
+        // Если параметр существует, добавляем новые категории к существующей привязке
+        if (paramDef != null && existingBinding != null)
+        {
+            // Получаем текущие привязанные категории
+            CategorySet existingCategories;
+            if (existingBinding is InstanceBinding instanceBinding)
+            {
+                existingCategories = instanceBinding.Categories;
+            }
+            else if (existingBinding is TypeBinding typeBinding)
+            {
+                existingCategories = typeBinding.Categories;
+            }
+            else
+            {
+                sT.RollBack();
+                return false;
+            }
+
+            // Добавляем новые категории к существующим
+            foreach (Category category in categorySet)
+            {
+                if (!existingCategories.Contains(category))
+                {
+                    existingCategories.Insert(category);
+                }
+            }
+
+            // Создаем новую привязку с обновленным набором категорий
+            Binding newBinding;
+            if (existingBinding is InstanceBinding)
+            {
+                newBinding = new InstanceBinding(existingCategories);
+            }
+            else
+            {
+                newBinding = new TypeBinding(existingCategories);
+            }
+
+            // Обновляем привязку
+            bool result = bindingMap.ReInsert(paramDef, newBinding);
+            sT.Commit();
+            return result;
+        }
+        else
+        {
+            // Если параметр не существует, нужно его создать
+            // [Код для создания нового параметра]
+
             sT.RollBack();
-            TaskDialog.Show("Ошибка", ex.Message);
+            TaskDialog.Show("Ошибка", "Параметр не найден в документе. Необходимо сначала создать общий параметр.");
             return false;
         }
     }
+    catch (Exception ex)
+    {
+        if (sT.HasStarted())
+            sT.RollBack();
+        TaskDialog.Show("Ошибка", $"Не удалось привязать параметр: {ex.Message}");
+        return false;
+    }
+}
 
     public static bool CheckParameterExists(Document doc, string parameterName)
     {

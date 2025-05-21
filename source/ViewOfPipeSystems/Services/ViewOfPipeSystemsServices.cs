@@ -1,7 +1,7 @@
-﻿
-using Autodesk.Revit.UI;
+﻿using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
-using Binding = Autodesk.Revit.DB.Binding;
+using NoNameApi.Utils;
+using ViewOfPipeSystems.Model;
 using View = Autodesk.Revit.DB.View;
 
 namespace ViewOfPipeSystems.Services;
@@ -10,28 +10,28 @@ public class ViewOfPipeSystemsServices
 {
     private readonly View _activeView;
     private readonly Document _doc;
-    private const string SetParamName = "ADSK_Система_Имя";
+    private const string ParamAdsk_Система_Имя = "ADSK_Система_Имя";
     private const string GetParamName = "Имя системы";
     private readonly IList<Element> _elements;
 
-    private readonly List<ElementId> _mepCategories =
+    private readonly List<BuiltInCategory> _mepCategories =
     [
-        new(BuiltInCategory.OST_PipeCurves),
-        new(BuiltInCategory.OST_PlumbingFixtures),
-        new(BuiltInCategory.OST_FlexPipeCurves),
-        new(BuiltInCategory.OST_MechanicalEquipment),
-        new(BuiltInCategory.OST_PipeAccessory),
-        new(BuiltInCategory.OST_PipeFitting),
-        new(BuiltInCategory.OST_PipeInsulations),
-        new(BuiltInCategory.OST_Sprinklers),
-        new(BuiltInCategory.OST_PlumbingEquipment),
-        new(BuiltInCategory.OST_DuctCurves),
-        new(BuiltInCategory.OST_DuctFitting),
-        new(BuiltInCategory.OST_FlexDuctCurves),
-        new(BuiltInCategory.OST_DuctAccessory),
-        new(BuiltInCategory.OST_DuctTerminal),
-        new(BuiltInCategory.OST_DuctInsulations),
-        new(BuiltInCategory.OST_DuctLinings),
+        BuiltInCategory.OST_PipeCurves,
+        BuiltInCategory.OST_PlumbingFixtures,
+        BuiltInCategory.OST_FlexPipeCurves,
+        BuiltInCategory.OST_MechanicalEquipment,
+        BuiltInCategory.OST_PipeAccessory,
+        BuiltInCategory.OST_PipeFitting,
+        BuiltInCategory.OST_PipeInsulations,
+        BuiltInCategory.OST_Sprinklers,
+        BuiltInCategory.OST_PlumbingEquipment,
+        BuiltInCategory.OST_DuctCurves,
+        BuiltInCategory.OST_DuctFitting,
+        BuiltInCategory.OST_FlexDuctCurves,
+        BuiltInCategory.OST_DuctAccessory,
+        BuiltInCategory.OST_DuctTerminal,
+        BuiltInCategory.OST_DuctInsulations,
+        BuiltInCategory.OST_DuctLinings
     ];
 
     public ViewOfPipeSystemsServices()
@@ -43,72 +43,23 @@ public class ViewOfPipeSystemsServices
             .ToElements();
     }
 
-    public void ViewOfPipeSystems()
-    {
-        if (_activeView is not View3D && _activeView is not ViewPlan)
-        {
-            TaskDialog.Show("Информация", "Откройте 3D вид или план для срабатывания команды");
-            return;
-        }
-
-        // Получение всех механических систем
-        var mechanicalSystems = new FilteredElementCollector(_doc)
-            .OfClass(typeof(MEPSystem))
-            .Cast<MEPSystem>()
-            .ToList();
-        var existingViews = new FilteredElementCollector(_doc)
-            .OfClass(typeof(View))
-            .Cast<View>()
-            .GroupBy(v => v.Name, StringComparer.OrdinalIgnoreCase) // Группируем по имени
-            .Select(g => g.First()) // Берем первый из попавших в группу
-            .ToDictionary(v => v.Name, v => v.Id, StringComparer.OrdinalIgnoreCase);
-
-        var existingFilters = new FilteredElementCollector(_doc)
-            .OfClass(typeof(ParameterFilterElement))
-            .Cast<ParameterFilterElement>()
-            .ToDictionary(f => f.Name, f => f, StringComparer.OrdinalIgnoreCase);
-
-        using Transaction tr = new(_doc, "Виды систем");
-        tr.Start();
-        try
-        {
-            SubTransaction sT = new SubTransaction(_doc);
-            //Проверка существования параметра
-            if (!IsSharedParameterBound(_doc, SetParamName))
-            {
-                TaskDialog.Show("Информации", $"В проекте отсутствует параметр {SetParamName}.");
-                return;
-            }
-
-            CheckAndBindParameter(_doc, SetParamName, sT);
-
-            foreach (var element in _elements)
-            {
-                CopyParameterMep(Context.ActiveDocument, element, GetParamName, SetParamName);
-            }
-
-            ProcessMepSystems(mechanicalSystems, existingViews, existingFilters);
-
-            tr.Commit();
-            TaskDialog.Show("Информация", "Виды созданы");
-        }
-        catch (Exception e)
-        {
-            TaskDialog.Show("Ошибка", e.Message);
-        }
-    }
-
-    private void ProcessMepSystems(List<MEPSystem> mechanicalSystems,Dictionary<string, ElementId> existingViews,
+    public void ProcessMepSystems(List<MEPSystemModel> mechanicalSystems, Dictionary<string, ElementId> existingViews,
         Dictionary<string, ParameterFilterElement> existingFilters)
     {
+        foreach (var element in _elements)
+        {
+            CopyParameterMep(Context.ActiveDocument, element, GetParamName, ParamAdsk_Система_Имя);
+        }
+        SubTransaction subTransaction = new SubTransaction(_doc);
+        Helpers.BindParameter(_doc, ParamAdsk_Система_Имя, _mepCategories, subTransaction);
         foreach (var mepSystem in mechanicalSystems)
         {
             string viewName = $"Схема системы {mepSystem.Name}";
-
+        
             // Получение или создание вида
             if (!existingViews.TryGetValue(viewName, out _))
             {
-                CreateAndSetupNewView(mepSystem, viewName, existingViews, existingFilters);
+                CreateAndSetupNewView(mepSystem.MEPSystem, viewName, existingViews, existingFilters);
             }
         }
     }
@@ -173,7 +124,20 @@ public class ViewOfPipeSystemsServices
         }
 
         // Создание нового фильтра
-        parameterFilter = ParameterFilterElement.Create(_doc, filterName, _mepCategories);
+        // Проверка и фильтрация категорий перед созданием
+        var categoryIds = _mepCategories
+            .Where(x => x != 0) // Отфильтруем нулевые или недопустимые категории
+            .Select(x => new ElementId(x))
+            .ToList(); // Важно использовать ToList() вместо as ICollection<ElementId>
+
+// Проверка, что список не пустой
+        if (categoryIds.Count == 0)
+        {
+            TaskDialog.Show("Ошибка", "Список категорий МЕП пуст или содержит недопустимые значения.");
+        }
+
+// Создание фильтра с проверенным списком категорий
+        parameterFilter = ParameterFilterElement.Create(_doc, filterName, categoryIds);
 
         // Настройка правила фильтра
         SetupFilterRule(parameterFilter, mepSystem.Name);
@@ -188,9 +152,17 @@ public class ViewOfPipeSystemsServices
     {
         try
         {
-            ParameterElement paramElement = GetParameterElement(SetParamName);
+            // Сначала проверяем, что фильтр имеет категории
+            if (!filter.GetCategories().Any())
+            {
+                TaskDialog.Show("Предупреждение", "Фильтр не имеет выбранных категорий.");
+                return;
+            }
+
+            ParameterElement paramElement = GetParameterElement(ParamAdsk_Система_Имя);
             ElementId parameterId = paramElement?.Id;
             FilterRule rule = ParameterFilterRuleFactory.CreateNotContainsRule(parameterId, systemName);
+
             // Создаем и применяем фильтр
             ElementParameterFilter elementFilter = new ElementParameterFilter(rule);
             filter.SetElementFilter(elementFilter);
@@ -225,184 +197,6 @@ public class ViewOfPipeSystemsServices
         }
     }
 
-    /// <summary>
-    /// Проверяет и подключает параметр к категориям
-    /// </summary>
-    private void CheckAndBindParameter(Document doc, string parameterName, SubTransaction sT)
-    {
-        try
-        {
-            sT.Start();
-            // Получаем непривязанные категории
-            var unboundCategories = GetUnboundCategories(doc, parameterName);
-
-            if (!unboundCategories.Any())
-            {
-                sT.RollBack();
-                return;
-            }
-
-            // Создаем набор категорий для привязки
-            CategorySet categorySet = new();
-            foreach (var categoryId in unboundCategories)
-            {
-                Category category = Category.GetCategory(doc, categoryId);
-                if (category is { AllowsBoundParameters: true })
-                {
-                    categorySet.Insert(category);
-                }
-
-                if (category?.SubCategories?.IsEmpty != false) continue;
-                foreach (var value in category.SubCategories)
-                {
-                    if (value is not Category subCategory) continue;
-                    if (subCategory.AllowsBoundParameters)
-                        categorySet.Insert(subCategory);
-                }
-            }
-
-            // Получаем определение параметра
-            Definition definition = GetParameterDefinition(doc, parameterName);
-            if (definition == null)
-            {
-                sT.RollBack();
-                TaskDialog.Show("Ошибка", "Параметр не найден");
-                return;
-            }
-
-            // Получаем существующую привязку, если она есть
-            BindingMap bindingMap = doc.ParameterBindings;
-            Binding existingBinding = bindingMap.get_Item(definition);
-
-            if (existingBinding != null)
-            {
-                CategorySet existingCategorySet = null;
-
-                if (existingBinding is InstanceBinding instanceBinding)
-                {
-                    existingCategorySet = instanceBinding.Categories;
-                }
-                else if (existingBinding is TypeBinding typeBinding)
-                {
-                    existingCategorySet = typeBinding.Categories;
-                }
-
-                if (existingCategorySet != null)
-                {
-                    foreach (Category category in categorySet)
-                    {
-                        if (!existingCategorySet.Contains(category))
-                        {
-                            existingCategorySet.Insert(category);
-                        }
-                    }
-
-                    // Обновляем существующую привязку
-                    bindingMap.ReInsert(definition, existingBinding);
-                }
-            }
-            else
-            {
-                // Создаем новую привязку
-                InstanceBinding binding = new(categorySet);
-                bindingMap.Insert(definition, binding, GroupTypeId.Data);
-            }
-
-            sT.Commit();
-        }
-        catch (Exception ex)
-        {
-            sT.RollBack();
-            TaskDialog.Show("Ошибка", ex.Message);
-        }
-    }
-
-    /// <summary>
-    /// Получает список категорий, к которым параметр не привязан
-    /// </summary>
-    private List<ElementId> GetUnboundCategories(Document doc, string parameterName)
-    {
-        List<ElementId> unboundCategories = new();
-        foreach (ElementId categoryId in _mepCategories)
-        {
-            if (!IsParameterBoundToCategory(doc, parameterName, categoryId))
-            {
-                unboundCategories.Add(categoryId);
-            }
-        }
-
-        return unboundCategories;
-    }
-
-    /// <summary>
-    /// Проверяет, привязан ли параметр к категории
-    /// </summary>
-    private bool IsParameterBoundToCategory(Document doc, string parameterName, ElementId categoryId)
-    {
-        Category category = Category.GetCategory(doc, categoryId);
-        if (category == null || !category.AllowsBoundParameters)
-            return false;
-
-        // Получаем первый элемент категории
-        FilteredElementCollector collector = new(doc);
-        collector.OfCategoryId(categoryId)
-            .WhereElementIsNotElementType();
-
-        Element element = collector.FirstElement();
-        if (element == null)
-            return false;
-
-        // Проверяем наличие параметра
-        return element.LookupParameter(parameterName) != null;
-    }
-
-    /// <summary>
-    /// Получает определение параметра
-    /// </summary>
-    private Definition GetParameterDefinition(Document doc, string parameterName)
-    {
-        BindingMap bindingMap = doc.ParameterBindings;
-        DefinitionBindingMapIterator iterator = bindingMap.ForwardIterator();
-        iterator.Reset();
-
-        while (iterator.MoveNext())
-        {
-            Definition definition = iterator.Key;
-            if (definition.Name.Equals(parameterName, StringComparison.OrdinalIgnoreCase))
-            {
-                return definition;
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Проверяет, связан ли общий параметр с документом Revit
-    /// </summary>
-    /// <param name="doc">Документ Revit</param>
-    /// <param name="parameterName">Имя параметра</param>
-    /// <returns>true если параметр связан с документом</returns>
-    private bool IsSharedParameterBound(Document doc, string parameterName)
-    {
-        if (doc == null || string.IsNullOrEmpty(parameterName))
-            return false;
-
-        BindingMap bindingMap = doc.ParameterBindings;
-        DefinitionBindingMapIterator iterator = bindingMap.ForwardIterator();
-
-        while (iterator.MoveNext())
-        {
-            Definition definition = iterator.Key;
-            if (definition?.Name.Equals(parameterName, StringComparison.OrdinalIgnoreCase) == true)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public void UpdateViews()
     {
         Transaction tr = new(_doc, "Обновить виды");
@@ -411,7 +205,7 @@ public class ViewOfPipeSystemsServices
         {
             foreach (var element in _elements)
             {
-                CopyParameterMep(Context.ActiveDocument, element, GetParamName, SetParamName);
+                CopyParameterMep(Context.ActiveDocument, element, GetParamName, ParamAdsk_Система_Имя);
             }
         }
         catch (Exception ex)

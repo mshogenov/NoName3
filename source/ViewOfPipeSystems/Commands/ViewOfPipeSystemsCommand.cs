@@ -1,17 +1,19 @@
 ﻿using Autodesk.Revit.Attributes;
 using Nice3point.Revit.Toolkit.External;
 using ViewOfPipeSystems.Services;
+using ViewOfPipeSystems.ViewModels;
+using ViewOfPipeSystems.Views;
 
-namespace ViewOfPipeSystems.Commands
+namespace ViewOfPipeSystems.Commands;
+
+[UsedImplicitly]
+[Transaction(TransactionMode.Manual)]
+public class ViewOfPipeSystemsCommand : ExternalCommand
 {
-    [UsedImplicitly]
-    [Transaction(TransactionMode.Manual)]
-    public class ViewOfPipeSystemsCommand : ExternalCommand
+    public override void Execute()
     {
-        public override void Execute()
-        {
-            ViewOfPipeSystemsServices viewOfPipeSystemsServices = new();
-            viewOfPipeSystemsServices.ViewOfPipeSystems();
-        }
+        var viewModel = new ViewOfPipeSystemsVM();
+        var view = new ViewOfPipeSystemWindow(viewModel);
+        view.ShowDialog();
     }
 }

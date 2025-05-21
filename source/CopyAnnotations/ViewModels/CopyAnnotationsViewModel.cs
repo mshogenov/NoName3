@@ -14,7 +14,7 @@ public sealed partial class CopyAnnotationsViewModel : ObservableObject
     [ObservableProperty] private int _selectedTagRefsCount;
     [ObservableProperty] private bool _isBasePointSet;
     [ObservableProperty] private string _basePointStatusTooltip = "Базовая точка не установлена";
-
+    private bool _canInitiateSelection = true;
     private List<Reference> SelectedTagRefs
     {
         get => _selectedTagRefs;
@@ -42,12 +42,8 @@ public sealed partial class CopyAnnotationsViewModel : ObservableObject
     private readonly ActionEventHandler _actionEventHandler = new();
 
     private XYZ? _sourceBasePoint;
-    private readonly CopyAnnotationsServices _copyAnnotationsServices;
-
-    public CopyAnnotationsViewModel()
-    {
-        _copyAnnotationsServices = new CopyAnnotationsServices();
-    }
+    private readonly CopyAnnotationsServices _copyAnnotationsServices=new();
+  
 
     [RelayCommand]
     private void SelectedAnnotations(object parameter)
@@ -74,11 +70,13 @@ public sealed partial class CopyAnnotationsViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanSelectBasePoint))]
     private void SelectBasePoint()
     {
         try
         {
+            _canInitiateSelection = false;
+            SelectBasePointCommand.NotifyCanExecuteChanged();
             SourceBasePoint = _copyAnnotationsServices.GetPoint("Выберите базовую точку копирования");
             if (SourceBasePoint == null) return;
             IsBasePointSet = true;
@@ -87,6 +85,17 @@ public sealed partial class CopyAnnotationsViewModel : ObservableObject
         catch (Autodesk.Revit.Exceptions.OperationCanceledException)
         {
         }
+        finally
+        {
+            _canInitiateSelection = true;
+            SelectBasePointCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    private bool CanSelectBasePoint()
+    {
+        // Добавляем проверку, что базовая точка еще не установлена
+        return _canInitiateSelection ;
     }
 
     [RelayCommand(CanExecute = nameof(CanCopyAnnotations))]

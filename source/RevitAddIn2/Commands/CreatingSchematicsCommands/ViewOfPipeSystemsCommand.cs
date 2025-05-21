@@ -1,6 +1,8 @@
 ﻿using Autodesk.Revit.Attributes;
 using Nice3point.Revit.Toolkit.External;
 using ViewOfPipeSystems.Services;
+using ViewOfPipeSystems.ViewModels;
+using ViewOfPipeSystems.Views;
 
 namespace RevitAddIn2.Commands.CreatingSchematicsCommands;
 
@@ -10,7 +12,8 @@ public class ViewOfPipeSystemsCommand : ExternalCommand
 {
     public override void Execute()
     {
-        ViewOfPipeSystemsServices viewOfPipeSystemsServices = new();
-        viewOfPipeSystemsServices.ViewOfPipeSystems();
+        var viewModel = new ViewOfPipeSystemsVM();
+        var view = new ViewOfPipeSystemWindow(viewModel);
+        view.ShowDialog();
     }
 }

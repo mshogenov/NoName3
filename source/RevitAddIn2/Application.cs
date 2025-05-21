@@ -78,14 +78,14 @@ namespace RevitAddIn2;
 
         private void CreateRibbon()
         {
-            var panelSystemModeling = Application.CreatePanel("Моделирование", "Фигня");
-            var panelSystemCreatingSchematics = Application.CreatePanel("Оформление", "Фигня");
-            var panelFormationOfSpecification = Application.CreatePanel("Спецификация", "Фигня");
-            var panelOther = Application.CreatePanel("Прочее", "Фигня");
+            var panelSystemModeling = Application.CreatePanel("Моделирование", "RevitAddIn");
+            var panelSystemCreatingSchematics = Application.CreatePanel("Оформление", "RevitAddIn");
+            var panelFormationOfSpecification = Application.CreatePanel("Спецификация", "RevitAddIn");
+            var panelOther = Application.CreatePanel("Прочее", "RevitAddIn");
 
-            #region Bloom
+            #region InsertPipe
 
-            var bloomCommandButton = panelSystemModeling.AddPushButton<BloomCommand>("Вставить трубу")
+            var bloomCommandButton = panelSystemModeling.AddPushButton<InsertPipeCommand>("Вставить трубу")
                 .SetImage("/RevitAddIn2;component/Resources/Icons/Bloom16.ico")
                 .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Bloom32.png");
             ((PushButton)bloomCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
@@ -274,9 +274,9 @@ namespace RevitAddIn2;
             
             #region CopyAnnotations
 
-            panelSystemCreatingSchematics.AddPushButton<CopyAnnotationsCommand>("Копировать\nаннотации")
-                .SetImage("/RevitAddIn2;component/Resources/Icons/kopirovat_v2swjczhusqj_16.png")
-                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/kopirovat_v2swjczhusqj_32.png");
+            // panelSystemCreatingSchematics.AddPushButton<CopyAnnotationsCommand>("Копировать\nаннотации")
+            //     .SetImage("/RevitAddIn2;component/Resources/Icons/kopirovat_v2swjczhusqj_16.png")
+            //     .SetLargeImage("/RevitAddIn2;component/Resources/Icons/kopirovat_v2swjczhusqj_32.png");
 
             #endregion
 

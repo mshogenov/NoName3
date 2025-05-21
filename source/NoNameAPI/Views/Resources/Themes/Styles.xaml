@@ -18,74 +18,127 @@
     <FontWeight x:Key="AppFontWeight">Normal</FontWeight>
     <!-- Шаблон для окна -->
     <ControlTemplate x:Key="CustomWindowTemplate" TargetType="{x:Type Window}">
-        <Border
-            BorderBrush="{DynamicResource WindowBorderBrush}"
-            BorderThickness="1"
-            Background="{TemplateBinding Background}">
-            <Grid Margin="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
+        <!-- Основная граница с тенью -->
+        <Border x:Name="MainBorder"
+                BorderBrush="{DynamicResource WindowBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="7">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="7" ShadowDepth="0" Opacity="0.2" />
+            </Border.Effect>
 
-                <!-- Заголовок окна - убираем отступы сверху -->
-                <Grid x:Name="PART_HeaderGrid"
-                      Grid.Row="0"
-                      Background="{DynamicResource WindowBackgroundBrush}"
-                      Height="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Tag.HeaderHeight, FallbackValue=32}">
+            <!-- Внутренний контейнер с фоном -->
+            <Border Background="{TemplateBinding Background}"
+                    CornerRadius="7">
+                <Grid Margin="0">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
 
-                    <!-- Заголовок -->
-                    <DockPanel Grid.Column="0"
-                               LastChildFill="True">
-                        <!-- Добавляем TextBlock с привязкой к Title окна -->
-                        <TextBlock VerticalAlignment="Center"
-                                   Margin="10,0,0,0"
-                                   FontWeight="Medium"
-                                   FontFamily="{StaticResource AppFontFamily}"
-                                   FontSize="13">
-                            <Run Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Title}"
-                                 Foreground="{DynamicResource TitleWindowBrush}" />
-                        </TextBlock>
+                    <!-- Заголовок окна с закругленными верхними углами -->
+                    <Grid x:Name="PART_HeaderGrid"
+                          Grid.Row="0"
+                          Background="{DynamicResource WindowBackgroundBrush}"
+                          Height="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Tag.HeaderHeight, FallbackValue=32}">
+                        <!-- Маска для скругления верхних углов заголовка -->
+                        <Grid.OpacityMask>
+                            <VisualBrush>
+                                <VisualBrush.Visual>
+                                    <Border Background="Black"
+                                            CornerRadius="7,7,0,0"
+                                            Width="{Binding ActualWidth, ElementName=PART_HeaderGrid}"
+                                            Height="{Binding ActualHeight, ElementName=PART_HeaderGrid}" />
+                                </VisualBrush.Visual>
+                            </VisualBrush>
+                        </Grid.OpacityMask>
 
-                        <!-- Если нужен кастомный заголовок, он добавится после текста -->
-                        <ContentPresenter DockPanel.Dock="Right"
-                                          Content="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=HeaderContent}"
-                                          VerticalAlignment="Center" />
-                    </DockPanel>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-                    <!-- Кнопки управления окном -->
-                    <Button x:Name="MinimizeButton"
-                            Grid.Row="0" Grid.Column="1"
-                            Content="&#xE921;"
-                            Style="{DynamicResource WindowButtonStyle}" />
+                        <!-- Заголовок -->
+                        <DockPanel Grid.Column="0"
+                                   LastChildFill="True">
+                            <!-- Добавляем TextBlock с привязкой к Title окна -->
+                            <TextBlock VerticalAlignment="Center"
+                                       Margin="10,0,0,0"
+                                       FontWeight="Medium"
+                                       FontFamily="{StaticResource AppFontFamily}"
+                                       FontSize="13">
+                                <Run Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Title}"
+                                     Foreground="{DynamicResource TitleWindowBrush}" />
+                            </TextBlock>
 
-                    <Button x:Name="MaximizeButton"
-                            Grid.Row="0" Grid.Column="2"
-                            Content="&#xE922;"
+                            <!-- Если нужен кастомный заголовок, он добавится после текста -->
+                            <ContentPresenter DockPanel.Dock="Right"
+                                              Content="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=HeaderContent}"
+                                              VerticalAlignment="Center" />
+                        </DockPanel>
 
-                            Style="{DynamicResource WindowButtonStyle}" />
-                    <Button x:Name="CloseButton"
-                            Grid.Row="0" Grid.Column="3"
-                            Content="&#xE8BB;"
-                            Style="{DynamicResource CloseButtonStyle}" />
+                        <!-- Кнопки управления окном с модифицированными стилями -->
+                        <Button x:Name="MinimizeButton"
+                                Grid.Row="0" Grid.Column="1"
+                                Content="&#xE921;"
+                                Style="{DynamicResource WindowButtonStyle}" />
+
+                        <Button x:Name="MaximizeButton"
+                                Grid.Row="0" Grid.Column="2"
+                                Content="&#xE922;"
+                                Style="{DynamicResource WindowButtonStyle}" />
+
+                        <!-- Кнопка закрытия со скругленным правым верхним углом -->
+                        <Button x:Name="CloseButton"
+                                Grid.Row="0" Grid.Column="3"
+                                Content="&#xE8BB;"
+                                Style="{DynamicResource CloseButtonStyle}">
+                            <!-- Переопределяем шаблон для кнопки закрытия -->
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="ButtonBorder"
+                                            Background="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"
+                                            CornerRadius="0,7,0,0">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="ButtonBorder" Property="Background" Value="#FFE81123" />
+                                            <Setter Property="Foreground" Value="White" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="ButtonBorder" Property="Background" Value="#FF8B0A14" />
+                                            <Setter Property="Foreground" Value="White" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </Grid>
+
+                    <!-- Содержимое окна -->
+                    <ContentPresenter Grid.Row="2" Content="{TemplateBinding Content}" />
                 </Grid>
-
-                <!-- Содержимое окна -->
-                <ContentPresenter Grid.Row="2" Content="{TemplateBinding Content}" />
-
-            </Grid>
+            </Border>
         </Border>
+
+        <ControlTemplate.Triggers>
+            <!-- Триггеры для обработки состояний окна -->
+            <Trigger Property="WindowState" Value="Maximized">
+                <Setter TargetName="MainBorder" Property="CornerRadius" Value="0" />
+                <Setter TargetName="MaximizeButton" Property="Content" Value="&#xE923;" />
+            </Trigger>
+            <Trigger Property="WindowState" Value="Normal">
+                <Setter TargetName="MaximizeButton" Property="Content" Value="&#xE922;" />
+            </Trigger>
+        </ControlTemplate.Triggers>
     </ControlTemplate>
     <!-- Стили для кнопок -->
     <Style x:Key="WindowButtonStyle" TargetType="{x:Type Button}">
@@ -1069,7 +1122,7 @@
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
         <Setter Property="Padding" Value="4" />
-       <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
+        <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource GroupBoxContentBrush}" />
         <Setter Property="Template">
             <Setter.Value>
@@ -1362,7 +1415,7 @@
         <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
         <Setter Property="CornerRadius" Value="5" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-        <Setter Property="Padding" Value="3" />
+        <Setter Property="Padding" Value="5" />
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
@@ -2170,7 +2223,7 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
-      <Setter Property="FontSize" Value="{DynamicResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource AppFontFamily}" />
         <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
         <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
         <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
@@ -2740,4 +2793,134 @@
                 Focusable="False"
                 Background="{TemplateBinding Background}" />
     </ControlTemplate>
+
+
+    <Style x:Key="ModernTreeViewStyle" TargetType="{x:Type TreeView}">
+        <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="5" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="ItemContainerStyle" Value="{DynamicResource ModernTreeViewItemStyle}" />
+        <Setter Property="FontSize" Value="{StaticResource AppFontSize}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TreeView}">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <ScrollViewer Focusable="False"
+                                      Style="{DynamicResource CustomScrollViewerStyle}"
+                                      Padding="{TemplateBinding Padding}"
+                                      CanContentScroll="True"
+                                      VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}"
+                                      HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}">
+                            <ItemsPresenter />
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ModernTreeViewItemStyle" TargetType="{x:Type TreeViewItem}">
+        <Setter Property="Padding" Value="5" />
+        <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBlockColorBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TreeViewItem}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" MinWidth="19" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+
+                        <!-- Expand/Collapse Button -->
+                        <ToggleButton x:Name="Expander"
+                                      ClickMode="Press"
+                                      IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Margin="1,0,1,0">
+                            <ToggleButton.Style>
+                                <Style TargetType="{x:Type ToggleButton}">
+                                    <Setter Property="Focusable" Value="False" />
+                                    <Setter Property="Width" Value="16" />
+                                    <Setter Property="Height" Value="16" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                <Border Width="16" Height="16" Background="Transparent">
+                                                    <Path x:Name="ExpandPath"
+                                                          Fill="{DynamicResource TextBlockColorBrush}"
+                                                          Stroke="{DynamicResource TextBlockColorBrush}"
+                                                          StrokeThickness="1">
+                                                        <Path.Data>
+                                                            <PathGeometry Figures="M 4 7 L 12 7 M 8 3 L 8 11" />
+                                                        </Path.Data>
+                                                    </Path>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter Property="Data" TargetName="ExpandPath">
+                                                            <Setter.Value>
+                                                                <PathGeometry Figures="M 4 7 L 12 7" />
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ToggleButton.Style>
+                        </ToggleButton>
+
+                        <!-- Header content -->
+                        <Border x:Name="Bd" Grid.Row="0" Grid.Column="1"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="3">
+                            <ContentPresenter x:Name="PART_Header"
+                                              ContentSource="Header"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+                        </Border>
+
+                        <!-- Child items -->
+                        <ItemsPresenter x:Name="ItemsHost"
+                                        Grid.Row="1"
+                                        Grid.Column="1"
+                                        Margin="0,1,0,0" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsExpanded" Value="False">
+                            <Setter Property="Visibility" TargetName="ItemsHost" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="HasItems" Value="False">
+                            <Setter Property="Visibility" TargetName="Expander" Value="Hidden" />
+                        </Trigger>
+
+                        <!-- Убираем выделение для IsSelected -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" TargetName="Bd" Value="Transparent" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" TargetName="Bd" Value="{DynamicResource IsMouseOverBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
 </ResourceDictionary>
