@@ -3,9 +3,9 @@ namespace PlacementOfStamps.Models;
 public class LeaderEndModel
 {
     public XYZ Position { get; set; }
-    public ElementModel TaggedElement { get; set; }
+    public ElementWrapper TaggedElement { get; set; }
 
-    public LeaderEndModel(IndependentTag tag, ElementModel element)
+    public LeaderEndModel(IndependentTag tag, ElementWrapper element)
     {
         TaggedElement = element;
         // Проверяем условия для получения LeaderEnd

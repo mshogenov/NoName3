@@ -1,47 +1,43 @@
 namespace PlacementOfStamps.Models;
 
-public class TagModel
+public class TagWrapper
 {
-    public IndependentTag TagElement { get; set; }
-    public XYZ TagHeadPosition { get; set; }
+    public IndependentTag IndependentTag { get; set; }
+    public XYZ TagHeadPosition => IndependentTag.TagHeadPosition;
     public double Parameter { get; set; }
-    public List<ElementModel> TaggedElements { get; set; } = [];
-    public ElementId TagTypeId { get; set; }
-    public bool HasLeader { get; set; }
-    public string Name { get; set; }
+    public List<ElementWrapper> TaggedElements { get; set; } = [];
+    public ElementId TagTypeId => IndependentTag.GetTypeId();
+    public bool HasLeader => IndependentTag.HasLeader;
+    public string Name => IndependentTag.Name;
     public BoundingBoxXYZ BoundingBox { get; set; }
     public double Distance { get; set; }
 
 
     public Rectangle Rectangle { get; set; }
-    public IndependentTag IndependentTag { get; set; }
+
 
     // public List<LeaderElbowModel> LeadersElbow { get; set; } = [];
     // public List<LeaderEndModel> LeadersEnd { get; set; } = [];
     public ICollection<Element> TaggedLocalElements { get; set; } = [];
 
-    public TagModel(IndependentTag tag)
+    public TagWrapper(IndependentTag independentTag)
     {
-        if (tag == null) return;
-        IndependentTag = tag;
-        Document doc = tag.Document;
-        TagElement = tag;
-        Name = tag.Name;
-        TagHeadPosition = tag.TagHeadPosition;
-        HasLeader = tag.HasLeader;
-        TagTypeId = tag.GetTypeId();
-        BoundingBox = tag.get_BoundingBox(doc.ActiveView);
-        foreach (var taggedLocalElement in tag.GetTaggedLocalElements())
+        if (independentTag == null) return;
+        Document doc = independentTag.Document;
+        IndependentTag = independentTag;
+
+        BoundingBox = independentTag.get_BoundingBox(doc.ActiveView);
+        foreach (var taggedLocalElement in independentTag.GetTaggedLocalElements())
         {
             TaggedLocalElements.Add(taggedLocalElement);
         }
 
-        ICollection<LinkElementId> taggedElementIds = tag.GetTaggedElementIds();
+        ICollection<LinkElementId> taggedElementIds = independentTag.GetTaggedElementIds();
         if (taggedElementIds is { Count: > 0 })
         {
             foreach (var taggedElementId in taggedElementIds)
             {
-                TaggedElements.Add(new ElementModel(doc.GetElement(taggedElementId.HostElementId)));
+                TaggedElements.Add(new ElementWrapper(doc.GetElement(taggedElementId.HostElementId)));
             }
         }
 
@@ -53,8 +49,7 @@ public class TagModel
         //         LeadersElbow.Add(new LeaderElbowModel(tag, taggedElement));
         //     }
         // }
-
-        Rectangle = GetTagBoundingBox(tag, doc.ActiveView);
+        Rectangle = GetTagBoundingBox(independentTag, doc.ActiveView);
     }
 
     /// <summary>

@@ -1,14 +1,14 @@
 namespace PlacementOfStamps.Models;
 
-public class ElementModel
+public class ElementWrapper
 {
-    public ElementId? Id { get; set; }
-    public Reference? Reference { get; set; }
+    public ElementId Id { get; set; }
+    public Reference Reference { get; set; }
     public BuiltInCategory Category { get; set; }
-    public Element? Element { get; set; }
-    public XYZ? Position { get; set; }
+    public Element Element { get; set; }
+    public XYZ Position { get; set; }
 
-    public ElementModel(Element? element)
+    public ElementWrapper(Element element)
     {
         if (element == null) return;
         Element = element;
@@ -18,7 +18,7 @@ public class ElementModel
         Position = GetElementPosition(element);
     }
 
-    private XYZ? GetElementPosition(Element? element)
+    private XYZ GetElementPosition(Element element)
     {
         if (element == null)
             return null;

@@ -11,7 +11,7 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
     [ObservableProperty] private bool _pipesOuterDiametersIsChecked;
     [ObservableProperty] private FamilySymbol _pipesOuterDiameterMarkSelected;
     [ObservableProperty] private HashSet<Element> _pipeMarks;
-    [ObservableProperty] private bool _systemAbbreviationIsChecked=true;
+    [ObservableProperty] private bool _systemAbbreviationIsChecked = true;
     [ObservableProperty] private FamilySymbol _systemAbbreviationMarkSelected;
     [ObservableProperty] private bool _pipeInsulationIsChecked;
     [ObservableProperty] private FamilySymbol _pipeInsulationMarkSelected;
@@ -34,15 +34,18 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
     {
         var activeView = _doc.ActiveView;
         _placementOfStampsServices = new PlacementOfStampsServices();
-       
+
         var collectorPipes = new FilteredElementCollector(_doc, activeView.Id)
-            .OfClass(typeof(Pipe)).WhereElementIsNotElementType().Where(p =>
-                p.FindParameter(BuiltInParameter.CURVE_ELEM_LENGTH)?.AsDouble().ToMillimeters() > 500).ToList();
+            .OfClass(typeof(Pipe))
+            .WhereElementIsNotElementType()
+            .Where(p => p.FindParameter(BuiltInParameter.CURVE_ELEM_LENGTH)?.AsDouble().ToMillimeters() > 500)
+            .Cast<Pipe>()
+            .ToList();
         FilteredElementCollector collectorDisplacement =
             new FilteredElementCollector(_doc, activeView.Id).OfClass(typeof(DisplacementElement))
                 .WhereElementIsNotElementType();
         List<Element> displacedElements = [];
-        List<PipeMdl> pipeMdls = [];
+        List<PipeWrapper> pipeMdls = [];
         displacedElements.AddRange(collectorDisplacement
             .Where(element => element.Category.BuiltInCategory == BuiltInCategory.OST_DisplacementElements));
 
@@ -61,18 +64,20 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
                     foreach (var pipe in collectorPipes.Where(p => pipeDisplaced.Id == p.Id).ToList())
                     {
                         collectorPipes.Remove(pipe);
-                        pipeMdls.Add(new PipeMdl(pipeDisplaced)
+                        pipeMdls.Add(new PipeWrapper(pipeDisplaced)
                         {
                             IsDisplaced = true,
-                            PointDisplaced = pointDisplaced,
+                            DisplacedPoint = pointDisplaced,
                         });
                     }
                 }
             }
         }
 
-        pipeMdls.AddRange(collectorPipes.Select(pipe => new PipeMdl(pipe)));
-
+        pipeMdls.AddRange(collectorPipes.Select(pipe => new PipeWrapper(pipe)));
+        var existingTags =_placementOfStampsServices.GetExistingAnnotations(_doc, activeView)
+            .Cast<IndependentTag>().Select(existingAnnotation => new TagWrapper(existingAnnotation))
+            .ToList();
         // var pipesOuterDiameters = elements.Where(p =>
         //     p.FindParameter(BuiltInParameter.WINDOW_TYPE_ID)?.AsValueString() == "Днар х Стенка");
         using Transaction tr = new(_doc, "Расстановка марок");
@@ -86,7 +91,7 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
 
             if (SystemAbbreviationIsChecked)
             {
-                _placementOfStampsServices.PlacementMarksSystemAbbreviation(_doc, pipeMdls, activeView,
+                _placementOfStampsServices.PlacementMarksSystemAbbreviation(_doc, pipeMdls,existingTags, activeView,
                     SystemAbbreviationMarkSelected);
             }
 
