@@ -11,8 +11,9 @@
     d:DataContext="{d:DesignInstance viewModel:ArrangeFixturesViewModel}"
     WindowStartupLocation="CenterScreen"
     Title="Расставить крепления"
+    SizeToContent="Height"
     Background="{DynamicResource WindowBackgroundBrush}"
-    Height="200"
+
     Width="400">
     <Window.Resources>
         <ResourceDictionary>
@@ -29,7 +30,7 @@
     <Grid Style="{DynamicResource Grid}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid>
             <Grid.RowDefinitions>
@@ -51,7 +52,8 @@
                            Text="Выбрать крепеж:"
                            Margin="0 0 10 0" />
                 <ComboBox Style="{DynamicResource ModernComboBoxStyle}"
-                          ItemsSource="{Binding Fixtures}">
+                          ItemsSource="{Binding Fixtures}"
+                          SelectedItem="{Binding SelectedFixture}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Name}" />
@@ -60,6 +62,21 @@
                 </ComboBox>
             </StackPanel>
         </Grid>
-
+        <DockPanel Grid.Row="1"
+                   Margin="0 7 0 0"
+                   HorizontalAlignment="Right">
+            <Button
+                Content="Расставить крепления"
+                Command="{Binding ArrangeFixturesCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                Style="{DynamicResource CommonButtonStyle2}"
+                HorizontalAlignment="Right" />
+            <Button Content="Закрыть"
+                    HorizontalAlignment="Right"
+                 Click="ButtonClose_OnClick"
+                    CommandParameter="{Binding  RelativeSource={RelativeSource AncestorType=Window}}"
+                    Style="{DynamicResource OutlineCloseButtonStyle}"
+                    Margin="10,0,0,0" />
+        </DockPanel>
     </Grid>
 </views:BaseRevitWindow>

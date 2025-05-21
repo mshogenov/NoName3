@@ -1,4 +1,5 @@
-﻿using ArrangeFixtures.ViewModels;
+﻿using System.Windows;
+using ArrangeFixtures.ViewModels;
 
 namespace ArrangeFixtures.Views;
 
@@ -9,5 +10,10 @@ public sealed partial class ArrangeFixturesView
         DataContext = viewModel;
         InitializeComponent();
         LoadWindowTemplate();
+    }
+
+    private void ButtonClose_OnClick(object sender, RoutedEventArgs e)
+    {
+      Close();
     }
 }
