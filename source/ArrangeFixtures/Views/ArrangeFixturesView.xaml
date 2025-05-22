@@ -45,8 +45,10 @@
                     <Run Text="Выбрано труб:" />
                     <Run Text="{Binding SelectedPipesCount}" />
                 </TextBlock>
+                <Button Content="Очистить выбор" Margin="10 0"
+                        Command="{Binding ClearSelectionCommand }"/>
             </StackPanel>
-            <StackPanel Grid.Row="1" Orientation="Horizontal">
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0 7 0 0">
 
                 <TextBlock Style="{DynamicResource TextBlockStyle}"
                            Text="Выбрать крепеж:"

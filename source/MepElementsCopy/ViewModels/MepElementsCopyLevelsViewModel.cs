@@ -34,9 +34,7 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
         }
     }
 
-
     [ObservableProperty] private bool _automaticallySetBaseLineIsChecked;
-
 
     private readonly Document _doc = Context.ActiveDocument;
     private readonly UIDocument _uiDoc = Context.ActiveUiDocument;
