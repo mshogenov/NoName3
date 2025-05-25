@@ -852,10 +852,11 @@ public class MakeBreakServices
                     {
                         if (connector.IsConnected)
                         {
-                            var connected = connector.AllRefs.Cast<Connector>().First().Owner;
-                            if (connected != null)
+                            var connected = connector.AllRefs.Cast<Connector>();
+                            if (connected == null) continue;
+                            foreach (var c in connected)
                             {
-                                connectedElements.Add(connected);
+                                connectedElements.Add(c.Owner);
                             }
                         }
                     }
@@ -868,10 +869,14 @@ public class MakeBreakServices
                     {
                         if (connector.IsConnected)
                         {
-                            var connected = connector.AllRefs.Cast<Connector>().First().Owner;
+                            var connected = connector.AllRefs.Cast<Connector>();
                             if (connected != null)
                             {
-                                connectedElements.Add(connected);
+                                foreach (var c in connected)
+                                {
+                                    connectedElements.Add(c.Owner);
+                                }
+                              
                             }
                         }
                     }
