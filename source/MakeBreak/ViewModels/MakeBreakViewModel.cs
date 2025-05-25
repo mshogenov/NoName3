@@ -13,9 +13,11 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     private readonly MakeBreakServices _makeBreakServices = new();
     private readonly FamilySymbol _familySymbol;
     private readonly Document _doc = Context.ActiveDocument;
-   private const string _parameterRupture = "msh_Разрыв";
+
+    private const string _parameterRupture = "msh_Разрыв";
+
     // Добавьте поле для отслеживания состояния выполнения команды
-    private bool _isExecutingMakeBreak = false;
+    private bool _isExecutingMakeBreak;
 
     [ObservableProperty] private string _statusColor = "#3498DB";
 
@@ -24,6 +26,7 @@ public sealed partial class MakeBreakViewModel : ObservableObject
         BuiltInCategory.OST_PipeCurves,
     ];
 
+    private bool _isExecutingDeleteBreak;
 
 
     public MakeBreakViewModel()
@@ -64,8 +67,8 @@ public sealed partial class MakeBreakViewModel : ObservableObject
             }
         });
     }
-    
-    
+
+
     [RelayCommand(CanExecute = nameof(CanExecuteMakeBreak))]
     private void MakeBreak()
     {
@@ -101,6 +104,37 @@ public sealed partial class MakeBreakViewModel : ObservableObject
             }
         });
     }
+
     // Метод для проверки возможности выполнения команды
     private bool CanExecuteMakeBreak() => !_isExecutingMakeBreak;
+
+    [RelayCommand(CanExecute = nameof(CanExecuteDeleteBreak))]
+    private void DeleteBreak()
+    {
+        // Устанавливаем флаг, что команда запущена
+        _isExecutingDeleteBreak = true;
+        (DeleteBreakCommand as RelayCommand)?.NotifyCanExecuteChanged();
+        _actionEventHandler.Raise(_ =>
+        {
+            try
+            {
+                _makeBreakServices.DeleteBreaksAndCreatePipe(_familySymbol);
+            }
+            catch (Exception e)
+            {
+                TaskDialog.Show("Ошибка", "Произошла ошибка: " + e.Message);
+            }
+            finally
+            {
+                _actionEventHandler.Cancel();
+                // Сбрасываем флаг после завершения команды
+                _isExecutingDeleteBreak = false;
+
+                // Уведомляем об изменении состояния
+                (DeleteBreakCommand as RelayCommand)?.NotifyCanExecuteChanged();
+            }
+        });
+    }
+
+    private bool CanExecuteDeleteBreak() => !_isExecutingDeleteBreak;
 }

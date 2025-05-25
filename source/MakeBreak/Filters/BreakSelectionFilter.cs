@@ -2,11 +2,11 @@ using Autodesk.Revit.UI.Selection;
 
 namespace MakeBreak.Filters;
 
-public class FamilySelectionFilter : ISelectionFilter
+public class BreakSelectionFilter : ISelectionFilter
 {
     private readonly FamilySymbol _familySymbol;
 
-    public FamilySelectionFilter(FamilySymbol familySymbol)
+    public BreakSelectionFilter(FamilySymbol familySymbol)
     {
         _familySymbol = familySymbol;
     }
