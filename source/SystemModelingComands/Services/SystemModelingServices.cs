@@ -529,7 +529,7 @@ namespace SystemModelingCommands.Services
             {
                 tr.Start();
                 // Шаг 1: Выбор целевого элемента и получение точки
-                if (AreOpposite(ctx.TargetConn, ctx.AttachConn))
+                if (AreOpposite(ctx.TargetConn.Connector, ctx.AttachConn.Connector, 0.001))
                 {
                     if (!HandleOppositeConnectors(ctx))
                     {
@@ -553,12 +553,7 @@ namespace SystemModelingCommands.Services
 
         private bool HandleOppositeConnectors(AlignContext ctx)
         {
-            // 1. Для труб/каналов – отдельная логика
-            if (ctx.Attach.Element is Pipe or Duct)
-                return HandlePipeOrDuctOpposite(ctx);
-
-            // 2. Для остальных семейств
-            return HandleGenericOpposite(ctx);
+            return ctx.Attach.Element is Pipe or Duct ? HandlePipeOrDuctOpposite(ctx) : HandleGenericOpposite(ctx);
         }
 
         private bool HandlePipeOrDuctOpposite(AlignContext ctx)
@@ -571,10 +566,17 @@ namespace SystemModelingCommands.Services
             switch (choice)
             {
                 case 1: // Удлинить-укоротить
+                    if (ctx.Attach.Element is Pipe attachPipe && ctx.Target.Element is Pipe targetPipe)
+                    {
+                        if (ArePipesSimilar(attachPipe, targetPipe))
+                        {
+                        }
+                    }
+
                     LengthenCurve(ctx.AttachConn, ctx.TargetConn);
                     XYZ newMove = ctx.TargetConn.Origin - ctx.AttachConn.Origin;
                     ElementTransformUtils.MoveElement(_doc, ctx.Attach.Id, newMove);
-                    ctx.AttachConn.ConnectTo(ctx.TargetConn);
+                    ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
                     break;
 
                 case 2: // Переместить
@@ -585,6 +587,24 @@ namespace SystemModelingCommands.Services
             }
 
             return true;
+        }
+
+        private bool ArePipesSimilar(Pipe pipe1, Pipe pipe2)
+        {
+            // Проверяем тип трубы
+            if (pipe1.PipeType.Id != pipe2.PipeType.Id)
+                return false;
+
+            // Проверяем диаметр
+            Parameter diameter1 = pipe1.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
+            Parameter diameter2 = pipe2.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
+
+            if (diameter1 == null || diameter2 == null)
+                return false;
+
+            // Сравниваем значения диаметров с небольшой погрешностью
+            const double tolerance = 0.001;
+            return Math.Abs(diameter1.AsDouble() - diameter2.AsDouble()) < tolerance;
         }
 
         private bool HandleGenericOpposite(AlignContext ctx)
@@ -614,9 +634,9 @@ namespace SystemModelingCommands.Services
                 }
             }
 
-            ElementTransformUtils.MoveElement(_doc, ctx.AttachId, translationVector);
+            ElementTransformUtils.MoveElement(_doc, ctx.Attach.Id, translationVector);
             // 3. Соединяем элементы
-            ctx.AttachConn.ConnectTo(ctx.TargetConn);
+            ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
             return true;
         }
 
@@ -642,15 +662,14 @@ namespace SystemModelingCommands.Services
         private void AlignAndConnect(AlignContext ctx)
         {
             // Шаг 5: Отключение существующих соединений и сохранение их для восстановления
-            var existingConnections = DisconnectExistingConnections(ctx.Attach.ConnectorManager);
-            // Шаг 7: Выравнивание соединителей
-            AlignConnectors(ctx.TargetConn, ctx.AttachConn,
-                ctx.Attach.Element);
+            var existingConnections = DisconnectExistingConnections(ctx.Attach);
+            // Шаг 6: Выравнивание соединителей
+            AlignConnectors(ctx.TargetConn.Connector, ctx.AttachConn.Connector, ctx.Attach.Element);
             var translationVector = ctx.TargetConn.Origin -
                                     ctx.AttachConn.Origin;
-            ElementTransformUtils.MoveElement(_doc, ctx.AttachId, translationVector);
+            ElementTransformUtils.MoveElement(_doc, ctx.Attach.Id, translationVector);
             // Соединение после вращения
-            ctx.AttachConn.ConnectTo(ctx.TargetConn);
+            ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
             // Шаг 8: Восстановление предыдущих соединений
             if (existingConnections.Any())
             {
@@ -658,25 +677,132 @@ namespace SystemModelingCommands.Services
             }
         }
 
-        private static bool AreOpposite(Connector c1, Connector c2)
+        /// <summary>
+        /// Выравнивает коннекторы элементов для соединения
+        /// </summary>
+        private void AlignConnectors(Connector targetConnector, Connector attachingConnector, Element attachingElement)
         {
-            double dot = c1.CoordinateSystem.BasisZ
-                .DotProduct(c2.CoordinateSystem.BasisZ);
+            if (targetConnector == null || attachingConnector == null || attachingElement == null)
+                throw new ArgumentNullException($"Null arguments are not allowed");
+
+            var (angle, rotationAxis) = CalculateRotationParameters(targetConnector, attachingConnector);
+
+            if (ShouldRotate(angle))
+            {
+                RotateElement(attachingElement, attachingConnector.Origin, rotationAxis, angle);
+            }
+        }
+
+        /// <summary>
+        /// Вычисляет параметры вращения для выравнивания коннекторов
+        /// </summary>
+        private (double angle, XYZ rotationAxis) CalculateRotationParameters(Connector targetConnector,
+            Connector attachingConnector)
+        {
+            var targetDirection = targetConnector.CoordinateSystem.BasisZ.Normalize();
+            var attachingDirection = attachingConnector.CoordinateSystem.BasisZ.Normalize();
+            var desiredDirection = -targetDirection;
+
+            // Вычисляем скалярное произведение и угол
+            var dotProduct = ClampDotProduct(attachingDirection.DotProduct(desiredDirection));
+            var angle = Math.Acos(dotProduct);
+
+            // Вычисляем ось вращения
+            var rotationAxis = attachingDirection.CrossProduct(desiredDirection);
+
+            // Обрабатываем случай параллельных векторов
+            return rotationAxis.IsZeroLength()
+                ? HandleParallelVectors(dotProduct, attachingConnector, angle)
+                : (angle, rotationAxis.Normalize());
+        }
+
+        /// <summary>
+        /// Обрабатывает случай параллельных векторов
+        /// </summary>
+        private (double angle, XYZ rotationAxis) HandleParallelVectors(double dotProduct, Connector attachingConnector,
+            double angle)
+        {
+            if (angle < 0) throw new ArgumentOutOfRangeException(nameof(angle));
+            const double PARALLEL_THRESHOLD = -0.9999;
+
+            if (dotProduct < PARALLEL_THRESHOLD)
+            {
+                // Векторы сонаправлены, нужен разворот на 180 градусов
+                angle = Math.PI;
+                return (angle, GetPerpendicularAxis(attachingConnector));
+            }
+
+            // Векторы противонаправлены, вращение не требуется
+            return (0, XYZ.Zero);
+        }
+
+        /// <summary>
+        /// Получает перпендикулярную ось для вращения
+        /// </summary>
+        private XYZ GetPerpendicularAxis(Connector connector)
+        {
+            var basisX = connector.CoordinateSystem.BasisX;
+            return !basisX.IsZeroLength() ? basisX : connector.CoordinateSystem.BasisY;
+        }
+
+        /// <summary>
+        /// Ограничивает значение скалярного произведения в диапазоне [-1, 1]
+        /// </summary>
+        private double ClampDotProduct(double dotProduct)
+        {
+            return Math.Min(Math.Max(dotProduct, -1.0), 1.0);
+        }
+
+        /// <summary>
+        /// Определяет, нужно ли выполнять вращение
+        /// </summary>
+        private bool ShouldRotate(double angle)
+        {
+            const double ROTATION_THRESHOLD = 1e-6;
+            return angle > ROTATION_THRESHOLD;
+        }
+
+        /// <summary>
+        /// Выполняет вращение элемента
+        /// </summary>
+        private void RotateElement(Element element, XYZ origin, XYZ axis, double angle)
+        {
+            var rotationLine = Line.CreateUnbound(origin, axis);
+            ElementTransformUtils.RotateElement(_doc, element.Id, rotationLine, angle);
+        }
+
+        /// <summary>
+        /// Проверяет, являются ли два коннектора противоположно направленными.
+        /// </summary>
+        /// <param name="targetConnector">Первый коннектор для проверки.</param>
+        /// <param name="attachConnector">Второй коннектор для проверки.</param>
+        /// <param name="tolerance">Погрешность вычислений</param>
+        /// <returns>
+        /// true - если коннекторы направлены противоположно друг другу (угол между их осями Z равен 180 градусов);
+        /// false - в противном случае.
+        /// </returns>
+        /// <remarks>
+        /// Метод использует скалярное произведение векторов направления (BasisZ) коннекторов.
+        /// </remarks>
+        private static bool AreOpposite(Connector targetConnector, Connector attachConnector, double tolerance)
+        {
+            double dot = targetConnector.CoordinateSystem.BasisZ
+                .DotProduct(attachConnector.CoordinateSystem.BasisZ);
             const double oppositeThreshold = -1.0;
-            return Math.Abs(Math.Round(dot, 10) - Math.Round(oppositeThreshold, 10)) < 0.001;
+            return Math.Abs(Math.Round(dot, 10) - Math.Round(oppositeThreshold, 10)) < tolerance;
         }
 
         private bool TryBuildContext(out AlignContext ctx)
         {
             ctx = default;
 
-            // 1. Элемент-приёмник
+
             if (!TryPickElement(
                     "Выберите точку на элементе, к которому хотите присоединить",
                     out var target, out var targetPt))
                 return false;
 
-            // 2. Элемент-донор
+
             if (!TryPickElement(
                     "Выберите точку на присоединяемом элементе",
                     out var attach, out var attachPt,
@@ -690,7 +816,7 @@ namespace SystemModelingCommands.Services
             if (tConn is null || aConn is null) // нет коннекторов
                 return false;
 
-            ctx = new AlignContext(target, attach, tConn, aConn);
+            ctx = new AlignContext(target, attach, new ConnectorWrapper(tConn), new ConnectorWrapper(aConn));
             return true;
         }
 
@@ -732,7 +858,7 @@ namespace SystemModelingCommands.Services
         /// </summary>
         /// <param name="attachingConnector"></param>
         /// <param name="targetConnector"></param>
-        private static void LengthenCurve(Connector attachingConnector, Connector targetConnector)
+        private static void LengthenCurve(ConnectorWrapper attachingConnector, ConnectorWrapper targetConnector)
         {
             if (attachingConnector.Owner.Location is not LocationCurve locationCurve) return;
             // 1. Удлиняем трубу
@@ -795,55 +921,63 @@ namespace SystemModelingCommands.Services
             locationCurve.Curve = newCurve;
         }
 
-        private List<ConnectorConnection> DisconnectExistingConnections(ConnectorManager connectorManager)
+        /// <summary>
+        /// Отключает все существующие соединения элемента и возвращает список отключенных соединений
+        /// </summary>
+        /// <param name="element">Элемент, соединения которого нужно отключить</param>
+        /// <returns>Список отключенных соединений в виде ConnectorWrapper</returns>
+        private List<ConnectorWrapper> DisconnectExistingConnections(ElementWrapper element)
         {
-            var connections = new List<ConnectorConnection>();
+            if (element?.ConnectorManager == null)
+                return [];
 
-            foreach (Connector connector in connectorManager.Connectors)
+            var connections = new List<ConnectorWrapper>();
+
+            foreach (var connector in element.Connectors)
             {
-                if (!connector.IsConnected)
+                var connectorWrapper = ProcessConnector(connector);
+                if (connectorWrapper != null)
                 {
-                    continue;
-                }
-
-                // Собираем подключенные коннекторы перед отключением
-                var connectedConnectors = new List<Connector>();
-
-                foreach (Connector connectedConnector in connector.AllRefs)
-                {
-                    if (!IsPhysicalDomain(connectedConnector.Domain))
-                        continue;
-                    if (!connectedConnector.IsConnected) continue;
-                    connectedConnectors.Add(connectedConnector);
-                }
-
-                var connectorConnection = new ConnectorConnection(connector);
-                // Отключаем и записываем подключенные коннекторы
-                foreach (Connector connectedConnector in connectedConnectors)
-                {
-                    try
-                    {
-                        // Сохраняем подключенный коннектор
-                        connectorConnection.ConnectedConnectors.Add(
-                            new ConnectorConnection(connectedConnector));
-
-                        // Отключаем коннекторы
-                        connector.DisconnectFrom(connectedConnector);
-                    }
-                    catch (Exception ex)
-                    {
-                        // ignored
-                    }
-                }
-
-
-                if (connectorConnection.ConnectedConnectors.Count > 0)
-                {
-                    connections.Add(connectorConnection);
+                    connections.Add(connectorWrapper);
                 }
             }
 
             return connections;
+        }
+
+        private ConnectorWrapper ProcessConnector(ConnectorWrapper connector)
+        {
+            if (connector is not { IsConnected: true })
+                return null;
+
+
+            if (GetValidConnectedConnectors(connector.ConnectedConnector))
+            {
+                var connectorWrapper = new ConnectorWrapper(connector.ConnectedConnector);
+                DisconnectFromConnectors(connector.Connector, connectorWrapper.Connector, connectorWrapper);
+                return connectorWrapper;
+            }
+
+            return null;
+        }
+
+        private bool GetValidConnectedConnectors(Connector connector)
+        {
+            return IsPhysicalDomain(connector.Domain) && connector.IsConnected;
+        }
+
+        private void DisconnectFromConnectors(Connector sourceConnector, Connector connectedConnector,
+            ConnectorWrapper connectorWrapper)
+        {
+            try
+            {
+                connectorWrapper.AddConnectedConnector(new ConnectorWrapper(connectedConnector));
+                sourceConnector.DisconnectFrom(connectedConnector);
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Ошибка", ex.Message);
+            }
         }
 
         private List<Connector> GetConnectedConnectors(ConnectorManager connectorManager)
@@ -873,108 +1007,38 @@ namespace SystemModelingCommands.Services
                    domain == Domain.DomainElectrical;
         }
 
-        private void AlignConnectors(Connector targetConnector, Connector attachingConnector, Element attachingElement)
-        {
-            // Получаем нормализованные векторы BasisZ коннекторов
-            XYZ targetBasisZ = targetConnector.CoordinateSystem.BasisZ.Normalize();
-            XYZ attachingBasisZ = attachingConnector.CoordinateSystem.BasisZ.Normalize();
 
-            // Желаемое направление для attachingBasisZ - противоположное targetBasisZ
-            XYZ desiredDirection = -targetBasisZ;
-
-            // Вычисляем скалярное произведение между attachingBasisZ и желаемым направлением
-            double dotProduct = attachingBasisZ.DotProduct(desiredDirection);
-
-            // Корректируем значение dotProduct на случай погрешностей вычислений
-            dotProduct = Math.Min(Math.Max(dotProduct, -1.0), 1.0);
-
-            // Вычисляем угол между attachingBasisZ и desiredDirection
-            double angle = Math.Acos(dotProduct);
-
-            // Вычисляем ось вращения
-            XYZ rotationAxis = attachingBasisZ.CrossProduct(desiredDirection);
-
-            // Если ось вращения имеет нулевую длину (векторы параллельны или антипараллельны)
-            if (rotationAxis.IsZeroLength())
-            {
-                // Векторы параллельны или антипараллельны
-                if (dotProduct < -0.9999)
-                {
-                    // Векторы направлены в ту же сторону, нужно вращение на 180 градусов
-                    angle = Math.PI;
-
-                    // Выбираем произвольную ось вращения, перпендикулярную attachingBasisZ
-                    rotationAxis = attachingConnector.CoordinateSystem.BasisX;
-
-                    if (rotationAxis.IsZeroLength())
-                    {
-                        rotationAxis = attachingConnector.CoordinateSystem.BasisY;
-                    }
-                }
-                else
-                {
-                    // Векторы уже направлены в противоположные стороны, вращение не требуется
-                    angle = 0;
-                }
-            }
-            else
-            {
-                // Нормализуем ось вращения
-                rotationAxis = rotationAxis.Normalize();
-            }
-
-            // Выполняем вращение, если угол больше допустимого порога
-            if (angle > 1e-6)
-            {
-                // Создаем неограниченную линию вращения с началом в attachingConnector.Origin и направлением rotationAxis
-                Line rotationLine = Line.CreateUnbound(attachingConnector.Origin, rotationAxis);
-
-                // Вращаем присоединяемый элемент
-                ElementTransformUtils.RotateElement(_doc, attachingElement.Id, rotationLine, angle);
-            }
-        }
-
-        private void RestoreConnections(List<ConnectorConnection> connections)
+        private void RestoreConnections(List<ConnectorWrapper> connections)
         {
             const int maxIterations = 20;
             int iteration = 0;
             while (connections.Count > 0 && iteration < maxIterations)
             {
-                var newConnections = new List<ConnectorConnection>();
+                var newConnections = new List<ConnectorWrapper>();
                 // Копируем список, чтобы избежать изменения коллекции во время итерации
                 foreach (var connectorConnection in connections.ToList())
                 {
                     var targetConnector = connectorConnection.Connector;
-                    var connectedConnectorInfos = connectorConnection.ConnectedConnectors;
-                    if (targetConnector == null || connectedConnectorInfos == null ||
-                        connectedConnectorInfos.Count == 0)
+                    var connectedConnectorInfo = connectorConnection.ConnectedConnector;
+                    if (targetConnector == null || connectedConnectorInfo == null
+                       )
                     {
                         // Удаляем некорректные или пустые подключения из списка для обработки
                         connections.Remove(connectorConnection);
                         continue;
                     }
 
-                    foreach (var connectedInfo in connectedConnectorInfos)
-                    {
-                        var attachingConnector = connectedInfo.Connector;
-                        var attachingElement = connectedInfo.Element;
-                        if (attachingConnector == null || attachingElement == null)
+                  
+                        var attachingConnector = connectedConnectorInfo;
+                        var attachingElement = new ElementWrapper(connectedConnectorInfo.Owner);
+                        if (attachingConnector == null)
                         {
                             // Пропускаем некорректные соединения
                             continue;
                         }
 
-                        // Получаем ConnectorManager для присоединяемого элемента
-                        var attachingConnectorManager = GetConnectorManager(attachingElement);
-
-                        if (attachingConnectorManager == null)
-                        {
-                            // Пропускаем, если не удалось получить ConnectorManager
-                            continue;
-                        }
-
                         // Отключаем существующие подключения присоединяемого элемента
-                        var existingConnections = DisconnectExistingConnections(attachingConnectorManager);
+                        var existingConnections = DisconnectExistingConnections(attachingElement);
 
                         // Добавляем отключённые соединения в список для последующей обработки
                         newConnections.AddRange(existingConnections);
@@ -985,9 +1049,10 @@ namespace SystemModelingCommands.Services
                         // Перемещаем присоединяемый элемент
                         ElementTransformUtils.MoveElement(_doc, attachingElement.Id, translationVector);
                         // Выравниваем коннекторы
-                        AlignConnectors(targetConnector, attachingConnector, attachingElement);
+                        AlignConnectors(connectorConnection.Connector, connectedConnectorInfo,
+                            attachingElement.Element);
                         attachingConnector.ConnectTo(targetConnector);
-                    }
+                   
 
                     // Удаляем обработанный объект из списка для обработки
                     connections.Remove(connectorConnection);
@@ -1000,28 +1065,6 @@ namespace SystemModelingCommands.Services
             }
         }
 
-        private ConnectorManager GetConnectorManager(Element element)
-        {
-            switch (element)
-            {
-                // Проверяем тип элемента
-                case MEPCurve pipe:
-                {
-                    // Логика для Pipe
-                    return pipe.ConnectorManager;
-                }
-                case FamilyInstance familyInstance:
-                {
-                    // Логика для FamilyInstance
-                    // Получаем MEPModel, только если это MEP-тип семейства
-                    MEPModel mepModel = familyInstance.MEPModel;
-                    {
-                        return mepModel.ConnectorManager;
-                    }
-                }
-                default: return null;
-            }
-        }
 
         private void MergeDictionaries(Dictionary<Connector, Element> target, Dictionary<Connector, Element> source)
         {

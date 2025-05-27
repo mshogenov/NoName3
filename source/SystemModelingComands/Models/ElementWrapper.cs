@@ -4,17 +4,36 @@ public sealed class ElementWrapper
 {
     public Element Element { get; set; }
     public ElementId Id { get; set; }
-    public ConnectorManager ConnectorManager { get; }
-
-
+   
+    public ConnectorManager ConnectorManager => GetConnectorManager(Element);
+    public List<ConnectorWrapper> Connectors => GetConnectors();
+    public List<Element> ConnectedElements => GetConnectedElements();
+  
     public ElementWrapper(Element element)
     {
         if (element == null) return;
         Element = element;
         Id = element.Id;
-        ConnectorManager = GetConnectorManager(element);
     }
-
+    private List<Element> GetConnectedElements()
+    {
+        List<Element> elements = [];
+        foreach (var connector in Connectors)
+        {
+            if (connector.ConnectedElement != null)
+            {
+                elements.Add(connector.ConnectedElement);
+            }
+        }
+        return elements;
+    }
+    private List<ConnectorWrapper> GetConnectors()
+    {
+        return ConnectorManager.Connectors
+            .Cast<Connector>()
+            .Select(x => new ConnectorWrapper(x))
+            .ToList();
+    }
     private static ConnectorManager GetConnectorManager(Element element) => element switch
     {
         MEPCurve mep => mep.ConnectorManager,
@@ -28,10 +47,8 @@ public sealed class ElementWrapper
     /// <param name="point"></param>
     /// <returns></returns>
     public Connector FindClosestFreeConnector(XYZ point) =>
-        ConnectorManager?
-            .Connectors
-            .Cast<Connector>()
+        Connectors
             .Where(c => !c.IsConnected)
             .OrderBy(c => c.Origin.DistanceTo(point))
-            .FirstOrDefault();
+            .FirstOrDefault() ?.Connector;
 }
