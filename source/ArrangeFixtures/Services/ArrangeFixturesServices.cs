@@ -1,3 +1,4 @@
+using ArrangeFixtures.Models;
 using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.UI;
 using Nice3point.Revit.Toolkit.External.Handlers;
@@ -81,8 +82,8 @@ public class ArrangeFixturesServices
             if (commonDirection == null)
                 return; // Нет труб для обработки
 
-            // Вычисляем шаг в футах (500 мм)
-            double stepInFeet = UnitUtils.ConvertToInternalUnits(500, UnitTypeId.Millimeters);
+            // Вычисляем шаг в футах (1000 мм)
+            double stepInFeet = UnitUtils.ConvertToInternalUnits(1000, UnitTypeId.Millimeters);
 
             // Определяем максимальную длину среди всех труб
             double maxLength = 0;
@@ -134,17 +135,15 @@ public class ArrangeFixturesServices
                     XYZ supportPoint = pipeStart + pipeDirection * (offset - startOffset);
 
                     // Проверяем, находится ли точка на трубе
-                    if (IsPointOnPipe(supportPoint, pipeStart, pipeEnd))
-                    {
-                        var level = _doc.GetElement(pipe.LevelId);
-                        FamilyInstance family = _doc.Create.NewFamilyInstance(
-                            supportPoint,
-                            symbol,
-                            level,
-                            Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
+                    if (!IsPointOnPipe(supportPoint, pipeStart, pipeEnd)) continue;
+                    var level = _doc.GetElement(pipe.LevelId);
+                    FamilyInstance family = _doc.Create.NewFamilyInstance(
+                        supportPoint,
+                        symbol,
+                        level,
+                        Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
 
-                        AlignInstanceWithPipe(family, pipe);
-                    }
+                    AlignInstanceWithPipe(family, pipe);
                 }
             }
 
@@ -155,7 +154,156 @@ public class ArrangeFixturesServices
             trans.RollBack();
         }
     }
+    public PipeExtremums FindExtremePipes(Document doc)
+    {
+        var collector = new FilteredElementCollector(doc)
+            .OfCategory(BuiltInCategory.OST_PipeCurves)
+            .OfClass(typeof(Pipe))
+            .Cast<Pipe>();
 
+        var result = new PipeExtremums();
+        double maxX = double.MinValue;
+        double minX = double.MaxValue;
+        double maxY = double.MinValue;
+        double minY = double.MaxValue;
+        double maxZ = double.MinValue;
+        double minZ = double.MaxValue;
+
+        foreach (Pipe pipe in collector)
+        {
+            if (pipe == null)
+            {
+                
+            }
+            LocationCurve location = pipe.Location as LocationCurve;
+            Curve curve = location.Curve;
+            XYZ start = curve.GetEndPoint(0);
+            XYZ end = curve.GetEndPoint(1);
+
+            // Проверяем X координату
+            if (start.X > maxX || end.X > maxX)
+            {
+                maxX = Math.Max(start.X, end.X);
+                result.MaxX = pipe;
+            }
+            if (start.X < minX || end.X < minX)
+            {
+                minX = Math.Min(start.X, end.X);
+                result.MinX = pipe;
+            }
+
+            // Проверяем Y координату
+            if (start.Y > maxY || end.Y > maxY)
+            {
+                maxY = Math.Max(start.Y, end.Y);
+                result.MaxY = pipe;
+            }
+            if (start.Y < minY || end.Y < minY)
+            {
+                minY = Math.Min(start.Y, end.Y);
+                result.MinY = pipe;
+            }
+
+            // Проверяем Z координату
+            if (start.Z > maxZ || end.Z > maxZ)
+            {
+                maxZ = Math.Max(start.Z, end.Z);
+                result.MaxZ = pipe;
+            }
+            if (start.Z < minZ || end.Z < minZ)
+            {
+                minZ = Math.Min(start.Z, end.Z);
+                result.MinZ = pipe;
+            }
+        }
+
+        return result;
+    }
+public IList<(XYZ Point, Pipe NearbyPipe)> CheckPipePoints(Pipe sourcePipe, double spacing = 500, double searchRange = 1000)
+{
+    Document doc = sourcePipe.Document;
+    var results = new List<(XYZ Point, Pipe NearbyPipe)>();
+
+    // Получаем линию трубы
+    LocationCurve locationCurve = sourcePipe.Location as LocationCurve;
+    Curve pipeCurve = locationCurve.Curve;
+
+    // Получаем длину трубы
+    double pipeLength = pipeCurve.Length;
+
+    // Собираем все трубы в проекте (кроме исходной)
+    var allPipes = new FilteredElementCollector(doc)
+        .OfCategory(BuiltInCategory.OST_PipeCurves)
+        .OfClass(typeof(Pipe))
+        .Where(p => p.Id != sourcePipe.Id)
+        .Cast<Pipe>()
+        .ToList();
+
+    // Проверяем точки через каждые spacing миллиметров
+    for (double currentDistance = 0; currentDistance <= pipeLength; currentDistance += spacing)
+    {
+        // Получаем точку на трубе
+        XYZ point = pipeCurve.Evaluate(currentDistance / pipeLength, true);
+
+        // Проецируем точку на горизонтальную плоскость
+        XYZ projectedPoint = new XYZ(point.X, point.Y, 0);
+
+        // Ищем ближайшую трубу к этой точке
+        Pipe nearestPipe = null;
+        double minDistance = double.MaxValue;
+
+        foreach (Pipe pipe in allPipes)
+        {
+            LocationCurve pipeLocCurve = pipe.Location as LocationCurve;
+            Curve pCurve = pipeLocCurve.Curve;
+
+            // Проецируем трубу на горизонтальную плоскость
+            XYZ pStart = pCurve.GetEndPoint(0);
+            XYZ pEnd = pCurve.GetEndPoint(1);
+            XYZ pStartProj = new XYZ(pStart.X, pStart.Y, 0);
+            XYZ pEndProj = new XYZ(pEnd.X, pEnd.Y, 0);
+            Line pProjectedLine = Line.CreateBound(pStartProj, pEndProj);
+
+            // Находим расстояние от точки до линии
+            double distance = GetDistanceFromPointToLine(projectedPoint, pProjectedLine);
+
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                nearestPipe = pipe;
+            }
+        }
+
+        // Если нашли трубу в пределах указанного диапазона
+        if (minDistance <= searchRange)
+        {
+            results.Add((point, nearestPipe));
+        }
+    }
+
+    return results;
+}
+
+private double GetDistanceFromPointToLine(XYZ point, Line line)
+{
+    XYZ start = line.GetEndPoint(0);
+    XYZ end = line.GetEndPoint(1);
+    XYZ vector = end - start;
+
+    double lineLength = vector.GetLength();
+    vector = vector.Normalize();
+
+    XYZ pointVector = point - start;
+    double dot = pointVector.DotProduct(vector);
+
+    if (dot <= 0)
+        return point.DistanceTo(start);
+    if (dot >= lineLength)
+        return point.DistanceTo(end);
+
+    XYZ projection = start + vector * dot;
+    return point.DistanceTo(projection);
+}
     // Проецирует точку на ось, заданную опорной точкой и направлением
     private XYZ ProjectPointToAxis(XYZ point, XYZ axisPoint, XYZ axisDirection)
     {

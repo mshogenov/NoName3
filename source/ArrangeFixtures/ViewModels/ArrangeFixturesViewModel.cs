@@ -77,7 +77,9 @@ public sealed partial class ArrangeFixturesViewModel : ObservableObject
         }
 
         // Преобразуем в список
-        Fixtures = uniqueFixtures.Values.ToList();
+        Fixtures = uniqueFixtures.Values
+            .OrderBy(x => x.Name)
+            .ToList();
     }
 
     [RelayCommand]
