@@ -18,6 +18,7 @@ public class ReconnectElements
         {
             return null;
         }
+
         // Запоминаем соединения каждого коннектора
         foreach (Connector connector in connectorManager.Connectors)
         {
@@ -32,6 +33,7 @@ public class ReconnectElements
 
         return connectionMap;
     }
+
     private ConnectorManager GetConnectorManager(Element element)
     {
         MEPSystem system = element as MEPSystem;
@@ -48,10 +50,12 @@ public class ReconnectElements
 
         return null;
     }
+
     /// <summary>
     /// Присоединяет элементы обратно к перемещённому элементу
     /// </summary>
-    public void ReconnectAllConnections(Element selectedElement, Document doc, Dictionary<Connector, Connector> connectionMap)
+    public void ReconnectAllConnections(Element selectedElement, Document doc,
+        Dictionary<Connector, Connector> connectionMap)
     {
         if (connectionMap == null || connectionMap.Count == 0)
         {
@@ -85,6 +89,7 @@ public class ReconnectElements
             trans.Commit();
         }
     }
+
     /// <summary>
     /// Ищем ближайший новый коннектор из перемещённого элемента
     /// </summary>

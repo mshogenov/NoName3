@@ -19,7 +19,9 @@ namespace SystemModelingCommands.Views.Converters
                 throw new ArgumentException($"{nameof(parameter)} is not type: {typeof(TEnum)}");
             }
 
-            return EqualityComparer<TEnum>.Default.Equals(valueEnum, parameterEnum) ? Visibility.Visible : Visibility.Hidden;
+            return EqualityComparer<TEnum>.Default.Equals(valueEnum, parameterEnum)
+                ? Visibility.Visible
+                : Visibility.Hidden;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

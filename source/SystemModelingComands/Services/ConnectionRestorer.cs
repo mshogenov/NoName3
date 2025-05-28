@@ -12,6 +12,4 @@ public class ConnectionRestorer
     {
         _doc = doc ?? throw new ArgumentNullException(nameof(doc));
     }
-
-    
 }

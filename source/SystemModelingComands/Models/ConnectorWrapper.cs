@@ -27,10 +27,15 @@ public class ConnectorWrapper
             .Cast<Connector>()
             .FirstOrDefault(IsValidConnectedConnector);
     }
+
     private bool IsValidConnectedConnector(Connector other)
     {
-        if (other == null || !other.IsConnected)
+        if (other == null)
             return false;
+        if (!IsPhysicalConnector(other))
+        {
+            return false;
+        }
 
         // Проверяем, что коннекторы действительно соединены
         const double tolerance = 0.001; // допустимая погрешность в футах
@@ -40,12 +45,25 @@ public class ConnectorWrapper
         bool differentConnectors = other.Owner.Id != Owner.Id;
 
         // Проверяем домен (например, что это физическое соединение)
-        bool validDomain = other.Domain == Domain.DomainPiping || 
+        bool validDomain = other.Domain == Domain.DomainPiping ||
                            other.Domain == Domain.DomainHvac;
 
         return sameLocation && differentConnectors && validDomain;
     }
+    private bool IsPhysicalConnector(Connector connector)
+    {
+        if (connector == null)
+            return false;
 
+        try
+        {
+            return connector.ConnectorType == ConnectorType.Physical;
+        }
+        catch
+        {
+            return false;
+        }
+    }
     private Element GetConnectedElement()
     {
         return IsConnected ? Connector.AllRefs.Cast<Connector>().FirstOrDefault()?.Owner : null;

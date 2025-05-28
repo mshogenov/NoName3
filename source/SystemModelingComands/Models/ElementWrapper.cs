@@ -4,17 +4,18 @@ public sealed class ElementWrapper
 {
     public Element Element { get; set; }
     public ElementId Id { get; set; }
-   
+
     public ConnectorManager ConnectorManager => GetConnectorManager(Element);
     public List<ConnectorWrapper> Connectors => GetConnectors();
     public List<Element> ConnectedElements => GetConnectedElements();
-  
+
     public ElementWrapper(Element element)
     {
         if (element == null) return;
         Element = element;
         Id = element.Id;
     }
+
     private List<Element> GetConnectedElements()
     {
         List<Element> elements = [];
@@ -25,8 +26,10 @@ public sealed class ElementWrapper
                 elements.Add(connector.ConnectedElement);
             }
         }
+
         return elements;
     }
+
     private List<ConnectorWrapper> GetConnectors()
     {
         return ConnectorManager.Connectors
@@ -34,6 +37,7 @@ public sealed class ElementWrapper
             .Select(x => new ConnectorWrapper(x))
             .ToList();
     }
+
     private static ConnectorManager GetConnectorManager(Element element) => element switch
     {
         MEPCurve mep => mep.ConnectorManager,

@@ -7,9 +7,9 @@ public readonly struct AlignContext
     public ConnectorWrapper TargetConn { get; }
     public ConnectorWrapper AttachConn { get; }
 
-    
 
-    public AlignContext(ElementWrapper target,ElementWrapper attach,ConnectorWrapper targetConn,ConnectorWrapper attachConn)
+    public AlignContext(ElementWrapper target, ElementWrapper attach, ConnectorWrapper targetConn,
+        ConnectorWrapper attachConn)
     {
         Target = target;
         Attach = attach;
