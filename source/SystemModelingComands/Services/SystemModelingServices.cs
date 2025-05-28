@@ -539,7 +539,7 @@ namespace SystemModelingCommands.Services
                 }
                 else
                 {
-                    AlignAndConnect(ctx); // Соосные коннекторы
+                    AlignAndConnect(ctx);
                 }
 
                 tr.Commit();
@@ -563,19 +563,20 @@ namespace SystemModelingCommands.Services
                 "Выберите действие",
                 ("Удлинить/укоротить трубу", 1),
                 ("Переместить элемент", 2));
-            XYZ newMove = ctx.TargetConn.Origin - ctx.AttachConn.Origin;
+
             switch (choice)
             {
                 case 1: // Удлинить-укоротить
-                    if (ctx.Attach.Element is Pipe && ctx.Target.Element is Pipe)
-                    {
-                        if (DrainPipes(ctx, newMove)) return true;
-                    }
 
                     LengthenCurve(ctx.AttachConn.Connector, ctx.TargetConn.Connector);
-
+                    XYZ newMove = ctx.TargetConn.Origin - ctx.AttachConn.Origin;
                     ElementTransformUtils.MoveElement(_doc, ctx.Attach.Id, newMove);
                     ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
+                    if (ctx.Attach.Element is Pipe && ctx.Target.Element is Pipe)
+                    {
+                        if (DrainPipes(ctx)) return true;
+                    }
+
                     break;
 
                 case 2: // Переместить
@@ -588,26 +589,17 @@ namespace SystemModelingCommands.Services
             return true;
         }
 
-        private bool DrainPipes(AlignContext ctx, XYZ newMove)
+        private bool DrainPipes(AlignContext ctx)
         {
             if (ArePipesSimilar(ctx.Attach.Element as Pipe, ctx.Target.Element as Pipe))
             {
+                XYZ newMove = ctx.TargetConn.Origin - ctx.AttachConn.Origin;
                 ElementTransformUtils.MoveElement(_doc, ctx.Attach.Id, newMove);
                 Connector connectedConnector = null;
-                if (ctx.Attach.Connectors.Count > 1)
-                {
-                    foreach (var connector in ctx.Attach.Connectors)
-                    {
-                        if (connector.Origin != ctx.AttachConn.Origin)
-                        {
-                            connectedConnector = connector.ConnectedConnector;
-                        }
-                    }
-                }
-                else
-                {
-                    connectedConnector = ctx.Attach.Connectors.FirstOrDefault()?.ConnectedConnector;
-                }
+
+                connectedConnector = ctx.Attach.Connectors.FirstOrDefault(x => x.ConnectedConnector != null)
+                    ?.ConnectedConnector;
+
 
                 if (connectedConnector == null)
                 {
@@ -705,42 +697,31 @@ namespace SystemModelingCommands.Services
 
         private void AlignAndConnect(AlignContext ctx)
         {
-           
             // Шаг 5: Отключение существующих соединений и сохранение их для восстановления
             var existingConnections = DisconnectExistingConnections(ctx.Attach);
             // Шаг 6: Выравнивание соединителей
             AlignConnectors(ctx.TargetConn.Connector, ctx.AttachConn.Connector, ctx.Attach.Element);
-            var translationVector = ctx.TargetConn.Origin -
-                                    ctx.AttachConn.Origin;
+            var translationVector = ctx.TargetConn.Origin - ctx.AttachConn.Origin;
             ElementTransformUtils.MoveElement(_doc, ctx.Attach.Id, translationVector);
-            // Соединение после вращения
-            ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
+            if (!(ctx.Attach.Element is Pipe && ctx.Target.Element is Pipe))
+            {
+                // Соединение после вращения
+                ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
+            }
+
             // Шаг 8: Восстановление предыдущих соединений
             if (existingConnections.Any())
             {
                 RestoreConnections(existingConnections);
             }
+
             if (ctx.Attach.Element is Pipe && ctx.Target.Element is Pipe)
             {
-               
                 if (ArePipesSimilar(ctx.Attach.Element as Pipe, ctx.Target.Element as Pipe))
                 {
-                   
                     Connector connectedConnector = null;
-                    if (ctx.Attach.Connectors.Count > 1)
-                    {
-                        foreach (var connector in ctx.Attach.Connectors)
-                        {
-                            if (connector.Origin != ctx.AttachConn.Origin)
-                            {
-                                connectedConnector = connector.ConnectedConnector;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        connectedConnector = ctx.Attach.Connectors.FirstOrDefault()?.ConnectedConnector;
-                    }
+                    connectedConnector = ctx.Attach.Connectors.FirstOrDefault(x => x.ConnectedConnector != null)
+                        ?.ConnectedConnector;
 
                     if (connectedConnector == null)
                     {
@@ -754,18 +735,10 @@ namespace SystemModelingCommands.Services
                     }
 
                     LengthenCurve(ctx.TargetConn.Connector, connectedConnector);
-                 
-                    if (connectedConnector is { IsValidObject: true })
-                    {
-                        connectedConnector?.ConnectTo(ctx.TargetConn.Connector);
-                    }
-                    _doc.Delete(ctx.Attach.Element.Id);
-                 
+                    _doc.Delete(ctx.Attach.Id);
+                    ctx.TargetConn.Connector.ConnectTo(connectedConnector);
                 }
-
-         
             }
-            
         }
 
         /// <summary>
@@ -897,27 +870,17 @@ namespace SystemModelingCommands.Services
             if (!TryPickElement(
                     "Выберите точку на присоединяемом элементе",
                     out var attach, out var attachPt,
-                    target.Element))
+                    target))
                 return false;
 
-            // 3. Ближайшие коннекторы
-            var tConn = target.FindClosestFreeConnector(targetPt);
-            var aConn = attach.FindClosestFreeConnector(attachPt);
-
-            if (tConn is null || aConn is null) // нет коннекторов
-                return false;
-
-            ctx = new AlignContext(target, attach, new ConnectorWrapper(tConn), new ConnectorWrapper(aConn));
+            ctx = new AlignContext(target, attach, targetPt, attachPt);
             return true;
         }
 
-        private bool TryPickElement(
-            string prompt,
-            out ElementWrapper wrapper,
-            out XYZ pickedPoint,
+        private bool TryPickElement(string prompt, out Element element, out XYZ pickedPoint,
             Element elementToExclude = null)
         {
-            wrapper = null;
+            element = null;
             pickedPoint = null;
 
             ISelectionFilter filter = new CategorySelectionFilter
@@ -933,9 +896,9 @@ namespace SystemModelingCommands.Services
                     prompt);
 
                 pickedPoint = r?.GlobalPoint;
-                wrapper = r == null ? null : new ElementWrapper(_doc.GetElement(r));
+                element = r == null ? null : _doc.GetElement(r);
 
-                return wrapper != null;
+                return element != null;
             }
             catch (Autodesk.Revit.Exceptions.OperationCanceledException)
             {
@@ -1056,44 +1019,6 @@ namespace SystemModelingCommands.Services
             return connectorConnections;
         }
 
-        private bool HasReferences(Connector connector)
-        {
-            return connector.AllRefs.Cast<Connector>()
-                .Any(c => c != null && c.Owner.Id != connector.Owner.Id);
-        }
-
-        private ConnectorWrapper ProcessConnector(ConnectorWrapper connector)
-        {
-            if (connector is not { IsConnected: true })
-                return null;
-            if (GetValidConnectedConnectors(connector.ConnectedConnector))
-            {
-                var connectorWrapper = new ConnectorWrapper(connector.ConnectedConnector);
-                DisconnectFromConnectors(connector.Connector, connectorWrapper.Connector, connectorWrapper);
-                return connectorWrapper;
-            }
-
-            return null;
-        }
-
-        private bool GetValidConnectedConnectors(Connector connector)
-        {
-            return IsPhysicalDomain(connector.Domain) && connector.IsConnected;
-        }
-
-        private void DisconnectFromConnectors(Connector sourceConnector, Connector connectedConnector,
-            ConnectorWrapper connectorWrapper)
-        {
-            try
-            {
-                connectorWrapper.AddConnectedConnector(new ConnectorWrapper(connectedConnector));
-                sourceConnector.DisconnectFrom(connectedConnector);
-            }
-            catch (Exception ex)
-            {
-                TaskDialog.Show("Ошибка", ex.Message);
-            }
-        }
 
         private List<Connector> GetConnectedConnectors(ConnectorManager connectorManager)
         {

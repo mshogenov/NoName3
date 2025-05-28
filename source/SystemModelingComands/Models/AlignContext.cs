@@ -8,12 +8,16 @@ public readonly struct AlignContext
     public ConnectorWrapper AttachConn { get; }
 
 
-    public AlignContext(ElementWrapper target, ElementWrapper attach, ConnectorWrapper targetConn,
-        ConnectorWrapper attachConn)
+    public AlignContext([NotNull] Element target, [NotNull] Element attach, [NotNull] XYZ targetPt, [NotNull] XYZ attachPt)
     {
-        Target = target;
-        Attach = attach;
-        TargetConn = targetConn;
-        AttachConn = attachConn;
+        if (target == null) throw new ArgumentNullException(nameof(target));
+        if (attach == null) throw new ArgumentNullException(nameof(attach));
+        if (targetPt == null) throw new ArgumentNullException(nameof(targetPt));
+        if (attachPt == null) throw new ArgumentNullException(nameof(attachPt));
+        Target = new ElementWrapper(target) ;
+        Attach = new ElementWrapper(attach) ;
+        TargetConn= new ConnectorWrapper(Target.FindClosestFreeConnector(targetPt)) ;
+        AttachConn = new ConnectorWrapper(Attach.FindClosestFreeConnector(attachPt)) ;
+       
     }
 }

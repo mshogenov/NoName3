@@ -9,16 +9,14 @@ public class ConnectorConnection
 
     public ConnectorConnection(Connector targetConnector)
     {
+        if (targetConnector == null) return;
         TargetConnector = targetConnector;
         Element = targetConnector.Owner;
     }
 
     public void AddConnectedConnector(Connector connector)
     {
-        if (connector == null)
-            throw new ArgumentNullException(nameof(connector));
         if (!_connectorConnections.Contains(new ConnectorConnection(connector)))
             _connectorConnections.Add(new ConnectorConnection(connector));
-       
     }
 }
