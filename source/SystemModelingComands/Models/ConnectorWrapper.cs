@@ -16,12 +16,34 @@ public class ConnectorWrapper
         Connector = connector;
     }
 
-    // Только чтение коллекции извне
     public Connector ConnectedConnector => GetConnectedConnector();
 
     private Connector GetConnectedConnector()
     {
-        return Connector.AllRefs.Cast<Connector>().FirstOrDefault();
+        if (!IsConnected)
+            return null;
+
+        return Connector.AllRefs
+            .Cast<Connector>()
+            .FirstOrDefault(IsValidConnectedConnector);
+    }
+    private bool IsValidConnectedConnector(Connector other)
+    {
+        if (other == null || !other.IsConnected)
+            return false;
+
+        // Проверяем, что коннекторы действительно соединены
+        const double tolerance = 0.001; // допустимая погрешность в футах
+        bool sameLocation = Origin.DistanceTo(other.Origin) < tolerance;
+
+        // Проверяем, что это не тот же самый коннектор
+        bool differentConnectors = other.Owner.Id != Owner.Id;
+
+        // Проверяем домен (например, что это физическое соединение)
+        bool validDomain = other.Domain == Domain.DomainPiping || 
+                           other.Domain == Domain.DomainHvac;
+
+        return sameLocation && differentConnectors && validDomain;
     }
 
     private Element GetConnectedElement()

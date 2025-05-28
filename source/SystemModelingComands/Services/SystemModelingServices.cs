@@ -662,7 +662,7 @@ namespace SystemModelingCommands.Services
         private void AlignAndConnect(AlignContext ctx)
         {
             // Шаг 5: Отключение существующих соединений и сохранение их для восстановления
-            var existingConnections = DisconnectExistingConnections(ctx.Attach);
+            var existingConnections = DisconnectExistingConnections(ctx.Attach.ConnectorManager);
             // Шаг 6: Выравнивание соединителей
             AlignConnectors(ctx.TargetConn.Connector, ctx.AttachConn.Connector, ctx.Attach.Element);
             var translationVector = ctx.TargetConn.Origin -
@@ -920,37 +920,67 @@ namespace SystemModelingCommands.Services
 
             locationCurve.Curve = newCurve;
         }
-
-        /// <summary>
-        /// Отключает все существующие соединения элемента и возвращает список отключенных соединений
-        /// </summary>
-        /// <param name="element">Элемент, соединения которого нужно отключить</param>
-        /// <returns>Список отключенных соединений в виде ConnectorWrapper</returns>
-        private List<ConnectorWrapper> DisconnectExistingConnections(ElementWrapper element)
+        private List<ConnectorConnection> DisconnectExistingConnections(ConnectorManager connectorManager)
         {
-            if (element?.ConnectorManager == null)
-                return [];
+            var connections = new List<ConnectorConnection>();
 
-            var connections = new List<ConnectorWrapper>();
-
-            foreach (var connector in element.Connectors)
+            foreach (Connector connector in connectorManager.Connectors)
             {
-                var connectorWrapper = ProcessConnector(connector);
-                if (connectorWrapper != null)
+                if (!connector.IsConnected)
                 {
-                    connections.Add(connectorWrapper);
+                    continue;
+                }
+
+                // Собираем подключенные коннекторы перед отключением
+                var connectedConnectors = new List<Connector>();
+
+                foreach (Connector connectedConnector in connector.AllRefs)
+                {
+                    if (!IsPhysicalDomain(connectedConnector.Domain))
+                        continue;
+                    if (!connectedConnector.IsConnected) continue;
+                    connectedConnectors.Add(connectedConnector);
+                }
+
+                var connectorConnection = new ConnectorConnection(connector);
+                // Отключаем и записываем подключенные коннекторы
+                foreach (Connector connectedConnector in connectedConnectors)
+                {
+                    try
+                    {
+                        // Сохраняем подключенный коннектор
+                        connectorConnection.ConnectedConnectors.Add(
+                            new ConnectorConnection(connectedConnector));
+
+                        // Отключаем коннекторы
+                        connector.DisconnectFrom(connectedConnector);
+                    }
+                    catch (Exception ex)
+                    {
+                        // ignored
+                    }
+                }
+
+
+                if (connectorConnection.ConnectedConnectors.Count > 0)
+                {
+                    connections.Add(connectorConnection);
                 }
             }
 
             return connections;
         }
 
+        private bool HasReferences(Connector connector)
+        {
+            return connector.AllRefs.Cast<Connector>()
+                .Any(c => c != null && c.Owner.Id != connector.Owner.Id);
+        }
+
         private ConnectorWrapper ProcessConnector(ConnectorWrapper connector)
         {
             if (connector is not { IsConnected: true })
                 return null;
-
-
             if (GetValidConnectedConnectors(connector.ConnectedConnector))
             {
                 var connectorWrapper = new ConnectorWrapper(connector.ConnectedConnector);
@@ -1006,39 +1036,47 @@ namespace SystemModelingCommands.Services
                    domain == Domain.DomainPiping ||
                    domain == Domain.DomainElectrical;
         }
-
-
-        private void RestoreConnections(List<ConnectorWrapper> connections)
+ private void RestoreConnections(List<ConnectorConnection> connections)
         {
             const int maxIterations = 20;
             int iteration = 0;
             while (connections.Count > 0 && iteration < maxIterations)
             {
-                var newConnections = new List<ConnectorWrapper>();
+                var newConnections = new List<ConnectorConnection>();
                 // Копируем список, чтобы избежать изменения коллекции во время итерации
                 foreach (var connectorConnection in connections.ToList())
                 {
                     var targetConnector = connectorConnection.Connector;
-                    var connectedConnectorInfo = connectorConnection.ConnectedConnector;
-                    if (targetConnector == null || connectedConnectorInfo == null
-                       )
+                    var connectedConnectorInfos = connectorConnection.ConnectedConnectors;
+                    if (targetConnector == null || connectedConnectorInfos == null ||
+                        connectedConnectorInfos.Count == 0)
                     {
                         // Удаляем некорректные или пустые подключения из списка для обработки
                         connections.Remove(connectorConnection);
                         continue;
                     }
 
-                  
-                        var attachingConnector = connectedConnectorInfo;
-                        var attachingElement = new ElementWrapper(connectedConnectorInfo.Owner);
-                        if (attachingConnector == null)
+                    foreach (var connectedInfo in connectedConnectorInfos)
+                    {
+                        var attachingConnector = connectedInfo.Connector;
+                        var attachingElement = connectedInfo.Element;
+                        if (attachingConnector == null || attachingElement == null)
                         {
                             // Пропускаем некорректные соединения
                             continue;
                         }
 
+                        // Получаем ConnectorManager для присоединяемого элемента
+                        var attachingConnectorManager = GetConnectorManager(attachingElement);
+
+                        if (attachingConnectorManager == null)
+                        {
+                            // Пропускаем, если не удалось получить ConnectorManager
+                            continue;
+                        }
+
                         // Отключаем существующие подключения присоединяемого элемента
-                        var existingConnections = DisconnectExistingConnections(attachingElement);
+                        var existingConnections = DisconnectExistingConnections(attachingConnectorManager);
 
                         // Добавляем отключённые соединения в список для последующей обработки
                         newConnections.AddRange(existingConnections);
@@ -1049,10 +1087,9 @@ namespace SystemModelingCommands.Services
                         // Перемещаем присоединяемый элемент
                         ElementTransformUtils.MoveElement(_doc, attachingElement.Id, translationVector);
                         // Выравниваем коннекторы
-                        AlignConnectors(connectorConnection.Connector, connectedConnectorInfo,
-                            attachingElement.Element);
+                        AlignConnectors(targetConnector, attachingConnector, attachingElement);
                         attachingConnector.ConnectTo(targetConnector);
-                   
+                    }
 
                     // Удаляем обработанный объект из списка для обработки
                     connections.Remove(connectorConnection);
@@ -1062,6 +1099,62 @@ namespace SystemModelingCommands.Services
                 connections.AddRange(newConnections);
 
                 iteration++;
+            }
+        }
+        private ConnectorManager GetConnectorManager(Element element)
+        {
+            switch (element)
+            {
+                // Проверяем тип элемента
+                case MEPCurve pipe:
+                {
+                    // Логика для Pipe
+                    return pipe.ConnectorManager;
+                }
+                case FamilyInstance familyInstance:
+                {
+                    // Логика для FamilyInstance
+                    // Получаем MEPModel, только если это MEP-тип семейства
+                    MEPModel mepModel = familyInstance.MEPModel;
+                    {
+                        return mepModel.ConnectorManager;
+                    }
+                }
+                default: return null;
+            }
+        }
+
+
+        private bool IsValidForConnection(ConnectorWrapper attachingConnector, ConnectorWrapper targetConnectorWrapper)
+        {
+            return attachingConnector?.Connector != null &&
+                   targetConnectorWrapper?.Connector != null &&
+                   attachingConnector.Owner != null;
+        }
+
+      
+
+        private void ConnectElements(ConnectorWrapper attachingConnector,
+            ConnectorWrapper targetConnectorWrapper,
+            ElementWrapper attachingElement)
+        {
+            using (Transaction tx = new Transaction(_doc, "Connect Elements"))
+            {
+                tx.Start();
+
+                // Перемещение
+                var translationVector = targetConnectorWrapper.Origin - attachingConnector.Origin;
+                ElementTransformUtils.MoveElement(_doc, attachingElement.Id, translationVector);
+
+                // Выравнивание
+                AlignConnectors(targetConnectorWrapper.Connector,
+                    attachingConnector.Connector,
+                    attachingElement.Element);
+
+                // Соединение
+                attachingConnector.Connector.ConnectTo(targetConnectorWrapper.Connector);
+
+                tx.Commit();
             }
         }
 
