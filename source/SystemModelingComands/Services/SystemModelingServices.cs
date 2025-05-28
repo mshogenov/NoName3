@@ -662,7 +662,7 @@ namespace SystemModelingCommands.Services
         private void AlignAndConnect(AlignContext ctx)
         {
             // Шаг 5: Отключение существующих соединений и сохранение их для восстановления
-            var existingConnections = DisconnectExistingConnections(ctx.Attach.ConnectorManager);
+            var existingConnections = DisconnectExistingConnections(ctx.Attach);
             // Шаг 6: Выравнивание соединителей
             AlignConnectors(ctx.TargetConn.Connector, ctx.AttachConn.Connector, ctx.Attach.Element);
             var translationVector = ctx.TargetConn.Origin -
@@ -920,11 +920,11 @@ namespace SystemModelingCommands.Services
 
             locationCurve.Curve = newCurve;
         }
-        private List<ConnectorConnection> DisconnectExistingConnections(ConnectorManager connectorManager)
+        private List<ConnectorConnection> DisconnectExistingConnections(ElementWrapper element)
         {
-            var connections = new List<ConnectorConnection>();
+            var connectorConnections = new List<ConnectorConnection>();
 
-            foreach (Connector connector in connectorManager.Connectors)
+            foreach (ConnectorWrapper connector in element.Connectors)
             {
                 if (!connector.IsConnected)
                 {
@@ -934,15 +934,9 @@ namespace SystemModelingCommands.Services
                 // Собираем подключенные коннекторы перед отключением
                 var connectedConnectors = new List<Connector>();
 
-                foreach (Connector connectedConnector in connector.AllRefs)
-                {
-                    if (!IsPhysicalDomain(connectedConnector.Domain))
-                        continue;
-                    if (!connectedConnector.IsConnected) continue;
-                    connectedConnectors.Add(connectedConnector);
-                }
-
-                var connectorConnection = new ConnectorConnection(connector);
+                    connectedConnectors.Add(connector.ConnectedConnector);
+              
+                var connectorConnection = new ConnectorConnection(connector.Connector);
                 // Отключаем и записываем подключенные коннекторы
                 foreach (Connector connectedConnector in connectedConnectors)
                 {
@@ -953,7 +947,7 @@ namespace SystemModelingCommands.Services
                             new ConnectorConnection(connectedConnector));
 
                         // Отключаем коннекторы
-                        connector.DisconnectFrom(connectedConnector);
+                        connector.Connector.DisconnectFrom(connectedConnector);
                     }
                     catch (Exception ex)
                     {
@@ -964,11 +958,11 @@ namespace SystemModelingCommands.Services
 
                 if (connectorConnection.ConnectedConnectors.Count > 0)
                 {
-                    connections.Add(connectorConnection);
+                    connectorConnections.Add(connectorConnection);
                 }
             }
 
-            return connections;
+            return connectorConnections;
         }
 
         private bool HasReferences(Connector connector)
@@ -1059,24 +1053,16 @@ namespace SystemModelingCommands.Services
                     foreach (var connectedInfo in connectedConnectorInfos)
                     {
                         var attachingConnector = connectedInfo.Connector;
-                        var attachingElement = connectedInfo.Element;
+                        var attachingElement = new ElementWrapper(connectedInfo.Element) ;
                         if (attachingConnector == null || attachingElement == null)
                         {
                             // Пропускаем некорректные соединения
                             continue;
                         }
 
-                        // Получаем ConnectorManager для присоединяемого элемента
-                        var attachingConnectorManager = GetConnectorManager(attachingElement);
-
-                        if (attachingConnectorManager == null)
-                        {
-                            // Пропускаем, если не удалось получить ConnectorManager
-                            continue;
-                        }
 
                         // Отключаем существующие подключения присоединяемого элемента
-                        var existingConnections = DisconnectExistingConnections(attachingConnectorManager);
+                        var existingConnections = DisconnectExistingConnections(attachingElement);
 
                         // Добавляем отключённые соединения в список для последующей обработки
                         newConnections.AddRange(existingConnections);
@@ -1087,7 +1073,7 @@ namespace SystemModelingCommands.Services
                         // Перемещаем присоединяемый элемент
                         ElementTransformUtils.MoveElement(_doc, attachingElement.Id, translationVector);
                         // Выравниваем коннекторы
-                        AlignConnectors(targetConnector, attachingConnector, attachingElement);
+                        AlignConnectors(targetConnector, attachingConnector, attachingElement.Element);
                         attachingConnector.ConnectTo(targetConnector);
                     }
 
