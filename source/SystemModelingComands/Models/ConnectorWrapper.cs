@@ -1,3 +1,4 @@
+using Autodesk.Revit.DB.Mechanical;
 using Autodesk.Revit.DB.Plumbing;
 
 namespace SystemModelingCommands.Models;
@@ -9,7 +10,7 @@ public class ConnectorWrapper
     public Element ConnectedElement => GetConnectedElement();
 
     public Transform CoordinateSystem => Connector.CoordinateSystem;
-   
+
     public XYZ Origin => Connector.Origin;
     public bool IsConnected => Connector.IsConnected;
     public Connector ConnectedConnector => GetConnectedConnector();
@@ -23,11 +24,12 @@ public class ConnectorWrapper
 
     private Connector GetConnectedConnector()
     {
-        if (!IsConnected )
+        if (!IsConnected)
             return null;
 
         return Connector.AllRefs
-            .Cast<Connector>().Where(x=>x.Owner is not PipingSystem)
+            .Cast<Connector>().Where(x =>
+                x.Owner is not PipingSystem && x.Owner is not DuctInsulation && x.Owner is not PipeInsulation)
             .FirstOrDefault(IsValidConnectedConnector);
     }
 
@@ -35,7 +37,7 @@ public class ConnectorWrapper
     {
         if (other == null)
             return false;
-      
+
         // Проверяем, что коннекторы действительно соединены
         const double tolerance = 0.001; // допустимая погрешность в футах
         bool sameLocation = Origin.DistanceTo(other.Origin) < tolerance;
@@ -49,6 +51,7 @@ public class ConnectorWrapper
 
         return sameLocation && differentConnectors && validDomain;
     }
+
     private bool IsPhysicalConnector(Connector connector)
     {
         if (connector == null)
@@ -63,9 +66,9 @@ public class ConnectorWrapper
             return false;
         }
     }
+
     private Element GetConnectedElement()
     {
         return IsConnected ? Connector.AllRefs.Cast<Connector>().FirstOrDefault()?.Owner : null;
     }
-
-  }
+}
