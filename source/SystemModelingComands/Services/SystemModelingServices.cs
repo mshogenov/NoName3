@@ -565,7 +565,7 @@ namespace SystemModelingCommands.Services
             var choice = CustomDialogWindow.ShowDialog(
                 "Соединить",
                 "Выберите действие",
-                ("Удлинить/укоротить трубу", 1),
+                ("Переместить с удлинением/укорочением трубы", 1),
                 ("Переместить все элементы", 2));
             // Сначала проверяем на отмену
             if (choice == 0) // или то значение, которое вы определили для отмены
@@ -581,7 +581,7 @@ namespace SystemModelingCommands.Services
                     XYZ newMove = ctx.TargetConn.Origin - ctx.AttachConn.Origin;
                     ElementTransformUtils.MoveElement(_doc, ctx.Attach.Id, newMove);
 
-                    if (ctx.Attach.Element is Pipe && ctx.Target.Element is Pipe)
+                    if (ctx.Attach.Element is Pipe or Duct && ctx.Target.Element is Pipe or Duct)
                     {
                         if (DrainPipes(ctx)) return true;
                     }
@@ -600,7 +600,21 @@ namespace SystemModelingCommands.Services
 
         private bool DrainPipes(AlignContext ctx)
         {
-            if (!ArePipesSimilar(ctx.Attach.Element as Pipe, ctx.Target.Element as Pipe)) return false;
+            switch (ctx.Attach.Element)
+            {
+                case Pipe pipe:
+                {
+                    if (!ArePipesSimilar(pipe, ctx.Target.Element as Pipe)) return false;
+                }
+                    break;
+                case Duct duct:
+                {
+                    if (!AreDuctSimilar(duct, ctx.Target.Element as Duct)) return false;
+                }
+                    break;
+                default: return false;
+            }
+
             if ((ctx.TargetConn.Origin - ctx.AttachConn.Origin).GetLength() >= 0.01)
             {
                 XYZ newMove = ctx.TargetConn.Origin - ctx.AttachConn.Origin;
@@ -611,13 +625,8 @@ namespace SystemModelingCommands.Services
                 ?.ConnectedConnector;
             if (connectedConnector == null)
             {
-                foreach (var connector in ctx.Attach.Connectors)
-                {
-                    if (connector.Origin != ctx.AttachConn.Origin)
-                    {
-                        connectedConnector = ctx.Attach.Connectors.FirstOrDefault(x => x.Id != ctx.AttachConn.Id)?.Connector;
-                    }
-                }
+                connectedConnector = ctx.Attach.Connectors.FirstOrDefault(x => x.Id != ctx.AttachConn.Id)
+                    ?.Connector;
 
                 LengthenCurve(ctx.TargetConn.Connector, connectedConnector);
                 _doc.Delete(ctx.Attach.Element.Id);
@@ -653,6 +662,67 @@ namespace SystemModelingCommands.Services
             // Сравниваем значения диаметров с небольшой погрешностью
             const double tolerance = 0.001;
             return Math.Abs(diameter1.AsDouble() - diameter2.AsDouble()) < tolerance;
+        }
+
+        private bool AreDuctSimilar(Duct duct1, Duct duct2)
+        {
+            // Проверяем тип воздуховода
+            if (duct1.DuctType.Id != duct2.DuctType.Id)
+                return false;
+
+            // Получаем форму воздуховода через коннекторы
+            ConnectorManager cm1 = duct1.ConnectorManager;
+            ConnectorManager cm2 = duct2.ConnectorManager;
+
+            if (cm1 == null || cm2 == null)
+                return false;
+
+            // Берем первый коннектор для определения формы
+            Connector c1 = cm1.Connectors.Cast<Connector>().FirstOrDefault();
+            Connector c2 = cm2.Connectors.Cast<Connector>().FirstOrDefault();
+
+            if (c1 == null || c2 == null)
+                return false;
+
+            // Проверяем форму воздуховода
+            if (c1.Shape != c2.Shape)
+                return false;
+
+            // В зависимости от формы проверяем размеры
+            switch (c1.Shape)
+            {
+                case ConnectorProfileType.Round:
+                    // Для круглого - проверяем диаметр
+                    Parameter diameter1 = duct1.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM);
+                    Parameter diameter2 = duct2.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM);
+
+                    if (diameter1 == null || diameter2 == null)
+                        return false;
+
+                    return AreValuesEqual(diameter1.AsDouble(), diameter2.AsDouble());
+
+                case ConnectorProfileType.Rectangular:
+                case ConnectorProfileType.Oval:
+                    // Для прямоугольного - проверяем высоту и ширину
+                    Parameter height1 = duct1.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM);
+                    Parameter height2 = duct2.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM);
+                    Parameter width1 = duct1.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM);
+                    Parameter width2 = duct2.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM);
+
+                    if (height1 == null || height2 == null || width1 == null || width2 == null)
+                        return false;
+
+                    return AreValuesEqual(height1.AsDouble(), height2.AsDouble()) &&
+                           AreValuesEqual(width1.AsDouble(), width2.AsDouble());
+                default:
+                    return false;
+            }
+        }
+
+        private bool AreValuesEqual(double value1, double value2)
+        {
+            const double tolerance = 0.001;
+            return Math.Abs(value1 - value2) < tolerance;
         }
 
         private bool HandleGenericOpposite(AlignContext ctx)
@@ -720,7 +790,7 @@ namespace SystemModelingCommands.Services
             AlignConnectors(ctx.TargetConn.Connector, ctx.AttachConn.Connector, ctx.Attach.Element);
             var translationVector = ctx.TargetConn.Origin - ctx.AttachConn.Origin;
             ElementTransformUtils.MoveElement(_doc, ctx.Attach.Id, translationVector);
-            if (!(ctx.Attach.Element is Pipe && ctx.Target.Element is Pipe))
+            if (!(ctx.Attach.Element is MEPCurve && ctx.Target.Element is MEPCurve))
             {
                 // Соединение после вращения
                 ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
@@ -732,32 +802,7 @@ namespace SystemModelingCommands.Services
                 RestoreConnections(existingConnections);
             }
 
-            if (ctx.Attach.Element is not Pipe pipe1 || ctx.Target.Element is not Pipe pipe2) return;
-            if (!ArePipesSimilar(pipe1, pipe2)) return;
             DrainPipes(ctx);
-            // Connector connectedConnector = ctx.Attach.Connectors
-            //     .FirstOrDefault(x => x.ConnectedConnector != null)
-            //     ?.ConnectedConnector;
-            //
-            // if (connectedConnector == null)
-            // {
-            //     foreach (var connector in ctx.Attach.Connectors)
-            //     {
-            //         if (connector.Origin != ctx.AttachConn.Origin)
-            //         {
-            //             connectedConnector = connector.Connector;
-            //         }
-            //     }
-            //
-            //     LengthenCurve(ctx.TargetConn.Connector, connectedConnector);
-            //     _doc.Delete(ctx.Attach.Id);
-            // }
-            // else
-            // {
-            //     LengthenCurve(ctx.TargetConn.Connector, connectedConnector);
-            //     _doc.Delete(ctx.Attach.Id);
-            //     ctx.TargetConn.Connector.ConnectTo(connectedConnector);
-            // }
         }
 
         /// <summary>
