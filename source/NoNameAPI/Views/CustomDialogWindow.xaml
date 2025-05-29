@@ -1,0 +1,54 @@
+<local:BaseRevitWindow x:Class="NoNameApi.Views.CustomDialogWindow"
+                       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                       xmlns:local="clr-namespace:NoNameApi.Views"
+                       mc:Ignorable="d"
+                       WindowStartupLocation="CenterScreen"
+                       Background="{DynamicResource WindowBackgroundBrush}"
+                       ResizeMode="NoResize"
+                       Title="{Binding Title}" 
+                       Width="400" 
+                       SizeToContent="Height"
+                       d:DataContext="{d:DesignInstance local:CustomDialogWindow }">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Style="{DynamicResource Grid}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+<Border Style="{DynamicResource BorderContentStyle}"
+        Margin="0 0 0  10">
+    <StackPanel>
+        <TextBlock Grid.Row="0"
+                   Text="{Binding Instruction}"
+                   TextWrapping="Wrap"
+                   Style="{DynamicResource TextBlockStyle}"
+                   Margin="0,0,0,10" />
+
+        <StackPanel Grid.Row="1"
+                    x:Name="CommandsPanel"
+                    Orientation="Vertical"
+                    Margin="0,0,0,10" />
+
+      
+    </StackPanel>
+</Border>
+        <Button Grid.Row="2"
+                Style="{DynamicResource OutlineCloseButtonStyle}"
+                Content="Отмена"
+                HorizontalAlignment="Right"
+                Click="CancelButton_Click" />
+    </Grid>
+</local:BaseRevitWindow>

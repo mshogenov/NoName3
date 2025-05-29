@@ -3,6 +3,7 @@ using Autodesk.Revit.DB.Mechanical;
 using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
+using NoNameApi.Views;
 using SystemModelingCommands.Filters;
 using SystemModelingCommands.Models;
 using SystemModelingCommands.Views;
@@ -658,7 +659,7 @@ namespace SystemModelingCommands.Services
                                     ctx.AttachConn.Origin;
             if (singleConnection)
             {
-                var choice = ShowChoiceDialog(
+                var choice = CustomDialogWindow.ShowDialog(
                     "Соединить",
                     "Выберите действие",
                     ("Переместить выбранный элемент", 1),

@@ -88,17 +88,20 @@
                         <Button x:Name="MinimizeButton"
                                 Grid.Row="0" Grid.Column="1"
                                 Content="&#xE921;"
+                                Margin="0,2,0,0"
                                 Style="{DynamicResource WindowButtonStyle}" />
 
                         <Button x:Name="MaximizeButton"
                                 Grid.Row="0" Grid.Column="2"
                                 Content="&#xE922;"
+                                Margin="0,2,0,0"
                                 Style="{DynamicResource WindowButtonStyle}" />
 
                         <!-- Кнопка закрытия со скругленным правым верхним углом -->
                         <Button x:Name="CloseButton"
                                 Grid.Row="0" Grid.Column="3"
                                 Content="&#xE8BB;"
+                                Margin="0,1,1,0"
                                 Style="{DynamicResource CloseButtonStyle}">
                             <!-- Переопределяем шаблон для кнопки закрытия -->
                             <Button.Template>
