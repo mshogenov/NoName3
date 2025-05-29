@@ -562,11 +562,11 @@ namespace SystemModelingCommands.Services
 
         private bool HandlePipeOrDuctOpposite(AlignContext ctx)
         {
-            var choice = ShowChoiceDialog(
+            var choice = CustomDialogWindow.ShowDialog(
                 "Соединить",
                 "Выберите действие",
                 ("Удлинить/укоротить трубу", 1),
-                ("Переместить элемент", 2));
+                ("Переместить все элементы", 2));
             // Сначала проверяем на отмену
             if (choice == 0) // или то значение, которое вы определили для отмены
             {
@@ -580,7 +580,7 @@ namespace SystemModelingCommands.Services
                     LengthenCurve(ctx.AttachConn.Connector, ctx.TargetConn.Connector);
                     XYZ newMove = ctx.TargetConn.Origin - ctx.AttachConn.Origin;
                     ElementTransformUtils.MoveElement(_doc, ctx.Attach.Id, newMove);
-                    ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
+
                     if (ctx.Attach.Element is Pipe && ctx.Target.Element is Pipe)
                     {
                         if (DrainPipes(ctx)) return true;
@@ -600,27 +600,30 @@ namespace SystemModelingCommands.Services
 
         private bool DrainPipes(AlignContext ctx)
         {
-            if (ArePipesSimilar(ctx.Attach.Element as Pipe, ctx.Target.Element as Pipe))
+            if (!ArePipesSimilar(ctx.Attach.Element as Pipe, ctx.Target.Element as Pipe)) return false;
+            if ((ctx.TargetConn.Origin - ctx.AttachConn.Origin).GetLength() >= 0.01)
             {
                 XYZ newMove = ctx.TargetConn.Origin - ctx.AttachConn.Origin;
                 ElementTransformUtils.MoveElement(_doc, ctx.Attach.Id, newMove);
-                Connector connectedConnector = null;
+            }
 
-                connectedConnector = ctx.Attach.Connectors.FirstOrDefault(x => x.ConnectedConnector != null)
-                    ?.ConnectedConnector;
-
-
-                if (connectedConnector == null)
+            Connector connectedConnector = ctx.Attach.Connectors.FirstOrDefault(x => x.ConnectedConnector != null)
+                ?.ConnectedConnector;
+            if (connectedConnector == null)
+            {
+                foreach (var connector in ctx.Attach.Connectors)
                 {
-                    foreach (var connector in ctx.Attach.Connectors)
+                    if (connector.Origin != ctx.AttachConn.Origin)
                     {
-                        if (connector.Origin != ctx.AttachConn.Origin)
-                        {
-                            connectedConnector = connector.Connector;
-                        }
+                        connectedConnector = ctx.Attach.Connectors.FirstOrDefault(x => x.Id != ctx.AttachConn.Id)?.Connector;
                     }
                 }
 
+                LengthenCurve(ctx.TargetConn.Connector, connectedConnector);
+                _doc.Delete(ctx.Attach.Element.Id);
+            }
+            else
+            {
                 LengthenCurve(ctx.TargetConn.Connector, connectedConnector);
                 _doc.Delete(ctx.Attach.Element.Id);
                 if (connectedConnector is { IsValidObject: true })
@@ -654,40 +657,33 @@ namespace SystemModelingCommands.Services
 
         private bool HandleGenericOpposite(AlignContext ctx)
         {
-            bool singleConnection = GetConnectedConnectors(ctx.Attach.ConnectorManager).Count >1;
-            XYZ translationVector = ctx.TargetConn.Origin -
-                                    ctx.AttachConn.Origin;
-            if (singleConnection)
+            XYZ translationVector = ctx.TargetConn.Origin - ctx.AttachConn.Origin;
+            var choice = CustomDialogWindow.ShowDialog(
+                "Соединить",
+                "Выберите действие",
+                ("Переместить выбранный элемент", 1),
+                ("Переместить все элементы", 2));
+            // Сначала проверяем на отмену
+            if (choice == 0) // или то значение, которое вы определили для отмены
             {
-                var choice = CustomDialogWindow.ShowDialog(
-                    "Соединить",
-                    "Выберите действие",
-                    ("Переместить выбранный элемент", 1),
-                    ("Переместить все элементы", 2));
-                // Сначала проверяем на отмену
-                if (choice == 0) // или то значение, которое вы определили для отмены
-                {
-                    return false;
-                }
-
-                switch (choice)
-                {
-                    case 1:
-                        break;
-
-                    case 2:
-                        AlignAndConnect(ctx); // Пользовательская логика
-                        return true;
-
-                    default:
-                        return false; // Cancel
-                }
+                return false;
             }
 
-            ElementTransformUtils.MoveElement(_doc, ctx.Attach.Id, translationVector);
-            // 3. Соединяем элементы
-            ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
-            return true;
+            switch (choice)
+            {
+                case 1:
+                    ElementTransformUtils.MoveElement(_doc, ctx.Attach.Id, translationVector);
+                    // 3. Соединяем элементы
+                    ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
+                    return true;
+
+                case 2:
+                    AlignAndConnect(ctx); // Пользовательская логика
+                    return true;
+
+                default:
+                    return false; // Cancel
+            }
         }
 
         private static int ShowChoiceDialog(
@@ -736,30 +732,32 @@ namespace SystemModelingCommands.Services
                 RestoreConnections(existingConnections);
             }
 
-            if (ctx.Attach.Element is Pipe && ctx.Target.Element is Pipe)
-            {
-                if (ArePipesSimilar(ctx.Attach.Element as Pipe, ctx.Target.Element as Pipe))
-                {
-                    Connector connectedConnector = null;
-                    connectedConnector = ctx.Attach.Connectors.FirstOrDefault(x => x.ConnectedConnector != null)
-                        ?.ConnectedConnector;
-
-                    if (connectedConnector == null)
-                    {
-                        foreach (var connector in ctx.Attach.Connectors)
-                        {
-                            if (connector.Origin != ctx.AttachConn.Origin)
-                            {
-                                connectedConnector = connector.Connector;
-                            }
-                        }
-                    }
-
-                    LengthenCurve(ctx.TargetConn.Connector, connectedConnector);
-                    _doc.Delete(ctx.Attach.Id);
-                    ctx.TargetConn.Connector.ConnectTo(connectedConnector);
-                }
-            }
+            if (ctx.Attach.Element is not Pipe pipe1 || ctx.Target.Element is not Pipe pipe2) return;
+            if (!ArePipesSimilar(pipe1, pipe2)) return;
+            DrainPipes(ctx);
+            // Connector connectedConnector = ctx.Attach.Connectors
+            //     .FirstOrDefault(x => x.ConnectedConnector != null)
+            //     ?.ConnectedConnector;
+            //
+            // if (connectedConnector == null)
+            // {
+            //     foreach (var connector in ctx.Attach.Connectors)
+            //     {
+            //         if (connector.Origin != ctx.AttachConn.Origin)
+            //         {
+            //             connectedConnector = connector.Connector;
+            //         }
+            //     }
+            //
+            //     LengthenCurve(ctx.TargetConn.Connector, connectedConnector);
+            //     _doc.Delete(ctx.Attach.Id);
+            // }
+            // else
+            // {
+            //     LengthenCurve(ctx.TargetConn.Connector, connectedConnector);
+            //     _doc.Delete(ctx.Attach.Id);
+            //     ctx.TargetConn.Connector.ConnectTo(connectedConnector);
+            // }
         }
 
         /// <summary>

@@ -8,9 +8,8 @@
                        WindowStartupLocation="CenterScreen"
                        Background="{DynamicResource WindowBackgroundBrush}"
                        ResizeMode="NoResize"
-                       Title="{Binding Title}" 
-                       Width="400" 
-                       SizeToContent="Height"
+                       Title="{Binding Title}"
+                       SizeToContent="WidthAndHeight"
                        d:DataContext="{d:DesignInstance local:CustomDialogWindow }">
     <Window.Resources>
         <ResourceDictionary>
@@ -28,23 +27,21 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-<Border Style="{DynamicResource BorderContentStyle}"
-        Margin="0 0 0  10">
-    <StackPanel>
-        <TextBlock Grid.Row="0"
-                   Text="{Binding Instruction}"
-                   TextWrapping="Wrap"
-                   Style="{DynamicResource TextBlockStyle}"
-                   Margin="0,0,0,10" />
+        <Border Style="{DynamicResource BorderContentStyle}"
+                Margin="0 0 0  10">
+            <StackPanel>
+                <TextBlock Grid.Row="0"
+                           Text="{Binding Instruction}"
+                           TextWrapping="Wrap"
+                           Style="{DynamicResource TextBlockStyle}"
+                           Margin="0,0,0,10" />
 
-        <StackPanel Grid.Row="1"
-                    x:Name="CommandsPanel"
-                    Orientation="Vertical"
-                    Margin="0,0,0,10" />
-
-      
-    </StackPanel>
-</Border>
+                <StackPanel Grid.Row="1"
+                            x:Name="CommandsPanel"
+                            Orientation="Vertical"
+                             />
+            </StackPanel>
+        </Border>
         <Button Grid.Row="2"
                 Style="{DynamicResource OutlineCloseButtonStyle}"
                 Content="Отмена"

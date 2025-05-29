@@ -1,3 +1,5 @@
+using Autodesk.Revit.DB.Plumbing;
+
 namespace SystemModelingCommands.Models;
 
 public class ConnectorWrapper
@@ -11,18 +13,21 @@ public class ConnectorWrapper
     public XYZ Origin => Connector.Origin;
     public bool IsConnected => Connector.IsConnected;
     public Connector ConnectedConnector => GetConnectedConnector();
+    public int Id { get; set; }
+
     public ConnectorWrapper(Connector connector)
     {
         Connector = connector;
+        Id = connector.Id;
     }
 
     private Connector GetConnectedConnector()
     {
-        if (!IsConnected)
+        if (!IsConnected )
             return null;
 
         return Connector.AllRefs
-            .Cast<Connector>()
+            .Cast<Connector>().Where(x=>x.Owner is not PipingSystem)
             .FirstOrDefault(IsValidConnectedConnector);
     }
 
