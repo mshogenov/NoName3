@@ -525,6 +525,9 @@ namespace SystemModelingCommands.Services
             if (!TryBuildContext(out AlignContext ctx))
                 return;
             using Transaction tr = new(_doc, "Соединить");
+            // FailureHandlingOptions options = tr.GetFailureHandlingOptions();
+            // options.SetFailuresPreprocessor(new CustomFailurePreprocessor());
+            // tr.SetFailureHandlingOptions(options);
             try
             {
                 tr.Start();
@@ -563,6 +566,11 @@ namespace SystemModelingCommands.Services
                 "Выберите действие",
                 ("Удлинить/укоротить трубу", 1),
                 ("Переместить элемент", 2));
+            // Сначала проверяем на отмену
+            if (choice == 0) // или то значение, которое вы определили для отмены
+            {
+                return false;
+            }
 
             switch (choice)
             {
@@ -645,7 +653,7 @@ namespace SystemModelingCommands.Services
 
         private bool HandleGenericOpposite(AlignContext ctx)
         {
-            bool singleConnection = GetConnectedConnectors(ctx.Attach.ConnectorManager).Count == 1;
+            bool singleConnection = GetConnectedConnectors(ctx.Attach.ConnectorManager).Count >1;
             XYZ translationVector = ctx.TargetConn.Origin -
                                     ctx.AttachConn.Origin;
             if (singleConnection)
@@ -655,6 +663,11 @@ namespace SystemModelingCommands.Services
                     "Выберите действие",
                     ("Переместить выбранный элемент", 1),
                     ("Переместить все элементы", 2));
+                // Сначала проверяем на отмену
+                if (choice == 0) // или то значение, которое вы определили для отмены
+                {
+                    return false;
+                }
 
                 switch (choice)
                 {
@@ -692,7 +705,14 @@ namespace SystemModelingCommands.Services
                 dlg.AddCommandLink((TaskDialogCommandLinkId)cmd.id, cmd.text);
 
             TaskDialogResult res = dlg.Show();
-            return (int)res; // Cancel => 0
+
+            // Проверяем, была ли нажата кнопка отмены
+            if (res == TaskDialogResult.Cancel)
+            {
+                return 0; // или любое другое значение, которое вы хотите использовать для отмены
+            }
+
+            return (int)res;
         }
 
         private void AlignAndConnect(AlignContext ctx)
