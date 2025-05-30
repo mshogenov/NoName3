@@ -17,7 +17,7 @@ sealed partial class Build
     /// </summary>
     Dictionary<Project, Project> InstallersMap => new()
     {
-        {Solution.Automation.Installer, Solution.RevitAddIn}
+        {Solution.Automation.Installer, Solution.RevitAddIn2}
     };
 
     /// <summary>
