@@ -19,9 +19,9 @@ namespace SystemModelingCommands.Services
         {
             // Создаем фильтр для проверки
             FittingAndAccessorySelectionFilter filter = new FittingAndAccessorySelectionFilter();
-            Element selectedElement = null;
+            ElementWrapper selectedElement = null;
             // Проверка, есть ли выбранный элемент до запуска скрипта
-            var selectedIds = Context.ActiveUiDocument?.Selection.GetElementIds();
+            var selectedIds = _uiDoc.Selection.GetElementIds();
             try
             {
                 if (selectedIds is { Count: 1 })
@@ -33,7 +33,7 @@ namespace SystemModelingCommands.Services
                         // Проверка, проходит ли выбранный элемент фильтр
                         if (filter.AllowElement(preSelectedElement))
                         {
-                            selectedElement = preSelectedElement;
+                            selectedElement = new ElementWrapper(preSelectedElement);
                         }
                     }
                 }
@@ -49,7 +49,7 @@ namespace SystemModelingCommands.Services
                 try
                 {
                     Reference reference = _uiDoc?.Selection.PickObject(ObjectType.Element, filter);
-                    selectedElement = _doc?.GetElement(reference);
+                    selectedElement = new ElementWrapper(_doc?.GetElement(reference));
                 }
                 catch (Autodesk.Revit.Exceptions.OperationCanceledException)
                 {
@@ -57,14 +57,14 @@ namespace SystemModelingCommands.Services
                 }
             }
 
-            MEPCurveType pipeType = DeterminingTypeOfPipeByFitting(_doc, selectedElement);
-            if (pipeType == null)
+            MEPCurveType mepCurveType = selectedElement.DeterminingTypeOfPipeByFitting();
+            if (mepCurveType == null)
             {
-                BloomView view = new BloomView(_doc, selectedElement);
+                BloomView view = new BloomView(_doc, selectedElement.Element);
                 view.ShowDialog();
                 if (view.MepCurveType != null)
                 {
-                    pipeType = view.MepCurveType;
+                    mepCurveType = view.MepCurveType;
                 }
                 else
                 {
@@ -76,7 +76,7 @@ namespace SystemModelingCommands.Services
             transaction.Start();
             try
             {
-                Bloom(_doc, selectedElement, pipeType);
+                Bloom(_doc, selectedElement, mepCurveType);
                 transaction.Commit();
             }
             catch (Autodesk.Revit.Exceptions.OperationCanceledException)
@@ -1611,63 +1611,46 @@ namespace SystemModelingCommands.Services
                 (xyz7.Z - xyz6.Z) / 2.0 + xyz6.Z);
         }
 
-        private static void Bloom(Document doc, Element selectedElement, MEPCurveType elementType)
+        private static void Bloom(Document doc, ElementWrapper selectedElement, MEPCurveType elementType)
         {
-            Connector[] source = ConnectorArrayUnused(selectedElement);
-            if (source == null)
+            List<ConnectorWrapper> connectorUnused = selectedElement.Connectors
+                .Where(x => !x.IsConnected)
+                .ToList();
+            if (connectorUnused.Count == 0)
 
                 return;
-            foreach (Connector connector in source)
+            foreach (ConnectorWrapper connector in connectorUnused)
             {
-                if (connector.Domain is Domain.DomainPiping or Domain.DomainHvac)
+                if (connector.Domain is not (Domain.DomainPiping or Domain.DomainHvac)) continue;
+                switch (connector.Domain)
                 {
-                    if (connector.Domain == Domain.DomainPiping)
+                    case Domain.DomainPiping:
                     {
-                        PipingSystemType pipeSystem = GetPipeSystem(doc, connector);
-                        double extensionLength = GetExtensionLength(connector);
-                        XYZ origin = connector.Origin;
-                        XYZ xyz1 = origin + extensionLength * connector.CoordinateSystem.BasisZ;
-                        ElementId level = GetLevel(doc, origin.Z);
+                        PipingSystemType pipeSystem = GetPipeSystem(doc, connector.Connector);
+                        double extensionLength = GetExtensionLength(connector.Connector);
+
+                        XYZ xyz1 = connector.Origin + extensionLength * connector.CoordinateSystem.BasisZ;
+                        ElementId level = GetLevel(doc, connector.Origin.Z);
                         if (elementType != null)
                         {
-                            CreatePipe(doc, pipeSystem, elementType as PipeType, connector, level, origin, xyz1);
+                            CreatePipe(doc, pipeSystem, elementType as PipeType, connector, level, xyz1);
                         }
-                    }
 
-                    if (connector.Domain == Domain.DomainHvac)
+                        break;
+                    }
+                    case Domain.DomainHvac:
                     {
-                        MechanicalSystemType mechanicalSystem = GetMechanicalSystem(doc, connector);
-                        double extensionLength = GetExtensionLength(connector);
-                        XYZ origin = connector.Origin;
-                        XYZ endPoint = origin + extensionLength * connector.CoordinateSystem.BasisZ;
-                        ElementId level = GetLevel(doc, origin.Z);
-                        CreateDuct(doc, mechanicalSystem, elementType as DuctType, connector, level, origin, endPoint);
+                        MechanicalSystemType mechanicalSystem = GetMechanicalSystem(doc, connector.Connector);
+                        double extensionLength = GetExtensionLength(connector.Connector);
+                        XYZ endPoint = connector.Origin + extensionLength * connector.CoordinateSystem.BasisZ;
+                        ElementId level = GetLevel(doc, connector.Origin.Z);
+                        CreateDuct(doc, mechanicalSystem, elementType as DuctType, connector, level, endPoint);
+                        break;
                     }
                 }
             }
         }
 
-        public static MEPCurveType DeterminingTypeOfPipeByFitting(Document doc, Element element)
-        {
-            ConnectorSet connectors = (element as FamilyInstance)?.MEPModel.ConnectorManager.Connectors;
-            if (connectors != null)
-            {
-                foreach (Connector connector in connectors)
-                {
-                    // Перебираем соединения
-                    foreach (Connector connectedConnector in connector.AllRefs)
-                    {
-                        if (connectedConnector.Owner is MEPCurve connectedPipe)
-                        {
-                            // Получаем тип присоединенной трубы
-                            return doc.GetElement(connectedPipe.GetTypeId()) as MEPCurveType;
-                        }
-                    }
-                }
-            }
-
-            return null;
-        }
 
         public static DuctType DeterminingTypeOfDuctByFitting(Document doc, Element element)
         {
@@ -1692,42 +1675,48 @@ namespace SystemModelingCommands.Services
         }
 
         private static void CreatePipe(Document doc, PipingSystemType pipeSystem, PipeType pipeType,
-            Connector connector, ElementId level, XYZ origin, XYZ xyz1)
+            ConnectorWrapper connector, ElementId level, XYZ xyz1)
         {
-            Element pipe = Pipe.Create(doc, pipeSystem.Id, pipeType.Id, level, origin, xyz1);
+            Element pipe = Pipe.Create(doc, pipeSystem.Id, pipeType.Id, level, connector.Origin, xyz1);
             Parameter diameter = pipe.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
             var diameterConnectorSelected = connector.Radius * 2;
             diameter.Set(diameterConnectorSelected);
             Connector[] cA = ConnectorArrayUnused(pipe);
-            NearestConnector(cA, connector.Origin).ConnectTo(connector);
+            NearestConnector(cA, connector.Origin).ConnectTo(connector.Connector);
         }
 
         private static void CreateDuct(Document doc, MechanicalSystemType mechanicalSystemType, DuctType ductType,
-            Connector connector, ElementId level, XYZ origin, XYZ endPoint)
+            ConnectorWrapper connector, ElementId level, XYZ endPoint)
         {
-            Element duct = Duct.Create(doc, mechanicalSystemType.Id, ductType.Id, level, origin, endPoint);
-            if (connector.Shape == ConnectorProfileType.Round)
+            Element duct = Duct.Create(doc, mechanicalSystemType.Id, ductType.Id, level, connector.Origin, endPoint);
+            switch (connector.Shape)
             {
-                Parameter diameter = duct.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM);
-                var diameterConnectorSelected = connector.Radius * 2;
-                diameter.Set(diameterConnectorSelected);
-            }
-            else if (connector.Shape == ConnectorProfileType.Rectangular)
-            {
-                Parameter width = duct.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM);
-                Parameter height = duct.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM);
-                var widthConnectorSelected = connector.Width;
-                var heightConnectorSelected = connector.Height;
-                width.Set(widthConnectorSelected);
-                height.Set(heightConnectorSelected);
-            }
-            else if (connector.Shape == ConnectorProfileType.Oval)
-            {
-                return;
+                case ConnectorProfileType.Round:
+                {
+                    Parameter diameter = duct.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM);
+                    var diameterConnectorSelected = connector.Radius * 2;
+                    diameter.Set(diameterConnectorSelected);
+                    break;
+                }
+                case ConnectorProfileType.Rectangular:
+                {
+                    var widthOwnerSelected = connector.Owner.FindParameter("Ширина воздуховода")?.AsDouble();
+                    double? widthConnectorSelected = widthOwnerSelected ?? connector.Width;
+                    var heightOwnerSelected = connector.Owner.FindParameter("Высота воздуховода")?.AsDouble();
+                    double? heightConnectorSelected = heightOwnerSelected ?? connector.Height;
+                   
+                    Parameter width = duct.FindParameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM);
+                    Parameter height = duct.FindParameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM);
+                    width?.Set((double)widthConnectorSelected);
+                    height?.Set((double)heightConnectorSelected);
+                    break;
+                }
+                case ConnectorProfileType.Oval:
+                    return;
             }
 
             Connector[] cA = ConnectorArrayUnused(duct);
-            NearestConnector(cA, connector.Origin).ConnectTo(connector);
+            NearestConnector(cA, connector.Origin).ConnectTo(connector.Connector);
         }
 
         public static void AlignColinearMEPElements(Element movingElement, Connector stationaryElementClosestConnector,
@@ -2056,15 +2045,10 @@ namespace SystemModelingCommands.Services
             Level closestLevel = levels
                 .Where(lvl => lvl.Elevation <= z)
                 .OrderByDescending(lvl => lvl.Elevation)
+                // Если не найден уровень ниже 'z', берем ближайший уровень выше
+                .FirstOrDefault() ?? levels
+                .OrderBy(lvl => lvl.Elevation - z)
                 .FirstOrDefault();
-
-            // Если не найден уровень ниже 'z', берем ближайший уровень выше
-            if (closestLevel == null)
-            {
-                closestLevel = levels
-                    .OrderBy(lvl => lvl.Elevation - z)
-                    .FirstOrDefault();
-            }
 
             return closestLevel?.Id;
         }

@@ -54,5 +54,13 @@ public sealed class ElementWrapper
         Connectors
             .Where(c => !c.IsConnected)
             .OrderBy(c => c.Origin.DistanceTo(point))
-            .FirstOrDefault() ?.Connector;
+            .FirstOrDefault()?.Connector;
+
+    public MEPCurveType DeterminingTypeOfPipeByFitting()
+    {
+        if (Element is not FamilyInstance) return null;
+        Document doc = Element.Document;
+        Element connectedConnector = ConnectedElements.FirstOrDefault();
+        return connectedConnector!=null ? doc.GetElement(connectedConnector.GetTypeId()) as MEPCurveType : null;
+    }
 }
