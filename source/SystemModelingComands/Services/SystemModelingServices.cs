@@ -19,9 +19,9 @@ namespace SystemModelingCommands.Services
         {
             // Создаем фильтр для проверки
             FittingAndAccessorySelectionFilter filter = new FittingAndAccessorySelectionFilter();
-            Element selectedElement = null;
+            ElementWrapper selectedElement = null;
             // Проверка, есть ли выбранный элемент до запуска скрипта
-            var selectedIds = Context.ActiveUiDocument?.Selection.GetElementIds();
+            var selectedIds = _uiDoc.Selection.GetElementIds();
             try
             {
                 if (selectedIds is { Count: 1 })
@@ -33,7 +33,7 @@ namespace SystemModelingCommands.Services
                         // Проверка, проходит ли выбранный элемент фильтр
                         if (filter.AllowElement(preSelectedElement))
                         {
-                            selectedElement = preSelectedElement;
+                            selectedElement = new ElementWrapper(preSelectedElement);
                         }
                     }
                 }
@@ -49,7 +49,7 @@ namespace SystemModelingCommands.Services
                 try
                 {
                     Reference reference = _uiDoc?.Selection.PickObject(ObjectType.Element, filter);
-                    selectedElement = _doc?.GetElement(reference);
+                    selectedElement = new ElementWrapper(_doc?.GetElement(reference));
                 }
                 catch (Autodesk.Revit.Exceptions.OperationCanceledException)
                 {
@@ -57,14 +57,14 @@ namespace SystemModelingCommands.Services
                 }
             }
 
-            MEPCurveType pipeType = DeterminingTypeOfPipeByFitting(_doc, selectedElement);
-            if (pipeType == null)
+            MEPCurveType mepCurveType = selectedElement.DeterminingTypeOfPipeByFitting();
+            if (mepCurveType == null)
             {
-                BloomView view = new BloomView(_doc, selectedElement);
+                BloomView view = new BloomView(_doc, selectedElement.Element);
                 view.ShowDialog();
                 if (view.MepCurveType != null)
                 {
-                    pipeType = view.MepCurveType;
+                    mepCurveType = view.MepCurveType;
                 }
                 else
                 {
@@ -76,7 +76,7 @@ namespace SystemModelingCommands.Services
             transaction.Start();
             try
             {
-                Bloom(_doc, selectedElement, pipeType);
+                Bloom(_doc, selectedElement, mepCurveType);
                 transaction.Commit();
             }
             catch (Autodesk.Revit.Exceptions.OperationCanceledException)
@@ -131,45 +131,70 @@ namespace SystemModelingCommands.Services
         {
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
-            Element element = _doc.GetElement(selectedReference);
+            ElementWrapper selectedElement = new ElementWrapper(selectedReference, _doc);
+            var closestConnector = selectedElement.FindClosestFreeConnector(selectedReference.GlobalPoint);
+            if (closestConnector == null)
+                return;
+            ConnectorWrapper connector = new ConnectorWrapper(closestConnector);
 
-            XYZ globalPoint = selectedReference.GlobalPoint;
-            Connector[] cA = ConnectorArrayUnused(element);
-            if (cA == null)
-                return;
-            Connector connector = NearestConnector(cA, globalPoint);
-            if (connector.IsConnected)
-                connector = FarthestConnector(cA, globalPoint);
-            if (connector.IsConnected)
-                return;
             ElementId level = GetLevel(_doc, connector.Origin.Z);
             if (level == null)
                 return;
-            XYZ origin = connector.Origin;
-            XYZ xyz = new XYZ(0.0, 0.0, 0.0);
-            XYZ basisZ = connector.CoordinateSystem.BasisZ;
-            double extensionLength = GetExtensionLength(connector);
-            XYZ end = basisZ.X != 0.0 || basisZ.Y != 0.0 || basisZ.Z <= 0.0
-                ? basisZ.X != 0.0 || basisZ.Y != 0.0 || basisZ.Z >= 0.0
-                    ? new XYZ(origin.X, origin.Y, origin.Z + extensionLength)
-                    : new XYZ(origin.X, origin.Y + extensionLength, origin.Z)
-                : new XYZ(origin.X, origin.Y - extensionLength, origin.Z);
+            double extensionLength = GetExtensionLength(connector.Connector);
+            var basisZ = connector.BasisZ;
+
+            // Проверяем условия для определения направления смещения
+            bool hasHorizontalComponents = basisZ.X != 0.0 || basisZ.Y != 0.0;
+            bool isPointingDown = basisZ.Z <= 0.0;
+            bool isPointingUp = basisZ.Z >= 0.0;
+
+            XYZ end;
+
+            if (hasHorizontalComponents || isPointingDown)
+            {
+                if (hasHorizontalComponents || isPointingUp)
+                {
+                    // Смещение вверх по Z
+                    end = new XYZ(
+                        connector.Origin.X, // X без изменений
+                        connector.Origin.Y, // Y без изменений
+                        connector.Origin.Z + extensionLength // Положительное смещение по Z
+                    );
+                }
+                else
+                {
+                    // Смещение вперед по Y
+                    end = new XYZ(
+                        connector.Origin.X, // X без изменений
+                        connector.Origin.Y + extensionLength, // Положительное смещение по Y
+                        connector.Origin.Z // Z без изменений
+                    );
+                }
+            }
+            else
+            {
+                // Смещение назад по Y
+                end = new XYZ(
+                    connector.Origin.X, // X без изменений
+                    connector.Origin.Y - extensionLength, // Отрицательное смещение по Y
+                    connector.Origin.Z // Z без изменений
+                );
+            }
+
             Transaction transaction = new Transaction(_doc, "Поворот вверх");
             try
             {
                 transaction.Start();
+                switch (selectedElement.BuiltInCategory)
+                {
+                    case BuiltInCategory.OST_DuctCurves:
+                        DrawDuct(_doc, selectedElement, connector, end);
+                        break;
+                    case BuiltInCategory.OST_PipeCurves:
+                        DrawPipeWithElbow(_doc, selectedElement, connector, end, true);
+                        break;
+                }
 
-                if (element != null && element.Category.Id.Value == -2008130)
-                    DrawCableTray(_doc, selectedReference, globalPoint, connector, origin, end,
-                        level);
-                else if (element != null && element.Category.Id.Value == -2008132)
-                    DrawConduit(_doc, selectedReference, globalPoint, connector, origin, end,
-                        level);
-                else if (element != null && element.Category.Id.Value == -2008000)
-                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end);
-                else if (element != null && element.Category.Id.Value == -2008044)
-                    DrawPipeWithElbow(_doc, selectedReference, globalPoint, connector, origin,
-                        end, true);
                 transaction.Commit();
             }
             catch (Exception e)
@@ -182,46 +207,79 @@ namespace SystemModelingCommands.Services
         {
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
-            Element element = _doc.GetElement(selectedReference);
-            XYZ globalPoint = selectedReference.GlobalPoint;
-            Connector[] cA = ConnectorArrayUnused(element);
-            if (cA == null)
+            ElementWrapper selectedElement = new ElementWrapper(selectedReference, _doc);
+            var closestConnector = selectedElement.FindClosestFreeConnector(selectedReference.GlobalPoint);
+            if (closestConnector == null)
                 return;
-            Connector connector = NearestConnector(cA, globalPoint);
-            if (connector.IsConnected)
-                connector = FarthestConnector(cA, globalPoint);
-            if (connector.IsConnected)
-                return;
+            ConnectorWrapper connector = new ConnectorWrapper(closestConnector);
+
             ElementId level = GetLevel(_doc, connector.Origin.Z);
             if (level == null)
                 return;
-            XYZ basisZ = connector.CoordinateSystem.BasisZ;
-            double num1 = 1.0 * basisZ.X;
-            double num2 = 1.0 * basisZ.Y;
+            double extensionLength = GetExtensionLength(connector.Connector);
+            // Получаем вектор направления из коннектора
+            var basisZ = connector.BasisZ;
+
+            // Нормализация компонентов вектора
+            double normalizedX = 1.0 * basisZ.X;
+            double normalizedY = 1.0 * basisZ.Y;
+
+            // Получаем начальную точку из коннектора
             XYZ origin = connector.Origin;
-            double extensionLength = GetExtensionLength(connector);
-            XYZ end = Math.Round(basisZ.X, 3) != 0.0 || Math.Round(basisZ.Y, 3) != 0.0 || basisZ.Z <= 0.0
-                ? Math.Round(basisZ.X, 3) != 0.0 || Math.Round(basisZ.Y, 3) != 0.0 || basisZ.Z >= 0.0
-                    ? new XYZ(origin.X + extensionLength * num2, origin.Y - extensionLength * num1,
-                        origin.Z + basisZ.Z * extensionLength)
-                    : new XYZ(origin.X + extensionLength, origin.Y, origin.Z)
-                : new XYZ(origin.X - extensionLength, origin.Y, origin.Z);
+
+            // Проверки направления вектора
+            bool hasHorizontalComponents = Math.Round(basisZ.X, 3) != 0.0 || Math.Round(basisZ.Y, 3) != 0.0;
+            bool isPointingDown = basisZ.Z <= 0.0;
+            bool isPointingUp = basisZ.Z >= 0.0;
+
+            XYZ end;
+
+            // Определяем конечную точку на основе направления вектора
+            if (hasHorizontalComponents || isPointingDown)
+            {
+                if (hasHorizontalComponents || isPointingUp)
+                {
+                    // Если есть горизонтальные компоненты или вектор направлен вверх
+                    end = new XYZ(
+                        origin.X + extensionLength * normalizedY, // Смещение по X с учетом Y компоненты
+                        origin.Y - extensionLength * normalizedX, // Смещение по Y с учетом X компоненты
+                        origin.Z + basisZ.Z * extensionLength // Пропорциональное смещение по Z
+                    );
+                }
+                else
+                {
+                    // Если вектор направлен вниз без горизонтальных компонент
+                    end = new XYZ(
+                        origin.X + extensionLength, // Положительное смещение по X
+                        origin.Y, // Без смещения по Y
+                        origin.Z // Без смещения по Z
+                    );
+                }
+            }
+            else
+            {
+                // В остальных случаях
+                end = new XYZ(
+                    origin.X - extensionLength, // Отрицательное смещение по X
+                    origin.Y, // Без смещения по Y
+                    origin.Z // Без смещения по Z
+                );
+            }
+
             Transaction transaction = new Transaction(_doc, "Поворот вправо");
             try
             {
                 transaction.Start();
+                switch (selectedElement.BuiltInCategory)
+                {
+                    case BuiltInCategory.OST_DuctCurves:
+                        DrawDuct(_doc, selectedElement, connector, end);
+                        break;
+                    case BuiltInCategory.OST_PipeCurves:
+                        DrawPipeWithElbow(_doc, selectedElement, connector, end, true);
+                        break;
+                }
 
-                if (element != null && element.Category.Id.Value == -2008130)
-                    DrawCableTray(_doc, selectedReference, globalPoint, connector, origin, end,
-                        level);
-                else if (element != null && element.Category.Id.Value == -2008132)
-                    DrawConduit(_doc, selectedReference, globalPoint, connector, origin, end,
-                        level);
-                else if (element != null && element.Category.Id.Value == -2008000)
-                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end);
-                else if (element != null && element.Category.Id.Value == -2008044)
-                    DrawPipeWithElbow(_doc, selectedReference, globalPoint, connector, origin,
-                        end, true);
                 transaction.Commit();
             }
             catch (Exception e)
@@ -234,43 +292,79 @@ namespace SystemModelingCommands.Services
         {
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
-            Element element = _doc.GetElement(selectedReference);
-            XYZ globalPoint = selectedReference.GlobalPoint;
-            Connector[] cA = ConnectorArrayUnused(element);
-            if (cA == null)
+            ElementWrapper selectedElement = new ElementWrapper(selectedReference, _doc);
+            var closestConnector = selectedElement.FindClosestFreeConnector(selectedReference.GlobalPoint);
+            if (closestConnector == null)
                 return;
-            Connector connector = NearestConnector(cA, globalPoint);
-            if (connector.IsConnected)
-                connector = FarthestConnector(cA, globalPoint);
-            if (connector.IsConnected)
-                return;
+            ConnectorWrapper connector = new ConnectorWrapper(closestConnector);
+
             ElementId level = GetLevel(_doc, connector.Origin.Z);
             if (level == null)
                 return;
-            XYZ basisZ = connector.CoordinateSystem.BasisZ;
-            double num1 = 1.0 * basisZ.X;
-            double num2 = 1.0 * basisZ.Y;
+            double extensionLength = GetExtensionLength(connector.Connector);
+            var basisZ = connector.BasisZ;
+            // Нормализация компонентов вектора направления
+            double normalizedX = 1.0 * basisZ.X;
+            double normalizedY = 1.0 * basisZ.Y;
+
+            // Получаем точку начала из коннектора
             XYZ origin = connector.Origin;
-            double extensionLength = GetExtensionLength(connector);
-            XYZ end = Math.Round(basisZ.X, 3) != 0.0 || Math.Round(basisZ.Y, 3) != 0.0 || basisZ.Z <= 0.0
-                ? Math.Round(basisZ.X, 3) != 0.0 || Math.Round(basisZ.Y, 3) != 0.0 || basisZ.Z >= 0.0
-                    ? new XYZ(origin.X - extensionLength * num2, origin.Y + extensionLength * num1,
-                        origin.Z + basisZ.Z * extensionLength)
-                    : new XYZ(origin.X - extensionLength, origin.Y, origin.Z)
-                : new XYZ(origin.X + extensionLength, origin.Y, origin.Z);
+
+            // Округляем значения для более точного сравнения
+            bool hasXComponent = Math.Round(basisZ.X, 3) != 0.0;
+            bool hasYComponent = Math.Round(basisZ.Y, 3) != 0.0;
+            bool isPointingDown = basisZ.Z <= 0.0;
+            bool isPointingUp = basisZ.Z >= 0.0;
+
+            XYZ end;
+
+            // Определяем конечную точку на основе направления вектора
+            if (hasXComponent || hasYComponent || isPointingDown)
+            {
+                if (hasXComponent || hasYComponent || isPointingUp)
+                {
+                    // Если вектор имеет горизонтальные компоненты или направлен вверх
+                    end = new XYZ(
+                        origin.X - extensionLength * normalizedY, // Смещение по X
+                        origin.Y + extensionLength * normalizedX, // Смещение по Y
+                        origin.Z + basisZ.Z * extensionLength // Смещение по Z пропорционально компоненте Z
+                    );
+                }
+                else
+                {
+                    // Если вектор направлен вниз без горизонтальных компонент
+                    end = new XYZ(
+                        origin.X - extensionLength, // Отрицательное смещение по X
+                        origin.Y, // Без смещения по Y
+                        origin.Z // Без смещения по Z
+                    );
+                }
+            }
+            else
+            {
+                // В остальных случаях
+                end = new XYZ(
+                    origin.X + extensionLength, // Положительное смещение по X
+                    origin.Y, // Без смещения по Y
+                    origin.Z // Без смещения по Z
+                );
+            }
+
             Transaction transaction = new Transaction(_doc, "Поворот влево");
             try
             {
                 transaction.Start();
 
-                if (element != null && element.Category.Id.Value == -2008130)
-                    DrawCableTray(_doc, selectedReference, globalPoint, connector, origin, end, level);
-                else if (element != null && element.Category.Id.Value == -2008132)
-                    DrawConduit(_doc, selectedReference, globalPoint, connector, origin, end, level);
-                else if (element != null && element.Category.Id.Value == -2008000)
-                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end);
-                else if (element != null && element.Category.Id.Value == -2008044)
-                    DrawPipeWithElbow(_doc, selectedReference, globalPoint, connector, origin, end, true);
+                switch (selectedElement.BuiltInCategory)
+                {
+                    case BuiltInCategory.OST_DuctCurves:
+                        DrawDuct(_doc, selectedElement, connector, end);
+                        break;
+                    case BuiltInCategory.OST_PipeCurves:
+                        DrawPipeWithElbow(_doc, selectedElement, connector, end, true);
+                        break;
+                }
+
                 transaction.Commit();
             }
             catch (Exception e)
@@ -283,40 +377,49 @@ namespace SystemModelingCommands.Services
         {
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
-            Element element = _doc.GetElement(selectedReference);
-            XYZ globalPoint = selectedReference.GlobalPoint;
-            Connector[] cA = ConnectorArrayUnused(element);
-            if (cA == null)
+            ElementWrapper selectedElement = new ElementWrapper(selectedReference, _doc);
+            var closestConnector = selectedElement.FindClosestFreeConnector(selectedReference.GlobalPoint);
+            if (closestConnector == null)
                 return;
-            Connector connector = NearestConnector(cA, globalPoint);
-            if (connector.IsConnected || connector.CoordinateSystem.BasisZ.X == 0.0 &&
-                connector.CoordinateSystem.BasisZ.Y == 0.0 && connector.CoordinateSystem.BasisZ.Z > 0.0)
-                connector = FarthestConnector(cA, globalPoint);
-            if (connector.IsConnected)
-                return;
-            XYZ origin = connector.Origin;
-            XYZ basisZ = connector.CoordinateSystem.BasisZ;
+            ConnectorWrapper connector = new ConnectorWrapper(closestConnector);
+
             ElementId level = GetLevel(_doc, connector.Origin.Z);
             if (level == null)
                 return;
-            double extensionLength = GetExtensionLength(connector);
-            XYZ end = basisZ.X != 0.0 || basisZ.Y != 0.0 || basisZ.Z >= 0.0
-                ? new XYZ(origin.X + basisZ.X * extensionLength, origin.Y + basisZ.Y * extensionLength,
-                    origin.Z - extensionLength)
-                : new XYZ(origin.X, origin.Y + extensionLength, origin.Z - extensionLength);
+            double extensionLength = GetExtensionLength(connector.Connector);
+            var basisZ = connector.BasisZ;
+            XYZ end;
+            bool hasHorizontalComponent = basisZ.X != 0.0 || basisZ.Y != 0.0 || basisZ.Z >= 0.0;
+
+            if (hasHorizontalComponent)
+            {
+                end = new XYZ(
+                    connector.Origin.X + basisZ.X * extensionLength,
+                    connector.Origin.Y + basisZ.Y * extensionLength,
+                    connector.Origin.Z - extensionLength);
+            }
+            else
+            {
+                end = new XYZ(
+                    connector.Origin.X,
+                    connector.Origin.Y + extensionLength,
+                    connector.Origin.Z - extensionLength);
+            }
+
             Transaction transaction = new Transaction(_doc, "Поворот вниз на 45°");
             try
             {
                 transaction.Start();
 
-                if (element != null && element.Category.BuiltInCategory == BuiltInCategory.OST_Conduit)
-                    DrawConduit(_doc, selectedReference, globalPoint, connector, origin, end,
-                        level);
-                else if (element != null && element.Category.BuiltInCategory == BuiltInCategory.OST_DuctCurves)
-                    DrawDuct(_doc, selectedReference, globalPoint, connector, origin, end);
-                else if (element != null && element.Category.BuiltInCategory == BuiltInCategory.OST_PipeCurves)
-                    DrawPipeWithElbow(_doc, selectedReference, globalPoint, connector, origin,
-                        end, true);
+                switch (selectedElement.BuiltInCategory)
+                {
+                    case BuiltInCategory.OST_DuctCurves:
+                        DrawDuct(_doc, selectedElement, connector, end);
+                        break;
+                    case BuiltInCategory.OST_PipeCurves:
+                        DrawPipeWithElbow(_doc, selectedElement, connector, end, true);
+                        break;
+                }
 
                 transaction.Commit();
             }
@@ -377,54 +480,59 @@ namespace SystemModelingCommands.Services
             }
         }
 
-        public static void ElbowDown()
+        public void ElbowDown()
         {
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
-            Element element = Context.ActiveDocument?.GetElement(selectedReference);
-            XYZ globalPoint = selectedReference?.GlobalPoint;
-            Connector[] connectors = ConnectorArrayUnused(element);
-            if (connectors == null)
+            ElementWrapper selectedElement = new ElementWrapper(selectedReference, _doc);
+            var closestConnector = selectedElement.FindClosestFreeConnector(selectedReference.GlobalPoint);
+            if (closestConnector == null)
                 return;
-            Connector connector = NearestConnector(connectors, globalPoint);
-            if (connector.IsConnected)
-                connector = FarthestConnector(connectors, globalPoint);
-            if (connector.IsConnected)
-                return;
-            XYZ origin = connector.Origin;
-            XYZ basisZ = connector.CoordinateSystem.BasisZ;
-            ElementId level = GetLevel(Context.ActiveDocument, connector.Origin.Z);
+            ConnectorWrapper connector = new ConnectorWrapper(closestConnector);
+
+            ElementId level = GetLevel(_doc, connector.Origin.Z);
             if (level == null)
                 return;
-            double extensionLength = GetExtensionLength(connector);
-            XYZ end = basisZ.X != 0.0 || basisZ.Y != 0.0 || basisZ.Z <= 0.0
-                ? basisZ.X != 0.0 || basisZ.Y != 0.0 || basisZ.Z >= 0.0
-                    ? new XYZ(origin.X, origin.Y, origin.Z - extensionLength)
-                    : new XYZ(origin.X, origin.Y + extensionLength, origin.Z)
-                : new XYZ(origin.X, origin.Y - extensionLength, origin.Z);
-            Transaction transaction = new(Context.ActiveDocument, "Поворот вниз");
+            double extensionLength = GetExtensionLength(connector.Connector);
+            var basisZ = connector.BasisZ;
+            XYZ end;
+            if (basisZ.X != 0.0 || basisZ.Y != 0.0 || basisZ.Z <= 0.0)
+            {
+                if (basisZ.X != 0.0 || basisZ.Y != 0.0 || basisZ.Z >= 0.0)
+                {
+                    // Смещение вниз по Z
+                    end = new XYZ(connector.Origin.X,
+                        connector.Origin.Y,
+                        connector.Origin.Z - extensionLength);
+                }
+                else
+                {
+                    // Смещение вверх по Y
+                    end = new XYZ(connector.Origin.X,
+                        connector.Origin.Y + extensionLength,
+                        connector.Origin.Z);
+                }
+            }
+            else
+            {
+                // Смещение вниз по Y
+                end = new XYZ(connector.Origin.X,
+                    connector.Origin.Y - extensionLength,
+                    connector.Origin.Z);
+            }
+
+            Transaction transaction = new(_doc, "Поворот вниз");
             try
             {
                 transaction.Start();
 
-                switch (element?.Category.BuiltInCategory)
+                switch (selectedElement.BuiltInCategory)
                 {
-                    case BuiltInCategory.OST_CableTray:
-                        DrawCableTray(Context.ActiveDocument, selectedReference, globalPoint,
-                            connector, origin, end, level);
-                        break;
-                    case BuiltInCategory.OST_Conduit:
-                        DrawConduit(Context.ActiveDocument, selectedReference, globalPoint,
-                            connector, origin, end, level);
-                        break;
                     case BuiltInCategory.OST_DuctCurves:
-                        DrawDuct(Context.ActiveDocument, selectedReference, globalPoint,
-                            connector,
-                            origin, end);
+                        DrawDuct(_doc, selectedElement, connector, end);
                         break;
                     case BuiltInCategory.OST_PipeCurves:
-                        DrawPipeWithElbow(Context.ActiveDocument, selectedReference, globalPoint,
-                            connector, origin, end, true);
+                        DrawPipeWithElbow(_doc, selectedElement, connector, end, true);
                         break;
                 }
 
@@ -456,40 +564,50 @@ namespace SystemModelingCommands.Services
         {
             Reference selectedReference = GetSelectedReference();
             if (selectedReference == null) return;
-            Element element = _doc.GetElement(selectedReference);
-            XYZ globalPoint = selectedReference.GlobalPoint;
-            Connector[] cA = ConnectorArrayUnused(element);
-            if (cA == null)
+            ElementWrapper selectedElement = new ElementWrapper(selectedReference, _doc);
+            var closestConnector = selectedElement.FindClosestFreeConnector(selectedReference.GlobalPoint);
+            if (closestConnector == null)
                 return;
-            // Находим ближайший коннектор
-            Connector connector = NearestConnector(cA, globalPoint);
+            ConnectorWrapper connector = new ConnectorWrapper(closestConnector);
 
-            if (connector == null || connector.IsConnected)
-                return;
-            XYZ origin = connector.Origin;
-            XYZ basisZ = connector.CoordinateSystem.BasisZ;
             ElementId level = GetLevel(_doc, connector.Origin.Z);
             if (level == null)
                 return;
-            double extensionLength = GetExtensionLength(connector);
-            // Вычисляем конечную точку
-            XYZ endPoint = CalculateEndPoint(origin, basisZ, extensionLength);
+            double extensionLength = GetExtensionLength(connector.Connector);
+            var basisZ = connector.BasisZ;
+            XYZ endPoint;
+            // Если есть отклонение по X или Y, или Z направлен вверх
+            bool hasHorizontalComponent = basisZ.X != 0.0 || basisZ.Y != 0.0 || basisZ.Z >= 0.0;
+
+            if (hasHorizontalComponent)
+            {
+                endPoint = new XYZ(
+                    connector.Origin.X + basisZ.X * extensionLength,
+                    connector.Origin.Y + basisZ.Y * extensionLength,
+                    connector.Origin.Z + extensionLength
+                );
+            }
+            else
+            {
+                // В противном случае просто смещаем по Y и Z
+                endPoint = new XYZ(
+                    connector.Origin.X,
+                    connector.Origin.Y + extensionLength,
+                    connector.Origin.Z + extensionLength
+                );
+            }
+
             using Transaction transaction = new Transaction(_doc, "Поворот вверх на 45°");
             try
             {
                 transaction.Start();
-                switch (element?.Category.BuiltInCategory)
+                switch (selectedElement.BuiltInCategory)
                 {
-                    case BuiltInCategory.OST_Conduit:
-                        DrawConduit(_doc, selectedReference, globalPoint, connector, origin, endPoint,
-                            level);
-                        break;
                     case BuiltInCategory.OST_DuctCurves:
-                        DrawDuct(_doc, selectedReference, globalPoint, connector, origin, endPoint);
+                        DrawDuct(_doc, selectedElement, connector, endPoint);
                         break;
                     case BuiltInCategory.OST_PipeCurves:
-                        DrawPipeWithElbow(_doc, selectedReference, globalPoint, connector, origin,
-                            endPoint, true);
+                        DrawPipeWithElbow(_doc, selectedElement, connector, endPoint, true);
                         break;
                 }
 
@@ -1332,26 +1450,24 @@ namespace SystemModelingCommands.Services
             }
         }
 
-        public static void DrawDuct(Document doc, Reference selectedReference, XYZ selectedPoint,
-            Connector closestConnector, XYZ start, XYZ end)
+        public static void DrawDuct(Document doc, ElementWrapper element,
+            ConnectorWrapper closestConnector, XYZ end)
         {
-            if (doc == null || selectedReference == null || selectedPoint == null ||
-                closestConnector == null || start == null || end == null)
+            if (doc == null || closestConnector == null || element == null || end == null)
             {
                 throw new ArgumentNullException("Один или несколько входных параметров равны null.");
             }
 
+            if (element.Element is not Duct duct)
+            {
+                TaskDialog.Show("Ошибка", "Выбранный элемент не является воздуховодом.");
+                return;
+            }
+
             try
             {
-                Duct element = doc.GetElement(selectedReference) as Duct;
-                if (element == null)
-                {
-                    TaskDialog.Show("Ошибка", "Выбранный элемент не является воздуховодом.");
-                    return;
-                }
-
                 // Вычисляем вектор направления от start до end
-                XYZ directionVector = end - start;
+                XYZ directionVector = end - closestConnector.Origin;
                 double length = directionVector.GetLength();
 
                 if (length <= 0)
@@ -1366,11 +1482,13 @@ namespace SystemModelingCommands.Services
                 // Определяем новую конечную точку увеличив длину на дополнительную длину
                 XYZ adjustedEnd = end + unitDirection;
 
-                DuctType ductType = element.DuctType;
-                MechanicalSystemType mechanicalSystem = GetMechanicalSystem(doc, closestConnector);
+                DuctType ductType = duct.DuctType;
+                MechanicalSystemType mechanicalSystem = GetMechanicalSystem(doc, closestConnector.Connector);
+                var selectedPoint = element.GetGlobalPoint();
                 ElementId level = GetLevel(doc, selectedPoint.Z);
 
-                Duct newDuct = Duct.Create(doc, mechanicalSystem.Id, ductType.Id, level, start, adjustedEnd);
+                Duct newDuct = Duct.Create(doc, mechanicalSystem.Id, ductType.Id, level, closestConnector.Origin,
+                    adjustedEnd);
 
                 if (newDuct == null)
                 {
@@ -1388,8 +1506,8 @@ namespace SystemModelingCommands.Services
                 {
                     case ConnectorProfileType.Rectangular:
                     case ConnectorProfileType.Oval:
-                        double width = element.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM).AsDouble();
-                        double height = element.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM).AsDouble();
+                        double width = duct.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM).AsDouble();
+                        double height = duct.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM).AsDouble();
 
                         if (width <= 0 || height <= 0)
                         {
@@ -1408,7 +1526,7 @@ namespace SystemModelingCommands.Services
                         break;
 
                     case ConnectorProfileType.Round:
-                        double diameter = element.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM).AsDouble();
+                        double diameter = duct.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM).AsDouble();
                         if (diameter <= 0)
                         {
                             TaskDialog.Show("Ошибка", "Некорректный диаметр исходного воздуховода.");
@@ -1428,21 +1546,23 @@ namespace SystemModelingCommands.Services
                         return;
                 }
 
-                if (Math.Abs(start.X - end.X) < 0.001 && Math.Abs(start.Y - end.Y) < 0.001)
+                if (Math.Abs(closestConnector.Origin.X - end.X) < 0.001 &&
+                    Math.Abs(closestConnector.Origin.Y - end.Y) < 0.001)
                 {
                     XYZ basisZ = closestConnector.CoordinateSystem.BasisZ;
                     XYZ source = new XYZ(0.0, 1.0, 0.0);
                     double angle = basisZ.AngleTo(source);
                     if (basisZ.DotProduct(source) > 0.0 && basisZ.X > 1.0)
                         angle = -angle;
-                    Line bound = Line.CreateBound(start, end);
-                    if (start.Z > end.Z)
-                        bound = Line.CreateBound(end, start);
+                    Line bound = Line.CreateBound(closestConnector.Origin, end);
+                    if (closestConnector.Origin.Z > end.Z)
+                        bound = Line.CreateBound(end, closestConnector.Origin);
                     ElementTransformUtils.RotateElement(doc, newDuct.Id, bound, angle);
                 }
 
                 // Создаём отвод между коннекторами
-                FamilyInstance newElbow = doc.Create.NewElbowFitting(closestConnector, closestConnectorNewDuct);
+                FamilyInstance newElbow =
+                    doc.Create.NewElbowFitting(closestConnector.Connector, closestConnectorNewDuct);
                 if (newElbow == null)
                 {
                     TaskDialog.Show("Ошибка", "Не удалось создать отвод между воздуховодами.");
@@ -1480,55 +1600,48 @@ namespace SystemModelingCommands.Services
             }
         }
 
-        private static void DrawPipeWithElbow(Document doc, Reference selectedReference, XYZ selectedPoint,
-            Connector closestConnector1, XYZ start, XYZ end, bool includeElbow)
+        private static void DrawPipeWithElbow(Document doc, ElementWrapper selectedElement,
+            ConnectorWrapper closestConnector, XYZ end, bool includeElbow)
         {
             try
             {
-                if (doc.GetElement(selectedReference) is Pipe element)
+                if (selectedElement.Element is not Pipe element) return;
+                PipeType pipeType = element.PipeType;
+                double diameter = element.Diameter;
+                const double scalingFactor = 2; // Этот коэффициент можно настроить по необходимости
+
+                // Вычисляем дополнительную длину на основе диаметра
+                double extraLength = diameter * scalingFactor;
+
+                // Вычисляем вектор направления от start до end
+                XYZ direction = end - closestConnector.Origin;
+                double length = direction.GetLength();
+
+                // Проверяем, чтобы длина не была нулевой
+                if (length == 0)
                 {
-                    PipeType pipeType = element.PipeType;
-                    double diameter = element.Diameter;
-                    const double scalingFactor = 2; // Этот коэффициент можно настроить по необходимости
-
-                    // Вычисляем дополнительную длину на основе диаметра
-                    double extraLength = diameter * scalingFactor;
-
-                    // Вычисляем вектор направления от start до end
-                    XYZ direction = end - start;
-                    double length = direction.GetLength();
-
-                    // Проверяем, чтобы длина не была нулевой
-                    if (length == 0)
-                    {
-                        // Можно обработать этот случай по-другому, если требуется
-                        return;
-                    }
-
-                    // Нормализуем вектор направления
-                    XYZ unitDirection = direction.Normalize();
-
-                    // Определяем новую конечную точку, увеличив длину на дополнительную длину
-                    XYZ adjustedEnd = end + unitDirection * extraLength;
-                    PipingSystemType pipeSystem = GetPipeSystem(doc, closestConnector1);
-                    ElementId level = GetLevel(doc, selectedPoint.Z);
-                    Pipe newPipe = Pipe.Create(doc, pipeSystem.Id, pipeType.Id, level, start, adjustedEnd);
-                    newPipe.LookupParameter("Диаметр").Set(diameter);
-                    Connector[] connectors = ConnectorArray(newPipe);
-
-                    if (includeElbow)
-                    {
-                        Connector connector = NearestConnector(connectors, selectedPoint);
-                        FamilyInstance newElbow = doc.Create.NewElbowFitting(closestConnector1, connector);
-                    }
-
-
+                    // Можно обработать этот случай по-другому, если требуется
                     return;
                 }
+
+                // Нормализуем вектор направления
+                XYZ unitDirection = direction.Normalize();
+
+                // Определяем новую конечную точку, увеличив длину на дополнительную длину
+                XYZ adjustedEnd = end + unitDirection * extraLength;
+                PipingSystemType pipeSystem = GetPipeSystem(doc, closestConnector.Connector);
+                ElementId level = GetLevel(doc, selectedElement.GetGlobalPoint().Z);
+                Pipe newPipe = Pipe.Create(doc, pipeSystem.Id, pipeType.Id, level, closestConnector.Origin,
+                    adjustedEnd);
+                newPipe.LookupParameter("Диаметр").Set(diameter);
+                Connector[] connectors = ConnectorArray(newPipe);
+                if (!includeElbow) return;
+                Connector connector = NearestConnector(connectors, selectedElement.GetGlobalPoint());
+                FamilyInstance newElbow = doc.Create.NewElbowFitting(closestConnector.Connector, connector);
             }
-            catch
+            catch (Exception ex)
             {
-                return;
+                TaskDialog.Show("Ошибка", ex.Message);
             }
         }
 
@@ -1611,63 +1724,46 @@ namespace SystemModelingCommands.Services
                 (xyz7.Z - xyz6.Z) / 2.0 + xyz6.Z);
         }
 
-        private static void Bloom(Document doc, Element selectedElement, MEPCurveType elementType)
+        private static void Bloom(Document doc, ElementWrapper selectedElement, MEPCurveType elementType)
         {
-            Connector[] source = ConnectorArrayUnused(selectedElement);
-            if (source == null)
+            List<ConnectorWrapper> connectorUnused = selectedElement.Connectors
+                .Where(x => !x.IsConnected)
+                .ToList();
+            if (connectorUnused.Count == 0)
 
                 return;
-            foreach (Connector connector in source)
+            foreach (ConnectorWrapper connector in connectorUnused)
             {
-                if (connector.Domain is Domain.DomainPiping or Domain.DomainHvac)
+                if (connector.Domain is not (Domain.DomainPiping or Domain.DomainHvac)) continue;
+                switch (connector.Domain)
                 {
-                    if (connector.Domain == Domain.DomainPiping)
+                    case Domain.DomainPiping:
                     {
-                        PipingSystemType pipeSystem = GetPipeSystem(doc, connector);
-                        double extensionLength = GetExtensionLength(connector);
-                        XYZ origin = connector.Origin;
-                        XYZ xyz1 = origin + extensionLength * connector.CoordinateSystem.BasisZ;
-                        ElementId level = GetLevel(doc, origin.Z);
+                        PipingSystemType pipeSystem = GetPipeSystem(doc, connector.Connector);
+                        double extensionLength = GetExtensionLength(connector.Connector);
+
+                        XYZ xyz1 = connector.Origin + extensionLength * connector.CoordinateSystem.BasisZ;
+                        ElementId level = GetLevel(doc, connector.Origin.Z);
                         if (elementType != null)
                         {
-                            CreatePipe(doc, pipeSystem, elementType as PipeType, connector, level, origin, xyz1);
+                            CreatePipe(doc, pipeSystem, elementType as PipeType, connector, level, xyz1);
                         }
-                    }
 
-                    if (connector.Domain == Domain.DomainHvac)
+                        break;
+                    }
+                    case Domain.DomainHvac:
                     {
-                        MechanicalSystemType mechanicalSystem = GetMechanicalSystem(doc, connector);
-                        double extensionLength = GetExtensionLength(connector);
-                        XYZ origin = connector.Origin;
-                        XYZ endPoint = origin + extensionLength * connector.CoordinateSystem.BasisZ;
-                        ElementId level = GetLevel(doc, origin.Z);
-                        CreateDuct(doc, mechanicalSystem, elementType as DuctType, connector, level, origin, endPoint);
+                        MechanicalSystemType mechanicalSystem = GetMechanicalSystem(doc, connector.Connector);
+                        double extensionLength = GetExtensionLength(connector.Connector);
+                        XYZ endPoint = connector.Origin + extensionLength * connector.CoordinateSystem.BasisZ;
+                        ElementId level = GetLevel(doc, connector.Origin.Z);
+                        CreateDuct(doc, mechanicalSystem, elementType as DuctType, connector, level, endPoint);
+                        break;
                     }
                 }
             }
         }
 
-        public static MEPCurveType DeterminingTypeOfPipeByFitting(Document doc, Element element)
-        {
-            ConnectorSet connectors = (element as FamilyInstance)?.MEPModel.ConnectorManager.Connectors;
-            if (connectors != null)
-            {
-                foreach (Connector connector in connectors)
-                {
-                    // Перебираем соединения
-                    foreach (Connector connectedConnector in connector.AllRefs)
-                    {
-                        if (connectedConnector.Owner is MEPCurve connectedPipe)
-                        {
-                            // Получаем тип присоединенной трубы
-                            return doc.GetElement(connectedPipe.GetTypeId()) as MEPCurveType;
-                        }
-                    }
-                }
-            }
-
-            return null;
-        }
 
         public static DuctType DeterminingTypeOfDuctByFitting(Document doc, Element element)
         {
@@ -1692,42 +1788,203 @@ namespace SystemModelingCommands.Services
         }
 
         private static void CreatePipe(Document doc, PipingSystemType pipeSystem, PipeType pipeType,
-            Connector connector, ElementId level, XYZ origin, XYZ xyz1)
+            ConnectorWrapper connector, ElementId level, XYZ xyz1)
         {
-            Element pipe = Pipe.Create(doc, pipeSystem.Id, pipeType.Id, level, origin, xyz1);
+            Element pipe = Pipe.Create(doc, pipeSystem.Id, pipeType.Id, level, connector.Origin, xyz1);
             Parameter diameter = pipe.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
             var diameterConnectorSelected = connector.Radius * 2;
             diameter.Set(diameterConnectorSelected);
             Connector[] cA = ConnectorArrayUnused(pipe);
-            NearestConnector(cA, connector.Origin).ConnectTo(connector);
+            NearestConnector(cA, connector.Origin).ConnectTo(connector.Connector);
         }
 
         private static void CreateDuct(Document doc, MechanicalSystemType mechanicalSystemType, DuctType ductType,
-            Connector connector, ElementId level, XYZ origin, XYZ endPoint)
+            ConnectorWrapper connector, ElementId level, XYZ endPoint)
         {
-            Element duct = Duct.Create(doc, mechanicalSystemType.Id, ductType.Id, level, origin, endPoint);
-            if (connector.Shape == ConnectorProfileType.Round)
+            Element duct = Duct.Create(doc, mechanicalSystemType.Id, ductType.Id, level, connector.Origin, endPoint);
+            switch (connector.Shape)
             {
-                Parameter diameter = duct.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM);
-                var diameterConnectorSelected = connector.Radius * 2;
-                diameter.Set(diameterConnectorSelected);
-            }
-            else if (connector.Shape == ConnectorProfileType.Rectangular)
-            {
-                Parameter width = duct.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM);
-                Parameter height = duct.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM);
-                var widthConnectorSelected = connector.Width;
-                var heightConnectorSelected = connector.Height;
-                width.Set(widthConnectorSelected);
-                height.Set(heightConnectorSelected);
-            }
-            else if (connector.Shape == ConnectorProfileType.Oval)
-            {
-                return;
+                case ConnectorProfileType.Round:
+                {
+                    Parameter diameter = duct.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM);
+                    var diameterConnectorSelected = connector.Radius * 2;
+                    diameter.Set(diameterConnectorSelected);
+                    break;
+                }
+                case ConnectorProfileType.Rectangular:
+                {
+                    Parameter width = duct.FindParameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM);
+                    Parameter height = duct.FindParameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM);
+                    ElementWrapper elem = new ElementWrapper(connector.Owner);
+                    var c = elem.Connectors.FirstOrDefault(x => x.Id != connector.Id);
+                    bool shouldSwapDimensions = false;
+                    if (IsConnectorsHorizontal(elem.Connectors))
+                    {
+                        shouldSwapDimensions = false;
+                    }
+                    // Проверка ориентации коннектора по векторам
+                    else if (IsVerticalUpward(connector)) 
+                    {
+                        shouldSwapDimensions = false;
+                    }
+                    else if (IsVerticalDownward(connector)) // Вертикально вниз
+                    {
+                        shouldSwapDimensions = false;
+                    }
+                    else if (IsHorizontalRight(connector)) // Горизонтально вправо
+                    {
+                        shouldSwapDimensions = true;
+                    }
+                    else if (IsHorizontalLeft(connector)) // Горизонтально влево
+                    {
+                        shouldSwapDimensions = false;
+                    }
+                    else if (IsForward(connector)) // Вперед (от наблюдателя)
+                    {
+                        shouldSwapDimensions = true;
+                    }
+                    else if (IsBackward(connector)) // Назад (к наблюдателю)
+                    {
+                        shouldSwapDimensions = false;
+                    }
+                    else if (IsPositiveInclinedUpward(connector)) // Наклон вверх положительный
+                    {
+                        shouldSwapDimensions = false;
+                    }
+                    else if (IsNegativeInclinedUpward(connector)) // Наклон вверх отрицательный
+                    {
+                        shouldSwapDimensions = false;
+                    }
+                    else if (IsPositiveInclinedDownward(connector)) // Наклон вниз положительный
+                    {
+                        shouldSwapDimensions = true;
+                    }
+                    else if (IsNegativeInclinedDownward(connector)) // Наклон вниз отрицательный
+                    {
+                        shouldSwapDimensions = true;
+                    }
+                    else
+                    {
+                        shouldSwapDimensions = true;
+                    }
+
+                    // Установка размеров с учетом необходимости их замены
+                    if (shouldSwapDimensions)
+                    {
+                        width?.Set(connector.Height);
+                        height?.Set(connector.Width);
+                    }
+                    else
+                    {
+                        width?.Set(connector.Width);
+                        height?.Set(connector.Height);
+                    }
+
+                    break;
+                }
+                case ConnectorProfileType.Oval:
+                    return;
             }
 
+            // if (Math.Abs(connector.Origin.X - endPoint.X) < 0.001 &&
+            //     Math.Abs(connector.Origin.Y - endPoint.Y) < 0.001)
+            // {
+            //     XYZ basisZ = connector.CoordinateSystem.BasisZ;
+            //     XYZ source = new XYZ(0.0, 1.0, 0.0);
+            //     double angle = basisZ.AngleTo(source);
+            //     if (basisZ.DotProduct(source) > 0.0 && basisZ.X > 1.0)
+            //         angle = -angle;
+            //     Line bound = Line.CreateBound(connector.Origin, endPoint);
+            //     if (connector.Origin.Z > endPoint.Z)
+            //         bound = Line.CreateBound(endPoint, connector.Origin);
+            //     ElementTransformUtils.RotateElement(doc, duct.Id, bound, angle);
+            // }
             Connector[] cA = ConnectorArrayUnused(duct);
-            NearestConnector(cA, connector.Origin).ConnectTo(connector);
+            NearestConnector(cA, connector.Origin).ConnectTo(connector.Connector);
+        }
+
+        private static bool IsConnectorsHorizontal(List<ConnectorWrapper> elemConnectors)
+        {
+            const double epsilon = 1.0e-9;
+
+            foreach (var connector in elemConnectors)
+            {
+                // Если Z-компонента направления близка к 1 или -1, значит коннектор вертикальный
+                if (Math.Abs(connector.BasisZ.Z) != 0)
+                {
+                    return false; // Нашли вертикальный коннектор
+                }
+            }
+
+            return true; // Все коннекторы горизонтальные
+        }
+
+        // Вспомогательные методы для проверки ориентации
+        private static bool IsVerticalUpward(ConnectorWrapper connector)
+        {
+            return Math.Abs(connector.BasisZ.Z - 1) < Constants.Epsilon;
+        }
+
+        private static bool IsVerticalDownward(ConnectorWrapper connector)
+        {
+            return Math.Abs(connector.BasisZ.Z + 1) < Constants.Epsilon;
+        }
+
+        private static bool IsHorizontalRight(ConnectorWrapper connector)
+        {
+            return Math.Abs(connector.BasisZ.X - 1) < Constants.Epsilon;
+        }
+
+        private static bool IsHorizontalLeft(ConnectorWrapper connector)
+        {
+            return Math.Abs(connector.BasisZ.X + 1) < Constants.Epsilon;
+        }
+
+        private static bool IsForward(ConnectorWrapper connector)
+        {
+            return Math.Abs(connector.BasisZ.Y - 1) < Constants.Epsilon;
+        }
+
+        private static bool IsBackward(ConnectorWrapper connector)
+        {
+            return Math.Abs(connector.BasisZ.Y + 1) < Constants.Epsilon;
+        }
+
+        private static bool IsPositiveInclinedUpward(ConnectorWrapper connector)
+        {
+            return connector.BasisZ.X > 0 &&
+                   connector.BasisZ.Y > 0 &&
+                   connector.BasisZ.Z > 0 &&
+                   connector.BasisY.Y > 0;
+        }
+
+        private static bool IsNegativeInclinedUpward(ConnectorWrapper connector)
+        {
+            return connector.BasisZ.X > 0 &&
+                   connector.BasisZ.Y > 0 &&
+                   connector.BasisZ.Z > 0 &&
+                   connector.BasisY.Y < 0;
+        }
+
+        private static bool IsPositiveInclinedDownward(ConnectorWrapper connector)
+        {
+            return connector.BasisZ.X > 0 &&
+                   connector.BasisZ.Y > 0 &&
+                   connector.BasisZ.Z < 0 &&
+                   connector.BasisY.Y > 0;
+        }
+
+        private static bool IsNegativeInclinedDownward(ConnectorWrapper connector)
+        {
+            return connector.BasisZ.X > 0 &&
+                   connector.BasisZ.Y > 0 &&
+                   connector.BasisZ.Z < 0 &&
+                   connector.BasisY.Y < 0;
+        }
+
+        private struct Constants
+        {
+            public const double Epsilon = 1.0e-9;
         }
 
         public static void AlignColinearMEPElements(Element movingElement, Connector stationaryElementClosestConnector,
@@ -2056,15 +2313,10 @@ namespace SystemModelingCommands.Services
             Level closestLevel = levels
                 .Where(lvl => lvl.Elevation <= z)
                 .OrderByDescending(lvl => lvl.Elevation)
+                // Если не найден уровень ниже 'z', берем ближайший уровень выше
+                .FirstOrDefault() ?? levels
+                .OrderBy(lvl => lvl.Elevation - z)
                 .FirstOrDefault();
-
-            // Если не найден уровень ниже 'z', берем ближайший уровень выше
-            if (closestLevel == null)
-            {
-                closestLevel = levels
-                    .OrderBy(lvl => lvl.Elevation - z)
-                    .FirstOrDefault();
-            }
 
             return closestLevel?.Id;
         }

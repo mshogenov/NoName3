@@ -10,17 +10,28 @@ public class ConnectorWrapper
     public Element ConnectedElement => GetConnectedElement();
 
     public Transform CoordinateSystem => Connector.CoordinateSystem;
-
     public XYZ Origin => Connector.Origin;
+    public XYZ BasisZ => CoordinateSystem.BasisZ;
     public bool IsConnected => Connector.IsConnected;
     public Connector ConnectedConnector => GetConnectedConnector();
     public int Id { get; set; }
+    public Domain Domain { get; set; }
+    public double Radius => Connector.Radius;
+    public ConnectorProfileType Shape { get; set; }
+    public double Width => Connector.Width;
+    public double Height => Connector.Height;
+    public XYZ BasisY => CoordinateSystem.BasisY;
 
     public ConnectorWrapper(Connector connector)
     {
+        
         Connector = connector;
         Id = connector.Id;
+        Domain = connector.Domain;
+        Shape = connector.Shape;
+        
     }
+
 
     private Connector GetConnectedConnector()
     {

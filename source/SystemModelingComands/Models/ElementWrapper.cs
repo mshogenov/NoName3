@@ -4,16 +4,27 @@ public sealed class ElementWrapper
 {
     public Element Element { get; set; }
     public ElementId Id { get; set; }
-
+public BuiltInCategory BuiltInCategory { get; }
     public ConnectorManager ConnectorManager => GetConnectorManager(Element);
     public List<ConnectorWrapper> Connectors => GetConnectors();
     public List<Element> ConnectedElements => GetConnectedElements();
+    private XYZ GlobalPoint { get; set; }
 
     public ElementWrapper(Element element)
     {
         if (element == null) return;
         Element = element;
         Id = element.Id;
+        BuiltInCategory = element.Category.BuiltInCategory;
+    }
+
+    public ElementWrapper(Reference reference, Document doc)
+    {
+        ArgumentNullException.ThrowIfNull(reference);
+        Element = doc.GetElement(reference);
+        Id = Element.Id;
+        GlobalPoint = reference.GlobalPoint;
+        BuiltInCategory = Element.Category.BuiltInCategory;
     }
 
     private List<Element> GetConnectedElements()
@@ -54,5 +65,18 @@ public sealed class ElementWrapper
         Connectors
             .Where(c => !c.IsConnected)
             .OrderBy(c => c.Origin.DistanceTo(point))
-            .FirstOrDefault() ?.Connector;
+            .FirstOrDefault()?.Connector;
+
+    public MEPCurveType DeterminingTypeOfPipeByFitting()
+    {
+        if (Element is not FamilyInstance) return null;
+        Document doc = Element.Document;
+        Element connectedConnector = ConnectedElements.FirstOrDefault();
+        return connectedConnector != null ? doc.GetElement(connectedConnector.GetTypeId()) as MEPCurveType : null;
+    }
+
+    public XYZ GetGlobalPoint()
+    {
+        return GlobalPoint;
+    }
 }
