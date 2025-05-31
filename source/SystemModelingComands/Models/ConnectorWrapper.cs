@@ -11,6 +11,7 @@ public class ConnectorWrapper
 
     public Transform CoordinateSystem => Connector.CoordinateSystem;
     public XYZ Origin => Connector.Origin;
+    public XYZ BasisZ => CoordinateSystem.BasisZ;
     public bool IsConnected => Connector.IsConnected;
     public Connector ConnectedConnector => GetConnectedConnector();
     public int Id { get; set; }
@@ -19,9 +20,11 @@ public class ConnectorWrapper
     public ConnectorProfileType Shape { get; set; }
     public double Width => Connector.Width;
     public double Height => Connector.Height;
+    public XYZ BasisY => CoordinateSystem.BasisY;
 
     public ConnectorWrapper(Connector connector)
     {
+        
         Connector = connector;
         Id = connector.Id;
         Domain = connector.Domain;
