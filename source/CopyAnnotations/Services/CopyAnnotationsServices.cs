@@ -53,40 +53,7 @@ public class CopyAnnotationsServices
         XYZ translationVector = targetBasePoint - sourceBasePoint;
         using Transaction tg = new Transaction(_doc, "Копирование аннотаций");
         tg.Start();
-        if (tagModels.Any())
-        {
-            var originalTag = tagModels.FirstOrDefault();
-            if (originalTag == null) return;
-            using SubTransaction trans = new SubTransaction(_doc);
-            trans.Start();
-            ElementId copiedTagId = CopiedTag(originalTag.IndependentTag, translationVector);
-            if (copiedTagId == null)
-            {
-                trans.RollBack();
-                tg.RollBack();
-                TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
-                return;
-            }
-
-            trans.Commit();
-            if (tagModels.Count > 1)
-            {
-                if (copiedTagId != null && _doc?.GetElement(copiedTagId) != null)
-                {
-                    // Получаем вектор трансляции, если можем
-                    var vector = GetTranslationVectorTag(copiedTagId, originalTag);
-                    // Удаляем скопированный элемент
-                    _doc.Delete(copiedTagId);
-                    CreateTags(tagModels, vector);
-                }
-                else
-                {
-                    tg.RollBack();
-                    TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
-                    return;
-                }
-            }
-        }
+        CreateTags(tagModels, translationVector);
 
         // if (dimensionModels.Any())
         // {
@@ -153,6 +120,43 @@ public class CopyAnnotationsServices
         }
 
         tg.Commit();
+    }
+
+    private bool CopyTags(List<TagModel> tagModels, XYZ translationVector, Transaction tg)
+    {
+       
+        CreateTags(tagModels, translationVector);
+        // if (tagModels.Count == 0) return false;
+        // var originalTag = tagModels.FirstOrDefault();
+        // if (originalTag == null) return true;
+        // using SubTransaction trans = new SubTransaction(_doc);
+        // trans.Start();
+        // ElementId copiedTagId = CopiedTag(originalTag.IndependentTag, translationVector);
+        // if (copiedTagId == null)
+        // {
+        //     trans.RollBack();
+        //     tg.RollBack();
+        //     TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
+        //     return true;
+        // }
+        //
+        // trans.Commit();
+        // if (tagModels.Count <= 1) return false;
+        // if (copiedTagId != null && _doc?.GetElement(copiedTagId) != null)
+        // {
+        //     // Получаем вектор трансляции, если можем
+        //     // var vector = GetTranslationVectorTag(copiedTagId, originalTag);
+        //     // Удаляем скопированный элемент
+        //     _doc.Delete(copiedTagId);
+        //     CreateTags(tagModels, translationVector);
+        // }
+        // else
+        // {
+        //     tg.RollBack();
+        //     TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
+        //     return true;
+        // }
+        return false;
     }
 
     private void CreateTags(List<TagModel> tagsData, XYZ? translationVector)
@@ -275,8 +279,7 @@ public class CopyAnnotationsServices
             return null;
         var displacement = nearestElement.Position.Subtract(searchPoint);
         IndependentTag? newTag = null;
-        if (ArePointsEqual(searchPoint, nearestElement.Position))
-        {
+      
             try
             {
                 // Создаем новую марку
@@ -296,7 +299,7 @@ public class CopyAnnotationsServices
                 TaskDialog.Show("Ошибка создания тега", ex.Message);
                 return null;
             }
-        }
+        
 
         if (newTag == null)
             return null;
@@ -600,7 +603,7 @@ public class CopyAnnotationsServices
             TaskDialog.Show("Ошибка", "Не удалось определить положение элемента.");
         }
 
-        return point;
+        return reference?.GlobalPoint;
     }
 
     public IList<Reference>? GetCopyTags()
