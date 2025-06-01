@@ -8,6 +8,7 @@ namespace CopyAnnotations.ViewModels;
 
 public sealed partial class CopyAnnotationsViewModel : ObservableObject
 {
+   
     private readonly Document? _doc = Context.ActiveDocument;
     private readonly UIDocument? _uiDoc = Context.ActiveUiDocument;
     private List<Reference> _selectedTagRefs = [];
@@ -43,8 +44,8 @@ public sealed partial class CopyAnnotationsViewModel : ObservableObject
 
     private XYZ? _sourceBasePoint;
     private readonly CopyAnnotationsServices _copyAnnotationsServices=new();
-  
 
+ 
     [RelayCommand]
     private void SelectedAnnotations(object parameter)
     {
@@ -54,11 +55,18 @@ public sealed partial class CopyAnnotationsViewModel : ObservableObject
             window.Hide();
             var selectedElements = Helpers.GetSelectedElements(_uiDoc)
                 .Where(x => x is IndependentTag or TextNote or AnnotationSymbol).ToList();
-            SelectedTagRefs = selectedElements.Any()
-                ? selectedElements.Select(x => new Reference(x)).ToList()
-                : _copyAnnotationsServices.GetCopyTags().ToList();
+            if (selectedElements.Count!=0)
+            {
+                SelectedTagRefs = selectedElements.Select(x => new Reference(x)).ToList();
 
-            if (SelectedTagRefs.Any())
+            }
+            else
+            {
+                SelectedTagRefs= _copyAnnotationsServices.GetCopyTags().ToList();
+            }
+          
+
+            if (SelectedTagRefs.Count != 0)
             {
                 SelectedTagRefsCount = SelectedTagRefs.Count;
             }

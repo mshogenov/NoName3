@@ -13,8 +13,7 @@
     Height="600" Width="350"
     Background="{DynamicResource WindowBackgroundBrush}"
     d:DataContext="{d:DesignInstance viewModel:MepElementsCopyLevelsViewModel}"
-    WindowStartupLocation="CenterScreen"
-    Title="Копировать элементы"
+   Title="Копировать элементы"
     MinWidth="350">
     <Window.Resources>
         <ResourceDictionary>

@@ -19,8 +19,8 @@ namespace RevitAddIn2;
     public class Application : ExternalApplication
     {
         // Заменяем одиночный список историей из 10 списков
-        public static ObservableCollection<SelectionHistoryData> SelectionHistories { get; } = new ();
-        public static int MaxHistories { get; } = 10;
+        public static ObservableCollection<SelectionHistoryData> SelectionHistories { get; } = [];
+        private static int MaxHistories { get; } = 10;
 
         public override void OnStartup()
         {
@@ -29,7 +29,7 @@ namespace RevitAddIn2;
             Application.SelectionChanged += LastAllocation;
         }
 
-        private void LastAllocation(object? sender, SelectionChangedEventArgs e)
+        private static void LastAllocation(object? sender, SelectionChangedEventArgs e)
         {
             ICollection<ElementId> currentSelection = e.GetSelectedElements();
             if (currentSelection.Count <= 1)
@@ -237,7 +237,7 @@ namespace RevitAddIn2;
                 .AddPushButton<MakeBreakCommand>("Сделать разрыв")
                 .SetImage("/RevitAddIn2;component/Resources/Icons/Разрыв-16.png")
                 .SetLargeImage("/RevitAddIn2;component/Resources/Icons/Разрыв-16.png");
-
+            ((PushButton)makeBreakCommandButton).AvailabilityClassName = typeof(CommandAvailability).FullName;
             #endregion
 
             #region NumberingOfRisers
@@ -274,9 +274,9 @@ namespace RevitAddIn2;
             
             #region CopyAnnotations
 
-            // panelSystemCreatingSchematics.AddPushButton<CopyAnnotationsCommand>("Копировать\nаннотации")
-            //     .SetImage("/RevitAddIn2;component/Resources/Icons/kopirovat_v2swjczhusqj_16.png")
-            //     .SetLargeImage("/RevitAddIn2;component/Resources/Icons/kopirovat_v2swjczhusqj_32.png");
+            panelSystemCreatingSchematics.AddPushButton<CopyAnnotationsCommand>("Копировать\nаннотации")
+                .SetImage("/RevitAddIn2;component/Resources/Icons/kopirovat_v2swjczhusqj_16.png")
+                .SetLargeImage("/RevitAddIn2;component/Resources/Icons/kopirovat_v2swjczhusqj_32.png");
 
             #endregion
 
@@ -304,7 +304,7 @@ namespace RevitAddIn2;
             #endregion
         }
 
-        private void RegisterUpdaterParameters()
+        private static void RegisterUpdaterParameters()
         {
             var parametersUpdater = new ParametersUpdater();
             UpdaterRegistry.RegisterUpdater(parametersUpdater, true);

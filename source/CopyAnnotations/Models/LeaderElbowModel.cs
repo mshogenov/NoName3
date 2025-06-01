@@ -8,9 +8,14 @@ public class LeaderElbowModel
     public LeaderElbowModel(IndependentTag tag, ElementModel element)
     {
         TaggedElement = element;
-        if (tag.LeaderEndCondition == LeaderEndCondition.Free)
+        if (tag.LeaderEndCondition != LeaderEndCondition.Free) return;
+        try
         {
             Position = tag.GetLeaderElbow(element.Reference);
+        }
+        catch
+        {
+            Position = null;
         }
     }
 }
