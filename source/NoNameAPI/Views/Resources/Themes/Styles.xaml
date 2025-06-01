@@ -1329,16 +1329,16 @@
                                         <DoubleAnimation Storyboard.TargetName="Checkmark"
                                                          Storyboard.TargetProperty="Opacity"
                                                          To="1" Duration="0:0:0.3"
-                                                         BeginTime="0:0:0.15" />
+                                                         BeginTime="0:0:0.10" />
 
                                         <DoubleAnimation Storyboard.TargetName="CheckmarkScale"
                                                          Storyboard.TargetProperty="ScaleX"
                                                          To="1" Duration="0:0:0.3"
-                                                         BeginTime="0:0:0.15" />
+                                                         BeginTime="0:0:0.10" />
                                         <DoubleAnimation Storyboard.TargetName="CheckmarkScale"
                                                          Storyboard.TargetProperty="ScaleY"
                                                          To="1" Duration="0:0:0.3"
-                                                         BeginTime="0:0:0.15" />
+                                                         BeginTime="0:0:0.10" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.EnterActions>
