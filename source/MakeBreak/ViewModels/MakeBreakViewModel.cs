@@ -15,7 +15,7 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     private readonly FamilySymbol _familySymbol;
     private UIApplication uiapp = Context.UiApplication;
     private readonly Document _doc = Context.ActiveDocument;
-    private View _activeView;
+    private View _activeView = Context.ActiveView;
 
     public View ActiveView
     {
@@ -45,28 +45,111 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     public MakeBreakViewModel()
     {
         _familySymbol = _makeBreakServices.FindFamily("Разрыв");
-        if (Helpers.CheckParameterExists(_doc, _parameterRupture)) return;
-        using Transaction tr = new Transaction(_doc, "Добавить общий параметр");
-        tr.Start();
-        try
+        if (!Helpers.CheckParameterExists(_doc, _parameterRupture))
         {
-            var isCreate = Helpers.CreateSharedParameter(_doc, _parameterRupture,
-                SpecTypeId.Boolean.YesNo, GroupTypeId.Graphics, true, _categories);
-            tr.Commit();
+            using Transaction tr = new Transaction(_doc, "Добавить общий параметр");
+            tr.Start();
+            try
+            {
+                var isCreate = Helpers.CreateSharedParameter(_doc, _parameterRupture,
+                    SpecTypeId.Boolean.YesNo, GroupTypeId.Graphics, true, _categories);
+                tr.Commit();
+            }
+            catch (Exception e)
+            {
+                tr.RollBack();
+                MessageBox.Show(e.Message, "Ошибка");
+            }
         }
-        catch (Exception e)
+
+        var filterExists = CheckFilterExists(_doc,"Разрыв");
+
+        if (_activeView.ViewType is ViewType.ThreeD or ViewType.FloorPlan)
         {
-            tr.RollBack();
-            MessageBox.Show(e.Message, "Ошибка");
+            var filter = new FilteredElementCollector(_doc)
+                .OfClass(typeof(ParameterFilterElement))
+                .Cast<ParameterFilterElement>().FirstOrDefault(x => x.Name == "Разрыв");
+            // проверка фильтра на правильность настроек
+
+            ICollection<ElementId> appliedFilters = _activeView.GetFilters();
         }
-   
+
+
         uiapp.ViewActivated += OnViewActivated;
     }
+
+    public bool CheckFilterExists(Document doc, string filterName)
+    {
+        var filter = new FilteredElementCollector(_doc)
+            .OfClass(typeof(ParameterFilterElement))
+            .Cast<ParameterFilterElement>().FirstOrDefault(x => x.Name == filterName);
+        if (filter == null) return false;
+
+        // Проверяем категории фильтра
+        var missingCategories = GetMissingCategories(filter, _categories);
+        if (missingCategories.Count != 0)
+        {
+            // Получаем текущие категории фильтра
+            var currentCategories = filter.GetCategories().ToList();
+            currentCategories.AddRange(missingCategories.Select(category => new ElementId((long)category)));
+
+            // Обновляем категории фильтра
+            filter.SetCategories(currentCategories);
+        }
+
+        // Проверяем правила фильтра
+        ParameterElement paramElement = GetParameterElement("msh_Разрыв");
+        var elementFilter = filter.GetElementFilter() as LogicalAndFilter;
+        var filters = elementFilter.GetFilters().Select(x => x as ElementParameterFilter);
+        foreach (var f in filters)
+        {
+            var rule = f.GetRules().FirstOrDefault();
+            switch (rule)
+            {
+                case null:
+                    return false;
+                case FilterIntegerRule integerRule:
+                {
+                    var param = integerRule.GetRuleParameter();
+                    if (!(paramElement != null && param.Equals(paramElement.Id)))
+                    {
+                        return false;
+                    }
+                    break;
+                }
+            }
+        }
+     
+        return true;
+    }
+
+    private ParameterElement GetParameterElement(string parameterName)
+    {
+        return new FilteredElementCollector(_doc)
+            .OfClass(typeof(ParameterElement))
+            .Cast<ParameterElement>()
+            .FirstOrDefault(pe => pe.Name.Equals(parameterName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private IList<BuiltInCategory> GetMissingCategories(ParameterFilterElement filter, List<BuiltInCategory> categories)
+    {
+        var filterCategoryIds = filter.GetCategories()
+            .Select(id => id.Value)
+            .ToList();
+
+        // Получаем категории, которых нет в фильтре
+        var missingCategories = categories
+            .Where(category => !filterCategoryIds.Contains((int)category))
+            .ToList();
+
+        return missingCategories;
+    }
+
     private void OnViewActivated(object sender, ViewActivatedEventArgs e)
     {
         Document doc = e.Document;
         View activeView = e.CurrentActiveView;
-     // проверка наличия фильтра на виде
+        // проверка наличия фильтра на виде
     }
 
     [RelayCommand]
