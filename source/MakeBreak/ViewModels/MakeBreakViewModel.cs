@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Events;
 using MakeBreak.Commands;
 using MakeBreak.Services;
 using Nice3point.Revit.Toolkit.External.Handlers;
@@ -12,7 +13,19 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     private readonly ActionEventHandler _actionEventHandler = new();
     private readonly MakeBreakServices _makeBreakServices = new();
     private readonly FamilySymbol _familySymbol;
+    private UIApplication uiapp = Context.UiApplication;
     private readonly Document _doc = Context.ActiveDocument;
+    private View _activeView;
+
+    public View ActiveView
+    {
+        get => _activeView;
+        set
+        {
+            _activeView = value;
+            OnPropertyChanged(nameof(ActiveView));
+        }
+    }
 
     private const string _parameterRupture = "msh_Разрыв";
 
@@ -46,6 +59,14 @@ public sealed partial class MakeBreakViewModel : ObservableObject
             tr.RollBack();
             MessageBox.Show(e.Message, "Ошибка");
         }
+   
+        uiapp.ViewActivated += OnViewActivated;
+    }
+    private void OnViewActivated(object sender, ViewActivatedEventArgs e)
+    {
+        Document doc = e.Document;
+        View activeView = e.CurrentActiveView;
+     // проверка наличия фильтра на виде
     }
 
     [RelayCommand]

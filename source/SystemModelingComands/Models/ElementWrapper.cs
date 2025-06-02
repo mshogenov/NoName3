@@ -18,9 +18,10 @@ public BuiltInCategory BuiltInCategory { get; }
         BuiltInCategory = element.Category.BuiltInCategory;
     }
 
-    public ElementWrapper(Reference reference, Document doc)
+    public ElementWrapper([NotNull] Reference reference, Document doc)
     {
-        ArgumentNullException.ThrowIfNull(reference);
+        if (reference == null) throw new ArgumentNullException(nameof(reference));
+
         Element = doc.GetElement(reference);
         Id = Element.Id;
         GlobalPoint = reference.GlobalPoint;
