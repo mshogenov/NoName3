@@ -10,6 +10,7 @@ public class ElbowDownCommand : ExternalCommand
 {
     public override void Execute()
     {
-        SystemModelingServices.ElbowDown();
+        SystemModelingServices systemModelingServices = new SystemModelingServices();
+        systemModelingServices.ElbowDown();
     }
 }

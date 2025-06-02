@@ -10,13 +10,35 @@ namespace NoNameApi.Views;
 
 public class BaseRevitWindow : Window
 {
+  
     // Свойства для управления видимостью кнопок
     public bool ShowMinimizeButton
     {
         get => (bool)GetValue(ShowMinimizeButtonProperty);
         set => SetValue(ShowMinimizeButtonProperty, value);
     }
+    public new static readonly DependencyProperty TitleProperty =
+        DependencyProperty.Register(nameof(Title), typeof(string), typeof(BaseRevitWindow),
+            new PropertyMetadata(string.Empty, OnTitleChanged));
 
+    public new string Title
+    {
+        get => (string)GetValue(TitleProperty);
+        set => SetValue(TitleProperty, value);
+    }
+
+    private static void OnTitleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is BaseRevitWindow window)
+        {
+            window.SetTitle((string)e.NewValue);
+        }
+    }
+
+    private void SetTitle(string newTitle)
+    {
+        base.Title = newTitle;
+    }
     public static readonly DependencyProperty ShowMinimizeButtonProperty =
         DependencyProperty.Register(
             nameof(ShowMinimizeButton),
