@@ -5,7 +5,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:viewModels="clr-namespace:MakeBreak.ViewModels"
-   xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
+    xmlns:converter="clr-namespace:NoNameApi.Views.Converters;assembly=NoNameAPI"
+    xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
     mc:Ignorable="d"
     d:DataContext="{d:DesignInstance viewModels:MakeBreakViewModel}"
     Title="Разрыв труб"
@@ -16,6 +17,7 @@
     Background="{DynamicResource WindowBackgroundBrush}">
     <Window.Resources>
         <ResourceDictionary>
+            <converter:BoolVisibilityConverter x:Key="BoolVisibilityConverter" />
             <d:ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
@@ -28,21 +30,22 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <!-- Контент окна -->
         <Grid Grid.Row="0"
               Margin="0 10">
-<DockPanel HorizontalAlignment="Right">
-    <Button HorizontalAlignment="Right" Content="Вернуть видимость трубы"
-            Command="{Binding BringBackVisibilityPipeCommand }"
-            Margin="10 7"
-            Style="{DynamicResource CommonButtonStyle2}" />
-    <Button HorizontalAlignment="Right" Content="Удалить разрыв"
-            Margin="0 7"
-            Command="{Binding DeleteBreakCommand }"
-            Style="{DynamicResource CommonButtonStyle2}" />
-</DockPanel>
-        
+            <DockPanel HorizontalAlignment="Right">
+                <Button HorizontalAlignment="Right" Content="Вернуть видимость трубы"
+                        Command="{Binding BringBackVisibilityPipeCommand }"
+                        Margin="10 7"
+                        Style="{DynamicResource CommonButtonStyle2}" />
+                <Button HorizontalAlignment="Right" Content="Удалить разрыв"
+                        Margin="0 7"
+                        Command="{Binding DeleteBreakCommand }"
+                        Style="{DynamicResource CommonButtonStyle2}" />
+            </DockPanel>
+
         </Grid>
         <DockPanel HorizontalAlignment="Right"
                    Grid.Row="1">
@@ -54,5 +57,31 @@
                     Style="{DynamicResource OutlineCloseButtonStyle}"
                     Click="CloseButton_Click" />
         </DockPanel>
+        <Grid Grid.Row="2" Margin="0 10">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            
+            <StackPanel Orientation="Horizontal"
+                        Visibility="{Binding IsExistingParameter,
+                        Converter={StaticResource BoolVisibilityConverter} }">
+                <TextBlock Text="В документе отсутствует параметр." />
+                <Button Content="Добавить" Command="{Binding AddParameterCommand}" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" Orientation="Horizontal"
+                        Visibility="{Binding IsExistingFilterInDocument,
+                        Converter={StaticResource BoolVisibilityConverter} }">
+                <TextBlock Text="В документе отсутствует фильтр вида." />
+                <Button Content="Добавить" Command="{Binding AddFilterInDocumentCommand}" />
+            </StackPanel>
+            <StackPanel Grid.Row="2" Orientation="Horizontal"
+                        Visibility="{Binding IsExistingFamily,
+                        Converter={StaticResource BoolVisibilityConverter} }">
+                <TextBlock Text="В документе отсутствует семейство." />
+                <Button Content="Добавить" Command="{Binding AddFamilyCommand}" />
+            </StackPanel>
+        </Grid>
     </Grid>
 </views:BaseRevitWindow>

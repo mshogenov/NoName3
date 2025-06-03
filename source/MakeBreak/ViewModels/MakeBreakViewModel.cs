@@ -16,6 +16,9 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     private UIApplication uiapp = Context.UiApplication;
     private readonly Document _doc = Context.ActiveDocument;
     private View _activeView = Context.ActiveView;
+    [ObservableProperty] private bool _isExistingFilterInDocument;
+    [ObservableProperty] private bool _isExistingParameter;
+    [ObservableProperty] private bool _isExistingFamily;
 
     public View ActiveView
     {
@@ -32,7 +35,6 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     // Добавьте поле для отслеживания состояния выполнения команды
     private bool _isExecutingMakeBreak;
 
-    [ObservableProperty] private string _statusColor = "#3498DB";
 
     private readonly List<BuiltInCategory> _categories =
     [
@@ -44,25 +46,24 @@ public sealed partial class MakeBreakViewModel : ObservableObject
 
     public MakeBreakViewModel()
     {
-        _familySymbol = _makeBreakServices.FindFamily("Разрыв");
         if (!Helpers.CheckParameterExists(_doc, _parameterRupture))
         {
-            using Transaction tr = new Transaction(_doc, "Добавить общий параметр");
-            tr.Start();
-            try
-            {
-                var isCreate = Helpers.CreateSharedParameter(_doc, _parameterRupture,
-                    SpecTypeId.Boolean.YesNo, GroupTypeId.Graphics, true, _categories);
-                tr.Commit();
-            }
-            catch (Exception e)
-            {
-                tr.RollBack();
-                MessageBox.Show(e.Message, "Ошибка");
-            }
+            IsExistingParameter = true;
         }
 
-        var filterExists = CheckFilterExists(_doc,"Разрыв");
+        if (!CheckFilterExists(_doc, "Разрыв"))
+        {
+            IsExistingFilterInDocument = true;
+        }
+
+        if (!CheckFamilyExists("Разрыв", out var family))
+        {
+            IsExistingFamily = true;
+        }
+        else
+        {
+            _familySymbol = family;
+        }
 
         if (_activeView.ViewType is ViewType.ThreeD or ViewType.FloorPlan)
         {
@@ -78,49 +79,72 @@ public sealed partial class MakeBreakViewModel : ObservableObject
         uiapp.ViewActivated += OnViewActivated;
     }
 
+    private bool CheckFamilyExists(string familyName, out FamilySymbol family)
+    {
+        family = new FilteredElementCollector(_doc)
+            .OfCategory(BuiltInCategory.OST_PipeFitting)
+            .OfClass(typeof(FamilySymbol)).FirstOrDefault(x => x.Name == familyName) as FamilySymbol;
+        return family != null;
+    }
+
+    private void AddParameter()
+    {
+        using Transaction tr = new Transaction(_doc, "Добавить общий параметр");
+        tr.Start();
+        try
+        {
+            var isCreate = Helpers.CreateSharedParameter(_doc, _parameterRupture,
+                SpecTypeId.Boolean.YesNo, GroupTypeId.Graphics, true, _categories);
+            tr.Commit();
+        }
+        catch (Exception e)
+        {
+            tr.RollBack();
+            MessageBox.Show(e.Message, "Ошибка");
+        }
+    }
+
     public bool CheckFilterExists(Document doc, string filterName)
     {
         var filter = new FilteredElementCollector(_doc)
             .OfClass(typeof(ParameterFilterElement))
             .Cast<ParameterFilterElement>().FirstOrDefault(x => x.Name == filterName);
-        if (filter == null) return false;
-
-        // Проверяем категории фильтра
-        var missingCategories = GetMissingCategories(filter, _categories);
-        if (missingCategories.Count != 0)
-        {
-            // Получаем текущие категории фильтра
-            var currentCategories = filter.GetCategories().ToList();
-            currentCategories.AddRange(missingCategories.Select(category => new ElementId((long)category)));
-
-            // Обновляем категории фильтра
-            filter.SetCategories(currentCategories);
-        }
-
-        // Проверяем правила фильтра
-        ParameterElement paramElement = GetParameterElement("msh_Разрыв");
-        var elementFilter = filter.GetElementFilter() as LogicalAndFilter;
-        var filters = elementFilter.GetFilters().Select(x => x as ElementParameterFilter);
-        foreach (var f in filters)
-        {
-            var rule = f.GetRules().FirstOrDefault();
-            switch (rule)
-            {
-                case null:
-                    return false;
-                case FilterIntegerRule integerRule:
-                {
-                    var param = integerRule.GetRuleParameter();
-                    if (!(paramElement != null && param.Equals(paramElement.Id)))
-                    {
-                        return false;
-                    }
-                    break;
-                }
-            }
-        }
-     
-        return true;
+        return filter != null;
+        // // Проверяем категории фильтра
+        // var missingCategories = GetMissingCategories(filter, _categories);
+        // if (missingCategories.Count != 0)
+        // {
+        //     // Получаем текущие категории фильтра
+        //     var currentCategories = filter.GetCategories().ToList();
+        //     currentCategories.AddRange(missingCategories.Select(category => new ElementId((long)category)));
+        //
+        //     // Обновляем категории фильтра
+        //     filter.SetCategories(currentCategories);
+        // }
+        //
+        // // Проверяем правила фильтра
+        // ParameterElement paramElement = GetParameterElement("msh_Разрыв");
+        // var elementFilter = filter.GetElementFilter() as LogicalAndFilter;
+        // var filters = elementFilter.GetFilters().Select(x => x as ElementParameterFilter);
+        // foreach (var f in filters)
+        // {
+        //     var rule = f.GetRules().FirstOrDefault();
+        //     switch (rule)
+        //     {
+        //         case null:
+        //             return false;
+        //         case FilterIntegerRule integerRule:
+        //         {
+        //             var param = integerRule.GetRuleParameter();
+        //             if (!(paramElement != null && param.Equals(paramElement.Id)))
+        //             {
+        //                 return false;
+        //             }
+        //             break;
+        //         }
+        //     }
+        // }
+        //
     }
 
     private ParameterElement GetParameterElement(string parameterName)
