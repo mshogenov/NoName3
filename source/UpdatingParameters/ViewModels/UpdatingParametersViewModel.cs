@@ -35,6 +35,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
     private readonly ParametersDataStorage _parametersDataStorage;
     [ObservableProperty] private ViewModelBase _selectedContent;
     [ObservableProperty] private ButtonType _selectedButton;
+    [ObservableProperty] private bool _mainIsVisible;
     [ObservableProperty] private bool _pipesWithoutButtonIsVisible;
     [ObservableProperty] private bool _allCategoriesButtonIsVisible;
     [ObservableProperty] private bool _pipesOuterDiameterButtonIsVisible;
@@ -250,6 +251,8 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
     private void InitializeViewModels()
     {
         _mainViewModel = new MainViewModel();
+        MainIsVisible = true;
+        SelectedContent = _mainViewModel;
         _parametersViewModel = new ParametersViewModel(_storageFactory);
 
         if (_pipesWithoutDataStorage.GetElements().Count != 0)

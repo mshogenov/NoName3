@@ -29,7 +29,7 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid >
+    <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="auto" />
             <ColumnDefinition Width="Auto" />
@@ -50,13 +50,13 @@
                 <StackPanel
                     VerticalAlignment="Top">
 
-                    <!--            <Button Content="Главная" -->
-                    <!--                    Style="{StaticResource CommonButtonStyle}" -->
-                    <!--                    Background="{Binding SelectedButton,  -->
-                    <!-- Converter={StaticResource ButtonSelectedConverter}, -->
-                    <!-- ConverterParameter={x:Static model:ButtonType.Main}}" -->
-                    <!--                    Command="{Binding MainCommand}" -->
-                    <!--                    Visibility="{Binding Path=MainIsVisible, Converter={StaticResource BoolVisibilityConverter}}" /> -->
+                    <Button Content="Главная"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Background="{Binding SelectedButton,
+                             Converter={StaticResource ButtonSelectedConverter},
+                             ConverterParameter={x:Static model:ButtonType.Main}}"
+                            Command="{Binding MainCommand}"
+                            Visibility="{Binding Path=MainIsVisible, Converter={StaticResource BoolVisibilityConverter}}" />
                     <Button Content="Трубы:Без типа"
                             Background="{Binding SelectedButton, 
                         Converter={StaticResource ButtonSelectedConverter},
