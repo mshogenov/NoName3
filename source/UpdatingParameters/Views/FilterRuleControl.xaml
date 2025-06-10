@@ -5,10 +5,15 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:UpdatingParameters.Views"
              mc:Ignorable="d"
-             xmlns:vm = "clr-namespace:UpdatingParameters.ViewModels"
+             xmlns:vm="clr-namespace:UpdatingParameters.ViewModels"
+             xmlns:converters="clr-namespace:UpdatingParameters.Views.Converters"
              d:DataContext="{d:DesignInstance vm:FilterRuleVM}"
              d:DesignHeight="Auto" d:DesignWidth="600">
+    <UserControl.Resources>
+        <converters:EnumToDisplayConverter x:Key="EnumToDisplayConverter" />
+    </UserControl.Resources>
     <Border BorderBrush="#2196F3" BorderThickness="1"
+            Padding="5"
             Background="#E3F2FD" Margin="5" CornerRadius="3">
         <Grid>
             <Grid.ColumnDefinitions>
@@ -16,31 +21,30 @@
                 <ColumnDefinition />
                 <ColumnDefinition />
                 <ColumnDefinition />
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <ComboBox Grid.Column="0"  Margin="0,0,5,0" Text="{Binding Category}">
-                <ComboBoxItem Content="Все выбранные категории" />
-                <ComboBoxItem Content="Стены" />
-                <ComboBoxItem Content="Двери" />
+            <ComboBox Grid.Column="0" Margin="0,0,5,0" Text="{Binding Category}">
+                />
             </ComboBox>
-            <ComboBox Grid.Column="1"  Margin="0,0,5,0" Text="{Binding Parameter}">
-                <ComboBoxItem Content="Имя системы" />
-                <ComboBoxItem Content="Материал" />
-                <ComboBoxItem Content="Тип" />
+            <ComboBox Grid.Column="1" Margin="0,0,5,0" Text="{Binding Parameter}">
+
             </ComboBox>
 
-            <ComboBox Grid.Column="2"  Margin="0,0,5,0" Text="{Binding Condition}">
-                <ComboBoxItem Content="содержит" />
-                <ComboBoxItem Content="не содержит" />
-                <ComboBoxItem Content="равно" />
-                <ComboBoxItem Content="не равно" />
+            <ComboBox Grid.Column="2" Margin="0,0,5,0"
+                      ItemsSource="{Binding Condition}"
+                      SelectedItem="{Binding SelectedCondition}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Converter={StaticResource EnumToDisplayConverter}}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
             </ComboBox>
 
-            <TextBox Grid.Column="3"  Text="{Binding Value}" />
-            <Button Grid.Column="4" Content="✕" DockPanel.Dock="Right"
-                    Width="20" Height="20" Margin="5,0,0,0"
-                    Command="{Binding RemoveCommand}" />
+            <TextBox Grid.Column="3" Text="{Binding Value}" />
+            <Button Grid.Column="4" Content="✕"
+                    Margin="5,0,0,0"
+                    Command="{Binding RemoveCommand}"
+                    />
         </Grid>
-
     </Border>
 </UserControl>

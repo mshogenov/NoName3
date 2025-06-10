@@ -1,30 +1,71 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using UpdatingParameters.Models;
 
 namespace UpdatingParameters.ViewModels;
 
 public partial class FilterGroupVM : FilterItem
 {
-    public ObservableCollection<FilterItem> Children { get; set; } = new ObservableCollection<FilterItem>();
-    private string _logicalOperator = "И";
+    private ObservableCollection<FilterItem> _children = new();
 
-    public string LogicalOperator
+    public ObservableCollection<FilterItem> Children
     {
-        get => _logicalOperator;
+        get => _children;
         set
         {
-            _logicalOperator = value;
+            if (_children != null)
+            {
+                _children.CollectionChanged -= OnChildrenChanged;
+            }
+
+            _children = value;
+
+            if (_children != null)
+            {
+                _children.CollectionChanged += OnChildrenChanged;
+                // Устанавливаем Parent для существующих элементов
+                foreach (var child in _children)
+                {
+                    child.Parent = this;
+                }
+            }
+
             OnPropertyChanged();
         }
     }
-    // Добавьте это свойство
+
+    private void OnChildrenChanged(object sender, NotifyCollectionChangedEventArgs e)
+    {
+        // Устанавливаем Parent для новых элементов
+        if (e.NewItems != null)
+        {
+            foreach (FilterItem item in e.NewItems)
+            {
+                item.Parent = this;
+            }
+        }
+
+        // Очищаем Parent для удаленных элементов
+        if (e.OldItems != null)
+        {
+            foreach (FilterItem item in e.OldItems)
+            {
+                item.Parent = null;
+            }
+        }
+    }
+
+    [ObservableProperty] private Array _enrollmentCondition = Enum.GetValues(typeof(EnrollmentCondition));
+    [ObservableProperty] private EnrollmentCondition _selectedEnrollmentCondition = Models.EnrollmentCondition.And;
     public bool CanBeRemoved => Parent != null;
 
     [RelayCommand]
     private void AddRule()
     {
-        var rule = new FilterRuleVM();
-        rule.Parent = this; // Устанавливаем родителя
+        var rule = new FilterRuleVM
+        {
+            Parent = this // Устанавливаем родителя
+        };
         Children.Add(rule);
     }
 

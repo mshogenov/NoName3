@@ -6,11 +6,15 @@
              xmlns:local="clr-namespace:UpdatingParameters.Views"
              xmlns:models="clr-namespace:UpdatingParameters.Models"
              xmlns:vm="clr-namespace:UpdatingParameters.ViewModels"
+             xmlns:services="clr-namespace:UpdatingParameters.Services"
+             xmlns:updatingParameters="clr-namespace:UpdatingParameters"
+             xmlns:converters="clr-namespace:UpdatingParameters.Views.Converters"
              d:DataContext="{d:DesignInstance Type = vm:FilterGroupVM}"
              mc:Ignorable="d"
-             d:DesignHeight="300" d:DesignWidth="500">
+             d:DesignHeight="Auto" d:DesignWidth="500">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:EnumToDisplayConverter x:Key="EnumToDisplayConverter" />
     </UserControl.Resources>
     <Border BorderBrush="#4CAF50" BorderThickness="2"
             Background="#E8F5E8" Margin="5" CornerRadius="5">
@@ -27,7 +31,13 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <ComboBox Grid.Column="0"
-                          SelectedItem="{Binding LogicalOperator}">
+                          ItemsSource="{Binding Path=EnrollmentCondition}"
+                          SelectedItem="{Binding SelectedEnrollmentCondition }">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource EnumToDisplayConverter}}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
                 </ComboBox>
 
                 <Button Grid.Column="1" Content="Добавить правило"
@@ -36,14 +46,13 @@
                 <Button Grid.Column="2" Content="Добавить набор"
                         Margin="5,0" Padding="5,2"
                         Command="{Binding AddGroupCommand}" />
-                <Button Grid.Column="3" Content="✕" DockPanel.Dock="Right"
-                        Command="{Binding RemoveCommand}"
-                        />
+                <Button Grid.Column="3" Content="✕" 
+                        Command="{Binding RemoveCommand}" />
 
             </Grid>
             <ItemsControl Grid.Row="1" ItemsSource="{Binding Children}">
                 <ItemsControl.ItemTemplateSelector>
-                    <models:FilterItemTemplateSelector />
+                    <services:FilterItemTemplateSelector />
                 </ItemsControl.ItemTemplateSelector>
             </ItemsControl>
         </Grid>
