@@ -1,0 +1,46 @@
+<UserControl x:Class="UpdatingParameters.Views.FilterRuleControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:UpdatingParameters.Views"
+             mc:Ignorable="d"
+             xmlns:vm = "clr-namespace:UpdatingParameters.ViewModels"
+             d:DataContext="{d:DesignInstance vm:FilterRuleVM}"
+             d:DesignHeight="Auto" d:DesignWidth="600">
+    <Border BorderBrush="#2196F3" BorderThickness="1"
+            Background="#E3F2FD" Margin="5" CornerRadius="3">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <ComboBox Grid.Column="0"  Margin="0,0,5,0" Text="{Binding Category}">
+                <ComboBoxItem Content="Все выбранные категории" />
+                <ComboBoxItem Content="Стены" />
+                <ComboBoxItem Content="Двери" />
+            </ComboBox>
+            <ComboBox Grid.Column="1"  Margin="0,0,5,0" Text="{Binding Parameter}">
+                <ComboBoxItem Content="Имя системы" />
+                <ComboBoxItem Content="Материал" />
+                <ComboBoxItem Content="Тип" />
+            </ComboBox>
+
+            <ComboBox Grid.Column="2"  Margin="0,0,5,0" Text="{Binding Condition}">
+                <ComboBoxItem Content="содержит" />
+                <ComboBoxItem Content="не содержит" />
+                <ComboBoxItem Content="равно" />
+                <ComboBoxItem Content="не равно" />
+            </ComboBox>
+
+            <TextBox Grid.Column="3"  Text="{Binding Value}" />
+            <Button Grid.Column="4" Content="✕" DockPanel.Dock="Right"
+                    Width="20" Height="20" Margin="5,0,0,0"
+                    Command="{Binding RemoveCommand}" />
+        </Grid>
+
+    </Border>
+</UserControl>
