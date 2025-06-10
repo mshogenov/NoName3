@@ -35,31 +35,50 @@
         </StackPanel>
 
         <Popup
-            Width="400"
+            Width="250"
             IsOpen="{Binding IsPopupOpen}"
             PlacementTarget="{Binding CurrentPopupTarget}">
-            <TabControl>
-                <TabItem Header="Параметры экземпляра">
-                    <ListBox ItemsSource="{Binding InstanceParameters}"
-                             SelectedItem="{Binding SelectedParameter}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Name}" />
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </TabItem>
-                <TabItem Header="Параметры типа">
-                    <ListBox ItemsSource="{Binding TypeParameters}"
-                             SelectedItem="{Binding SelectedParameter}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Name}" />
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </TabItem>
-            </TabControl>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid>
+                    <TabControl>
+                        <TabItem Header="Параметры экземпляра"
+                               >
+                            <ListBox ItemsSource="{Binding InstanceParameters}"
+                                     SelectedItem="{Binding SelectedParameter}"
+                                     Height="300">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Definition.Name}" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </TabItem>
+                        <TabItem Header="Параметры типа"
+                                 >
+                            <ListBox ItemsSource="{Binding TypeParameters}"
+                                     Height="300"
+                                     SelectedItem="{Binding SelectedParameter}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Definition.Name}" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </TabItem>
+                    </TabControl>
+                </Grid>
+                <DockPanel Grid.Row="1" HorizontalAlignment="Right">
+                    <Button
+                        Content="Закрыть" Command="{Binding ClosePopupCommand}"/>
+                </DockPanel>
+               
+              
+            </Grid>
+         
 
         </Popup>
     </Grid>

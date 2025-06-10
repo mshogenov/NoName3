@@ -5,7 +5,7 @@
         <LangVersion>latest</LangVersion>
         <PlatformTarget>x64</PlatformTarget>
         <ImplicitUsings>true</ImplicitUsings>
-        <Configurations>DDebug R24;Debug R25;Debug R26</Configurations>
+        <Configurations>Debug R24;Debug R25;Debug R26</Configurations>
         <Configurations>$(Configurations);Release R24;Release R25;Release R26</Configurations>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>

@@ -4,7 +4,7 @@ public sealed class ElementWrapper
 {
     public Element Element { get; set; }
     public ElementId Id { get; set; }
-public BuiltInCategory BuiltInCategory { get; }
+    public BuiltInCategory BuiltInCategory { get; }
     public ConnectorManager ConnectorManager => GetConnectorManager(Element);
     public List<ConnectorWrapper> Connectors => GetConnectors();
     public List<Element> ConnectedElements => GetConnectedElements();
@@ -20,7 +20,6 @@ public BuiltInCategory BuiltInCategory { get; }
 
     public ElementWrapper(Reference reference, Document doc)
     {
-        ArgumentNullException.ThrowIfNull(reference);
         Element = doc.GetElement(reference);
         Id = Element.Id;
         GlobalPoint = reference.GlobalPoint;

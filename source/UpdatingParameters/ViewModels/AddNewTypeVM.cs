@@ -11,6 +11,9 @@ public partial class AddNewTypeVM : ViewModelBase
     private Category _selectedCategory;
     [ObservableProperty] private UIElement _currentPopupTarget;
     [ObservableProperty] private bool _isPopupOpen;
+    [ObservableProperty] private List<Parameter> _instanceParameters = [];
+    [ObservableProperty] private List<Parameter> _typeParameters = [];
+
     public Category SelectedCategory
     {
         get => _selectedCategory;
@@ -36,7 +39,20 @@ public partial class AddNewTypeVM : ViewModelBase
 
     private void UpdateParameters()
     {
-        Parameters = GetParameterNamesForCategory(_doc, SelectedCategory.BuiltInCategory);
+        InstanceParameters = GetInstanceParameters(_doc, SelectedCategory.BuiltInCategory);
+        TypeParameters = GetTypeParameters(_doc, SelectedCategory.BuiltInCategory);
+    }
+
+    private List<Parameter> GetTypeParameters(Document doc, BuiltInCategory builtInCategory)
+    {
+        // Получаем первый элемент категории
+        FilteredElementCollector collector = new FilteredElementCollector(doc);
+        Element element = collector.OfCategory(builtInCategory)
+            .WhereElementIsNotElementType()
+            .FirstElement();
+        var elementType = _doc.GetElement(element.GetTypeId());
+        var typeParameters = elementType.Parameters;
+        return typeParameters.Cast<Parameter>().ToList();
     }
 
     private List<Category> GetAllCategoryByType(Document doc, CategoryType categoryType)
@@ -46,38 +62,30 @@ public partial class AddNewTypeVM : ViewModelBase
             .Where(c => c.CategoryType == categoryType).ToList();
     }
 
-    List<string> GetParameterNamesForCategory(Document doc, BuiltInCategory builtInCategory)
+    List<Parameter> GetInstanceParameters(Document doc, BuiltInCategory builtInCategory)
     {
-        List<string> names = new List<string>();
-        Category category = Category.GetCategory(doc, builtInCategory);
-
-        DefinitionBindingMapIterator it = doc.ParameterBindings.ForwardIterator();
-        while (it.MoveNext())
-        {
-            Definition def = it.Key;
-            Binding binding = it.Current as Binding;
-            names.Add(def.Name);
-            if (binding is InstanceBinding instanceBinding &&
-                instanceBinding.Categories.Contains(category))
-            {
-            }
-        }
-
-        return names;
+        // Получаем первый элемент категории
+        FilteredElementCollector collector = new FilteredElementCollector(doc);
+        Element element = collector.OfCategory(builtInCategory)
+            .WhereElementIsNotElementType()
+            .FirstElement();
+        var instanceParameters = element.Parameters;
+        return instanceParameters.Cast<Parameter>().ToList();
     }
 
     [RelayCommand]
     private void SelectParameter(Button button)
     {
-        if (button != null)
-        {
-         
+        if (button == null) return;
+        // Устанавливаем целевой элемент для Popup
+        CurrentPopupTarget = button;
 
-            // Устанавливаем целевой элемент для Popup
-            CurrentPopupTarget = button;
-
-            // Открываем Popup
-            IsPopupOpen = true;
-        }
+        // Открываем Popup
+        IsPopupOpen = true;
+    }
+    [RelayCommand]
+    private void ClosePopup()
+    {
+        IsPopupOpen = false;
     }
 }
