@@ -35,7 +35,7 @@
                           SelectedItem="{Binding SelectedEnrollmentCondition }">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Converter={StaticResource EnumToDisplayConverter}}"/>
+                            <TextBlock Text="{Binding Converter={StaticResource EnumToDisplayConverter}}" />
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
@@ -46,11 +46,11 @@
                 <Button Grid.Column="2" Content="Добавить набор"
                         Margin="5,0" Padding="5,2"
                         Command="{Binding AddGroupCommand}" />
-                <Button Grid.Column="3" Content="✕" 
+                <Button Grid.Column="3" Content="✕"
                         Command="{Binding RemoveCommand}" />
 
             </Grid>
-            <ItemsControl Grid.Row="1" ItemsSource="{Binding Children}">
+            <ItemsControl Grid.Row="1" ItemsSource="{Binding FilterGroup.Items}">
                 <ItemsControl.ItemTemplateSelector>
                     <services:FilterItemTemplateSelector />
                 </ItemsControl.ItemTemplateSelector>
