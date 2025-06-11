@@ -5,10 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:UpdatingParameters.Views"
              mc:Ignorable="d"
-             xmlns:vm="clr-namespace:UpdatingParameters.ViewModels"
-             xmlns:converters="clr-namespace:UpdatingParameters.Views.Converters"
-             d:DataContext="{d:DesignInstance vm:FilterRuleVM}"
-             d:DesignHeight="Auto" d:DesignWidth="600">
+           xmlns:converters="clr-namespace:UpdatingParameters.Views.Converters"
+          d:DesignHeight="Auto" d:DesignWidth="600">
     <UserControl.Resources>
         <converters:EnumToDisplayConverter x:Key="EnumToDisplayConverter" />
     </UserControl.Resources>

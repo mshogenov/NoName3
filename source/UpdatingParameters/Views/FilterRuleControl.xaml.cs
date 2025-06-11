@@ -8,6 +8,7 @@ public partial class FilterRuleControl : UserControl
     public FilterRuleControl()
     {
         InitializeComponent();
-        DataContext = new FilterRuleVM();
+       
     }
+ 
 }

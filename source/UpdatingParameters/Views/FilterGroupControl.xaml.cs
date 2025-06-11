@@ -8,8 +8,6 @@ public partial class FilterGroupControl : UserControl
 {
     public FilterGroupControl()
     {
-        
         InitializeComponent();
-        DataContext = new FilterGroupVM();
     }
 }

@@ -1,7 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
+using UpdatingParameters.Models;
 using UpdatingParameters.ViewModels;
 using UpdatingParameters.Views;
+using FilterRule = Autodesk.Revit.DB.FilterRule;
 
 namespace UpdatingParameters.Services;
 
@@ -19,9 +21,9 @@ public class FilterItemTemplateSelector : DataTemplateSelector
         return item switch
         {
             // Если элемент является группой фильтров
-            FilterGroupVM => new DataTemplate { VisualTree = new FrameworkElementFactory(typeof(FilterGroupControl)) },
+            FilterGroup => new DataTemplate { VisualTree = new FrameworkElementFactory(typeof(FilterGroupControl)) },
             // Если элемент является правилом фильтра
-            FilterRuleVM => new DataTemplate { VisualTree = new FrameworkElementFactory(typeof(FilterRuleControl)) },
+            FilterRule => new DataTemplate { VisualTree = new FrameworkElementFactory(typeof(FilterRuleControl)) },
             _ => null
         };
     }

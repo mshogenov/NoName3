@@ -38,7 +38,7 @@
             </StackPanel>
         </StackPanel>
         <Grid Grid.Row="1">
-            <local:FilterGroupControl />
+            <local:FilteringCriteriaControl />
         </Grid>
         <Popup
             Width="250"
