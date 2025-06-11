@@ -704,6 +704,7 @@ namespace SystemModelingCommands.Services
                         if (DrainPipes(ctx)) return true;
                     }
 
+                    ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
                     break;
 
                 case 2: // Переместить
@@ -1823,7 +1824,7 @@ namespace SystemModelingCommands.Services
                         shouldSwapDimensions = false;
                     }
                     // Проверка ориентации коннектора по векторам
-                    else if (IsVerticalUpward(connector)) 
+                    else if (IsVerticalUpward(connector))
                     {
                         shouldSwapDimensions = false;
                     }
