@@ -913,6 +913,7 @@ namespace SystemModelingCommands.Services
             {
                 // Соединение после вращения
                 ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
+                return;
             }
 
             // Шаг 8: Восстановление предыдущих соединений
