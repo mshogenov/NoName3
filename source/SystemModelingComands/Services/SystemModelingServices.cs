@@ -913,6 +913,10 @@ namespace SystemModelingCommands.Services
             {
                 // Соединение после вращения
                 ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
+                if (existingConnections.Any())
+                {
+                    RestoreConnections(existingConnections);
+                }
                 return;
             }
 
