@@ -22,39 +22,47 @@
             <local:FilterRuleControl />
         </DataTemplate>
     </UserControl.Resources>
-    <Border BorderBrush="#2196F3" BorderThickness="1" 
+    <Border BorderBrush="#2196F3" BorderThickness="1"
             Margin="5" Padding="5" CornerRadius="3">
         <StackPanel>
             <!-- Заголовок группы -->
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <ComboBox Grid.Column="0" 
+                <ComboBox Grid.Column="0"
                           Width="150"
                           ItemsSource="{Binding LogicalOperators}"
-                          SelectedItem="{Binding LogicalOperator}"/>
+                          SelectedItem="{Binding LogicalOperator}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource EnumToDisplayConverter}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
 
-                <Button Grid.Column="2" 
+                <Button Grid.Column="2"
                         Content="Добавить правило"
-                        Margin="5,0" 
-                        Command="{Binding AddRuleCommand}"/>
+                        Margin="5,0"
+                        Command="{Binding AddRuleCommand}"
+                      />
 
-                <Button Grid.Column="3" 
+                <Button Grid.Column="3"
                         Content="Добавить набор"
-                        Margin="5,0" 
-                        Command="{Binding AddGroupCommand}"/>
+                        Margin="5,0"
+                        Command="{Binding AddCommand}" />
 
-                <Button Grid.Column="4" 
+                <Button Grid.Column="4"
                         Content="✕"
-                        Margin="5,0" 
+                        Margin="5,0"
                         Command="{Binding RemoveCommand}"
-                        Visibility="{Binding CanRemove, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        CommandParameter="{Binding }"
+                        Visibility="{Binding CanRemove, Converter={StaticResource BooleanToVisibilityConverter}}" />
             </Grid>
 
             <!-- Содержимое группы -->

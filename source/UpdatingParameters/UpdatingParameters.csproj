@@ -48,5 +48,15 @@
       <None Remove="Resources\DefaultDuctParameters.json" />
       <EmbeddedResource Include="Resources\DefaultDuctParameters.json" />
     </ItemGroup>
+    
+
+    <ItemGroup>
+      <Folder Include="Views\Themes\" />
+    </ItemGroup>
+    
+
+    <ItemGroup>
+      <Page Remove="Views\Themes\Generic.xaml" />
+    </ItemGroup>
 
 </Project>

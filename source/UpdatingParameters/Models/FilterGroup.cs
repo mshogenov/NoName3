@@ -2,16 +2,15 @@ using System.Collections.ObjectModel;
 
 namespace UpdatingParameters.Models;
 
-public partial class FilterGroup: ObservableObject
+public partial class FilterGroup : ObservableObject
 {
-    [ObservableProperty]
-    private ObservableCollection<object> items = new();
+    // Добавляем свойство для хранения ссылки на родительскую группу
+    public FilterGroup? Parent { get; private set; }
+    [ObservableProperty] private ObservableCollection<object> _items = new();
 
-    [ObservableProperty]
-    private LogicalOperator logicalOperator = LogicalOperator.And;
+    [ObservableProperty] private LogicalOperator logicalOperator = LogicalOperator.And;
 
-    [ObservableProperty]
-    private bool canRemove = true;
+    [ObservableProperty] private bool canRemove = true;
 
     // Добавляем массив операторов прямо в модель
     public Array LogicalOperators => Enum.GetValues(typeof(LogicalOperator));
@@ -19,18 +18,25 @@ public partial class FilterGroup: ObservableObject
     [RelayCommand]
     private void AddRule()
     {
-        Items.Add(new FilterRule());
+        var newRule = new FilterRule { Parent = this };
+        Items.Add(newRule);
     }
 
     [RelayCommand]
-    private void AddGroup()
+    private void Add()
     {
-        Items.Add(new FilterGroup());
+        var newGroup = new FilterGroup();
+        newGroup.Parent = this; // Устанавливаем ссылку на родителя
+        Items.Add(newGroup);
     }
 
+
     [RelayCommand]
-    private void Remove()
+    private void Remove(object parameter)
     {
-        // Логика удаления будет обрабатываться родительским элементом
+        if (parameter is FilterGroup filterGroup && filterGroup.Parent != null)
+        {
+            filterGroup.Parent.Items.Remove(filterGroup);
+        }
     }
 }

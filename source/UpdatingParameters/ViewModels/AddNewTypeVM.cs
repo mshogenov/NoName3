@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using UpdatingParameters.Models;
 
 namespace UpdatingParameters.ViewModels;
 
@@ -13,7 +14,8 @@ public partial class AddNewTypeVM : ViewModelBase
     [ObservableProperty] private bool _isPopupOpen;
     [ObservableProperty] private List<Parameter> _instanceParameters = [];
     [ObservableProperty] private List<Parameter> _typeParameters = [];
-
+    [ObservableProperty]
+    private FilterGroup rootGroup;
     public Category SelectedCategory
     {
         get => _selectedCategory;
@@ -32,6 +34,7 @@ public partial class AddNewTypeVM : ViewModelBase
 
     public AddNewTypeVM()
     {
+        RootGroup = new FilterGroup { CanRemove = false };
         Categories = GetAllCategoryByType(_doc, CategoryType.Model)
             .OrderBy(x => x.Name)
             .ToList();

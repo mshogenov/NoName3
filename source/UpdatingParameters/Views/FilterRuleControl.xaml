@@ -5,8 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:UpdatingParameters.Views"
              mc:Ignorable="d"
-           xmlns:converters="clr-namespace:UpdatingParameters.Views.Converters"
-          d:DesignHeight="Auto" d:DesignWidth="600">
+             xmlns:converters="clr-namespace:UpdatingParameters.Views.Converters"
+             d:DesignHeight="Auto" d:DesignWidth="600">
     <UserControl.Resources>
         <converters:EnumToDisplayConverter x:Key="EnumToDisplayConverter" />
     </UserControl.Resources>
@@ -18,18 +18,15 @@
                 <ColumnDefinition />
                 <ColumnDefinition />
                 <ColumnDefinition />
-                <ColumnDefinition />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <ComboBox Grid.Column="0" Margin="0,0,5,0" Text="{Binding Category}">
-                />
-            </ComboBox>
-            <ComboBox Grid.Column="1" Margin="0,0,5,0" Text="{Binding Parameter}">
+
+            <ComboBox Grid.Column="0" Margin="0,0,5,0" Text="{Binding Parameter}">
 
             </ComboBox>
 
-            <ComboBox Grid.Column="2" Margin="0,0,5,0"
-                      ItemsSource="{Binding Condition}"
+            <ComboBox Grid.Column="1" Margin="0,0,5,0"
+                      ItemsSource="{Binding Conditions}"
                       SelectedItem="{Binding SelectedCondition}">
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
@@ -38,11 +35,10 @@
                 </ComboBox.ItemTemplate>
             </ComboBox>
 
-            <TextBox Grid.Column="3" Text="{Binding Value}" />
-            <Button Grid.Column="4" Content="✕"
+            <TextBox Grid.Column="2" Text="{Binding Value}" />
+            <Button Grid.Column="3" Content="✕"
                     Margin="5,0,0,0"
-                    Command="{Binding RemoveCommand}"
-                    />
+                    Command="{Binding RemoveCommand}" />
         </Grid>
     </Border>
 </UserControl>

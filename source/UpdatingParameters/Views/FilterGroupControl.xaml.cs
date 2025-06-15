@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Controls;
 using UpdatingParameters.Models;
 using UpdatingParameters.ViewModels;
@@ -6,8 +8,9 @@ namespace UpdatingParameters.Views;
 
 public partial class FilterGroupControl : UserControl
 {
-    public FilterGroupControl()
+   public FilterGroupControl()
     {
+       
         InitializeComponent();
     }
 }

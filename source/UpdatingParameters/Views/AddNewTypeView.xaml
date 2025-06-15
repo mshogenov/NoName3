@@ -38,7 +38,8 @@
             </StackPanel>
         </StackPanel>
         <Grid Grid.Row="1">
-            <local:FilteringCriteriaControl />
+            <local:FilteringCriteriaControl
+                RootGroup="{Binding RootGroup}" />
         </Grid>
         <Popup
             Width="250"
