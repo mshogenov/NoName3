@@ -20,8 +20,35 @@
 
     <Border BorderBrush="#4CAF50" BorderThickness="2"
             Background="#E8F5E8" Margin="5" CornerRadius="5">
-        <Grid Margin="10">
-            <ContentControl Content="{Binding RootGroup}" />
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+
+            <Border Margin="10 5">
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="+"
+                            Click="ButtonSelectedCategories_OnClick" />
+                    <TextBlock Text="{Binding SelectedCategoriesStatus}" />
+                </StackPanel>
+            </Border>
+
+            <Grid Grid.Row="1" Margin="10">
+                <ContentControl Content="{Binding RootGroup}" />
+            </Grid>
+            <Popup x:Name="Popup"
+                   StaysOpen="False">
+                <Border Background="White"
+                        BorderBrush="LightGray"
+                        BorderThickness="1"
+                        CornerRadius="3"
+                        Padding="5">
+                    <local:SelectedCategoriesControl />
+                </Border>
+            </Popup>
         </Grid>
+
+
     </Border>
 </UserControl>

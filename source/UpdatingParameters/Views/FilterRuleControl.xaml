@@ -5,6 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:UpdatingParameters.Views"
              mc:Ignorable="d"
+             xmlns:model="clr-namespace:UpdatingParameters.Models"
+             d:DataContext="{d:DesignInstance model:FilterRule}"
              xmlns:converters="clr-namespace:UpdatingParameters.Views.Converters"
              d:DesignHeight="Auto" d:DesignWidth="600">
     <UserControl.Resources>
@@ -21,9 +23,10 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <ComboBox Grid.Column="0" Margin="0,0,5,0" Text="{Binding Parameter}">
-
-            </ComboBox>
+            <Button Content="Выбрать параметр"
+                    Margin="0 0 5 0"
+                    Command="{Binding SelectParameterCommand}"
+                    CommandParameter="{Binding RelativeSource={RelativeSource Self}}" />
 
             <ComboBox Grid.Column="1" Margin="0,0,5,0"
                       ItemsSource="{Binding Conditions}"
@@ -39,6 +42,48 @@
             <Button Grid.Column="3" Content="✕"
                     Margin="5,0,0,0"
                     Command="{Binding RemoveCommand}" />
+            <Popup
+                Width="250"
+                IsOpen="{Binding IsPopupOpen}"
+                PlacementTarget="{Binding CurrentPopupTarget}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <TabControl>
+                            <TabItem Header="Параметры экземпляра">
+                                <ListBox ItemsSource="{Binding InstanceParameters}"
+                                         SelectedItem="{Binding SelectedParameter}"
+                                         Height="300">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Definition.Name}" />
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </TabItem>
+                            <TabItem Header="Параметры типа">
+                                <ListBox ItemsSource="{Binding TypeParameters}"
+                                         Height="300"
+                                         SelectedItem="{Binding SelectedParameter}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Definition.Name}" />
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </TabItem>
+                        </TabControl>
+                    </Grid>
+                    <DockPanel Grid.Row="1" HorizontalAlignment="Right">
+                        <Button
+                            Content="Закрыть" Command="{Binding ClosePopupCommand}" />
+                    </DockPanel>
+                </Grid>
+            </Popup>
         </Grid>
+
     </Border>
 </UserControl>
