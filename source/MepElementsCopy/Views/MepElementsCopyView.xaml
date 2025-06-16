@@ -13,7 +13,7 @@
     Height="600" Width="350"
     Background="{DynamicResource WindowBackgroundBrush}"
     d:DataContext="{d:DesignInstance viewModel:MepElementsCopyLevelsViewModel}"
-   Title="Копировать элементы"
+    Title="Копировать элементы"
     MinWidth="350">
     <Window.Resources>
         <ResourceDictionary>
@@ -100,19 +100,19 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <ListView ItemsSource="{Binding LevelModels}"
-                                      Style="{DynamicResource ListViewStyle}"
-                                      ScrollViewer.VerticalScrollBarVisibility="Auto">
-                                <ListView.ItemTemplate>
+                            <ItemsControl ItemsSource="{Binding LevelModels}"
+                                          Padding="5">
+                                <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <CheckBox Content="{Binding Path=Name}"
                                                   IsChecked="{Binding Path=IsChecked,UpdateSourceTrigger=PropertyChanged}"
-                                                  Style="{DynamicResource JellyCheckboxStyle}" />
+                                                  Style="{DynamicResource JellyCheckboxStyle}" 
+                                                  Margin="0,2"/>
                                     </DataTemplate>
-                                </ListView.ItemTemplate>
-                            </ListView>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                             <Separator Grid.Row="1" Style="{DynamicResource ShadowSeparator}"
-                                       Margin="5 0"/>
+                                       Margin="5 0" />
                             <DockPanel Grid.Row="2" VerticalAlignment="Top" Margin="5 0 ">
                                 <Button Command="{Binding HighlightAllCommand}"
                                         Style="{DynamicResource SelectAllButton}">

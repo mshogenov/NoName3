@@ -1367,36 +1367,36 @@
                         </DataTrigger>
 
                         <!-- Триггер для анимации желе при нажатии -->
-                        <Trigger Property="IsPressed" Value="True">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <!-- Анимация желе -->
-                                        <DoubleAnimationUsingKeyFrames Storyboard.TargetName="CheckboxScale"
-                                                                       Storyboard.TargetProperty="ScaleX">
-                                            <LinearDoubleKeyFrame KeyTime="0:0:0.0" Value="1.0" />
-                                            <LinearDoubleKeyFrame KeyTime="0:0:0.18" Value="1.25" />
-                                            <LinearDoubleKeyFrame KeyTime="0:0:0.24" Value="0.75" />
-                                            <LinearDoubleKeyFrame KeyTime="0:0:0.30" Value="1.15" />
-                                            <LinearDoubleKeyFrame KeyTime="0:0:0.39" Value="0.95" />
-                                            <LinearDoubleKeyFrame KeyTime="0:0:0.45" Value="1.05" />
-                                            <LinearDoubleKeyFrame KeyTime="0:0:0.6" Value="1.0" />
-                                        </DoubleAnimationUsingKeyFrames>
-
-                                        <DoubleAnimationUsingKeyFrames Storyboard.TargetName="CheckboxScale"
-                                                                       Storyboard.TargetProperty="ScaleY">
-                                            <LinearDoubleKeyFrame KeyTime="0:0:0.0" Value="1.0" />
-                                            <LinearDoubleKeyFrame KeyTime="0:0:0.18" Value="0.75" />
-                                            <LinearDoubleKeyFrame KeyTime="0:0:0.24" Value="1.25" />
-                                            <LinearDoubleKeyFrame KeyTime="0:0:0.30" Value="0.85" />
-                                            <LinearDoubleKeyFrame KeyTime="0:0:0.39" Value="1.05" />
-                                            <LinearDoubleKeyFrame KeyTime="0:0:0.45" Value="0.95" />
-                                            <LinearDoubleKeyFrame KeyTime="0:0:0.6" Value="1.0" />
-                                        </DoubleAnimationUsingKeyFrames>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                        </Trigger>
+                        <!-- <Trigger Property="IsPressed" Value="True"> -->
+                        <!--     <Trigger.EnterActions> -->
+                        <!--         <BeginStoryboard> -->
+                        <!--             <Storyboard> -->
+                        <!--                 ~1~ Анимация желе @1@ -->
+                        <!--                 <DoubleAnimationUsingKeyFrames Storyboard.TargetName="CheckboxScale" -->
+                        <!--                                                Storyboard.TargetProperty="ScaleX"> -->
+                        <!--                     <LinearDoubleKeyFrame KeyTime="0:0:0.0" Value="1.0" /> -->
+                        <!--                     <LinearDoubleKeyFrame KeyTime="0:0:0.18" Value="1.25" /> -->
+                        <!--                     <LinearDoubleKeyFrame KeyTime="0:0:0.24" Value="0.75" /> -->
+                        <!--                     <LinearDoubleKeyFrame KeyTime="0:0:0.30" Value="1.15" /> -->
+                        <!--                     <LinearDoubleKeyFrame KeyTime="0:0:0.39" Value="0.95" /> -->
+                        <!--                     <LinearDoubleKeyFrame KeyTime="0:0:0.45" Value="1.05" /> -->
+                        <!--                     <LinearDoubleKeyFrame KeyTime="0:0:0.6" Value="1.0" /> -->
+                        <!--                 </DoubleAnimationUsingKeyFrames> -->
+                        <!-- -->
+                        <!--                 <DoubleAnimationUsingKeyFrames Storyboard.TargetName="CheckboxScale" -->
+                        <!--                                                Storyboard.TargetProperty="ScaleY"> -->
+                        <!--                     <LinearDoubleKeyFrame KeyTime="0:0:0.0" Value="1.0" /> -->
+                        <!--                     <LinearDoubleKeyFrame KeyTime="0:0:0.18" Value="0.75" /> -->
+                        <!--                     <LinearDoubleKeyFrame KeyTime="0:0:0.24" Value="1.25" /> -->
+                        <!--                     <LinearDoubleKeyFrame KeyTime="0:0:0.30" Value="0.85" /> -->
+                        <!--                     <LinearDoubleKeyFrame KeyTime="0:0:0.39" Value="1.05" /> -->
+                        <!--                     <LinearDoubleKeyFrame KeyTime="0:0:0.45" Value="0.95" /> -->
+                        <!--                     <LinearDoubleKeyFrame KeyTime="0:0:0.6" Value="1.0" /> -->
+                        <!--                 </DoubleAnimationUsingKeyFrames> -->
+                        <!--             </Storyboard> -->
+                        <!--         </BeginStoryboard> -->
+                        <!--     </Trigger.EnterActions> -->
+                        <!-- </Trigger> -->
 
                         <!-- Остальные триггеры -->
                         <Trigger Property="IsMouseOver" Value="True">
@@ -2280,14 +2280,7 @@
                                     <Trigger Property="IsSelected" Value="True">
                                         <Setter Property="Background" Value="{DynamicResource IsSelectedBrush}" />
                                     </Trigger>
-                                    <MultiTrigger>
-                                        <MultiTrigger.Conditions>
-                                            <Condition Property="IsSelected" Value="True" />
-                                            <Condition Property="IsMouseOver" Value="True" />
-                                        </MultiTrigger.Conditions>
-                                        <Setter Property="Background" Value="#BBDEFB" TargetName="ItemBorder" />
-                                    </MultiTrigger>
-                                </ControlTemplate.Triggers>
+                                  </ControlTemplate.Triggers>
                             </ControlTemplate>
                         </Setter.Value>
                     </Setter>
