@@ -6,22 +6,28 @@ public class ElementModel
 
     public ElementId Id { get; set; }
 
-    public Level BindingLevel { get; set; }
+    public Level BindingLevel => GetBindingLevel(Element);
 
     public ElementModel(Element element)
     {
-       Element = element;
-       Id = element.Id;
+        Element = element;
+        Id = element.Id;
+    }
+
+    private Level GetBindingLevel(Element element)
+    {
         switch (element)
         {
             case FamilyInstance familyInstance:
                 if (familyInstance.MEPModel == null)
                     break;
-               BindingLevel = element.Document.GetElement(element.get_Parameter(BuiltInParameter.SCHEDULE_LEVEL_PARAM).AsElementId()) as Level;
-                break;
+                return element.Document.GetElement(element.get_Parameter(BuiltInParameter.SCHEDULE_LEVEL_PARAM)
+                    .AsElementId()) as Level;
+
             case MEPCurve mepCurve:
-                BindingLevel = mepCurve.ReferenceLevel;
-                break;
+                return mepCurve.ReferenceLevel;
         }
+
+        return null;
     }
 }
