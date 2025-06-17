@@ -215,7 +215,7 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
             trans.Start();
             try
             {
-                List<ElementModel> mepElementModels = [];
+                List<ElementWrp> mepElementModels = [];
                 var selectedElements = _mepElementsCopyServices.GetSelectedElements(_uiDoc);
                 if (selectedElements.Count == 0)
                 {
@@ -224,7 +224,7 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
                 }
 
                 mepElementModels.AddRange(selectedElements.Select(selectedElement =>
-                    new ElementModel(selectedElement)));
+                    new ElementWrp(selectedElement)));
                 _mepElementsCopyServices.SetBaseLevel(mepElementModels, SelectedLevelModel);
                 trans.Commit();
                 ShowNotification("Базовый уровень установлен");
@@ -364,7 +364,7 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
     }
 
 
-    private bool GetElementsCopy(out List<MepCurveMdl> mepCurveModels, out List<ElementModel> mepElementModels)
+    private bool GetElementsCopy(out List<MepCurveWrp> mepCurveModels, out List<ElementWrp> mepElementModels)
     {
         mepCurveModels = new FilteredElementCollector(_doc)
             .OfClass(typeof(MEPCurve))
@@ -382,13 +382,13 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
                         return m is not InsulationLiningBase;
                 }
             })
-            .Select(m => new MepCurveMdl(m)).ToList();
+            .Select(m => new MepCurveWrp(m)).ToList();
         mepElementModels = [];
         var selectedElements = _mepElementsCopyServices.GetSelectedElements(_uiDoc);
         if (selectedElements.Count == 0) return false;
         foreach (var selectedElement in selectedElements)
         {
-            mepElementModels.Add(new ElementModel(selectedElement));
+            mepElementModels.Add(new ElementWrp(selectedElement));
         }
 
         return true;

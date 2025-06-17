@@ -1,6 +1,6 @@
 namespace MepElementsCopy.Models;
 
-public class ElementModel
+public class ElementWrp
 {
     public Element Element { get; set; }
 
@@ -8,7 +8,7 @@ public class ElementModel
 
     public Level BindingLevel => GetBindingLevel(Element);
 
-    public ElementModel(Element element)
+    public ElementWrp(Element element)
     {
         Element = element;
         Id = element.Id;

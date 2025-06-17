@@ -1,12 +1,12 @@
 namespace MepElementsCopy.Models;
 
-public class MepCurveMdl
+public class MepCurveWrp
 {
    public ElementId Id { get; }
 
     public Connector FirstConnector { get; }
 
-    public Connector SecondConnector { get; }
+    private Connector SecondConnector { get; }
 
     private Curve Curve
     {
@@ -33,7 +33,7 @@ public class MepCurveMdl
 
     public MEPCurve MepCurve { get; }
 
-    public MepCurveMdl(MEPCurve mepCurve)
+    public MepCurveWrp(MEPCurve mepCurve)
     {
         MepCurve = mepCurve;
         Id = mepCurve.Id;
