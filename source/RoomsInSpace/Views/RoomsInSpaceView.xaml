@@ -63,7 +63,6 @@
                       Margin="0 5"
                       Style="{DynamicResource GroupBoxStyle}" />
             <ListBox
-
                 Style="{DynamicResource ModernListBoxStyle}"
                 ItemsSource="{Binding LevelInfos}">
                 <ListBox.ItemTemplate>
@@ -77,7 +76,7 @@
                                 Style="{DynamicResource JellyCheckboxStyle}"
                                 IsChecked="{Binding IsChecked}"
                                 Content="{Binding LevelName}"
-                                Margin="3 0" />
+                              />
                             <TextBlock Grid.Column="1" Style="{DynamicResource TextBlockStyle}">
                                 <Run Text="Количество помещений: " />
                                 <Run Text="{Binding RoomCount}" />
