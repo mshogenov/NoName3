@@ -314,7 +314,7 @@ public class MakeBreakServices
                 statusPrompt);
             return reference;
         }
-        catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+        catch (OperationCanceledException)
         {
             return null;
         }
@@ -697,13 +697,57 @@ public class MakeBreakServices
 
     public void BringBackVisibilityPipe(FamilySymbol familySymbol)
     {
-        var selectReference =
-            SelectReference("Выберите первую точку на трубе", new BreakSelectionFilter(familySymbol));
-        var element = _doc.GetElement(selectReference);
-        if (element is FamilyInstance familyInstance)
+        while (true)
         {
+            var selectReference =
+                SelectReference("Выберите первую точку на трубе", new BreakSelectionFilter(familySymbol));
+            if (selectReference == null) return;
+            FamilyInstance familyInstance = null;
+            var selectedElement = _doc.GetElement(selectReference);
+            switch (selectedElement)
+            {
+                case FamilyInstance family:
+                    familyInstance = family;
+                    break;
+                case DisplacementElement displacement:
+                {
+                    var displacementElementIds = displacement.GetDisplacedElementIds();
+                    double toleranceInMm = 100.0; 
+
+                    // Преобразование миллиметров в внутренние единицы Revit (футы)
+                    double tolerance = UnitUtils.ConvertToInternalUnits(toleranceInMm, UnitTypeId.Millimeters);
+
+                    foreach (ElementId displacedId in displacementElementIds)
+                    {
+                        Element element = _doc.GetElement(displacedId);
+
+                        if (element is not FamilyInstance instance) continue;
+
+                        BoundingBoxXYZ bounding = instance.get_BoundingBox(_doc.ActiveView);
+                        if (bounding == null) continue;
+
+                        // Расширяем BoundingBox на величину погрешности
+                        XYZ expandVector = new XYZ(tolerance, tolerance, tolerance);
+                        BoundingBoxXYZ expandedBounding = new BoundingBoxXYZ
+                        {
+                            Min = bounding.Min.Subtract(expandVector),
+                            Max = bounding.Max.Add(expandVector)
+                        };
+
+                        var contains = expandedBounding.Contains(selectReference.GlobalPoint);
+                        if (!contains) continue;
+
+                        familyInstance = instance;
+                        break;
+                    }
+
+                    break;
+                }
+            }
+
+            if (familyInstance == null) return;
             var activeView = familyInstance.Document.ActiveView;
-            string param = String.Empty;
+            string param = string.Empty;
             if (activeView.ViewType == ViewType.ThreeD)
             {
                 param = "msh_Разрыв";
@@ -876,7 +920,6 @@ public class MakeBreakServices
                                 {
                                     connectedElements.Add(c.Owner);
                                 }
-                              
                             }
                         }
                     }

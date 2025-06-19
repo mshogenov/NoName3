@@ -13,7 +13,7 @@ public class BreakSelectionFilter : ISelectionFilter
 
     public bool AllowElement(Element elem)
     {
-        return elem.Name==_familySymbol.Name;
+        return elem.Name==_familySymbol.Name || elem is DisplacementElement;
     }
 
     public bool AllowReference(Reference reference, XYZ position)
