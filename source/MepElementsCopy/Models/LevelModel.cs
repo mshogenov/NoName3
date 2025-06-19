@@ -6,19 +6,16 @@ public partial class LevelModel : ObservableObject
     public string Name { get; set; }
     [ObservableProperty] private bool _isChecked;
     public ElementId Id { get; set; }
-    public double Elevation { get; set; }
+    public double Elevation => Level.Elevation;
 
 
     public LevelModel(Level level)
     {
-        if (level != null)
-        {
-            Level = level;
-            Id = level.Id;
-            Elevation = level.Elevation;
-            string formattedElevation = GetFormattedElevation(level.Elevation);
-            Name = $"{level.Name} ({formattedElevation})";
-        }
+        if (level == null) return;
+        Level = level;
+        Id = level.Id;
+        string formattedElevation = GetFormattedElevation(level.Elevation);
+        Name = $"{level.Name} ({formattedElevation})";
     }
 
     private static string GetFormattedElevation(double elevation)

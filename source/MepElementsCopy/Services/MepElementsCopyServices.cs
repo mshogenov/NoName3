@@ -10,7 +10,6 @@ namespace MepElementsCopy.Services;
 
 public class MepElementsCopyServices
 {
-    private readonly UIDocument _uiDoc = Context.ActiveUiDocument;
     private readonly Document _doc = Context.ActiveDocument;
     private readonly Options _options;
 
@@ -52,19 +51,19 @@ public class MepElementsCopyServices
         return elements;
     }
 
-    public void CopyMepElementsToLevel(LevelModel level, List<ElementModel> mepElementModels,
-        List<MepCurveMdl> mepCurveModels)
+    public void CopyMepElementsToLevel(LevelModel level, List<ElementWrp> mepElementModels,
+        List<MepCurveWrp> mepCurveModels)
     {
-        ElementModel elementModel = mepElementModels.Where(m => m.BindingLevel != null)
+        ElementWrp elementWrp = mepElementModels.Where(m => m.BindingLevel != null)
             .OrderBy(m => m.BindingLevel.Elevation)
             .FirstOrDefault();
-        Level bindingLevel = elementModel?.BindingLevel;
+        Level bindingLevel = elementWrp?.BindingLevel;
         if (bindingLevel == null) return;
         double offset = level.Elevation - bindingLevel.Elevation;
         CopyingMepElementsAndConnect(offset, mepElementModels, mepCurveModels);
     }
 
-    public void SetBaseLevel(List<ElementModel> mepElementModels, LevelModel selectedLevel)
+    public void SetBaseLevel(List<ElementWrp> mepElementModels, LevelModel selectedLevel)
     {
         var selectedLevelId = selectedLevel.Id;
         Document doc = mepElementModels.FirstOrDefault()?.Element?.Document;
@@ -296,7 +295,7 @@ public class MepElementsCopyServices
         return double.NaN;
     }
 
-    internal XYZ FindFurthestPoint(List<ElementModel> elements, XYZ fromPoint)
+    internal XYZ FindFurthestPoint(List<ElementWrp> elements, XYZ fromPoint)
     {
         XYZ furthestPoint = null;
         double minValue = double.MinValue;
@@ -358,8 +357,8 @@ public class MepElementsCopyServices
         furthestPoint = point;
     }
 
-    private void CopyingMepElementsAndConnect(double offset, List<ElementModel> mepElementModels,
-        List<MepCurveMdl> mepCurveModels, XYZ direction = null)
+    private void CopyingMepElementsAndConnect(double offset, List<ElementWrp> mepElementModels,
+        List<MepCurveWrp> mepCurveModels, XYZ direction = null)
     {
         XYZ translation = (direction ?? XYZ.BasisZ).Multiply(offset);
         ICollection<ElementId> mepElementsIds =
@@ -371,13 +370,13 @@ public class MepElementsCopyServices
     }
 
     private void ConnectInMepCurves(List<Tuple<ConnectorSplitModel, ConnectorSplitModel>> splitConnectorsPairs,
-        List<MepCurveMdl> mepCurveModels)
+        List<MepCurveWrp> mepCurveModels)
     {
         foreach (Tuple<ConnectorSplitModel, ConnectorSplitModel> splitConnectorsPair in splitConnectorsPairs)
         {
             splitConnectorsPair.Deconstruct(out var connectorSplitWr1,
                 out var connectorSplitWr2);
-            MepCurveMdl existingMepCurve =
+            MepCurveWrp existingMepCurve =
                 mepCurveModels.FirstOrDefault(m => m.Id == connectorSplitWr1.IdMepCurve);
             if (existingMepCurve == null) continue;
             Connector opositeConnector = existingMepCurve.GetConnectorByDirection(connectorSplitWr2.Direction);
@@ -391,7 +390,7 @@ public class MepElementsCopyServices
             connectorSplitWr1.Connector.ConnectTo(opositeConnector);
             MEPCurve curve = CreateCurve(connectorSplitWr2.Connector.Origin, nearestEndPoint1, existingMepCurve);
             if (curve == null) continue;
-            MepCurveMdl mepCurveWr = new MepCurveMdl(curve);
+            MepCurveWrp mepCurveWr = new MepCurveWrp(curve);
             mepCurveModels.Add(mepCurveWr);
             if (connector != null)
                 mepCurveWr.GetConnectorByDirection(connectorSplitWr2.Direction).ConnectTo(connector);
@@ -399,7 +398,7 @@ public class MepElementsCopyServices
         }
     }
 
-    private MEPCurve CreateCurve(XYZ p1, XYZ p2, MepCurveMdl mWr)
+    private MEPCurve CreateCurve(XYZ p1, XYZ p2, MepCurveWrp mWr)
     {
         if (p1.DistanceTo(p2) < 0.1)
             return null;
@@ -425,8 +424,8 @@ public class MepElementsCopyServices
         return element;
     }
 
-    public void CopyMepElementsToDistance(double distance, int countCopy, List<ElementModel> mepElementModels,
-        List<MepCurveMdl> mepCurveModels, XYZ direction = null)
+    public void CopyMepElementsToDistance(double distance, int countCopy, List<ElementWrp> mepElementModels,
+        List<MepCurveWrp> mepCurveModels, XYZ direction = null)
     {
         double ft = distance.FromMillimeters();
         for (int i = 1; i <= countCopy; ++i)
@@ -441,7 +440,7 @@ public class MepElementsCopyServices
     /// <returns>Список пар коннекторов или null, если пар недостаточно.</returns>
     private List<Tuple<ConnectorSplitModel, ConnectorSplitModel>> GetSplitConnectors(
         IEnumerable<ElementId> mepElementsIds,
-        List<MepCurveMdl> mepCurveModels)
+        List<MepCurveWrp> mepCurveModels)
     {
         List<ConnectorSplitModel> connectorSplitModels = [];
         foreach (ElementId mepElementsId in mepElementsIds)
@@ -471,7 +470,7 @@ public class MepElementsCopyServices
                             connectorSplitModels.Add(new ConnectorSplitModel(connector, idMepCurve));
                     }
 
-                    mepCurveModels.Add(new MepCurveMdl(mepCurve));
+                    mepCurveModels.Add(new MepCurveWrp(mepCurve));
                     break;
                 }
             }
@@ -542,7 +541,7 @@ public class MepElementsCopyServices
     /// <param name="mepCurveModels">Список моделей MEP-кривых.</param>
     /// <param name="idMepCurve">Идентификатор MEP-кривой, на которой находится коннектор.</param>
     /// <returns>True, если коннектор находится на одной из кривых; иначе False.</returns>
-    private bool IsInMepCurve(Connector connector, List<MepCurveMdl> mepCurveModels, out ElementId idMepCurve)
+    private bool IsInMepCurve(Connector connector, List<MepCurveWrp> mepCurveModels, out ElementId idMepCurve)
     {
         idMepCurve = null;
 

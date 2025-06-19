@@ -337,7 +337,7 @@ public class UpdaterParametersService
                 {
                     var connectors = (element as FamilyInstance)?.MEPModel?.ConnectorManager?.Connectors;
                     string parameterValue = string.Empty;
-                    setParam = element.FetchParameter(setParamName);
+                    setParam = element.FindParameter(setParamName);
                     if (connectors != null)
                     {
                         foreach (Connector connector in connectors)
@@ -346,7 +346,7 @@ public class UpdaterParametersService
                             ElementId systemTypeId = connector.MEPSystem.GetTypeId();
                             Element systemType = doc.GetElement(systemTypeId);
                             Parameter getParamAbbreviation =
-                                systemType?.FetchParameter(BuiltInParameter.RBS_SYSTEM_ABBREVIATION_PARAM);
+                                systemType?.FindParameter(BuiltInParameter.RBS_SYSTEM_ABBREVIATION_PARAM);
                             if (getParamAbbreviation != null &&
                                 !parameterValue.Contains(getParamAbbreviation.AsValueString()))
                             {

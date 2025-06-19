@@ -644,9 +644,6 @@ namespace SystemModelingCommands.Services
             if (!TryBuildContext(out AlignContext ctx))
                 return;
             using Transaction tr = new(_doc, "Соединить");
-            // FailureHandlingOptions options = tr.GetFailureHandlingOptions();
-            // options.SetFailuresPreprocessor(new CustomFailurePreprocessor());
-            // tr.SetFailureHandlingOptions(options);
             try
             {
                 tr.Start();
@@ -704,6 +701,7 @@ namespace SystemModelingCommands.Services
                         if (DrainPipes(ctx)) return true;
                     }
 
+                    ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
                     break;
 
                 case 2: // Переместить
@@ -846,6 +844,14 @@ namespace SystemModelingCommands.Services
         private bool HandleGenericOpposite(AlignContext ctx)
         {
             XYZ translationVector = ctx.TargetConn.Origin - ctx.AttachConn.Origin;
+            if (ctx.Attach.ConnectedElements.Count == 0 && ctx.Attach.Element is not MEPCurve)
+            {
+                ElementTransformUtils.MoveElement(_doc, ctx.Attach.Id, translationVector);
+                // 3. Соединяем элементы
+                ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
+                return true;
+            }
+
             var choice = CustomDialogWindow.ShowDialog(
                 "Соединить",
                 "Выберите действие",
@@ -912,6 +918,12 @@ namespace SystemModelingCommands.Services
             {
                 // Соединение после вращения
                 ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
+                if (existingConnections.Any())
+                {
+                    RestoreConnections(existingConnections);
+                }
+
+                return;
             }
 
             // Шаг 8: Восстановление предыдущих соединений
@@ -1823,7 +1835,7 @@ namespace SystemModelingCommands.Services
                         shouldSwapDimensions = false;
                     }
                     // Проверка ориентации коннектора по векторам
-                    else if (IsVerticalUpward(connector)) 
+                    else if (IsVerticalUpward(connector))
                     {
                         shouldSwapDimensions = false;
                     }
