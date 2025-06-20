@@ -9,7 +9,13 @@ namespace Marking.Services
 {
     public class MarkingServices
     {
-        public Tuple<List<Element>, List<Element>> SelectElements()
+        private readonly Document _doc = Context.ActiveDocument;
+        private readonly UIDocument _uiDoc = Context.ActiveUiDocument;
+        private const string paramNameLevelMark = "msh_Отметка уровня";
+        private const string paramNameFloor = "ADSK_Этаж";
+
+
+        public (List<Element> selectedElements, List<DisplacementElement> displacedElements) SelectElements()
         {
             try
             {
@@ -17,60 +23,73 @@ namespace Marking.Services
                     (e.Category?.BuiltInCategory == BuiltInCategory.OST_PipeFitting &&
                      (e.get_Parameter(BuiltInParameter.ELEM_TYPE_PARAM).AsValueString() == "Полимерная труба")) ||
                     (e.Category?.BuiltInCategory == BuiltInCategory.OST_DisplacementElements));
-                var elements = Context.ActiveUiDocument.Selection
+                var elements = _uiDoc.Selection
                     .PickObjects(ObjectType.Element, selectionConfiguration.Filter, "Выберите элементы")
-                    .Select(x => Context.ActiveDocument.GetElement(x));
-                List<Element> selectedElements = [];
-                List<Element> displacedElements = [];
-                foreach (var element in elements)
-                {
-                    if (element.Category.BuiltInCategory == BuiltInCategory.OST_DisplacementElements)
-                    {
-                        displacedElements.Add(element);
-                    }
-                    else selectedElements.Add(element);
-                }
+                    .Select(x => _doc.GetElement(x)).ToList();
+                var displacedElements = elements
+                    .Where(e => e.Category?.BuiltInCategory == BuiltInCategory.OST_DisplacementElements)
+                    .Cast<DisplacementElement>()
+                    .ToList();
 
-                return new Tuple<List<Element>, List<Element>>(selectedElements, displacedElements);
+                var selectedElements = elements
+                    .Where(e => e.Category?.BuiltInCategory != BuiltInCategory.OST_DisplacementElements)
+                    .ToList();
+
+                return (selectedElements, displacedElements);
             }
             catch (Autodesk.Revit.Exceptions.OperationCanceledException)
             {
-                return new Tuple<List<Element>, List<Element>>([], []);
+                return ([], []);
             }
             catch (Exception ex)
             {
                 TaskDialog.Show("Ошибка", ex.Message);
+                return ([], []);
             }
-
-            return null;
         }
 
-        public void PlaceStamps(Tuple<List<Element>, List<Element>> selectedElements, Element mark, bool isCheked)
+        public void PlaceStamps(
+            (List<Element> selectedElements, List<DisplacementElement> displacedElements) selectedElements,
+            Element mark, bool isChecked)
         {
-            if (selectedElements.Item1 != null)
+            List<IndependentTag> newTags = [];
+            if (selectedElements.selectedElements != null)
             {
-                foreach (var el in selectedElements.Item1)
+                foreach (var element in selectedElements.selectedElements)
                 {
-                    HeightSetting(el, isCheked);
-                    StampSetting(el, mark);
-                }
-            }
-
-            if (selectedElements.Item2 != null)
-            {
-                foreach (var el in selectedElements.Item2)
-                {
-                    DisplacementElement displacementElement = el as DisplacementElement;
-                    XYZ pointDisplaced = displacementElement.GetRelativeDisplacement();
-                    List<Element> selectedElementsDisplaced = [];
-                    selectedElementsDisplaced = GetExemplarsFromOffset(displacementElement);
-                    foreach (var elemDisplaced in selectedElementsDisplaced)
+                    HeightSetting(element, isChecked);
+                    var newTag = StampSetting(element, mark);
+                    if (newTag != null)
                     {
-                        HeightSetting(elemDisplaced, isCheked);
-                        StampSettingDisplaced(pointDisplaced, elemDisplaced, mark);
+                        newTags.Add(newTag);
                     }
                 }
             }
+
+            if (selectedElements.displacedElements == null) return;
+            {
+                foreach (var displacementElement in selectedElements.displacedElements)
+                {
+                    XYZ pointDisplaced = displacementElement.GetRelativeDisplacement();
+                    var selectedElementsDisplaced = GetExemplarsFromOffset(displacementElement);
+                    foreach (var elemDisplaced in selectedElementsDisplaced)
+                    {
+                        HeightSetting(elemDisplaced, isChecked);
+                        var newTag = StampSetting(elemDisplaced, mark);
+                        if (newTag == null) continue;
+                        newTag.TagHeadPosition += pointDisplaced;
+                        newTags.Add(newTag);
+                    }
+                }
+            }
+            if (newTags.Count <= 0) return;
+            var validElementIds = newTags
+                .Where(tag => tag is { IsValidObject: true })
+                .Select(tag => tag.Id)
+                .ToList();
+
+            if (validElementIds.Count <= 0) return;
+            _uiDoc.Selection.SetElementIds(validElementIds);
         }
 
         private List<Element> GetExemplarsFromOffset(DisplacementElement displacementElement)
@@ -79,7 +98,7 @@ namespace Marking.Services
             var displacedElementIds = displacementElement.GetDisplacedElementIds();
             foreach (var elementId in displacedElementIds)
             {
-                var displacedElementFamily = Context.ActiveDocument.GetElement(elementId);
+                var displacedElementFamily = _doc.GetElement(elementId);
                 if (displacedElementFamily.get_Parameter(BuiltInParameter.ELEM_TYPE_PARAM).AsValueString() ==
                     "Полимерная труба" && displacedElementFamily is FamilyInstance)
                 {
@@ -90,67 +109,67 @@ namespace Marking.Services
             return selectedElementsDisplaced;
         }
 
-        private void StampSettingDisplaced(XYZ pointDisplaced, Element elemDisplaced, Element mark)
+        private IndependentTag StampSettingDisplaced(XYZ pointDisplaced, Element elemDisplaced, Element mark)
         {
-            LocationPoint location = elemDisplaced.Location as LocationPoint;
+            if (elemDisplaced.Location is not LocationPoint location) return null;
             XYZ point = location.Point;
             XYZ newPoint = new(point.X + pointDisplaced.X + 1, point.Y + pointDisplaced.Y, point.Z + pointDisplaced.Z);
-            IndependentTag newTag = IndependentTag.Create(Context.ActiveDocument, mark.Id,
-                Context.ActiveDocument.ActiveView.Id, new Reference(elemDisplaced), false, TagOrientation.Horizontal,
+            IndependentTag newTag = IndependentTag.Create(_doc, mark.Id,
+                _doc.ActiveView.Id, new Reference(elemDisplaced), false, TagOrientation.Horizontal,
                 newPoint);
             if (newTag != null)
             {
                 newTag.TagHeadPosition = newPoint;
             }
+
+            return newTag;
         }
 
-        private void StampSetting(Element el, Element mark)
+        private IndependentTag StampSetting(Element element, Element mark)
         {
-            LocationPoint locPoint = el.Location as LocationPoint;
+            if (element.Location is not LocationPoint locPoint) return null;
             XYZ point = locPoint.Point;
-            XYZ newPoint = new(point.X + 1, point.Y, point.Z);
-            IndependentTag newTag = IndependentTag.Create(Context.ActiveDocument, mark.Id, Context.ActiveView.Id,
-                new Reference(el), false, TagOrientation.Horizontal, newPoint);
+            XYZ newPoint = new XYZ(point.X + 1, point.Y, point.Z);
+            IndependentTag newTag = IndependentTag.Create(Context.ActiveDocument, mark.Id, _doc.ActiveView.Id,
+                new Reference(element), false, TagOrientation.Horizontal, newPoint);
             if (newTag != null)
             {
                 newTag.TagHeadPosition = newPoint;
             }
+
+            return newTag;
         }
 
-        public void HeightSetting(Element el, bool isChecked)
+        public static void HeightSetting(Element element, bool isChecked)
         {
-            if (el.Location is LocationPoint location)
+            if (element.Location is not LocationPoint location) return;
+
+            double elevationInFeet = location.Point.Z;
+            double elevationInMeters = elevationInFeet.ToMeters();
+            double roundedElevation = Math.Round(elevationInMeters, 3) + 0.0;
+
+            // Форматируем число с нужной точностью и добавляем знак плюс
+            string formattedNumber = roundedElevation >= 0
+                ? roundedElevation.ToString("+0.000", CultureInfo.InvariantCulture)
+                : roundedElevation.ToString("0.000", CultureInfo.InvariantCulture);
+
+            // Установка значения в пользовательский параметр
+            Parameter paramLevelMark = element.FindParameter(paramNameLevelMark);
+            paramLevelMark?.Set(formattedNumber);
+
+            Parameter paramFloor = element.FindParameter(paramNameFloor);
+            if (isChecked)
             {
-                string paramNameLevelMark = "msh_Отметка уровня";
-                string paramNameFloor = "ADSK_Этаж";
-
-                double elevationInFeet = location.Point.Z;
-                double elevationInMeters = elevationInFeet.ToMeters();
-                double roundedElevation = Math.Round(elevationInMeters, 3) + 0.0;
-
-                // Форматируем число с нужной точностью и добавляем знак плюс
-                string formattedNumber = roundedElevation >= 0
-                    ? roundedElevation.ToString("+0.000", CultureInfo.InvariantCulture)
-                    : roundedElevation.ToString("0.000", CultureInfo.InvariantCulture);
-
-                // Установка значения в пользовательский параметр
-                Parameter paramLevelMark = el.LookupParameter(paramNameLevelMark);
-                paramLevelMark?.Set(formattedNumber);
-
-                Parameter paramFloor = el.LookupParameter(paramNameFloor);
-                if (isChecked)
-                {
-                    string levelName = el.FindParameter(BuiltInParameter.FAMILY_LEVEL_PARAM).AsValueString();
-                    paramFloor?.Set(levelName);
-                }
-                else if (paramFloor != null && paramFloor.AsValueString() != null)
-                {
-                    paramFloor.Set((string)null);
-                }
+                string levelName = element.FindParameter(BuiltInParameter.FAMILY_LEVEL_PARAM)?.AsValueString();
+                paramFloor?.Set(levelName);
+            }
+            else if (paramFloor?.AsValueString() != null)
+            {
+                paramFloor.Set((string)null);
             }
         }
 
-        public void DownloadFamily(Document doc, string familyName)
+        public static void DownloadFamily(Document doc, string familyName)
         {
             // Получаем текущую сборку
             Assembly assembly = Assembly.GetExecutingAssembly();
@@ -176,7 +195,7 @@ namespace Marking.Services
             //Сохраняем поток в файл
             using (FileStream fileStream = new FileStream(tempFamilyPath, FileMode.Create, FileAccess.Write))
             {
-                stream.CopyTo(fileStream);
+                stream?.CopyTo(fileStream);
             }
 
             bool loaded = doc.LoadFamily(tempFamilyPath, new FamilyLoadOptions(), out Family family);
