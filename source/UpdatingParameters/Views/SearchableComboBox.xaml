@@ -1,0 +1,35 @@
+<UserControl x:Class="UpdatingParameters.Views.SearchableComboBox"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:UpdatingParameters.Views"
+             mc:Ignorable="d"
+           >
+    <Grid>
+        <TextBox x:Name="SearchTextBox"
+                 TextChanged="SearchTextBox_OnTextChanged"
+                 VerticalAlignment="Center"/>
+        <ToggleButton x:Name="DropDownButton"
+                      HorizontalAlignment="Right"
+                      Margin="1"
+                      Width="{Binding ActualHeight, ElementName=SearchTextBox}"
+                      Content="▼"/>
+        <Popup x:Name="ItemsPopup"
+               PlacementTarget="{Binding ElementName=SearchTextBox}"
+               Placement="Bottom"
+               StaysOpen="False"
+               IsOpen="{Binding IsChecked, ElementName=DropDownButton, Mode=TwoWay}">
+            <Border Background="White" BorderBrush="Gray" BorderThickness="1">
+                <ListBox x:Name="ItemsListBox"
+                         MaxHeight="200"
+                         SelectionChanged="ItemsListBox_OnSelectionChanged"
+                         DisplayMemberPath="{Binding DisplayMemberPath, ElementName=thisControl}">
+                    
+                </ListBox>
+                
+            </Border>
+            
+        </Popup>
+    </Grid>
+</UserControl>
