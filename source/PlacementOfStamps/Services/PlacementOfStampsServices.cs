@@ -382,7 +382,7 @@ public class PlacementOfStampsServices
         FamilySymbol selectedTag)
     {
         var existingSelectedTags = tagWpr
-            .Where(x => x.Name == selectedTag.Name)
+            .Where(x => x.TagTypeId == selectedTag.Id) // Сравниваем по ID типа
             .ToList();
         var pipes = GetPipeNotTags(pipeWrp, existingSelectedTags);
         var pipesSort = pipes.OrderBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).X)
