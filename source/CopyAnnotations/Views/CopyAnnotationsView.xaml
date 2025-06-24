@@ -8,6 +8,7 @@
     xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
     xmlns:converters="clr-namespace:NoNameApi.Views.Converters;assembly=NoNameAPI"
     mc:Ignorable="d"
+    ResizeMode="NoResize"
     d:DataContext="{d:DesignInstance viewModels:CopyAnnotationsViewModel}"
     Background="{DynamicResource WindowBackgroundBrush}"
     Title="Скопировать марки"

@@ -3,6 +3,7 @@ using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using MakeBreak.Filters;
 using MakeBreak.Models;
+using OperationCanceledException = Autodesk.Revit.Exceptions.OperationCanceledException;
 
 
 namespace MakeBreak.Services;
@@ -49,9 +50,9 @@ public class MakeBreakServices
                         tg.RollBack();
                         return;
                     }
-                    
+
                     Break break2 = new Break(selectReference2, _doc);
-                    
+
                     // Проверяем минимальное расстояние между точками
                     double distanceBetweenPoints = break1.BreakPoint.DistanceTo(break2.BreakPoint).ToMillimeters();
                     const double minimumDistance = 20; //мм
@@ -64,7 +65,7 @@ public class MakeBreakServices
                         tg.RollBack();
                         return;
                     }
-                    
+
                     // Определяем, какую трубу разрезать для второй точки
                     var secondPipeToCut = GetPipeToCut(break1, firstSplitPipe, break2);
                     using Transaction trans2 = new Transaction(_doc, "Вставка второй муфты");
@@ -77,7 +78,7 @@ public class MakeBreakServices
                         tg.RollBack();
                         return;
                     }
-                    
+
                     var secondSplitPipe = secondBreak.Value.SplitPipe;
                     // Создаем муфту между разрезанными частями (используя "Разрыв")
                     var secondCoupling = secondBreak.Value.Coupling;
@@ -88,7 +89,7 @@ public class MakeBreakServices
                         tg.RollBack();
                         return;
                     }
-                    
+
                     // Определяем среднюю трубу между двумя точками разреза
                     var midPipe = GetMidPipe(secondPipeToCut, break1, secondSplitPipe, break2, firstBreak,
                         firstSplitPipe);
@@ -313,7 +314,7 @@ public class MakeBreakServices
                 statusPrompt);
             return reference;
         }
-        catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+        catch (OperationCanceledException)
         {
             return null;
         }
@@ -364,7 +365,8 @@ public class MakeBreakServices
                 }
 
                 // Сортировка коннекторов фитинга для определения, какой из них ближе к какой трубе
-                Connector fittingConn1 = FindClosestConnector(newFamilyInstance.MEPModel.ConnectorManager, bBreak.BreakPoint);
+                Connector fittingConn1 =
+                    FindClosestConnector(newFamilyInstance.MEPModel.ConnectorManager, bBreak.BreakPoint);
                 // Вторым коннектором будет любой другой коннектор, отличный от первого
                 Connector fittingConn2 = connectors.FirstOrDefault(c => c.Id != fittingConn1.Id);
 
@@ -380,7 +382,7 @@ public class MakeBreakServices
                 // Перемещаем фитинг к первому коннектору
                 XYZ translationVector = conn1.Origin - fittingConn1.Origin;
                 ElementTransformUtils.MoveElement(_doc, newFamilyInstance.Id, translationVector);
-                
+
                 // Соединяем первую пару коннекторов
                 conn1.ConnectTo(fittingConn1);
                 ElementTransformUtils.MoveElement(_doc, newFamilyInstance.Id, conn2.Origin - fittingConn2.Origin);
@@ -459,6 +461,7 @@ public class MakeBreakServices
             ElementTransformUtils.RotateElement(_doc, attachingElement.Id, rotationLine, angle);
         }
     }
+
     private Connector FindClosestConnector(ConnectorManager connectorManager, XYZ pickedPoint)
     {
         Connector closestConnector = null;
@@ -491,6 +494,7 @@ public class MakeBreakServices
 
         return closestConnector;
     }
+
     private Connector FindBestConnectorMatch(List<Connector> fittingConnectors, Connector pipeConnector)
     {
         // Сортировка коннекторов по сходству направления (противоположные направления лучше)
@@ -693,13 +697,57 @@ public class MakeBreakServices
 
     public void BringBackVisibilityPipe(FamilySymbol familySymbol)
     {
-        var selectReference =
-            SelectReference("Выберите первую точку на трубе", new FamilySelectionFilter(familySymbol));
-        var element = _doc.GetElement(selectReference);
-        if (element is FamilyInstance familyInstance)
+        while (true)
         {
+            var selectReference =
+                SelectReference("Выберите первую точку на трубе", new BreakSelectionFilter(familySymbol));
+            if (selectReference == null) return;
+            FamilyInstance familyInstance = null;
+            var selectedElement = _doc.GetElement(selectReference);
+            switch (selectedElement)
+            {
+                case FamilyInstance family:
+                    familyInstance = family;
+                    break;
+                case DisplacementElement displacement:
+                {
+                    var displacementElementIds = displacement.GetDisplacedElementIds();
+                    double toleranceInMm = 100.0; 
+
+                    // Преобразование миллиметров в внутренние единицы Revit (футы)
+                    double tolerance = UnitUtils.ConvertToInternalUnits(toleranceInMm, UnitTypeId.Millimeters);
+
+                    foreach (ElementId displacedId in displacementElementIds)
+                    {
+                        Element element = _doc.GetElement(displacedId);
+
+                        if (element is not FamilyInstance instance) continue;
+
+                        BoundingBoxXYZ bounding = instance.get_BoundingBox(_doc.ActiveView);
+                        if (bounding == null) continue;
+
+                        // Расширяем BoundingBox на величину погрешности
+                        XYZ expandVector = new XYZ(tolerance, tolerance, tolerance);
+                        BoundingBoxXYZ expandedBounding = new BoundingBoxXYZ
+                        {
+                            Min = bounding.Min.Subtract(expandVector),
+                            Max = bounding.Max.Add(expandVector)
+                        };
+
+                        var contains = expandedBounding.Contains(selectReference.GlobalPoint);
+                        if (!contains) continue;
+
+                        familyInstance = instance;
+                        break;
+                    }
+
+                    break;
+                }
+            }
+
+            if (familyInstance == null) return;
             var activeView = familyInstance.Document.ActiveView;
-            string param = String.Empty;
+            string param = string.Empty;
             if (activeView.ViewType == ViewType.ThreeD)
             {
                 param = "msh_Разрыв";
@@ -731,5 +779,266 @@ public class MakeBreakServices
                 transaction.RollBack();
             }
         }
+    }
+
+    public void DeleteBreaksAndCreatePipe(FamilySymbol familySymbol)
+    {
+        // Список для хранения выбранных элементов
+        List<Gap> selectedBreaks = [];
+        try
+        {
+            var selectedElements = _uidoc.Selection
+                .PickObjects(ObjectType.Element, new BreakSelectionFilter(familySymbol))
+                .Select(x => _doc.GetElement(x));
+            foreach (var element in selectedElements)
+            {
+                if (element is FamilyInstance familyInstance)
+                {
+                    selectedBreaks.Add(new Gap(familyInstance));
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (!selectedBreaks.Any()) return;
+
+        using TransactionGroup tGroup = new TransactionGroup(_doc, "Process all breaks");
+        tGroup.Start();
+
+        foreach (var break1 in selectedBreaks.ToList())
+        {
+            using Transaction trans = new Transaction(_doc, "Process single break");
+            trans.Start();
+
+            var pairBreak = FindPairBreak(break1, familySymbol);
+
+            if (pairBreak != null)
+            {
+                // Удаляем из коллекции элемент с соответствующим Id
+                var breakToRemove = selectedBreaks.FirstOrDefault(b => b.Id == pairBreak.Id);
+                if (breakToRemove != null)
+                {
+                    selectedBreaks.Remove(breakToRemove);
+                }
+
+                _doc.Delete(pairBreak.Id);
+            }
+
+            trans.Commit();
+        }
+
+        tGroup.Assimilate(); // или tGroup.RollBack() если что-то пошло не так
+    }
+
+
+    private Gap FindPairBreak(Gap gap, FamilySymbol familySymbol)
+    {
+        var breakLists = new List<List<FamilyInstance>>();
+        var visitedElements = new HashSet<ElementId>(); // Для отслеживания просмотренных элементов
+
+        foreach (var element in gap.ConnectedElements)
+        {
+            var breaksInPath = new List<FamilyInstance>();
+            visitedElements.Clear(); // Очищаем для каждого нового пути
+            visitedElements.Add(gap.Id); // Добавляем исходный разрыв
+            FindBreaksInPath(element, familySymbol, breaksInPath, 0, visitedElements);
+
+            if (breaksInPath.Any())
+            {
+                breakLists.Add(breaksInPath);
+            }
+        }
+
+        // Остальная логика выбора парного разрыва...
+        if (!breakLists.Any()) return null;
+
+        if (breakLists.Count == 1 && breakLists[0].Count == 1)
+            return new Gap(breakLists[0][0]);
+
+        var oddList = breakLists.FirstOrDefault(list => list.Count % 2 != 0);
+        return oddList != null ? new Gap(oddList[0]) : null;
+    }
+
+    private void FindBreaksInPath(Element element, FamilySymbol familySymbol,
+        List<FamilyInstance> breaks, int depth, HashSet<ElementId> visitedElements)
+    {
+        if (element == null || !visitedElements.Add(element.Id)) return;
+
+        if (depth > 2 && !breaks.Any()) return;
+
+        if (element is FamilyInstance familyInstance && familyInstance.Name == familySymbol.Name)
+        {
+            breaks.Add(familyInstance);
+            depth = 0;
+        }
+
+        foreach (var connectedElement in GetConnectedElements(element)
+                     .Where(connectedElement => !visitedElements.Contains(connectedElement.Id)))
+        {
+            FindBreaksInPath(connectedElement, familySymbol, breaks, depth + 1, visitedElements);
+        }
+    }
+
+    private List<Element> GetConnectedElements(Element element)
+    {
+        var connectedElements = new List<Element>();
+
+        try
+        {
+            switch (element)
+            {
+                case FamilyInstance { MEPModel: not null } family:
+                    var familyConnectors = family.MEPModel.ConnectorManager.Connectors.Cast<Connector>();
+                    foreach (var connector in familyConnectors)
+                    {
+                        if (connector.IsConnected)
+                        {
+                            var connected = connector.AllRefs.Cast<Connector>();
+                            if (connected == null) continue;
+                            foreach (var c in connected)
+                            {
+                                connectedElements.Add(c.Owner);
+                            }
+                        }
+                    }
+
+                    break;
+
+                case MEPCurve curve:
+                    var curveConnectors = curve.ConnectorManager.Connectors.Cast<Connector>();
+                    foreach (var connector in curveConnectors)
+                    {
+                        if (connector.IsConnected)
+                        {
+                            var connected = connector.AllRefs.Cast<Connector>();
+                            if (connected != null)
+                            {
+                                foreach (var c in connected)
+                                {
+                                    connectedElements.Add(c.Owner);
+                                }
+                            }
+                        }
+                    }
+
+                    break;
+            }
+        }
+        catch (Exception)
+        {
+            // Обработка возможных ошибок
+        }
+
+        return connectedElements;
+    }
+
+    private void CreatePipeBetweenElements(Element start, Element end)
+    {
+        try
+        {
+            // Проверяем существование элементов
+            if (start == null || end == null ||
+                _doc.GetElement(start.Id) == null ||
+                _doc.GetElement(end.Id) == null)
+                return;
+
+            // Получаем коннекторы
+            Connector startConn = GetAvailableConnector(start);
+            Connector endConn = GetAvailableConnector(end);
+
+            if (startConn != null && endConn != null)
+            {
+                // Получаем параметры от существующей трубы
+                MEPCurve existingPipe = start as MEPCurve;
+                if (existingPipe == null)
+                {
+                    var connectedPipes = GetConnectedPipes(start);
+                    existingPipe = connectedPipes.FirstOrDefault();
+                }
+
+                if (existingPipe != null)
+                {
+                    ElementId systemTypeId = existingPipe.get_Parameter(BuiltInParameter.RBS_PIPING_SYSTEM_TYPE_PARAM)
+                        ?.AsElementId();
+                    ElementId pipeTypeId =
+                        existingPipe.get_Parameter(BuiltInParameter.RBS_PIPE_TYPE_PARAM)?.AsElementId();
+                    ElementId levelId = existingPipe.get_Parameter(BuiltInParameter.RBS_START_LEVEL_PARAM)
+                        ?.AsElementId();
+
+                    if (systemTypeId != null && pipeTypeId != null && levelId != null)
+                    {
+                        Pipe.Create(_doc, systemTypeId, pipeTypeId, levelId,
+                            startConn.Origin, endConn.Origin);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            TaskDialog.Show("Error", "Failed to create pipe: " + ex.Message);
+        }
+    }
+
+    private List<MEPCurve> GetConnectedPipes(Element element)
+    {
+        var connectedPipes = new List<MEPCurve>();
+        try
+        {
+            if (element is FamilyInstance familyInstance &&
+                familyInstance.MEPModel?.ConnectorManager != null)
+            {
+                var connectors = familyInstance.MEPModel.ConnectorManager.Connectors.Cast<Connector>();
+                foreach (var connector in connectors)
+                {
+                    if (connector.IsConnected)
+                    {
+                        foreach (Connector ref_connector in connector.AllRefs)
+                        {
+                            if (ref_connector.Owner is MEPCurve mepCurve)
+                            {
+                                connectedPipes.Add(mepCurve);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // Игнорируем ошибки
+        }
+
+        return connectedPipes;
+    }
+
+    private Connector GetAvailableConnector(Element element)
+    {
+        try
+        {
+            if (element == null || element.Id == null || _doc.GetElement(element.Id) == null)
+                return null;
+
+            if (element is MEPCurve mepCurve && mepCurve.ConnectorManager != null)
+            {
+                return mepCurve.ConnectorManager.Connectors.Cast<Connector>()
+                    .FirstOrDefault(c => c.IsConnected); // Изменено на IsConnected
+            }
+            else if (element is FamilyInstance familyInstance &&
+                     familyInstance.MEPModel != null &&
+                     familyInstance.MEPModel.ConnectorManager != null)
+            {
+                return familyInstance.MEPModel.ConnectorManager.Connectors.Cast<Connector>()
+                    .FirstOrDefault(c => c.IsConnected); // Изменено на IsConnected
+            }
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+
+        return null;
     }
 }

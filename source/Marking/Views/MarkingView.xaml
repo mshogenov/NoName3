@@ -39,7 +39,7 @@
                   Header="Выберите марку:"
                   Style="{DynamicResource GroupBoxStyle}" Margin="0 5">
             <ListBox ItemsSource="{Binding Path=Marks}"
-                     SelectedItem="{Binding Path=SelectedItem, Mode=TwoWay}"
+                     SelectedItem="{Binding Path=SelectedMark, Mode=TwoWay}"
                      Style="{DynamicResource ModernListBoxStyle}">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
@@ -53,7 +53,7 @@
         <!-- Чекбокс -->
         <CheckBox Grid.Row="1"
                   Content="Записывать этаж"
-                  IsChecked="{Binding Path=IsChecked}"
+                  IsChecked="{Binding Path=RecordFloorIsChecked}"
                   Style="{DynamicResource JellyCheckboxStyle}">
         </CheckBox>
         <!-- Кнопки действий -->

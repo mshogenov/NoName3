@@ -132,8 +132,4 @@
       <ProjectReference Include="..\ViewOfPipeSystems\ViewOfPipeSystems.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Models\" />
-    </ItemGroup>
-
 </Project>

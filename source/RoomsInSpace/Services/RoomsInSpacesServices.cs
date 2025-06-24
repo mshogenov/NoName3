@@ -19,11 +19,11 @@ public class RoomsInSpacesServices
         Transform linkTransform = linkInstance.GetTotalTransform();
         // Собираем все существующие пространства в текущем документе 
         List<Space> existingSpaces = GetSpace(doc).ToList();
-        List<Level> currentLevels = GenerateNecessaryLevels(doc, linkedDoc, linkedRooms);
         int createdCount = 0;
         int updatedCount = 0;
         using Transaction trans = new(doc, "Импорт пространств из связанного файла");
         trans.Start();
+        List<Level> currentLevels = GenerateNecessaryLevels(doc, linkedDoc, linkedRooms);
         var progressBar = new ProgressWindow(linkedRooms.Count);
         progressBar.Show();
         for (int currentIndex = 0; currentIndex < linkedRooms.Count; currentIndex++)
@@ -92,103 +92,103 @@ public class RoomsInSpacesServices
             $"Создано пространств: {createdCount}\n" + $"Обновлено пространств: {updatedCount}");
     }
 
-   private Space FindIntersectedSpace(List<Space> spaces, Room room, Transform linkTransform, Document doc)
-{
-    // 1. Быстрая проверка по ограничивающим прямоугольникам перед сложными вычислениями
-    BoundingBoxXYZ roomBBox = room.get_BoundingBox(null);
-    if (roomBBox == null) return null;
-
-    // Трансформируем ограничивающий прямоугольник помещения
-    BoundingBoxXYZ transformedRoomBBox = new BoundingBoxXYZ();
-    transformedRoomBBox.Min = linkTransform.OfPoint(roomBBox.Min);
-    transformedRoomBBox.Max = linkTransform.OfPoint(roomBBox.Max);
-
-    // Фильтруем пространства по пересечению ограничивающих прямоугольников
-    List<Space> potentialSpaces = new List<Space>();
-    foreach (Space space in spaces)
+    private Space FindIntersectedSpace(List<Space> spaces, Room room, Transform linkTransform, Document doc)
     {
-        BoundingBoxXYZ spaceBBox = space.get_BoundingBox(null);
-        if (spaceBBox == null) continue;
+        // 1. Быстрая проверка по ограничивающим прямоугольникам перед сложными вычислениями
+        BoundingBoxXYZ roomBBox = room.get_BoundingBox(null);
+        if (roomBBox == null) return null;
 
-        // Проверяем пересечение ограничивающих прямоугольников
-        if (DoBoxesIntersect(transformedRoomBBox, spaceBBox))
+        // Трансформируем ограничивающий прямоугольник помещения
+        BoundingBoxXYZ transformedRoomBBox = new BoundingBoxXYZ();
+        transformedRoomBBox.Min = linkTransform.OfPoint(roomBBox.Min);
+        transformedRoomBBox.Max = linkTransform.OfPoint(roomBBox.Max);
+
+        // Фильтруем пространства по пересечению ограничивающих прямоугольников
+        List<Space> potentialSpaces = new List<Space>();
+        foreach (Space space in spaces)
         {
-            potentialSpaces.Add(space);
+            BoundingBoxXYZ spaceBBox = space.get_BoundingBox(null);
+            if (spaceBBox == null) continue;
+
+            // Проверяем пересечение ограничивающих прямоугольников
+            if (DoBoxesIntersect(transformedRoomBBox, spaceBBox))
+            {
+                potentialSpaces.Add(space);
+            }
         }
-    }
 
-    // Если нет потенциальных пространств, сразу возвращаем null
-    if (potentialSpaces.Count == 0) return null;
+        // Если нет потенциальных пространств, сразу возвращаем null
+        if (potentialSpaces.Count == 0) return null;
 
-    // 2. Вычисляем геометрию только для отфильтрованных пространств
-    SpatialElementGeometryCalculator calculator = new SpatialElementGeometryCalculator(doc);
+        // 2. Вычисляем геометрию только для отфильтрованных пространств
+        SpatialElementGeometryCalculator calculator = new SpatialElementGeometryCalculator(doc);
 
-    // Получаем геометрию помещения из связанного файла (делаем однократно)
-    Solid roomSolid;
-    try
-    {
-        SpatialElementGeometryResults roomResults = calculator.CalculateSpatialElementGeometry(room);
-        roomSolid = roomResults.GetGeometry();
-        if (roomSolid == null || roomSolid.Volume < 0.001) return null;
-
-        // Трансформируем геометрию помещения в координаты текущего документа
-        roomSolid = SolidUtils.CreateTransformed(roomSolid, linkTransform);
-    }
-    catch
-    {
-        return null; // Если не получилось вычислить геометрию
-    }
-
-    // 3. Отслеживаем наилучшее совпадение по объему пересечения
-    Space bestMatch = null;
-    double maxIntersectionRatio = 0.05; // Минимальный порог пересечения (5% объема)
-
-    foreach (Space space in potentialSpaces)
-    {
+        // Получаем геометрию помещения из связанного файла (делаем однократно)
+        Solid roomSolid;
         try
         {
-            SpatialElementGeometryResults spaceResults = calculator.CalculateSpatialElementGeometry(space);
-            Solid spaceSolid = spaceResults.GetGeometry();
+            SpatialElementGeometryResults roomResults = calculator.CalculateSpatialElementGeometry(room);
+            roomSolid = roomResults.GetGeometry();
+            if (roomSolid == null || roomSolid.Volume < 0.001) return null;
 
-            if (spaceSolid == null || spaceSolid.Volume < 0.001) continue;
-
-            // Вычисляем пересечение объемов
-            Solid intersection = BooleanOperationsUtils.ExecuteBooleanOperation(
-                roomSolid, spaceSolid, BooleanOperationsType.Intersect);
-
-            if (intersection != null && intersection.Volume > 0.001)
-            {
-                // Вычисляем соотношение объема пересечения к объему помещения
-                double intersectionRatio = intersection.Volume / roomSolid.Volume;
-
-                // Если это лучшее совпадение, запоминаем его
-                if (intersectionRatio > maxIntersectionRatio)
-                {
-                    maxIntersectionRatio = intersectionRatio;
-                    bestMatch = space;
-
-                    // Если нашли почти полное пересечение, можем сразу вернуть результат
-                    if (intersectionRatio > 0.9) return space;
-                }
-            }
+            // Трансформируем геометрию помещения в координаты текущего документа
+            roomSolid = SolidUtils.CreateTransformed(roomSolid, linkTransform);
         }
         catch
         {
-            continue; // Если не получилось вычислить геометрию для этого пространства
+            return null; // Если не получилось вычислить геометрию
         }
+
+        // 3. Отслеживаем наилучшее совпадение по объему пересечения
+        Space bestMatch = null;
+        double maxIntersectionRatio = 0.05; // Минимальный порог пересечения (5% объема)
+
+        foreach (Space space in potentialSpaces)
+        {
+            try
+            {
+                SpatialElementGeometryResults spaceResults = calculator.CalculateSpatialElementGeometry(space);
+                Solid spaceSolid = spaceResults.GetGeometry();
+
+                if (spaceSolid == null || spaceSolid.Volume < 0.001) continue;
+
+                // Вычисляем пересечение объемов
+                Solid intersection = BooleanOperationsUtils.ExecuteBooleanOperation(
+                    roomSolid, spaceSolid, BooleanOperationsType.Intersect);
+
+                if (intersection != null && intersection.Volume > 0.001)
+                {
+                    // Вычисляем соотношение объема пересечения к объему помещения
+                    double intersectionRatio = intersection.Volume / roomSolid.Volume;
+
+                    // Если это лучшее совпадение, запоминаем его
+                    if (intersectionRatio > maxIntersectionRatio)
+                    {
+                        maxIntersectionRatio = intersectionRatio;
+                        bestMatch = space;
+
+                        // Если нашли почти полное пересечение, можем сразу вернуть результат
+                        if (intersectionRatio > 0.9) return space;
+                    }
+                }
+            }
+            catch
+            {
+                continue; // Если не получилось вычислить геометрию для этого пространства
+            }
+        }
+
+        return bestMatch;
     }
 
-    return bestMatch;
-}
-
 // Вспомогательный метод для проверки пересечения ограничивающих прямоугольников
-private bool DoBoxesIntersect(BoundingBoxXYZ box1, BoundingBoxXYZ box2)
-{
-    // Проверка по x, y, z
-    return (box1.Min.X <= box2.Max.X && box1.Max.X >= box2.Min.X) &&
-           (box1.Min.Y <= box2.Max.Y && box1.Max.Y >= box2.Min.Y) &&
-           (box1.Min.Z <= box2.Max.Z && box1.Max.Z >= box2.Min.Z);
-}
+    private bool DoBoxesIntersect(BoundingBoxXYZ box1, BoundingBoxXYZ box2)
+    {
+        // Проверка по x, y, z
+        return (box1.Min.X <= box2.Max.X && box1.Max.X >= box2.Min.X) &&
+               (box1.Min.Y <= box2.Max.Y && box1.Max.Y >= box2.Min.Y) &&
+               (box1.Min.Z <= box2.Max.Z && box1.Max.Z >= box2.Min.Z);
+    }
 
     private BoundingBoxXYZ CreateBoundingBoxAtPoint(
         XYZ centerPoint,

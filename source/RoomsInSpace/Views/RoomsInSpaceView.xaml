@@ -43,11 +43,11 @@
                                Style="{DynamicResource TextBlockStyle}"
                                FontWeight="SemiBold" />
 
-                    <ComboBox 
+                    <ComboBox
                         ItemsSource="{Binding LinkedFiles}"
-                              Margin="0 5"
-                              SelectedItem="{Binding SelectedLinkedFile}"
-                              Style="{DynamicResource ModernComboBoxStyle}">
+                        Margin="0 5"
+                        SelectedItem="{Binding SelectedLinkedFile}"
+                        Style="{DynamicResource ModernComboBoxStyle}">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding  Converter={StaticResource RevitLinkNameConverter}}"
@@ -61,32 +61,29 @@
         <Grid Grid.Row="1">
             <GroupBox Header="Выбрать уровни:"
                       Margin="0 5"
-                      Style="{DynamicResource GroupBoxStyle}" />
-            <ListBox
-
-                Style="{DynamicResource ModernListBoxStyle}"
-                ItemsSource="{Binding LevelInfos}">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*" />
-                                <ColumnDefinition />
-                            </Grid.ColumnDefinitions>
-                            <CheckBox
-                                Style="{DynamicResource JellyCheckboxStyle}"
-                                IsChecked="{Binding IsChecked}"
-                                Content="{Binding LevelName}"
-                                Margin="3 0" />
-                            <TextBlock Grid.Column="1" Style="{DynamicResource TextBlockStyle}">
-                                <Run Text="Количество помещений: " />
-                                <Run Text="{Binding RoomCount}" />
-                            </TextBlock>
-                        </Grid>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-
+                      Style="{DynamicResource GroupBoxStyle}">
+                <ListBox
+                    Style="{DynamicResource ModernListBoxStyle}"
+                         ItemsSource="{Binding LevelInfos}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*" />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <CheckBox Style="{DynamicResource JellyCheckboxStyle}"
+                                          IsChecked="{Binding IsChecked}"
+                                          Content="{Binding LevelName}" />
+                                <TextBlock Grid.Column="1" Style="{DynamicResource TextBlockStyle}">
+                                    <Run Text="Количество помещений: " />
+                                    <Run Text="{Binding RoomCount}" />
+                                </TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </GroupBox>
         </Grid>
         <DockPanel
             HorizontalAlignment="Right"

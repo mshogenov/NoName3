@@ -4,21 +4,20 @@ public readonly struct AlignContext
 {
     public ElementWrapper Target { get; }
     public ElementWrapper Attach { get; }
-    public Connector TargetConn { get; }
-    public Connector AttachConn { get; }
+    public ConnectorWrapper TargetConn { get; }
+    public ConnectorWrapper AttachConn { get; }
 
-    public ElementId TargetId => Target.Id;
-    public ElementId AttachId => Attach.Id;
 
-    public AlignContext(
-        ElementWrapper target,
-        ElementWrapper attach,
-        Connector targetConn,
-        Connector attachConn)
+    public AlignContext([NotNull] Element target, [NotNull] Element attach, [NotNull] XYZ targetPt, [NotNull] XYZ attachPt)
     {
-        Target = target;
-        Attach = attach;
-        TargetConn = targetConn;
-        AttachConn = attachConn;
+        if (target == null) throw new ArgumentNullException(nameof(target));
+        if (attach == null) throw new ArgumentNullException(nameof(attach));
+        if (targetPt == null) throw new ArgumentNullException(nameof(targetPt));
+        if (attachPt == null) throw new ArgumentNullException(nameof(attachPt));
+        Target = new ElementWrapper(target) ;
+        Attach = new ElementWrapper(attach) ;
+        TargetConn= new ConnectorWrapper(Target.FindClosestFreeConnector(targetPt)) ;
+        AttachConn = new ConnectorWrapper(Attach.FindClosestFreeConnector(attachPt)) ;
+       
     }
 }

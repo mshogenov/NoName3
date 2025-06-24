@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Events;
 using MakeBreak.Commands;
 using MakeBreak.Services;
 using Nice3point.Revit.Toolkit.External.Handlers;
@@ -12,24 +13,82 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     private readonly ActionEventHandler _actionEventHandler = new();
     private readonly MakeBreakServices _makeBreakServices = new();
     private readonly FamilySymbol _familySymbol;
+    private UIApplication uiapp = Context.UiApplication;
     private readonly Document _doc = Context.ActiveDocument;
-   private const string _parameterRupture = "msh_Разрыв";
-    // Добавьте поле для отслеживания состояния выполнения команды
-    private bool _isExecutingMakeBreak = false;
+    private View _activeView = Context.ActiveView;
+    [ObservableProperty] private bool _isExistingFilterInDocument;
+    [ObservableProperty] private bool _isExistingParameter;
+    [ObservableProperty] private bool _isExistingFamily;
 
-    [ObservableProperty] private string _statusColor = "#3498DB";
+    public View ActiveView
+    {
+        get => _activeView;
+        set
+        {
+            _activeView = value;
+            OnPropertyChanged(nameof(ActiveView));
+        }
+    }
+
+    private const string _parameterRupture = "msh_Разрыв";
+
+    // Добавьте поле для отслеживания состояния выполнения команды
+    private bool _isExecutingMakeBreak;
+
 
     private readonly List<BuiltInCategory> _categories =
     [
         BuiltInCategory.OST_PipeCurves,
     ];
 
+    private bool _isExecutingDeleteBreak;
 
 
     public MakeBreakViewModel()
     {
-        _familySymbol = _makeBreakServices.FindFamily("Разрыв");
-        if (Helpers.CheckParameterExists(_doc, _parameterRupture)) return;
+        if (!Helpers.CheckParameterExists(_doc, _parameterRupture))
+        {
+            IsExistingParameter = true;
+        }
+
+        if (!CheckFilterExists(_doc, "Разрыв"))
+        {
+            IsExistingFilterInDocument = true;
+        }
+
+        if (!CheckFamilyExists("Разрыв", out var family))
+        {
+            IsExistingFamily = true;
+        }
+        else
+        {
+            _familySymbol = family;
+        }
+
+        if (_activeView.ViewType is ViewType.ThreeD or ViewType.FloorPlan)
+        {
+            var filter = new FilteredElementCollector(_doc)
+                .OfClass(typeof(ParameterFilterElement))
+                .Cast<ParameterFilterElement>().FirstOrDefault(x => x.Name == "Разрыв");
+            // проверка фильтра на правильность настроек
+
+            ICollection<ElementId> appliedFilters = _activeView.GetFilters();
+        }
+
+
+        uiapp.ViewActivated += OnViewActivated;
+    }
+
+    private bool CheckFamilyExists(string familyName, out FamilySymbol family)
+    {
+        family = new FilteredElementCollector(_doc)
+            .OfCategory(BuiltInCategory.OST_PipeFitting)
+            .OfClass(typeof(FamilySymbol)).FirstOrDefault(x => x.Name == familyName) as FamilySymbol;
+        return family != null;
+    }
+
+    private void AddParameter()
+    {
         using Transaction tr = new Transaction(_doc, "Добавить общий параметр");
         tr.Start();
         try
@@ -43,6 +102,78 @@ public sealed partial class MakeBreakViewModel : ObservableObject
             tr.RollBack();
             MessageBox.Show(e.Message, "Ошибка");
         }
+    }
+
+    public bool CheckFilterExists(Document doc, string filterName)
+    {
+        var filter = new FilteredElementCollector(_doc)
+            .OfClass(typeof(ParameterFilterElement))
+            .Cast<ParameterFilterElement>().FirstOrDefault(x => x.Name == filterName);
+        return filter != null;
+        // // Проверяем категории фильтра
+        // var missingCategories = GetMissingCategories(filter, _categories);
+        // if (missingCategories.Count != 0)
+        // {
+        //     // Получаем текущие категории фильтра
+        //     var currentCategories = filter.GetCategories().ToList();
+        //     currentCategories.AddRange(missingCategories.Select(category => new ElementId((long)category)));
+        //
+        //     // Обновляем категории фильтра
+        //     filter.SetCategories(currentCategories);
+        // }
+        //
+        // // Проверяем правила фильтра
+        // ParameterElement paramElement = GetParameterElement("msh_Разрыв");
+        // var elementFilter = filter.GetElementFilter() as LogicalAndFilter;
+        // var filters = elementFilter.GetFilters().Select(x => x as ElementParameterFilter);
+        // foreach (var f in filters)
+        // {
+        //     var rule = f.GetRules().FirstOrDefault();
+        //     switch (rule)
+        //     {
+        //         case null:
+        //             return false;
+        //         case FilterIntegerRule integerRule:
+        //         {
+        //             var param = integerRule.GetRuleParameter();
+        //             if (!(paramElement != null && param.Equals(paramElement.Id)))
+        //             {
+        //                 return false;
+        //             }
+        //             break;
+        //         }
+        //     }
+        // }
+        //
+    }
+
+    private ParameterElement GetParameterElement(string parameterName)
+    {
+        return new FilteredElementCollector(_doc)
+            .OfClass(typeof(ParameterElement))
+            .Cast<ParameterElement>()
+            .FirstOrDefault(pe => pe.Name.Equals(parameterName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private IList<BuiltInCategory> GetMissingCategories(ParameterFilterElement filter, List<BuiltInCategory> categories)
+    {
+        var filterCategoryIds = filter.GetCategories()
+            .Select(id => id.Value)
+            .ToList();
+
+        // Получаем категории, которых нет в фильтре
+        var missingCategories = categories
+            .Where(category => !filterCategoryIds.Contains((int)category))
+            .ToList();
+
+        return missingCategories;
+    }
+
+    private void OnViewActivated(object sender, ViewActivatedEventArgs e)
+    {
+        Document doc = e.Document;
+        View activeView = e.CurrentActiveView;
+        // проверка наличия фильтра на виде
     }
 
     [RelayCommand]
@@ -64,8 +195,8 @@ public sealed partial class MakeBreakViewModel : ObservableObject
             }
         });
     }
-    
-    
+
+
     [RelayCommand(CanExecute = nameof(CanExecuteMakeBreak))]
     private void MakeBreak()
     {
@@ -101,6 +232,37 @@ public sealed partial class MakeBreakViewModel : ObservableObject
             }
         });
     }
+
     // Метод для проверки возможности выполнения команды
     private bool CanExecuteMakeBreak() => !_isExecutingMakeBreak;
+
+    [RelayCommand(CanExecute = nameof(CanExecuteDeleteBreak))]
+    private void DeleteBreak()
+    {
+        // Устанавливаем флаг, что команда запущена
+        _isExecutingDeleteBreak = true;
+        (DeleteBreakCommand as RelayCommand)?.NotifyCanExecuteChanged();
+        _actionEventHandler.Raise(_ =>
+        {
+            try
+            {
+                _makeBreakServices.DeleteBreaksAndCreatePipe(_familySymbol);
+            }
+            catch (Exception e)
+            {
+                TaskDialog.Show("Ошибка", "Произошла ошибка: " + e.Message);
+            }
+            finally
+            {
+                _actionEventHandler.Cancel();
+                // Сбрасываем флаг после завершения команды
+                _isExecutingDeleteBreak = false;
+
+                // Уведомляем об изменении состояния
+                (DeleteBreakCommand as RelayCommand)?.NotifyCanExecuteChanged();
+            }
+        });
+    }
+
+    private bool CanExecuteDeleteBreak() => !_isExecutingDeleteBreak;
 }

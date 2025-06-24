@@ -2,22 +2,37 @@ using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using CopyAnnotations.Filters;
 using CopyAnnotations.Models;
+using OperationCanceledException = Autodesk.Revit.Exceptions.OperationCanceledException;
 
 namespace CopyAnnotations.Services;
 
 public class CopyAnnotationsServices
 {
     private readonly UIDocument? _uidoc = Context.ActiveUiDocument;
-    private readonly Document? _doc = Context.ActiveDocument;
+    private Document? _doc => Context.ActiveDocument;
 
-    public void CopyAnnotations(List<Reference> selectedTagRefs, XYZ sourceBasePoint)
+    public void CopyAnnotations(List<Reference> selectedTagRefs, CopyAnnContext sourceBasePoint)
     {
         XYZ? targetBasePoint = null;
+        XYZ displacementPoint = null;
         try
         {
-            targetBasePoint = GetPoint("Выберите целевой опорный элемент");
+            Reference? reference = _uidoc?.Selection.PickObject(ObjectType.Element,
+                "Выберите целевой опорный элемент");
+            Element selectedElement = _doc.GetElement(reference);
+            if (selectedElement is DisplacementElement displacement)
+            {
+                displacementPoint = displacement.GetRelativeDisplacement();
+            }
+
+            targetBasePoint = reference?.GlobalPoint;
         }
-        catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (targetBasePoint == null)
         {
             return;
         }
@@ -50,42 +65,12 @@ public class CopyAnnotationsServices
         }
 
         // Вычисляем вектор перемещения между опорными элементами
-        XYZ translationVector = targetBasePoint - sourceBasePoint;
+        XYZ translationVector = targetBasePoint - sourceBasePoint.PickPoint;
         using Transaction tg = new Transaction(_doc, "Копирование аннотаций");
         tg.Start();
-        if (tagModels.Any())
+        if (tagModels.Count != 0)
         {
-            var originalTag = tagModels.FirstOrDefault();
-            if (originalTag == null) return;
-            using SubTransaction trans = new SubTransaction(_doc);
-            trans.Start();
-            ElementId copiedTagId = CopiedTag(originalTag.IndependentTag, translationVector);
-            if (copiedTagId == null)
-            {
-                trans.RollBack();
-                tg.RollBack();
-                TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
-                return;
-            }
-
-            trans.Commit();
-            if (tagModels.Count > 1)
-            {
-                if (copiedTagId != null && _doc?.GetElement(copiedTagId) != null)
-                {
-                    // Получаем вектор трансляции, если можем
-                    var vector = GetTranslationVectorTag(copiedTagId, originalTag);
-                    // Удаляем скопированный элемент
-                    _doc.Delete(copiedTagId);
-                    CreateTags(tagModels, vector);
-                }
-                else
-                {
-                    tg.RollBack();
-                    TaskDialog.Show("Ошибка", "Не удалось скопировать аннотации.");
-                    return;
-                }
-            }
+            CreateTags(tagModels, translationVector, displacementPoint, sourceBasePoint);
         }
 
         // if (dimensionModels.Any())
@@ -136,7 +121,7 @@ public class CopyAnnotationsServices
         //     }
         // }
 
-        if (textNoteModels.Any())
+        if (textNoteModels.Count != 0)
         {
             foreach (var textNote in textNoteModels)
             {
@@ -144,7 +129,7 @@ public class CopyAnnotationsServices
             }
         }
 
-        if (annotationSymbols.Any())
+        if (annotationSymbols.Count != 0)
         {
             foreach (var annotationSymbol in annotationSymbols)
             {
@@ -155,9 +140,10 @@ public class CopyAnnotationsServices
         tg.Commit();
     }
 
-    private void CreateTags(List<TagModel> tagsData, XYZ? translationVector)
+    private void CreateTags(List<TagModel> tagsData, XYZ? translationVector, XYZ? displacementPoint,
+        CopyAnnContext sourceBasePoint)
     {
-        if (!tagsData.Any() || translationVector == null) return;
+        if (tagsData.Count == 0 || translationVector == null) return;
 
         foreach (TagModel tagData in tagsData)
         {
@@ -221,6 +207,16 @@ public class CopyAnnotationsServices
                     TaskDialog.Show("Предупреждение", $"Не удалось добавить ссылки к тегу: {ex.Message}");
                 }
             }
+
+            if (displacementPoint != null)
+            {
+                ElementTransformUtils.MoveElement(_doc, newTag.Id, displacementPoint);
+            }
+
+            if (sourceBasePoint.DisplacementPoint != null)
+            {
+                ElementTransformUtils.MoveElement(_doc, newTag.Id, -sourceBasePoint.DisplacementPoint);
+            }
         }
     }
 
@@ -275,28 +271,27 @@ public class CopyAnnotationsServices
             return null;
         var displacement = nearestElement.Position.Subtract(searchPoint);
         IndependentTag? newTag = null;
-        if (ArePointsEqual(searchPoint, nearestElement.Position))
+
+        try
         {
-            try
-            {
-                // Создаем новую марку
-                newTag = IndependentTag.Create(
-                    _doc, // документ
-                    tagModel.TagTypeId, // тип марки
-                    _doc?.ActiveView.Id, // id вида
-                    new Reference(nearestElement.Element), // ссылка на элемент
-                    tagModel.HasLeader, // наличие выноски
-                    tagModel.Orientation, // ориентация
-                    newTagHead.Add(displacement) // позиция марки
-                );
-            }
-            catch (Exception ex)
-            {
-                // Обработка возможных ошибок при создании тега
-                TaskDialog.Show("Ошибка создания тега", ex.Message);
-                return null;
-            }
+            // Создаем новую марку
+            newTag = IndependentTag.Create(
+                _doc, // документ
+                tagModel.TagTypeId, // тип марки
+                _doc?.ActiveView.Id, // id вида
+                new Reference(nearestElement.Element), // ссылка на элемент
+                tagModel.HasLeader, // наличие выноски
+                tagModel.Orientation, // ориентация
+                newTagHead.Add(displacement) // позиция марки
+            );
         }
+        catch (Exception ex)
+        {
+            // Обработка возможных ошибок при создании тега
+            TaskDialog.Show("Ошибка создания тега", ex.Message);
+            return null;
+        }
+
 
         if (newTag == null)
             return null;
@@ -328,7 +323,7 @@ public class CopyAnnotationsServices
             if (leader.TaggedElement.Id?.Value != firstTaggedElement.Id?.Value) continue;
             try
             {
-                if (tagModel.LeaderEndCondition == LeaderEndCondition.Free)
+                if (tagModel.LeaderEndCondition == LeaderEndCondition.Free && leader.Position != null)
                 {
                     newTag.SetLeaderElbow(
                         new Reference(nearestElement.Element),
@@ -589,24 +584,26 @@ public class CopyAnnotationsServices
         }
     }
 
-    public XYZ? GetPoint(string status)
+    public CopyAnnContext GetCopyAnnContext(string status)
     {
-        Reference? reference = _uidoc?.Selection.PickObject(ObjectType.Element,
-            status);
-        Element? element = _doc?.GetElement(reference);
-        XYZ? point = GetElementPosition(element);
-        if (point == null)
+        try
         {
-            TaskDialog.Show("Ошибка", "Не удалось определить положение элемента.");
-        }
+            Reference? reference = _uidoc?.Selection.PickObject(ObjectType.Element,
+                status);
+            CopyAnnContext copyAnnContext = new CopyAnnContext(_doc, reference);
 
-        return point;
+            return copyAnnContext;
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
     }
 
-    public IList<Reference>? GetCopyTags()
+    public List<Reference>? GetCopyTags()
     {
-        IList<Reference>? selectedTagRefs = _uidoc?.Selection.PickObjects(ObjectType.Element,
-            new TagSelectionFilter(), "Выберите марки для копирования");
+        List<Reference>? selectedTagRefs = _uidoc?.Selection.PickObjects(ObjectType.Element,
+            new TagSelectionFilter(), "Выберите марки для копирования").ToList();
         return selectedTagRefs;
     }
 

@@ -2,13 +2,21 @@ namespace SystemModelingCommands.Models;
 
 public class ConnectorConnection
 {
-    public Connector Connector { get; set; }
+    public Connector TargetConnector { get; set; }
     public Element Element { get; set; }
-    public List<ConnectorConnection> ConnectedConnectors { get; set; } = [];
+    private readonly List<ConnectorConnection> _connectorConnections = [];
+    public IReadOnlyList<ConnectorConnection> ConnectedConnectors => _connectorConnections;
 
-    public ConnectorConnection(Connector connector)
+    public ConnectorConnection(Connector targetConnector)
     {
-        Connector = connector;
-        Element = connector.Owner;
+        if (targetConnector == null) return;
+        TargetConnector = targetConnector;
+        Element = targetConnector.Owner;
+    }
+
+    public void AddConnectedConnector(Connector connector)
+    {
+        if (!_connectorConnections.Contains(new ConnectorConnection(connector)))
+            _connectorConnections.Add(new ConnectorConnection(connector));
     }
 }

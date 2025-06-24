@@ -1,3 +1,6 @@
+using Autodesk.Revit.DB;
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace ViewOfPipeSystems.Model;
 
 public partial class MEPSystemModel : ObservableObject

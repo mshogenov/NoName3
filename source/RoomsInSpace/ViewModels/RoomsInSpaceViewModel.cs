@@ -25,8 +25,7 @@ public sealed partial class RoomsInSpacesViewModel : ObservableObject
         // Перебираем каждый экземпляр связанного файла
         foreach (RevitLinkInstance linkInstance in linkInstances)
         {
-            Document linkDoc = linkInstance.GetLinkDocument();
-            if (linkDoc != null)
+            if (linkInstance.GetLinkDocument() != null && _doc.GetElement(linkInstance.GetTypeId()).FindParameter(BuiltInParameter.WALL_ATTR_ROOM_BOUNDING).AsBool() )
             {
                 LinkedFiles.Add(linkInstance);
             }
