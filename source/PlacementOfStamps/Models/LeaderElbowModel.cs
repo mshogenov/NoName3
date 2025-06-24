@@ -3,9 +3,9 @@ namespace PlacementOfStamps.Models;
 public class LeaderElbowModel
 {
     public XYZ Position { get; set; }
-    public ElementWrapper TaggedElement { get; set; }
+    public ElementWrp TaggedElement { get; set; }
 
-    public LeaderElbowModel(IndependentTag tag, ElementWrapper element)
+    public LeaderElbowModel(IndependentTag tag, ElementWrp element)
     {
         TaggedElement = element;
         // if (tag.LeaderEndCondition == LeaderEndCondition.Free)

@@ -3,10 +3,10 @@ using Autodesk.Revit.DB.Plumbing;
 
 namespace PlacementOfStamps.Models;
 
-public class PipeWrapper
+public class PipeWrp
 {
     public Pipe Pipe { get; }
-    public ElementId Id => Pipe.Id;
+    public ElementId Id { get; }
 
     public bool IsDisplaced { get; set; }
     public XYZ? DisplacedPoint { get; set; }
@@ -21,8 +21,9 @@ public class PipeWrapper
     public XYZ EndPoint => Curve.GetEndPoint(1);
     public XYZ Direction => (EndPoint - StartPoint).Normalize();
 
-    public PipeWrapper(Pipe pipe)
+    public PipeWrp(Pipe pipe)
     {
+        Id = pipe.Id;
         Pipe = pipe ?? throw new ArgumentNullException(nameof(pipe));
         IsRiser = CalculateIsRiser(pipe);
         HasInsulation = pipe.FindParameter(BuiltInParameter.RBS_REFERENCE_INSULATION_TYPE)?.HasValue == true;
@@ -42,5 +43,4 @@ public class PipeWrapper
                !slopeParam.HasValue ||
                slopeParam.AsDouble() > 1;
     }
- 
 }

@@ -1,6 +1,6 @@
 namespace PlacementOfStamps.Models;
 
-public class ElementWrapper
+public class ElementWrp
 {
     public ElementId Id { get; set; }
     public Reference Reference { get; set; }
@@ -8,7 +8,7 @@ public class ElementWrapper
     public Element Element { get; set; }
     public XYZ Position { get; set; }
 
-    public ElementWrapper(Element element)
+    public ElementWrp(Element element)
     {
         if (element == null) return;
         Element = element;

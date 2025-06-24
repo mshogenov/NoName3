@@ -1,11 +1,11 @@
 namespace PlacementOfStamps.Models;
 
-public class TagWrapper
+public class TagWrp
 {
     public IndependentTag IndependentTag { get; set; }
     public XYZ TagHeadPosition => IndependentTag.TagHeadPosition;
     public double Parameter { get; set; }
-    public List<ElementWrapper> TaggedElements { get; set; } = [];
+    public List<ElementWrp> TaggedElements => GetTaggedElements(IndependentTag);
     public ElementId TagTypeId => IndependentTag.GetTypeId();
     public bool HasLeader => IndependentTag.HasLeader;
     public string Name => IndependentTag.Name;
@@ -20,7 +20,7 @@ public class TagWrapper
     // public List<LeaderEndModel> LeadersEnd { get; set; } = [];
     public ICollection<Element> TaggedLocalElements { get; set; } = [];
 
-    public TagWrapper(IndependentTag independentTag)
+    public TagWrp(IndependentTag independentTag)
     {
         if (independentTag == null) return;
         Document doc = independentTag.Document;
@@ -32,14 +32,6 @@ public class TagWrapper
             TaggedLocalElements.Add(taggedLocalElement);
         }
 
-        ICollection<LinkElementId> taggedElementIds = independentTag.GetTaggedElementIds();
-        if (taggedElementIds is { Count: > 0 })
-        {
-            foreach (var taggedElementId in taggedElementIds)
-            {
-                TaggedElements.Add(new ElementWrapper(doc.GetElement(taggedElementId.HostElementId)));
-            }
-        }
 
         // if (HasLeader)
         // {
@@ -50,6 +42,20 @@ public class TagWrapper
         //     }
         // }
         Rectangle = GetTagBoundingBox(independentTag, doc.ActiveView);
+    }
+
+    private static List<ElementWrp> GetTaggedElements(IndependentTag independentTag)
+    {
+        List<ElementWrp> elementsWrp = [];
+        Document doc = independentTag.Document;
+        ICollection<LinkElementId> taggedElementIds = independentTag.GetTaggedElementIds();
+        if (taggedElementIds is not { Count: > 0 }) return elementsWrp;
+        foreach (var taggedElementId in taggedElementIds)
+        {
+            elementsWrp.Add(new ElementWrp(doc.GetElement(taggedElementId.HostElementId)));
+        }
+
+        return elementsWrp;
     }
 
     /// <summary>

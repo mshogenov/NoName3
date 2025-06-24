@@ -7,6 +7,7 @@ namespace PlacementOfStamps.Services;
 
 public class PlacementOfStampsServices
 {
+    private readonly Document _doc = Context.ActiveDocument;
     private const double OffsetStep = 1;
     private const int MaxAttempts = 3;
     private const double SpiralAngleStep = Math.PI / 4;
@@ -377,16 +378,17 @@ public class PlacementOfStampsServices
     //     }
     // }
 
-    public void PlacementMarksSystemAbbreviation(Document doc, List<PipeWrapper> pipeWrp, List<TagWrapper> tagWpr,
-        View activeView,FamilySymbol selectedTag)
+    public void PlacementMarksSystemAbbreviation(List<PipeWrp> pipeWrp, List<TagWrp> tagWpr,
+        FamilySymbol selectedTag)
     {
         var existingSelectedTags = tagWpr
-            .Where(x => x.Name == selectedTag.Name).ToList();
+            .Where(x => x.Name == selectedTag.Name)
+            .ToList();
         var pipes = GetPipeNotTags(pipeWrp, existingSelectedTags);
         var pipesSort = pipes.OrderBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).X)
-            .ThenBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).Y);
-       
-    bool flag = false;
+            .ThenBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).Y).ToList();
+        bool flag = false;
+        var activeView = _doc.ActiveView;
         foreach (var pipe in pipesSort)
         {
             if (pipe.Length.ToMillimeters() is > 500 and < 4000 && flag)
@@ -400,40 +402,41 @@ public class PlacementOfStampsServices
                 continue;
             }
 
-            // Шаг 4: Вычисление позиций марки для текущей трубы
-            List<XYZ> tagLocations =
-                FindOptimalTagLocation(pipe, selectedTag);
-            if (tagLocations.Count == 0) continue;
-            // Создание марки
-            foreach (var tagLocation in tagLocations)
-            {
-                if (tagLocation == null) continue;
-                IndependentTag pipeTag = IndependentTag.Create(doc, selectedTag.Id, activeView.Id,
-                    new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagLocation);
-                tagWpr.Add(new TagWrapper(pipeTag));
-            }
+            // если на трубе уже есть такая же марка, то пропускаем создание марки
 
-            flag = true;
+            IndependentTag pipeTag = IndependentTag.Create(_doc, selectedTag.Id, activeView.Id,
+                new Reference(pipe.Pipe), false, TagOrientation.Horizontal, (pipe.EndPoint + pipe.StartPoint) / 2);
+
+
+            // Шаг 4: Вычисление позиций марки для текущей трубы
+            // List<XYZ> tagLocations =
+            //     FindOptimalTagLocation(pipe, selectedTag);
+            // if (tagLocations.Count == 0) continue;
+            // // Создание марки
+            // foreach (var tagLocation in tagLocations)
+            // {
+            //     if (tagLocation == null) continue;
+            //     IndependentTag pipeTag = IndependentTag.Create(doc, selectedTag.Id, activeView.Id,
+            //         new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagLocation);
+            //     tagWpr.Add(new TagWrapper(pipeTag));
+            // }
+            //
+            // flag = true;
         }
     }
 
-    private static List<PipeWrapper> GetPipeNotTags(List<PipeWrapper> pipeWrp, List<TagWrapper> existingSelectedTags)
+    private static List<PipeWrp> GetPipeNotTags(List<PipeWrp> pipesWrp, List<TagWrp> existingSelectedTags)
     {
-        var pipes = new List<PipeWrapper>();
+        if (existingSelectedTags.Count == 0) return pipesWrp;
 
-        if (!existingSelectedTags.Any()) return pipes;
-        foreach (var element in pipeWrp.ToList())
-        {
-            foreach (var tag in existingSelectedTags)
-            {
-                if (tag.TaggedLocalElements.All(x => x.Id.Value != element.Id.Value))
-                {
-                    pipes.Add(element);
-                }
-            }
-        }
+        // Получаем все ID элементов, которые помечены хотя бы одним тегом
+        var taggedElementIds = existingSelectedTags
+            .SelectMany(tag => tag.TaggedElements)
+            .Select(element => element.Id.Value)
+            .ToHashSet(); // Используем HashSet для быстрого поиска
 
-        return pipes;
+        // Возвращаем только те трубы, которые НЕ помечены ни одним тегом
+        return pipesWrp.Where(pipe => !taggedElementIds.Contains(pipe.Id.Value)).ToList();
     }
 
     public void TestTagBoundingBoxes(IndependentTag tag)
@@ -562,42 +565,38 @@ public class PlacementOfStampsServices
     }
 
 
-    private Dictionary<ElementId, List<TagWrapper>> GetPipeTags(List<TagWrapper> existingAnnotations)
-    {
-        var pipeTagsInfo = new Dictionary<ElementId, List<TagWrapper>>();
-        foreach (var tagModel in existingAnnotations)
-        {
-            foreach (var taggedElement in tagModel.TaggedElements)
-            {
-              
+// private Dictionary<ElementId, List<TagWrapper>> GetPipeTags(List<TagWrapper> existingAnnotations)
+// {
+//     var pipeTagsInfo = new Dictionary<ElementId, List<TagWrapper>>();
+//     foreach (var tagModel in existingAnnotations)
+//     {
+//         foreach (var taggedElement in tagModel.TaggedElements)
+//         {
+//           
+//
+//             // Получение кривой трубы и проекции положения тега на кривую
+//             Curve pipeCurve = tagModel.Curve;
+//            
+//             IntersectionResult result = pipeCurve.Project(tagModel.TagHeadPosition);
+//             double parameter = result.Parameter;
+//
+//             // Добавление записи для трубы, если её еще нет в словаре
+//             if (!pipeTagsInfo.ContainsKey(pipe.Id))
+//             {
+//                 pipeTagsInfo[pipe.Id] = new List<TagWrapper>();
+//             }
+//
+//             // Вычисление расстояния от начала трубы до точки проекции тега
+//             double distanceAlongCurve = CalculateDistanceAlongPipe(pipeCurve, parameter);
+//             tagModel.Distance = distanceAlongCurve;
+//
+//             pipeTagsInfo[pipe.Id].Add(tagModel);
+//         }
+//     }
+//
+//     return pipeTagsInfo;
+// }
 
-                // Получение кривой трубы и проекции положения тега на кривую
-                Curve pipeCurve = tagModel.Curve;
-               
-                IntersectionResult result = pipeCurve.Project(tagModel.TagHeadPosition);
-                double parameter = result.Parameter;
-
-                // Добавление записи для трубы, если её еще нет в словаре
-                if (!pipeTagsInfo.ContainsKey(pipe.Id))
-                {
-                    pipeTagsInfo[pipe.Id] = new List<TagWrapper>();
-                }
-
-                // Вычисление расстояния от начала трубы до точки проекции тега
-                double distanceAlongCurve = CalculateDistanceAlongPipe(pipeCurve, parameter);
-                tagModel.Distance = distanceAlongCurve;
-
-                pipeTagsInfo[pipe.Id].Add(tagModel);
-            }
-        }
-
-        return pipeTagsInfo;
-    }
-
-    
-
-  
-   
 
     /// Вычисление расстояния вдоль трубы от начала до параметра
     private double CalculateDistanceAlongPipe(Curve pipeCurve, double parameter)
@@ -652,32 +651,29 @@ public class PlacementOfStampsServices
     /// </summary>
     /// <param name="pipe">Труба для маркировки</param>
     /// <param name="tagSymbol">Семейство символа тега</param>
-   
     /// <returns>Позиция для размещения марки или null, если подходящая позиция не найдена</returns>
-    private List<XYZ> FindOptimalTagLocation(PipeWrapper pipe, FamilySymbol tagSymbol )
-    {
-        // Конвертируйте в футы (внутренняя единица Revit)
-        double interval = UnitUtils.ConvertToInternalUnits(3000, UnitTypeId.Millimeters);
-        // Вычисляем количество марок
-        int numberOfTags = (int)(pipe.Length / interval);
-        if (pipe.Length % interval != 0) numberOfTags++;
-
-       
-        if (pipe.Length < interval && pipe.Length > UnitUtils.ConvertToInternalUnits(500, UnitTypeId.Millimeters))
-        {
-            List<XYZ> position =
-            [
-                GetPosition(tagSymbol, pipe)
-            ];
-            return position;
-        }
-
-        return GetPositionInterval(tagSymbol, numberOfTags, interval, existingTags, pipe);
-    }
-
-
+// private List<XYZ> FindOptimalTagLocation(PipeWrapper pipe, FamilySymbol tagSymbol )
+// {
+//     // Конвертируйте в футы (внутренняя единица Revit)
+//     double interval = UnitUtils.ConvertToInternalUnits(3000, UnitTypeId.Millimeters);
+//     // Вычисляем количество марок
+//     int numberOfTags = (int)(pipe.Length / interval);
+//     if (pipe.Length % interval != 0) numberOfTags++;
+//
+//    
+//     if (pipe.Length < interval && pipe.Length > UnitUtils.ConvertToInternalUnits(500, UnitTypeId.Millimeters))
+//     {
+//         List<XYZ> position =
+//         [
+//             GetPosition(tagSymbol, pipe)
+//         ];
+//         return position;
+//     }
+//
+//     return GetPositionInterval(tagSymbol, numberOfTags, interval, existingTags, pipe);
+// }
     private List<XYZ> GetPositionInterval(FamilySymbol tagSymbol, int numberOfTags, double interval,
-        List<TagWrapper> existingTags, PipeWrapper pipe)
+        List<TagWrp> existingTags, PipeWrp pipe)
     {
         List<XYZ> positions = [];
         // Итерация по количеству марок
@@ -712,7 +708,7 @@ public class PlacementOfStampsServices
             }
 
             // Проверяем наличие марки другого типа
-            TagWrapper existingTag = null;
+            TagWrp existingTag = null;
             bool differentTagExists = existingTags.Any(tagInfo =>
             {
                 if (!(Math.Abs(tagInfo.Distance - distance) < interval) ||
@@ -740,77 +736,77 @@ public class PlacementOfStampsServices
     }
 
 
-    private XYZ GetPosition(FamilySymbol tagSymbol,  PipeWrapper pipe)
-    {
-        XYZ tagPoint;
+// private XYZ GetPosition(FamilySymbol tagSymbol,  PipeWrapper pipe)
+// {
+//     XYZ tagPoint;
+//
+//     XYZ point = (pipe.StartPoint + pipe.EndPoint) / 2;
+//     if (pipe.IsDisplaced)
+//     {
+//         tagPoint = new XYZ(point.X + pipe.DisplacedPoint.X, point.Y + pipe.DisplacedPoint.Y,
+//             point.Z + pipe.DisplacedPoint.Z);
+//     }
+//     else
+//     {
+//         tagPoint = point;
+//     }
+//
+//
+//     XYZ position = new XYZ();
+//     // Проверяем наличие марки в этой позиции
+//     bool sameTagExists = existingTags.Any(tagInfo =>
+//     {
+//         XYZ annotationPoint = tagInfo.IndependentTag.TagHeadPosition;
+//         double distance = tagPoint.DistanceTo(annotationPoint);
+//         return distance < 1 && tagInfo.Name == tagSymbol.Name;
+//     });
+//
+//     if (sameTagExists)
+//     {
+//         // Такая же марка уже существует на этой позиции, пропускаем
+//         return position;
+//     }
+//
+//     TagWrapper existingTag = null;
+//     // Проверяем наличие марки другого типа
+//     bool differentTagExists = existingTags.Any(tagInfo =>
+//     {
+//         XYZ annotationPoint = tagInfo.IndependentTag.TagHeadPosition;
+//         double distance = tagPoint.DistanceTo(annotationPoint);
+//         if (distance < UnitUtils.ConvertToInternalUnits(400, UnitTypeId.Millimeters) &&
+//             tagInfo.Name != tagSymbol.Name)
+//         {
+//             existingTag = tagInfo;
+//             return true;
+//         }
+//
+//         return false;
+//     });
+//
+//     if (differentTagExists)
+//     {
+//         // Марка другого типа существует на этой позиции, необходимо сместить новую марку
+//         XYZ shiftedTagPoint = FindFreeTagPosition(tagPoint, existingTag, pipe);
+//         if (shiftedTagPoint != null)
+//         {
+//             position = shiftedTagPoint;
+//         }
+//         else
+//         {
+//             return null;
+//         }
+//     }
+//     else
+//     {
+//         // Марки в этой позиции нет, можно размещать без смещения
+//         position = tagPoint;
+//     }
+//
+//     return position;
+// }
 
-        XYZ point = (pipe.StartPoint + pipe.EndPoint) / 2;
-        if (pipe.IsDisplaced)
-        {
-            tagPoint = new XYZ(point.X + pipe.DisplacedPoint.X, point.Y + pipe.DisplacedPoint.Y,
-                point.Z + pipe.DisplacedPoint.Z);
-        }
-        else
-        {
-            tagPoint = point;
-        }
-
-
-        XYZ position = new XYZ();
-        // Проверяем наличие марки в этой позиции
-        bool sameTagExists = existingTags.Any(tagInfo =>
-        {
-            XYZ annotationPoint = tagInfo.IndependentTag.TagHeadPosition;
-            double distance = tagPoint.DistanceTo(annotationPoint);
-            return distance < 1 && tagInfo.Name == tagSymbol.Name;
-        });
-
-        if (sameTagExists)
-        {
-            // Такая же марка уже существует на этой позиции, пропускаем
-            return position;
-        }
-
-        TagWrapper existingTag = null;
-        // Проверяем наличие марки другого типа
-        bool differentTagExists = existingTags.Any(tagInfo =>
-        {
-            XYZ annotationPoint = tagInfo.IndependentTag.TagHeadPosition;
-            double distance = tagPoint.DistanceTo(annotationPoint);
-            if (distance < UnitUtils.ConvertToInternalUnits(400, UnitTypeId.Millimeters) &&
-                tagInfo.Name != tagSymbol.Name)
-            {
-                existingTag = tagInfo;
-                return true;
-            }
-
-            return false;
-        });
-
-        if (differentTagExists)
-        {
-            // Марка другого типа существует на этой позиции, необходимо сместить новую марку
-            XYZ shiftedTagPoint = FindFreeTagPosition(tagPoint, existingTag, pipe);
-            if (shiftedTagPoint != null)
-            {
-                position = shiftedTagPoint;
-            }
-            else
-            {
-                return null;
-            }
-        }
-        else
-        {
-            // Марки в этой позиции нет, можно размещать без смещения
-            position = tagPoint;
-        }
-
-        return position;
-    }
-
-    // Метод для поиска свободной позиции для марки
-    private XYZ FindFreeTagPosition(XYZ originalPosition, TagWrapper existingTag, PipeWrapper pipe)
+// Метод для поиска свободной позиции для марки
+    private XYZ FindFreeTagPosition(XYZ originalPosition, TagWrp existingTag, PipeWrp pipe)
     {
         // Максимальное количество попыток смещения для каждой позиции
         int maxAttempts = 1;
@@ -852,7 +848,7 @@ public class PlacementOfStampsServices
         return null;
     }
 
-    private bool IsPositionWithinPipeBounds(XYZ position, PipeWrapper pipe, double exclusionTolerance)
+    private bool IsPositionWithinPipeBounds(XYZ position, PipeWrp pipe, double exclusionTolerance)
     {
         // Проецируем позицию на кривую трубы
         IntersectionResult result = pipe.Curve.Project(position);
@@ -877,8 +873,8 @@ public class PlacementOfStampsServices
         return param > startParam + exclusionTolerance && param < endParam - exclusionTolerance;
     }
 
-    // Метод для проверки, занята ли позиция маркой
-    private bool IsPositionOccupied(XYZ position, TagWrapper existingTag, PipeWrapper pipe)
+// Метод для проверки, занята ли позиция маркой
+    private bool IsPositionOccupied(XYZ position, TagWrp existingTag, PipeWrp pipe)
     {
         // Вычисляем расстояние по параметру кривой до существующей марки
         double existingDistance = existingTag.Parameter;
@@ -925,7 +921,7 @@ public class PlacementOfStampsServices
         return new XYZ(-direction.Y, direction.X, 0).Normalize();
     }
 
-    private XYZ GetParallelDirectionXy(PipeWrapper pipe)
+    private XYZ GetParallelDirectionXy(PipeWrp pipe)
     {
         // Проецируем направление на плоскость XY (обнуляем Z-компонент)
         XYZ directionXy = new XYZ(pipe.Direction.X, pipe.Direction.Y, 0);
@@ -946,7 +942,7 @@ public class PlacementOfStampsServices
         return directionXy;
     }
 
-    // Метод для смещения точки вдоль кривой
+// Метод для смещения точки вдоль кривой
     private XYZ ShiftAlongCurve(Curve curve, XYZ point, double shift)
     {
         // Получаем параметры начала и конца кривой
