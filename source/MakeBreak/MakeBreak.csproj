@@ -53,5 +53,10 @@
       <ProjectReference Include="..\NoNameAPI\NoNameAPI.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="Resources\Разрыв.rfa" />
+      <EmbeddedResource Include="Resources\Разрыв.rfa" />
+    </ItemGroup>
+
     
 </Project>

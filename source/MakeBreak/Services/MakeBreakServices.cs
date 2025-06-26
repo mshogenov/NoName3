@@ -1,8 +1,11 @@
+using System.IO;
+using System.Reflection;
 using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using MakeBreak.Filters;
 using MakeBreak.Models;
+using Nice3point.Revit.Toolkit.Options;
 using OperationCanceledException = Autodesk.Revit.Exceptions.OperationCanceledException;
 
 
@@ -712,7 +715,7 @@ public class MakeBreakServices
                 case DisplacementElement displacement:
                 {
                     var displacementElementIds = displacement.GetDisplacedElementIds();
-                    double toleranceInMm = 100.0; 
+                    double toleranceInMm = 100.0;
 
                     // Преобразование миллиметров в внутренние единицы Revit (футы)
                     double tolerance = UnitUtils.ConvertToInternalUnits(toleranceInMm, UnitTypeId.Millimeters);
@@ -1040,5 +1043,130 @@ public class MakeBreakServices
         }
 
         return null;
+    }
+
+    public ParameterFilterElement AddFilter(List<BuiltInCategory> mepCategories,
+        string filterName, string parameterName, bool expected)
+    {
+        var categoryIds = mepCategories
+            .Where(c => c != 0)
+            .Select(c => new ElementId(c))
+            .ToList();
+
+        if (categoryIds.Count == 0)
+        {
+            TaskDialog.Show("Ошибка", "Список категорий МЕП пуст.");
+            return null;
+        }
+
+        // Проверяем существование фильтра ПЕРЕД созданием
+        var existingFilter = new FilteredElementCollector(_doc)
+            .OfClass(typeof(ParameterFilterElement))
+            .Cast<ParameterFilterElement>()
+            .FirstOrDefault(f => f.Name.Equals(filterName, StringComparison.OrdinalIgnoreCase));
+
+        if (existingFilter != null)
+        {
+            TaskDialog.Show("Ошибка", $"Фильтр «{filterName}» уже существует.");
+            return existingFilter;
+        }
+
+        // Создаём фильтр
+        ParameterFilterElement parameterFilter =
+            ParameterFilterElement.Create(_doc, filterName, categoryIds);
+
+        try
+        {
+            ParameterElement paramElement = GetParameterElement(parameterName);
+            if (paramElement == null)
+            {
+                TaskDialog.Show("Ошибка", $"Параметр «{parameterName}» не найден.");
+                _doc.Delete(parameterFilter.Id); // удаляем созданный фильтр
+                return null;
+            }
+
+            int boolInt = expected ? 1 : 0;
+            FilterRule rule = ParameterFilterRuleFactory
+                .CreateEqualsRule(paramElement.Id, boolInt);
+
+            ElementParameterFilter elementFilter = new ElementParameterFilter(rule);
+            parameterFilter.SetElementFilter(elementFilter);
+
+            TaskDialog.Show("Успех", $"Фильтр «{filterName}» создан успешно.");
+            return parameterFilter;
+        }
+        catch (Exception ex)
+        {
+            TaskDialog.Show("Ошибка", $"Не удалось настроить правило фильтра: {ex.Message}");
+            _doc.Delete(parameterFilter.Id); // удаляем созданный фильтр при ошибке
+            return null;
+        }
+    }
+
+    private ParameterElement GetParameterElement(string parameterName)
+    {
+        return new FilteredElementCollector(_doc)
+            .OfClass(typeof(ParameterElement))
+            .Cast<ParameterElement>()
+            .FirstOrDefault(pe => pe.Name.Equals(parameterName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public void ApplyFilterToView(View activeView, ParameterFilterElement filter)
+    {
+        if (activeView.GetFilters().Contains(filter.Id)) return;
+
+        try
+        {
+            activeView.AddFilter(filter.Id);
+            activeView.SetFilterVisibility(filter.Id, false);
+        }
+        catch (Exception ex)
+        {
+            TaskDialog.Show("Ошибка",
+                $"Не удалось применить фильтр '{filter.Name}' к виду '{activeView.Name}'.\n{ex.Message}");
+        }
+    }
+
+    public void DownloadFamily(string familyName)
+    {
+        // Получаем текущую сборку
+        Assembly assembly = Assembly.GetExecutingAssembly();
+        string resourceName = $"MakeBreak.Resources.{familyName}.rfa";
+        // Проверяем, существует ли ресурс
+        string[] resourceNames = assembly.GetManifestResourceNames();
+        if (!resourceNames.Contains(resourceName))
+        {
+            return;
+        }
+
+        Stream stream = assembly.GetManifestResourceStream(resourceName);
+        // Создаем временный файл с желаемым именем семейства
+        string tempFamilyFileName = $"{familyName}.rfa";
+        string tempFamilyPath = Path.Combine(Path.GetTempPath(), tempFamilyFileName);
+
+        // Проверяем, существует ли файл, и удаляем его, если необходимо
+        if (File.Exists(tempFamilyPath))
+        {
+            File.Delete(tempFamilyPath);
+        }
+
+        //Сохраняем поток в файл
+        using (FileStream fileStream = new FileStream(tempFamilyPath, FileMode.Create, FileAccess.Write))
+        {
+            stream?.CopyTo(fileStream);
+        }
+
+        bool loaded = _doc.LoadFamily(tempFamilyPath, new FamilyLoadOptions(), out Family family);
+
+        if (loaded && family != null)
+        {
+            TaskDialog.Show("Успешно", "Семейство было успешно загружено.");
+        }
+        else
+        {
+            TaskDialog.Show("Ошибка", "Не удалось загрузить семейство.");
+        }
+
+        File.Delete(tempFamilyPath);
     }
 }

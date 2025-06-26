@@ -87,22 +87,6 @@ public sealed partial class MakeBreakViewModel : ObservableObject
         return family != null;
     }
 
-    private void AddParameter()
-    {
-        using Transaction tr = new Transaction(_doc, "Добавить общий параметр");
-        tr.Start();
-        try
-        {
-            var isCreate = Helpers.CreateSharedParameter(_doc, _parameterRupture,
-                SpecTypeId.Boolean.YesNo, GroupTypeId.Graphics, true, _categories);
-            tr.Commit();
-        }
-        catch (Exception e)
-        {
-            tr.RollBack();
-            MessageBox.Show(e.Message, "Ошибка");
-        }
-    }
 
     public bool CheckFilterExists(Document doc, string filterName)
     {
@@ -177,6 +161,53 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void AddFilter()
+    {
+        _actionEventHandler.Raise(_ =>
+        {
+            try
+            {
+                using Transaction tr = new Transaction(_doc, "Добавить фильтр вида");
+                tr.Start();
+                var filter = _makeBreakServices.AddFilter(_categories, "Разрыв", "msh_Разрыв", true);
+                _makeBreakServices.ApplyFilterToView(_activeView, filter);
+                tr.Commit();
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Ошибка", "Произошла ошибка: " + ex.Message);
+            }
+            finally
+            {
+                _actionEventHandler.Cancel();
+            }
+        });
+    }
+
+    [RelayCommand]
+    private void AddFamily()
+    {
+        _actionEventHandler.Raise(_ =>
+        {
+            try
+            {
+                using Transaction tr = new Transaction(_doc, "Загрузить семейство");
+                tr.Start();
+                _makeBreakServices.DownloadFamily("Разрыв");
+               tr.Commit();
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Ошибка", "Произошла ошибка: " + ex.Message);
+            }
+            finally
+            {
+                _actionEventHandler.Cancel();
+            }
+        });
+    }
+
+    [RelayCommand]
     private void BringBackVisibilityPipe()
     {
         _actionEventHandler.Raise(_ =>
@@ -196,6 +227,29 @@ public sealed partial class MakeBreakViewModel : ObservableObject
         });
     }
 
+    [RelayCommand]
+    private void AddParameter()
+    {
+        _actionEventHandler.Raise(_ =>
+        {
+            try
+            {
+                using Transaction tr = new Transaction(_doc, "Добавить общий параметр");
+                tr.Start();
+                var isCreate = Helpers.CreateSharedParameter(_doc, _parameterRupture,
+                    SpecTypeId.Boolean.YesNo, GroupTypeId.Graphics, true, _categories);
+                tr.Commit();
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Ошибка", "Произошла ошибка: " + ex.Message);
+            }
+            finally
+            {
+                _actionEventHandler.Cancel();
+            }
+        });
+    }
 
     [RelayCommand(CanExecute = nameof(CanExecuteMakeBreak))]
     private void MakeBreak()

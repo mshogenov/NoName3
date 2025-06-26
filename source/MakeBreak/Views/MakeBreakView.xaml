@@ -67,19 +67,22 @@
             <StackPanel Orientation="Horizontal"
                         Visibility="{Binding IsExistingParameter,
                         Converter={StaticResource BoolVisibilityConverter} }">
-                <TextBlock Text="В документе отсутствует параметр." />
+                <TextBlock Text="В документе отсутствует параметр." 
+                           Style="{DynamicResource TextBlockStyle}"/>
                 <Button Content="Добавить" Command="{Binding AddParameterCommand}" />
             </StackPanel>
             <StackPanel Grid.Row="1" Orientation="Horizontal"
                         Visibility="{Binding IsExistingFilterInDocument,
                         Converter={StaticResource BoolVisibilityConverter} }">
-                <TextBlock Text="В документе отсутствует фильтр вида." />
-                <Button Content="Добавить" Command="{Binding AddFilterInDocumentCommand}" />
+                <TextBlock Text="В документе отсутствует фильтр вида." 
+                           Style="{DynamicResource TextBlockStyle}"/>
+                <Button Content="Добавить" Command="{Binding AddFilterCommand}" />
             </StackPanel>
             <StackPanel Grid.Row="2" Orientation="Horizontal"
                         Visibility="{Binding IsExistingFamily,
                         Converter={StaticResource BoolVisibilityConverter} }">
-                <TextBlock Text="В документе отсутствует семейство." />
+                <TextBlock Text="В документе отсутствует семейство." 
+                           Style="{DynamicResource TextBlockStyle}"/>
                 <Button Content="Добавить" Command="{Binding AddFamilyCommand}" />
             </StackPanel>
         </Grid>
