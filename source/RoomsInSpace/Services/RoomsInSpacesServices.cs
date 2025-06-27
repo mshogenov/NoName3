@@ -92,56 +92,83 @@ public class RoomsInSpacesServices
             $"Создано пространств: {createdCount}\n" + $"Обновлено пространств: {updatedCount}");
     }
 
+    private bool IsRoomValid(Room room)
+    {
+        try
+        {
+            // Проверяем, что помещение не удалено и имеет валидную геометрию
+            if (room == null || !room.IsValidObject)
+                return false;
+
+            // Проверяем площадь помещения
+            double area = room.Area;
+            if (area <= 0)
+                return false;
+
+            // Проверяем, что помещение ограничено (bounded)
+            if (room.Location == null)
+                return false;
+
+            // Проверяем уровень помещения
+            Level roomLevel = room.Level;
+            if (roomLevel == null)
+                return false;
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private Space FindIntersectedSpace(List<Space> spaces, Room room, Transform linkTransform, Document doc)
     {
-        // 1. Быстрая проверка по ограничивающим прямоугольникам перед сложными вычислениями
+        // Проверяем валидность помещения
+        if (!IsRoomValid(room))
+            return null;
+
+        // 1. Быстрая проверка по ограничивающим прямоугольникам
         BoundingBoxXYZ roomBBox = room.get_BoundingBox(null);
         if (roomBBox == null) return null;
 
-        // Трансформируем ограничивающий прямоугольник помещения
         BoundingBoxXYZ transformedRoomBBox = new BoundingBoxXYZ();
         transformedRoomBBox.Min = linkTransform.OfPoint(roomBBox.Min);
         transformedRoomBBox.Max = linkTransform.OfPoint(roomBBox.Max);
 
-        // Фильтруем пространства по пересечению ограничивающих прямоугольников
         List<Space> potentialSpaces = new List<Space>();
         foreach (Space space in spaces)
         {
             BoundingBoxXYZ spaceBBox = space.get_BoundingBox(null);
             if (spaceBBox == null) continue;
 
-            // Проверяем пересечение ограничивающих прямоугольников
             if (DoBoxesIntersect(transformedRoomBBox, spaceBBox))
             {
                 potentialSpaces.Add(space);
             }
         }
 
-        // Если нет потенциальных пространств, сразу возвращаем null
         if (potentialSpaces.Count == 0) return null;
 
-        // 2. Вычисляем геометрию только для отфильтрованных пространств
-        SpatialElementGeometryCalculator calculator = new SpatialElementGeometryCalculator(doc);
+        // 2. Получаем геометрию помещения с улучшенной обработкой ошибок
+        Solid roomSolid = GetRoomSolid(room, room.Document);
+        if (roomSolid == null)
+            return null;
 
-        // Получаем геометрию помещения из связанного файла (делаем однократно)
-        Solid roomSolid;
+        // Трансформируем геометрию
         try
         {
-            SpatialElementGeometryResults roomResults = calculator.CalculateSpatialElementGeometry(room);
-            roomSolid = roomResults.GetGeometry();
-            if (roomSolid == null || roomSolid.Volume < 0.001) return null;
-
-            // Трансформируем геометрию помещения в координаты текущего документа
             roomSolid = SolidUtils.CreateTransformed(roomSolid, linkTransform);
         }
         catch
         {
-            return null; // Если не получилось вычислить геометрию
+            return null;
         }
 
-        // 3. Отслеживаем наилучшее совпадение по объему пересечения
+        // 3. Ищем лучшее совпадение
+        SpatialElementGeometryCalculator calculator = new SpatialElementGeometryCalculator(doc);
         Space bestMatch = null;
-        double maxIntersectionRatio = 0.05; // Минимальный порог пересечения (5% объема)
+        double maxIntersectionRatio = 0.05;
 
         foreach (Space space in potentialSpaces)
         {
@@ -152,33 +179,147 @@ public class RoomsInSpacesServices
 
                 if (spaceSolid == null || spaceSolid.Volume < 0.001) continue;
 
-                // Вычисляем пересечение объемов
                 Solid intersection = BooleanOperationsUtils.ExecuteBooleanOperation(
                     roomSolid, spaceSolid, BooleanOperationsType.Intersect);
 
                 if (intersection != null && intersection.Volume > 0.001)
                 {
-                    // Вычисляем соотношение объема пересечения к объему помещения
                     double intersectionRatio = intersection.Volume / roomSolid.Volume;
 
-                    // Если это лучшее совпадение, запоминаем его
                     if (intersectionRatio > maxIntersectionRatio)
                     {
                         maxIntersectionRatio = intersectionRatio;
                         bestMatch = space;
 
-                        // Если нашли почти полное пересечение, можем сразу вернуть результат
                         if (intersectionRatio > 0.9) return space;
                     }
                 }
             }
             catch
             {
-                continue; // Если не получилось вычислить геометрию для этого пространства
+                continue;
             }
         }
 
         return bestMatch;
+    }
+
+    private Solid GetRoomSolid(Room room, Document doc)
+    {
+        try
+        {
+            // Метод 1: Стандартный калькулятор
+            SpatialElementGeometryCalculator calculator = new SpatialElementGeometryCalculator(doc);
+            SpatialElementGeometryResults roomResults = calculator.CalculateSpatialElementGeometry(room);
+            Solid roomSolid = roomResults.GetGeometry();
+
+            if (roomSolid != null && roomSolid.Volume > 0.001)
+                return roomSolid;
+        }
+        catch
+        {
+        }
+
+        try
+        {
+            // Метод 2: Получение через Options
+            Options options = new Options();
+            options.ComputeReferences = false;
+            options.DetailLevel = ViewDetailLevel.Coarse;
+            options.IncludeNonVisibleObjects = false;
+
+            GeometryElement geomElement = room.get_Geometry(options);
+            if (geomElement != null)
+            {
+                foreach (GeometryObject geomObj in geomElement)
+                {
+                    if (geomObj is Solid solid && solid.Volume > 0.001)
+                        return solid;
+                }
+            }
+        }
+        catch
+        {
+        }
+
+        try
+        {
+            // Метод 3: Создание геометрии на основе границ помещения
+            return CreateSolidFromRoomBoundaries(room);
+        }
+        catch
+        {
+        }
+
+        return null;
+    }
+
+    private Solid CreateSolidFromRoomBoundaries(Room room)
+    {
+        try
+        {
+            // Получаем границы помещения
+            IList<IList<BoundarySegment>> boundaries = room.GetBoundarySegments(new SpatialElementBoundaryOptions());
+
+            if (boundaries == null || boundaries.Count == 0)
+                return null;
+
+            List<CurveLoop> curveLoops = new List<CurveLoop>();
+
+            foreach (IList<BoundarySegment> boundary in boundaries)
+            {
+                CurveLoop curveLoop = new CurveLoop();
+                foreach (BoundarySegment segment in boundary)
+                {
+                    Curve curve = segment.GetCurve();
+                    if (curve != null)
+                        curveLoop.Append(curve);
+                }
+
+                if (curveLoop.NumberOfCurves() > 0)
+                    curveLoops.Add(curveLoop);
+            }
+
+            if (curveLoops.Count > 0)
+            {
+                // Создаем твердое тело экструзией
+                double height = GetRoomHeight(room);
+                XYZ extrusionDirection = XYZ.BasisZ;
+
+                return GeometryCreationUtilities.CreateExtrusionGeometry(
+                    curveLoops, extrusionDirection, height);
+            }
+        }
+        catch
+        {
+        }
+
+        return null;
+    }
+
+    private double GetRoomHeight(Room room)
+    {
+        try
+        {
+            // Пытаемся получить высоту из параметров
+            Parameter heightParam = room.get_Parameter(BuiltInParameter.ROOM_HEIGHT);
+            if (heightParam != null && heightParam.HasValue)
+                return heightParam.AsDouble();
+
+            // Альтернативно - используем высоту уровня
+            Level level = room.Level;
+            if (level != null)
+            {
+                // Возвращаем стандартную высоту помещения (например, 3 метра)
+                return UnitUtils.ConvertToInternalUnits(3.0, UnitTypeId.Meters);
+            }
+        }
+        catch
+        {
+        }
+
+        // Высота по умолчанию
+        return UnitUtils.ConvertToInternalUnits(2.7, UnitTypeId.Meters);
     }
 
 // Вспомогательный метод для проверки пересечения ограничивающих прямоугольников
@@ -303,17 +444,8 @@ public class RoomsInSpacesServices
     {
         bool updated = false;
 
-        // Получаем связанное помещение
-        Room associatedRoom = space.Room;
-        if (associatedRoom == null)
-        {
-            return false;
-        }
-
-        // Получаем имя и номер из помещения
-        string roomName = associatedRoom.Name;
-        string roomNumber = associatedRoom.Number;
-
+        string roomName = space.get_Parameter(BuiltInParameter.SPACE_ASSOC_ROOM_NAME).AsValueString();
+        string roomNumber = space.get_Parameter(BuiltInParameter.SPACE_ASSOC_ROOM_NUMBER).AsValueString();
         // Получаем параметры пространства
         Parameter spaceNameParam = space.get_Parameter(BuiltInParameter.ROOM_NAME);
         Parameter spaceNumberParam = space.get_Parameter(BuiltInParameter.ROOM_NUMBER);
@@ -324,13 +456,13 @@ public class RoomsInSpacesServices
         }
 
         // Обновляем только если значения не пустые
-        if (!string.IsNullOrEmpty(roomName))
+        if (!string.IsNullOrEmpty(roomName) && roomName != spaceNameParam.AsValueString())
         {
             spaceNameParam.Set(roomName);
             updated = true;
         }
 
-        if (!string.IsNullOrEmpty(roomNumber))
+        if (!string.IsNullOrEmpty(roomNumber) && roomNumber != spaceNumberParam.AsValueString())
         {
             spaceNumberParam.Set(roomNumber);
             updated = true;
