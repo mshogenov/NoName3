@@ -132,9 +132,12 @@ public class RoomsInSpacesServices
         BoundingBoxXYZ roomBBox = room.get_BoundingBox(null);
         if (roomBBox == null) return null;
 
-        BoundingBoxXYZ transformedRoomBBox = new BoundingBoxXYZ();
-        transformedRoomBBox.Min = linkTransform.OfPoint(roomBBox.Min);
-        transformedRoomBBox.Max = linkTransform.OfPoint(roomBBox.Max);
+        // Правильная трансформация ограничивающего прямоугольника
+        BoundingBoxXYZ transformedRoomBBox = TransformBoundingBox(roomBBox, linkTransform);
+        if (transformedRoomBBox == null) return null;
+
+// Расширяем область поиска для учета возможных погрешностей
+        BoundingBoxXYZ expandedRoomBBox = ExpandBoundingBox(transformedRoomBBox, 0.5);
 
         List<Space> potentialSpaces = new List<Space>();
         foreach (Space space in spaces)
@@ -142,7 +145,7 @@ public class RoomsInSpacesServices
             BoundingBoxXYZ spaceBBox = space.get_BoundingBox(null);
             if (spaceBBox == null) continue;
 
-            if (DoBoxesIntersect(transformedRoomBBox, spaceBBox))
+            if (DoBoxesIntersect(expandedRoomBBox, spaceBBox, 0.1))
             {
                 potentialSpaces.Add(space);
             }
@@ -202,6 +205,58 @@ public class RoomsInSpacesServices
         }
 
         return bestMatch;
+    }
+
+    private BoundingBoxXYZ ExpandBoundingBox(BoundingBoxXYZ originalBox, double expansion = 1.0)
+    {
+        if (originalBox == null) return null;
+
+        return new BoundingBoxXYZ
+        {
+            Min = new XYZ(
+                originalBox.Min.X - expansion,
+                originalBox.Min.Y - expansion,
+                originalBox.Min.Z - expansion),
+            Max = new XYZ(
+                originalBox.Max.X + expansion,
+                originalBox.Max.Y + expansion,
+                originalBox.Max.Z + expansion)
+        };
+    }
+
+    private BoundingBoxXYZ TransformBoundingBox(BoundingBoxXYZ originalBox, Transform transform)
+    {
+        if (originalBox == null) return null;
+
+        // Получаем все 8 углов исходного ограничивающего прямоугольника
+        List<XYZ> corners = new List<XYZ>
+        {
+            new XYZ(originalBox.Min.X, originalBox.Min.Y, originalBox.Min.Z),
+            new XYZ(originalBox.Min.X, originalBox.Min.Y, originalBox.Max.Z),
+            new XYZ(originalBox.Min.X, originalBox.Max.Y, originalBox.Min.Z),
+            new XYZ(originalBox.Min.X, originalBox.Max.Y, originalBox.Max.Z),
+            new XYZ(originalBox.Max.X, originalBox.Min.Y, originalBox.Min.Z),
+            new XYZ(originalBox.Max.X, originalBox.Min.Y, originalBox.Max.Z),
+            new XYZ(originalBox.Max.X, originalBox.Max.Y, originalBox.Min.Z),
+            new XYZ(originalBox.Max.X, originalBox.Max.Y, originalBox.Max.Z)
+        };
+
+        // Трансформируем все углы
+        List<XYZ> transformedCorners = corners.Select(corner => transform.OfPoint(corner)).ToList();
+
+        // Находим новые Min и Max координаты
+        double minX = transformedCorners.Min(p => p.X);
+        double minY = transformedCorners.Min(p => p.Y);
+        double minZ = transformedCorners.Min(p => p.Z);
+        double maxX = transformedCorners.Max(p => p.X);
+        double maxY = transformedCorners.Max(p => p.Y);
+        double maxZ = transformedCorners.Max(p => p.Z);
+
+        return new BoundingBoxXYZ
+        {
+            Min = new XYZ(minX, minY, minZ),
+            Max = new XYZ(maxX, maxY, maxZ)
+        };
     }
 
     private Solid GetRoomSolid(Room room, Document doc)
@@ -323,12 +378,14 @@ public class RoomsInSpacesServices
     }
 
 // Вспомогательный метод для проверки пересечения ограничивающих прямоугольников
-    private bool DoBoxesIntersect(BoundingBoxXYZ box1, BoundingBoxXYZ box2)
+    private bool DoBoxesIntersect(BoundingBoxXYZ box1, BoundingBoxXYZ box2, double tolerance = 0.01)
     {
-        // Проверка по x, y, z
-        return (box1.Min.X <= box2.Max.X && box1.Max.X >= box2.Min.X) &&
-               (box1.Min.Y <= box2.Max.Y && box1.Max.Y >= box2.Min.Y) &&
-               (box1.Min.Z <= box2.Max.Z && box1.Max.Z >= box2.Min.Z);
+        if (box1 == null || box2 == null) return false;
+
+        // Добавляем небольшой допуск для учета погрешностей вычислений
+        return (box1.Min.X <= box2.Max.X + tolerance && box1.Max.X >= box2.Min.X - tolerance) &&
+               (box1.Min.Y <= box2.Max.Y + tolerance && box1.Max.Y >= box2.Min.Y - tolerance) &&
+               (box1.Min.Z <= box2.Max.Z + tolerance && box1.Max.Z >= box2.Min.Z - tolerance);
     }
 
     private BoundingBoxXYZ CreateBoundingBoxAtPoint(
