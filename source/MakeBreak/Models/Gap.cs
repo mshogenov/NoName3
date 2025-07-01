@@ -1,3 +1,6 @@
+using Autodesk.Revit.DB.Plumbing;
+using NoNameApi.Extensions;
+
 namespace MakeBreak.Models;
 
 public class Gap
@@ -30,10 +33,73 @@ public class Gap
         List<Element> elements = [];
         foreach (var connector in Connectors)
         {
-            if (!connector.IsConnected ) continue;
-            elements.Add(connector.AllRefs.Cast<Connector>().First().Owner); 
+            if (!connector.IsConnected) continue;
+            elements.Add(connector.AllRefs.Cast<Connector>().First().Owner);
         }
 
         return elements;
+    }
+
+    public Gap FindPairBreak(FamilySymbol familySymbol)
+    {
+        var breakLists = new List<List<FamilyInstance>>();
+        var visitedElements = new HashSet<ElementId>(); // Для отслеживания просмотренных элементов
+
+        foreach (var element in ConnectedElements)
+        {
+            var breaksInPath = new List<FamilyInstance>();
+            visitedElements.Clear(); // Очищаем для каждого нового пути
+            visitedElements.Add(Id); // Добавляем исходный разрыв
+            FindBreaksInPath(element, familySymbol, breaksInPath, 0, visitedElements);
+
+            if (breaksInPath.Any())
+            {
+                breakLists.Add(breaksInPath);
+            }
+        }
+
+        // Остальная логика выбора парного разрыва...
+        if (!breakLists.Any()) return null;
+
+        if (breakLists.Count == 1 && breakLists[0].Count == 1)
+            return new Gap(breakLists[0][0]);
+
+        var oddList = breakLists.FirstOrDefault(list => list.Count % 2 != 0);
+        return oddList != null ? new Gap(oddList[0]) : null;
+    }
+
+    private void FindBreaksInPath(Element element, FamilySymbol familySymbol,
+        List<FamilyInstance> breaks, int depth, HashSet<ElementId> visitedElements)
+    {
+        if (element == null || !visitedElements.Add(element.Id)) return;
+
+        if (depth > 2 && breaks.Count == 0) return;
+
+        if (element is FamilyInstance familyInstance && familyInstance.Name == familySymbol.Name)
+        {
+            breaks.Add(familyInstance);
+            depth = 0;
+        }
+
+        foreach (var connectedElement in element.GetConnectedMEPElements()
+                     .Where(connectedElement => !visitedElements.Contains(connectedElement.Id)))
+        {
+            FindBreaksInPath(connectedElement, familySymbol, breaks, depth + 1, visitedElements);
+        }
+    }
+
+
+    public Pipe FindGeneralPipe(Gap gap)
+    {
+        foreach (var connectedElement in ConnectedElements)
+        {
+            if (connectedElement is not Pipe pipe) continue;
+            if (gap.ConnectedElements.FirstOrDefault(x => x.Id == pipe.Id) is Pipe generalPipe)
+            {
+                return generalPipe;
+            }
+        }
+
+        return null;
     }
 }

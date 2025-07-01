@@ -6,6 +6,7 @@ using Autodesk.Revit.UI.Selection;
 using MakeBreak.Filters;
 using MakeBreak.Models;
 using Nice3point.Revit.Toolkit.Options;
+using NoNameApi.Extensions;
 using OperationCanceledException = Autodesk.Revit.Exceptions.OperationCanceledException;
 
 
@@ -787,18 +788,15 @@ public class MakeBreakServices
     public void DeleteBreaksAndCreatePipe(FamilySymbol familySymbol)
     {
         // Список для хранения выбранных элементов
-        List<Gap> selectedBreaks = [];
+
+        Element selectedElement = null;
         try
         {
-            var selectedElements = _uidoc.Selection
-                .PickObjects(ObjectType.Element, new BreakSelectionFilter(familySymbol))
-                .Select(x => _doc.GetElement(x));
-            foreach (var element in selectedElements)
+            var reference = _uidoc.Selection
+                .PickObject(ObjectType.Element, new BreakSelectionFilter(familySymbol));
+            if (reference != null)
             {
-                if (element is FamilyInstance familyInstance)
-                {
-                    selectedBreaks.Add(new Gap(familyInstance));
-                }
+                selectedElement = _doc.GetElement(reference);
             }
         }
         catch (OperationCanceledException)
@@ -806,137 +804,75 @@ public class MakeBreakServices
             return;
         }
 
-        if (!selectedBreaks.Any()) return;
-
-        using TransactionGroup tGroup = new TransactionGroup(_doc, "Process all breaks");
-        tGroup.Start();
-
-        foreach (var break1 in selectedBreaks.ToList())
+        Gap selectedBreak = null;
+        switch (selectedElement)
         {
-            using Transaction trans = new Transaction(_doc, "Process single break");
-            trans.Start();
+            case null:
+                return;
+            case FamilyInstance familyInstance:
+                selectedBreak = new Gap(familyInstance);
+                break;
+        }
 
-            var pairBreak = FindPairBreak(break1, familySymbol);
+        if (selectedBreak == null)
+        {
+            return;
+        }
 
-            if (pairBreak != null)
+        using Transaction trans = new Transaction(_doc, "Process single break");
+        trans.Start();
+
+        var pairBreak = selectedBreak?.FindPairBreak(familySymbol);
+        Pipe generalPipe = selectedBreak?.FindGeneralPipe(pairBreak);
+        Connector targetConnector = null;
+        Connector attachConnector = null;
+        foreach (var connectedElement in selectedBreak.ConnectedElements)
+        {
+            if (connectedElement.Id == generalPipe.Id)
             {
-                // Удаляем из коллекции элемент с соответствующим Id
-                var breakToRemove = selectedBreaks.FirstOrDefault(b => b.Id == pairBreak.Id);
-                if (breakToRemove != null)
+                continue;
+            }
+
+            var connectedMEPElement = connectedElement.GetConnectedMEPElements().FirstOrDefault();
+            var c = connectedMEPElement?.GetConnectedMEPElements().FirstOrDefault();
+            if (c == null) continue;
+            var connectedConnectors = c.GetConnectedMEPConnectors();
+            foreach (var connectedConnector in connectedConnectors)
+            {
+                var a = connectedConnector.AllRefs.Cast<Connector>()
+                    .FirstOrDefault(x => x.Owner.Id == connectedMEPElement.Id);
+                if (a != null)
                 {
-                    selectedBreaks.Remove(breakToRemove);
+                    targetConnector = a;
                 }
-
-                _doc.Delete(pairBreak.Id);
             }
-
-            trans.Commit();
         }
 
-        tGroup.Assimilate(); // или tGroup.RollBack() если что-то пошло не так
-    }
-
-
-    private Gap FindPairBreak(Gap gap, FamilySymbol familySymbol)
-    {
-        var breakLists = new List<List<FamilyInstance>>();
-        var visitedElements = new HashSet<ElementId>(); // Для отслеживания просмотренных элементов
-
-        foreach (var element in gap.ConnectedElements)
+        var s = pairBreak.ConnectedElements.FirstOrDefault(x => x.Id != generalPipe.Id);
+        var connectors = s.GetConnectedMEPConnectors();
+        foreach (var connectedConnector in connectors)
         {
-            var breaksInPath = new List<FamilyInstance>();
-            visitedElements.Clear(); // Очищаем для каждого нового пути
-            visitedElements.Add(gap.Id); // Добавляем исходный разрыв
-            FindBreaksInPath(element, familySymbol, breaksInPath, 0, visitedElements);
-
-            if (breaksInPath.Any())
+            var a = connectedConnector.AllRefs.Cast<Connector>()
+                .FirstOrDefault(x => x.Owner.Id == pairBreak.Id);
+            if (a != null)
             {
-                breakLists.Add(breaksInPath);
+                attachConnector = a;
             }
         }
 
-        // Остальная логика выбора парного разрыва...
-        if (!breakLists.Any()) return null;
+        if (pairBreak != null)
+        {
+            _doc.Delete(pairBreak.Id);
+            _doc.Delete(selectedBreak.Id);
+            _doc.Delete(generalPipe.Id);
+        }
 
-        if (breakLists.Count == 1 && breakLists[0].Count == 1)
-            return new Gap(breakLists[0][0]);
-
-        var oddList = breakLists.FirstOrDefault(list => list.Count % 2 != 0);
-        return oddList != null ? new Gap(oddList[0]) : null;
+        XYZ newMove = targetConnector.Origin - attachConnector.Origin;
+        ElementTransformUtils.MoveElement(_doc, s.Id, newMove);
+        attachConnector.ConnectTo(targetConnector);
+        trans.Commit();
     }
 
-    private void FindBreaksInPath(Element element, FamilySymbol familySymbol,
-        List<FamilyInstance> breaks, int depth, HashSet<ElementId> visitedElements)
-    {
-        if (element == null || !visitedElements.Add(element.Id)) return;
-
-        if (depth > 2 && !breaks.Any()) return;
-
-        if (element is FamilyInstance familyInstance && familyInstance.Name == familySymbol.Name)
-        {
-            breaks.Add(familyInstance);
-            depth = 0;
-        }
-
-        foreach (var connectedElement in GetConnectedElements(element)
-                     .Where(connectedElement => !visitedElements.Contains(connectedElement.Id)))
-        {
-            FindBreaksInPath(connectedElement, familySymbol, breaks, depth + 1, visitedElements);
-        }
-    }
-
-    private List<Element> GetConnectedElements(Element element)
-    {
-        var connectedElements = new List<Element>();
-
-        try
-        {
-            switch (element)
-            {
-                case FamilyInstance { MEPModel: not null } family:
-                    var familyConnectors = family.MEPModel.ConnectorManager.Connectors.Cast<Connector>();
-                    foreach (var connector in familyConnectors)
-                    {
-                        if (connector.IsConnected)
-                        {
-                            var connected = connector.AllRefs.Cast<Connector>();
-                            if (connected == null) continue;
-                            foreach (var c in connected)
-                            {
-                                connectedElements.Add(c.Owner);
-                            }
-                        }
-                    }
-
-                    break;
-
-                case MEPCurve curve:
-                    var curveConnectors = curve.ConnectorManager.Connectors.Cast<Connector>();
-                    foreach (var connector in curveConnectors)
-                    {
-                        if (connector.IsConnected)
-                        {
-                            var connected = connector.AllRefs.Cast<Connector>();
-                            if (connected != null)
-                            {
-                                foreach (var c in connected)
-                                {
-                                    connectedElements.Add(c.Owner);
-                                }
-                            }
-                        }
-                    }
-
-                    break;
-            }
-        }
-        catch (Exception)
-        {
-            // Обработка возможных ошибок
-        }
-
-        return connectedElements;
-    }
 
     private void CreatePipeBetweenElements(Element start, Element end)
     {
