@@ -87,55 +87,37 @@ public static class ElementExtensions
 
     public static List<Element> GetConnectedMEPElements(this Element element)
     {
-        var connectedElements = new List<Element>();
-
-        try
+        var connectedElements = new HashSet<ElementId>(); 
+        var result = new List<Element>();
+        var connectors = GetConnectors(element);
+        foreach (var connector in connectors)
         {
-            switch (element)
+            if (!connector.IsConnected) continue;
+
+            foreach (var connectedConnector in connector.AllRefs.Cast<Connector>())
             {
-                case FamilyInstance { MEPModel: not null } family:
-                    var familyConnectors = family.MEPModel.ConnectorManager.Connectors.Cast<Connector>();
-                    foreach (var connector in familyConnectors)
-                    {
-                        if (connector.IsConnected)
-                        {
-                            var connected = connector.AllRefs.Cast<Connector>();
-                            if (connected == null) continue;
-                            foreach (var c in connected)
-                            {
-                                connectedElements.Add(c.Owner);
-                            }
-                        }
-                    }
+                if (connectedConnector.Owner.Id == element.Id) continue;
 
-                    break;
-
-                case MEPCurve curve:
-                    var curveConnectors = curve.ConnectorManager.Connectors.Cast<Connector>();
-                    foreach (var connector in curveConnectors)
-                    {
-                        if (connector.IsConnected)
-                        {
-                            var connected = connector.AllRefs.Cast<Connector>();
-                            if (connected != null)
-                            {
-                                foreach (var c in connected)
-                                {
-                                    connectedElements.Add(c.Owner);
-                                }
-                            }
-                        }
-                    }
-
-                    break;
+                if (connectedElements.Add(connectedConnector.Owner.Id))
+                {
+                    result.Add(connectedConnector.Owner);
+                }
             }
         }
-        catch (Exception)
-        {
-            // Обработка возможных ошибок
-        }
 
-        return connectedElements;
+        return result;
+    }
+
+    private static IEnumerable<Connector> GetConnectors(Element element)
+    {
+        return element switch
+        {
+            FamilyInstance { MEPModel: not null } family =>
+                family.MEPModel.ConnectorManager.Connectors.Cast<Connector>(),
+            MEPCurve curve =>
+                curve.ConnectorManager.Connectors.Cast<Connector>(),
+            _ => []
+        };
     }
 
     public static List<Connector> GetConnectedMEPConnectors(this Element element)

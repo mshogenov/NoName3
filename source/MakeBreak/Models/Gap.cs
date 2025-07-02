@@ -23,21 +23,41 @@ public class Gap
         Id = familyInstance.Id;
     }
 
-    private List<Connector> GetConnectors()
-    {
-        return FamilyInstance.MEPModel.ConnectorManager.Connectors.Cast<Connector>().ToList();
-    }
-
     private List<Element> GetConnectedElements()
     {
-        List<Element> elements = [];
-        foreach (var connector in Connectors)
+        var elements = new List<Element>();
+        try
         {
-            if (!connector.IsConnected) continue;
-            elements.Add(connector.AllRefs.Cast<Connector>().First().Owner);
+            foreach (var connector in Connectors)
+            {
+                if (connector.IsConnected)
+                {
+                    foreach (Connector connectedConnector in connector.AllRefs.Cast<Connector>())
+                    {
+                        if (connectedConnector.Owner.Id != this.Id)
+                        {
+                            elements.Add(connectedConnector.Owner);
+                        }
+                    }
+                }
+            }
         }
-
+        catch (Exception ex)
+        {
+           
+        }
         return elements;
+    }
+
+    private IEnumerable<Connector> GetConnectors()
+    {
+        if (FamilyInstance?.MEPModel?.ConnectorManager?.Connectors == null)
+            yield break;
+
+        foreach (Connector connector in FamilyInstance.MEPModel.ConnectorManager.Connectors)
+        {
+            yield return connector;
+        }
     }
 
     public Gap FindPairBreak(FamilySymbol familySymbol)

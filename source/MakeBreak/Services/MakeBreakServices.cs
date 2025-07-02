@@ -787,8 +787,264 @@ public class MakeBreakServices
 
     public void DeleteBreaksAndCreatePipe(FamilySymbol familySymbol)
     {
-        // Список для хранения выбранных элементов
+        var selectedBreak = SelectGap(familySymbol);
+        if (selectedBreak?.FamilyInstance == null) return;
 
+        using Transaction trans = new Transaction(_doc, "Delete breaks and connect elements");
+        trans.Start();
+
+        try
+        {
+            var pairBreak = selectedBreak.FindPairBreak(familySymbol);
+            if (pairBreak?.FamilyInstance == null)
+            {
+                trans.RollBack();
+                return;
+            }
+
+            Pipe generalPipe = selectedBreak.FindGeneralPipe(pairBreak);
+            if (generalPipe == null)
+            {
+                trans.RollBack();
+                return;
+            }
+
+            // Находим элементы, которые останутся после удаления разрывов
+            var leftElement = GetConnectedElementExcluding(selectedBreak, generalPipe.Id);
+            var rightElement = GetConnectedElementExcluding(pairBreak, generalPipe.Id);
+
+            if (leftElement == null || rightElement == null)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"Connected elements not found: left={leftElement != null}, right={rightElement != null}");
+                trans.RollBack();
+                return;
+            }
+
+
+            Connector targetConnector = null;
+            Connector attachConnector = null;
+            Element deletePipe = null;
+            foreach (var connectedElement in selectedBreak.ConnectedElements)
+            {
+                if (connectedElement.Id == generalPipe.Id)
+                {
+                    continue;
+                }
+
+                deletePipe = connectedElement;
+
+                // Получаем коннекторы трубы deletePipe
+                var pipeConnectorManager = GetConnectorManager(deletePipe);
+                if (pipeConnectorManager?.Connectors != null)
+                {
+                    foreach (Connector pipeConnector in pipeConnectorManager.Connectors)
+                    {
+                        if (pipeConnector.IsConnected)
+                        {
+                            // Ищем среди подключенных коннекторов тот, который принадлежит фитингу
+                            foreach (Connector connectedConnector in pipeConnector.AllRefs.Cast<Connector>())
+                            {
+                                // Проверяем, что это НЕ selectedBreak и НЕ сама труба
+                                if (connectedConnector.Owner.Id != selectedBreak.Id && 
+                                    connectedConnector.Owner.Id != deletePipe.Id)
+                                {
+                                    // Это коннектор фитинга
+                                    targetConnector = connectedConnector;
+                                    break;
+                                }
+                            }
+
+                            if (targetConnector != null)
+                                break;
+                        }
+                    }
+                }
+            }
+
+
+            // Находим коннекторы для соединения (до удаления!)
+            var leftConnector = FindConnectorBetween(leftElement, selectedBreak.FamilyInstance);
+            var rightConnector = FindConnectorBetween(rightElement, pairBreak.FamilyInstance);
+
+            if (leftConnector == null || rightConnector == null)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"Connectors not found: left={leftConnector != null}, right={rightConnector != null}");
+                trans.RollBack();
+                return;
+            }
+
+            // Удаляем разрывы и промежуточную трубу
+            _doc.Delete(selectedBreak.Id);
+            _doc.Delete(pairBreak.Id);
+            _doc.Delete(generalPipe.Id);
+            _doc.Delete(deletePipe.Id);
+
+            // Обновляем коннекторы после удаления
+            // leftConnector = GetFreeConnectorOnElement(leftElement);
+            rightConnector = GetFreeConnectorOnElement(rightElement);
+
+            if ( rightConnector != null)
+            {
+                // Выравниваем элементы для соединения
+                AlignConnectors(rightElement, rightConnector, targetConnector);
+
+                // Соединяем
+                rightConnector.ConnectTo(targetConnector);
+            }
+
+            trans.Commit();
+        }
+        catch (Exception ex)
+        {
+            trans.RollBack();
+            System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
+            throw;
+        }
+    }
+
+// Вспомогательные методы
+    private Element GetConnectedElementExcluding(Gap gap, ElementId excludeId)
+    {
+        return gap.ConnectedElements?.FirstOrDefault(e => e.Id != excludeId);
+    }
+
+    private Connector FindConnectorBetween(Element element1, Element element2)
+    {
+        var connectorManager = GetConnectorManager(element1);
+        if (connectorManager?.Connectors == null) return null;
+
+        foreach (Connector connector in connectorManager.Connectors)
+        {
+            if (!connector.IsConnected) continue;
+
+            foreach (Connector connectedConnector in connector.AllRefs.Cast<Connector>())
+            {
+                if (connectedConnector.Owner.Id == element2.Id)
+                    return connector;
+            }
+        }
+
+        return null;
+    }
+
+    private void DisconnectElement(Element element)
+    {
+        var connectorManager = GetConnectorManager(element);
+        if (connectorManager?.Connectors == null) return;
+
+        foreach (Connector connector in connectorManager.Connectors)
+        {
+            if (connector.IsConnected)
+            {
+                connector.DisconnectFrom(connector.AllRefs.Cast<Connector>().FirstOrDefault());
+            }
+        }
+    }
+
+    private Connector GetFreeConnectorOnElement(Element element)
+    {
+        var connectorManager = GetConnectorManager(element);
+        if (connectorManager?.Connectors == null) return null;
+
+        foreach (Connector connector in connectorManager.Connectors)
+        {
+            if (!connector.IsConnected)
+                return connector;
+        }
+
+        return null;
+    }
+
+    private void AlignConnectors(Element movableElement, Connector movableConnector, Connector targetConnector)
+    {
+        // Перемещаем элемент так, чтобы коннекторы совпали по позиции
+        XYZ moveVector = targetConnector.Origin - movableConnector.Origin;
+        ElementTransformUtils.MoveElement(_doc, movableElement.Id, moveVector);
+
+        // Поворачиваем если нужно (для правильной ориентации)
+        XYZ movableDirection = movableConnector.CoordinateSystem.BasisZ;
+        XYZ targetDirection = targetConnector.CoordinateSystem.BasisZ;
+
+        double angle = movableDirection.AngleTo(targetDirection);
+        if (Math.Abs(angle - Math.PI) > 0.01) // Если угол не равен 180°
+        {
+            XYZ rotationAxis = movableDirection.CrossProduct(targetDirection);
+            if (!rotationAxis.IsZeroLength())
+            {
+                Line rotationLine = Line.CreateBound(
+                    targetConnector.Origin,
+                    targetConnector.Origin + rotationAxis);
+                ElementTransformUtils.RotateElement(_doc, movableElement.Id, rotationLine, Math.PI - angle);
+            }
+        }
+    }
+
+    private ConnectorManager GetConnectorManager(Element element)
+    {
+        if (element is MEPCurve mepCurve)
+            return mepCurve.ConnectorManager;
+        else if (element is FamilyInstance familyInstance)
+            return familyInstance.MEPModel?.ConnectorManager;
+
+        return null;
+    }
+
+// Вспомогательные методы для работы с Gap
+    private Connector FindConnectorToElement(Gap gap, Element targetElement)
+    {
+        foreach (var connector in gap.Connectors)
+        {
+            if (connector.IsConnected)
+            {
+                foreach (Connector connectedConnector in connector.AllRefs.Cast<Connector>())
+                {
+                    if (connectedConnector.Owner.Id == targetElement.Id)
+                    {
+                        return connector;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private Connector FindFreeConnectorInElement(Element element)
+    {
+        // Для MEP элементов
+        if (element is MEPCurve mepCurve)
+        {
+            var connectorSet = mepCurve.ConnectorManager?.Connectors;
+            if (connectorSet != null)
+            {
+                foreach (Connector connector in connectorSet)
+                {
+                    if (!connector.IsConnected)
+                        return connector;
+                }
+            }
+        }
+        // Для FamilyInstance (фитинги, оборудование)
+        else if (element is FamilyInstance familyInstance)
+        {
+            var connectorSet = familyInstance.MEPModel?.ConnectorManager?.Connectors;
+            if (connectorSet != null)
+            {
+                foreach (Connector connector in connectorSet)
+                {
+                    if (!connector.IsConnected)
+                        return connector;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private Gap SelectGap(FamilySymbol familySymbol)
+    {
         Element selectedElement = null;
         try
         {
@@ -801,76 +1057,13 @@ public class MakeBreakServices
         }
         catch (OperationCanceledException)
         {
-            return;
+            return null;
         }
 
         Gap selectedBreak = null;
-        switch (selectedElement)
-        {
-            case null:
-                return;
-            case FamilyInstance familyInstance:
-                selectedBreak = new Gap(familyInstance);
-                break;
-        }
+        if (selectedElement is FamilyInstance familyInstance) selectedBreak = new Gap(familyInstance);
 
-        if (selectedBreak == null)
-        {
-            return;
-        }
-
-        using Transaction trans = new Transaction(_doc, "Process single break");
-        trans.Start();
-
-        var pairBreak = selectedBreak?.FindPairBreak(familySymbol);
-        Pipe generalPipe = selectedBreak?.FindGeneralPipe(pairBreak);
-        Connector targetConnector = null;
-        Connector attachConnector = null;
-        foreach (var connectedElement in selectedBreak.ConnectedElements)
-        {
-            if (connectedElement.Id == generalPipe.Id)
-            {
-                continue;
-            }
-
-            var connectedMEPElement = connectedElement.GetConnectedMEPElements().FirstOrDefault();
-            var c = connectedMEPElement?.GetConnectedMEPElements().FirstOrDefault();
-            if (c == null) continue;
-            var connectedConnectors = c.GetConnectedMEPConnectors();
-            foreach (var connectedConnector in connectedConnectors)
-            {
-                var a = connectedConnector.AllRefs.Cast<Connector>()
-                    .FirstOrDefault(x => x.Owner.Id == connectedMEPElement.Id);
-                if (a != null)
-                {
-                    targetConnector = a;
-                }
-            }
-        }
-
-        var s = pairBreak.ConnectedElements.FirstOrDefault(x => x.Id != generalPipe.Id);
-        var connectors = s.GetConnectedMEPConnectors();
-        foreach (var connectedConnector in connectors)
-        {
-            var a = connectedConnector.AllRefs.Cast<Connector>()
-                .FirstOrDefault(x => x.Owner.Id == pairBreak.Id);
-            if (a != null)
-            {
-                attachConnector = a;
-            }
-        }
-
-        if (pairBreak != null)
-        {
-            _doc.Delete(pairBreak.Id);
-            _doc.Delete(selectedBreak.Id);
-            _doc.Delete(generalPipe.Id);
-        }
-
-        XYZ newMove = targetConnector.Origin - attachConnector.Origin;
-        ElementTransformUtils.MoveElement(_doc, s.Id, newMove);
-        attachConnector.ConnectTo(targetConnector);
-        trans.Commit();
+        return selectedBreak;
     }
 
 
