@@ -100,7 +100,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <ScrollViewer
+                            <ScrollViewer Padding="5"
                                           Style="{DynamicResource CustomScrollViewerStyle}">
                                 <ItemsControl ItemsSource="{Binding LevelModels}">
                                     <ItemsControl.ItemTemplate>
