@@ -790,9 +790,8 @@ public class MakeBreakServices
         var selectedBreak = SelectGap(familySymbol);
         if (selectedBreak?.FamilyInstance == null) return;
 
-        using Transaction trans = new Transaction(_doc, "Delete breaks and connect elements");
+        using Transaction trans = new Transaction(_doc, "Удалить разрыв");
         trans.Start();
-
         try
         {
             var pairBreak = selectedBreak.FindPairBreak(familySymbol);
@@ -801,106 +800,100 @@ public class MakeBreakServices
                 trans.RollBack();
                 return;
             }
-
+            
             Pipe generalPipe = selectedBreak.FindGeneralPipe(pairBreak);
             if (generalPipe == null)
             {
                 trans.RollBack();
                 return;
             }
-
+            
             // Находим элементы, которые останутся после удаления разрывов
             var leftElement = GetConnectedElementExcluding(selectedBreak, generalPipe.Id);
             var rightElement = GetConnectedElementExcluding(pairBreak, generalPipe.Id);
-
+            
             if (leftElement == null || rightElement == null)
             {
-                System.Diagnostics.Debug.WriteLine(
-                    $"Connected elements not found: left={leftElement != null}, right={rightElement != null}");
-                trans.RollBack();
+               trans.RollBack();
                 return;
             }
-
-
+            
+            
             Connector targetConnector = null;
             Connector attachConnector = null;
             Element deletePipe = null;
-            foreach (var connectedElement in selectedBreak.ConnectedElements)
-            {
-                if (connectedElement.Id == generalPipe.Id)
-                {
-                    continue;
-                }
-
-                deletePipe = connectedElement;
-
-                // Получаем коннекторы трубы deletePipe
-                var pipeConnectorManager = GetConnectorManager(deletePipe);
-                if (pipeConnectorManager?.Connectors != null)
-                {
-                    foreach (Connector pipeConnector in pipeConnectorManager.Connectors)
-                    {
-                        if (pipeConnector.IsConnected)
-                        {
-                            // Ищем среди подключенных коннекторов тот, который принадлежит фитингу
-                            foreach (Connector connectedConnector in pipeConnector.AllRefs.Cast<Connector>())
-                            {
-                                // Проверяем, что это НЕ selectedBreak и НЕ сама труба
-                                if (connectedConnector.Owner.Id != selectedBreak.Id && 
-                                    connectedConnector.Owner.Id != deletePipe.Id)
-                                {
-                                    // Это коннектор фитинга
-                                    targetConnector = connectedConnector;
-                                    break;
-                                }
-                            }
-
-                            if (targetConnector != null)
-                                break;
-                        }
-                    }
-                }
-            }
-
-
-            // Находим коннекторы для соединения (до удаления!)
-            var leftConnector = FindConnectorBetween(leftElement, selectedBreak.FamilyInstance);
-            var rightConnector = FindConnectorBetween(rightElement, pairBreak.FamilyInstance);
-
-            if (leftConnector == null || rightConnector == null)
-            {
-                System.Diagnostics.Debug.WriteLine(
-                    $"Connectors not found: left={leftConnector != null}, right={rightConnector != null}");
-                trans.RollBack();
-                return;
-            }
-
-            // Удаляем разрывы и промежуточную трубу
-            _doc.Delete(selectedBreak.Id);
-            _doc.Delete(pairBreak.Id);
-            _doc.Delete(generalPipe.Id);
-            _doc.Delete(deletePipe.Id);
-
-            // Обновляем коннекторы после удаления
-            // leftConnector = GetFreeConnectorOnElement(leftElement);
-            rightConnector = GetFreeConnectorOnElement(rightElement);
-
-            if ( rightConnector != null)
-            {
-                // Выравниваем элементы для соединения
-                AlignConnectors(rightElement, rightConnector, targetConnector);
-
-                // Соединяем
-                rightConnector.ConnectTo(targetConnector);
-            }
+            // foreach (var connectedElement in selectedBreak.ConnectedElements)
+            // {
+            //     if (connectedElement.Id == generalPipe.Id)
+            //     {
+            //         continue;
+            //     }
+            //
+            //     deletePipe = connectedElement;
+            //
+            //     // Получаем коннекторы трубы deletePipe
+            //     var pipeConnectorManager = GetConnectorManager(deletePipe);
+            //     if (pipeConnectorManager?.Connectors != null)
+            //     {
+            //         foreach (Connector pipeConnector in pipeConnectorManager.Connectors)
+            //         {
+            //             if (pipeConnector.IsConnected)
+            //             {
+            //                 // Ищем среди подключенных коннекторов тот, который принадлежит фитингу
+            //                 foreach (Connector connectedConnector in pipeConnector.AllRefs.Cast<Connector>())
+            //                 {
+            //                     // Проверяем, что это НЕ selectedBreak и НЕ сама труба
+            //                     if (connectedConnector.Owner.Id != selectedBreak.Id && 
+            //                         connectedConnector.Owner.Id != deletePipe.Id)
+            //                     {
+            //                         // Это коннектор фитинга
+            //                         targetConnector = connectedConnector;
+            //                         break;
+            //                     }
+            //                 }
+            //
+            //                 if (targetConnector != null)
+            //                     break;
+            //             }
+            //         }
+            //     }
+            // }
+            //
+            
+            // // Находим коннекторы для соединения (до удаления!)
+            // var leftConnector = FindConnectorBetween(leftElement, selectedBreak.FamilyInstance);
+            // var rightConnector = FindConnectorBetween(rightElement, pairBreak.FamilyInstance);
+            //
+            // if (leftConnector == null || rightConnector == null)
+            // {
+            //    trans.RollBack();
+            //     return;
+            // }
+            //
+            // // Удаляем разрывы и промежуточную трубу
+            // _doc.Delete(selectedBreak.Id);
+            // _doc.Delete(pairBreak.Id);
+            // _doc.Delete(generalPipe.Id);
+            // _doc.Delete(deletePipe.Id);
+            //
+            // // Обновляем коннекторы после удаления
+            // // leftConnector = GetFreeConnectorOnElement(leftElement);
+            // rightConnector = GetFreeConnectorOnElement(rightElement);
+            //
+            // if ( rightConnector != null)
+            // {
+            //     // Выравниваем элементы для соединения
+            //     AlignConnectors(rightElement, rightConnector, targetConnector);
+            //
+            //     // Соединяем
+            //     rightConnector.ConnectTo(targetConnector);
+            // }
 
             trans.Commit();
         }
         catch (Exception ex)
         {
             trans.RollBack();
-            System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
-            throw;
         }
     }
 

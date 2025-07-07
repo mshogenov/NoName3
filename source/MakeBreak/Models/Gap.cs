@@ -72,14 +72,14 @@ public class Gap
             visitedElements.Add(Id); // Добавляем исходный разрыв
             FindBreaksInPath(element, familySymbol, breaksInPath, 0, visitedElements);
 
-            if (breaksInPath.Any())
+            if (breaksInPath.Count != 0)
             {
                 breakLists.Add(breaksInPath);
             }
         }
 
         // Остальная логика выбора парного разрыва...
-        if (!breakLists.Any()) return null;
+        if (breakLists.Count == 0) return null;
 
         if (breakLists.Count == 1 && breakLists[0].Count == 1)
             return new Gap(breakLists[0][0]);
@@ -101,8 +101,9 @@ public class Gap
             depth = 0;
         }
 
-        foreach (var connectedElement in element.GetConnectedMEPElements()
-                     .Where(connectedElement => !visitedElements.Contains(connectedElement.Id)))
+        var elementsConnected = element.GetConnectedMEPElements()
+            .Where(connectedElement => !visitedElements.Contains(connectedElement.Id));
+        foreach (var connectedElement in elementsConnected)
         {
             FindBreaksInPath(connectedElement, familySymbol, breaks, depth + 1, visitedElements);
         }
