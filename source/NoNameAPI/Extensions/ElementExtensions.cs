@@ -84,7 +84,11 @@ public static class ElementExtensions
 
         return null;
     }
-
+/// <summary>
+/// Находит 
+/// </summary>
+/// <param name="element"></param>
+/// <returns></returns>
     public static List<Element> GetConnectedMEPElements(this Element element)
     {
         var connectedElements = new HashSet<ElementId>(); 
@@ -108,7 +112,7 @@ public static class ElementExtensions
         return result;
     }
 
-    private static IEnumerable<Connector> GetConnectors(Element element)
+    public static IEnumerable<Connector> GetConnectors( this Element element)
     {
         return element switch
         {
@@ -146,5 +150,37 @@ public static class ElementExtensions
         }
 
         return mepConnectors;
+    }
+    /// <summary>
+    /// Находит соединяющий коннектор с присоединенным элементом
+    /// </summary>
+    /// <param name="element"></param>
+    /// <param name="attachElement"></param>
+    /// <returns></returns>
+    public static Connector FindCommonConnector(this Element element, Element attachElement)
+    {
+        ConnectorSet connectorSet1 = element switch
+        {
+            // Проверяем тип первого элемента
+            MEPCurve mepCurve => mepCurve.ConnectorManager?.Connectors,
+            FamilyInstance familyInstance => familyInstance.MEPModel?.ConnectorManager?.Connectors,
+            _ => null
+        };
+
+        if (connectorSet1 == null) return null;
+
+        // Перебираем коннекторы первого элемента
+        foreach (Connector connector1 in connectorSet1)
+        {
+            foreach (Connector connected in connector1.AllRefs)
+            {
+                if (connected.Owner.Id == attachElement.Id)
+                {
+                    return connector1;
+                }
+            }
+        }
+
+        return null;
     }
 }

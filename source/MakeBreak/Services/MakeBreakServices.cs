@@ -789,106 +789,54 @@ public class MakeBreakServices
     {
         var selectedBreak = SelectGap(familySymbol);
         if (selectedBreak?.FamilyInstance == null) return;
+        var pairBreak = selectedBreak.FindPairBreak(familySymbol);
+        if (pairBreak?.FamilyInstance == null) return;
+        Pipe generalPipe = selectedBreak.FindGeneralPipe(pairBreak);
+        if (generalPipe == null) return;
+        Element deletePipe = null;
+        var connectElementSelectedBreak = selectedBreak.ConnectedElements.FirstOrDefault(x => x.Id != generalPipe.Id);
+        Connector attachConnector = connectElementSelectedBreak.FindCommonConnector(selectedBreak.FamilyInstance);
+        foreach (var connectedElement in pairBreak.ConnectedElements)
+        {
+            if (connectedElement.Id == generalPipe.Id)
+            {
+                continue;
+            }
+            deletePipe = connectedElement;
+        }
 
+        Element  connectElementDeletePipe =
+            deletePipe.GetConnectedMEPElements().FirstOrDefault(x => x.Id != pairBreak.Id);
+        Connector targetConnector = null;
+        XYZ targetPosition = null;
+        if (connectElementDeletePipe!=null)
+        {
+            targetConnector = connectElementDeletePipe.FindCommonConnector(deletePipe); 
+        }
+        else
+        {
+            targetPosition = deletePipe.GetConnectors().FirstOrDefault(x => !x.IsConnected).Origin;
+        }
+      
         using Transaction trans = new Transaction(_doc, "Удалить разрыв");
         trans.Start();
         try
         {
-            var pairBreak = selectedBreak.FindPairBreak(familySymbol);
-            if (pairBreak?.FamilyInstance == null)
+            // Удаляем разрывы и промежуточную трубу
+            _doc.Delete(selectedBreak.Id);
+            _doc.Delete(pairBreak.Id);
+            _doc.Delete(generalPipe.Id);
+            _doc.Delete(deletePipe?.Id);
+            if (targetConnector!=null)
             {
-                trans.RollBack();
-                return;
+                LengthenCurve(attachConnector, targetConnector);
+                attachConnector.ConnectTo(targetConnector);
             }
-            
-            Pipe generalPipe = selectedBreak.FindGeneralPipe(pairBreak);
-            if (generalPipe == null)
+            else
             {
-                trans.RollBack();
-                return;
+                LengthenCurveToPosition(attachConnector, targetPosition);
             }
-            
-            // Находим элементы, которые останутся после удаления разрывов
-            var leftElement = GetConnectedElementExcluding(selectedBreak, generalPipe.Id);
-            var rightElement = GetConnectedElementExcluding(pairBreak, generalPipe.Id);
-            
-            if (leftElement == null || rightElement == null)
-            {
-               trans.RollBack();
-                return;
-            }
-            
-            
-            Connector targetConnector = null;
-            Connector attachConnector = null;
-            Element deletePipe = null;
-            // foreach (var connectedElement in selectedBreak.ConnectedElements)
-            // {
-            //     if (connectedElement.Id == generalPipe.Id)
-            //     {
-            //         continue;
-            //     }
-            //
-            //     deletePipe = connectedElement;
-            //
-            //     // Получаем коннекторы трубы deletePipe
-            //     var pipeConnectorManager = GetConnectorManager(deletePipe);
-            //     if (pipeConnectorManager?.Connectors != null)
-            //     {
-            //         foreach (Connector pipeConnector in pipeConnectorManager.Connectors)
-            //         {
-            //             if (pipeConnector.IsConnected)
-            //             {
-            //                 // Ищем среди подключенных коннекторов тот, который принадлежит фитингу
-            //                 foreach (Connector connectedConnector in pipeConnector.AllRefs.Cast<Connector>())
-            //                 {
-            //                     // Проверяем, что это НЕ selectedBreak и НЕ сама труба
-            //                     if (connectedConnector.Owner.Id != selectedBreak.Id && 
-            //                         connectedConnector.Owner.Id != deletePipe.Id)
-            //                     {
-            //                         // Это коннектор фитинга
-            //                         targetConnector = connectedConnector;
-            //                         break;
-            //                     }
-            //                 }
-            //
-            //                 if (targetConnector != null)
-            //                     break;
-            //             }
-            //         }
-            //     }
-            // }
-            //
-            
-            // // Находим коннекторы для соединения (до удаления!)
-            // var leftConnector = FindConnectorBetween(leftElement, selectedBreak.FamilyInstance);
-            // var rightConnector = FindConnectorBetween(rightElement, pairBreak.FamilyInstance);
-            //
-            // if (leftConnector == null || rightConnector == null)
-            // {
-            //    trans.RollBack();
-            //     return;
-            // }
-            //
-            // // Удаляем разрывы и промежуточную трубу
-            // _doc.Delete(selectedBreak.Id);
-            // _doc.Delete(pairBreak.Id);
-            // _doc.Delete(generalPipe.Id);
-            // _doc.Delete(deletePipe.Id);
-            //
-            // // Обновляем коннекторы после удаления
-            // // leftConnector = GetFreeConnectorOnElement(leftElement);
-            // rightConnector = GetFreeConnectorOnElement(rightElement);
-            //
-            // if ( rightConnector != null)
-            // {
-            //     // Выравниваем элементы для соединения
-            //     AlignConnectors(rightElement, rightConnector, targetConnector);
-            //
-            //     // Соединяем
-            //     rightConnector.ConnectTo(targetConnector);
-            // }
-
+           
             trans.Commit();
         }
         catch (Exception ex)
@@ -897,12 +845,165 @@ public class MakeBreakServices
         }
     }
 
+    /// <summary>
+    /// Если присоединяемый элемент является кривой, то ее длина удлиняется по направлению к соединяемому элементу
+    /// </summary>
+    /// <param name="attachingConnector"></param>
+    /// <param name="targetConnector"></param>
+    private static void LengthenCurve( Connector attachingConnector, Connector targetConnector)
+    {
+        ArgumentNullException.ThrowIfNull(attachingConnector);
+        ArgumentNullException.ThrowIfNull(targetConnector);
+        if (attachingConnector.Owner.Location is not LocationCurve locationCurve) return;
+        // 1. Удлиняем трубу
+        XYZ startPoint = locationCurve.Curve.GetEndPoint(0);
+        XYZ endPoint = locationCurve.Curve.GetEndPoint(1);
+
+        double startDistance = startPoint.DistanceTo(attachingConnector.Origin);
+        double endDistance = endPoint.DistanceTo(attachingConnector.Origin);
+
+        // Определяем, какой конец трубы ближе к соединителю элемента
+        XYZ pointToExtend;
+        XYZ otherPoint;
+        XYZ pipeDirection;
+        XYZ extensionPoint;
+        Line newCurve;
+
+        if (startDistance < endDistance)
+        {
+            // Удлиняем от startPoint
+            pointToExtend = startPoint;
+            otherPoint = endPoint;
+            pipeDirection = (startPoint - endPoint).Normalize();
+
+            // Вектор от точки удлинения до коннектора целевого элемента
+            XYZ vectorToTarget = targetConnector.Origin - pointToExtend;
+
+            // Расстояние вдоль направления pipeDirection
+            double extensionLength = vectorToTarget.DotProduct(pipeDirection);
+
+            // Вычисляем новую точку начала трубы
+            extensionPoint = pointToExtend + pipeDirection * extensionLength;
+
+            // Создаем новую линию (трубу) от extensionPoint до endPoint (otherPoint)
+            newCurve = Line.CreateBound(extensionPoint, otherPoint);
+        }
+        else
+        {
+            // Удлиняем от endPoint
+            pointToExtend = endPoint;
+            otherPoint = startPoint;
+            pipeDirection = (endPoint - startPoint).Normalize();
+
+            // Вектор от точки удлинения до коннектора целевого элемента
+            XYZ vectorToTarget = targetConnector.Origin - pointToExtend;
+
+            // Расстояние вдоль направления pipeDirection
+            double extensionLength = vectorToTarget.DotProduct(pipeDirection);
+            if (extensionLength <= 0)
+            {
+                return;
+            }
+
+            // Вычисляем новую конечную точку трубы
+            extensionPoint = pointToExtend + pipeDirection * extensionLength;
+
+            // Создаем новую линию (трубу) от startPoint (otherPoint) до extensionPoint
+            newCurve = Line.CreateBound(otherPoint, extensionPoint);
+        }
+
+        locationCurve.Curve = newCurve;
+    }
+  
+    /// <summary>
+/// Удлиняет кривую до заданной позиции по направлению к этой позиции
+/// </summary>
+/// <param name="attachingConnector">Коннектор элемента, который нужно удлинить</param>
+/// <param name="targetPosition">Целевая позиция, до которой нужно удлинить</param>
+private static void LengthenCurveToPosition(Connector attachingConnector, XYZ targetPosition)
+{
+    ArgumentNullException.ThrowIfNull(attachingConnector);
+    ArgumentNullException.ThrowIfNull(targetPosition);
+
+    if (attachingConnector.Owner.Location is not LocationCurve locationCurve) return;
+
+    // Получаем точки кривой
+    XYZ startPoint = locationCurve.Curve.GetEndPoint(0);
+    XYZ endPoint = locationCurve.Curve.GetEndPoint(1);
+
+    double startDistance = startPoint.DistanceTo(attachingConnector.Origin);
+    double endDistance = endPoint.DistanceTo(attachingConnector.Origin);
+
+    // Определяем, какой конец трубы ближе к соединителю элемента
+    XYZ pointToExtend;
+    XYZ otherPoint;
+    XYZ pipeDirection;
+    XYZ extensionPoint;
+    Line newCurve;
+
+    if (startDistance < endDistance)
+    {
+        // Удлиняем от startPoint
+        pointToExtend = startPoint;
+        otherPoint = endPoint;
+        pipeDirection = (startPoint - endPoint).Normalize();
+
+        // Вектор от точки удлинения до целевой позиции
+        XYZ vectorToTarget = targetPosition - pointToExtend;
+
+        // Расстояние вдоль направления pipeDirection
+        double extensionLength = vectorToTarget.DotProduct(pipeDirection);
+
+        if (extensionLength <= 0)
+        {
+            return; // Не удлиняем в обратном направлении
+        }
+
+        // Вычисляем новую точку начала трубы
+        extensionPoint = pointToExtend + pipeDirection * extensionLength;
+
+        // Создаем новую линию от extensionPoint до endPoint
+        newCurve = Line.CreateBound(extensionPoint, otherPoint);
+    }
+    else
+    {
+        // Удлиняем от endPoint
+        pointToExtend = endPoint;
+        otherPoint = startPoint;
+        pipeDirection = (endPoint - startPoint).Normalize();
+
+        // Вектор от точки удлинения до целевой позиции
+        XYZ vectorToTarget = targetPosition - pointToExtend;
+
+        // Расстояние вдоль направления pipeDirection
+        double extensionLength = vectorToTarget.DotProduct(pipeDirection);
+
+        if (extensionLength <= 0)
+        {
+            return; // Не удлиняем в обратном направлении
+        }
+
+        // Вычисляем новую конечную точку трубы
+        extensionPoint = pointToExtend + pipeDirection * extensionLength;
+
+        // Создаем новую линию от startPoint до extensionPoint
+        newCurve = Line.CreateBound(otherPoint, extensionPoint);
+    }
+
+    locationCurve.Curve = newCurve;
+}
 // Вспомогательные методы
     private Element GetConnectedElementExcluding(Gap gap, ElementId excludeId)
     {
         return gap.ConnectedElements?.FirstOrDefault(e => e.Id != excludeId);
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="element1"></param>
+    /// <param name="element2"></param>
+    /// <returns></returns>
     private Connector FindConnectorBetween(Element element1, Element element2)
     {
         var connectorManager = GetConnectorManager(element1);
