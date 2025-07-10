@@ -44,8 +44,8 @@ public class Gap
         }
         catch (Exception ex)
         {
-           
         }
+
         return elements;
     }
 
@@ -78,14 +78,18 @@ public class Gap
             }
         }
 
-        // Остальная логика выбора парного разрыва...
-        if (breakLists.Count == 0) return null;
-
-        if (breakLists.Count == 1 && breakLists[0].Count == 1)
-            return new Gap(breakLists[0][0]);
-
-        var oddList = breakLists.FirstOrDefault(list => list.Count % 2 != 0);
-        return oddList != null ? new Gap(oddList[0]) : null;
+        switch (breakLists.Count)
+        {
+            // Остальная логика выбора парного разрыва...
+            case 0:
+                return null;
+            case 1: return new Gap(breakLists[0][0]);
+            default:
+            {
+                var oddList = breakLists.FirstOrDefault(list => list.Count % 2 != 0);
+                return oddList != null ? new Gap(oddList[0]) : null;
+            }
+        }
     }
 
     private void FindBreaksInPath(Element element, FamilySymbol familySymbol,

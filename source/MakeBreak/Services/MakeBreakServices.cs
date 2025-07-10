@@ -789,45 +789,105 @@ public class MakeBreakServices
     {
         var selectedBreak = SelectGap(familySymbol);
         if (selectedBreak?.FamilyInstance == null) return;
-        var pairBreak = selectedBreak.FindPairBreak(familySymbol);
-        if (pairBreak?.FamilyInstance == null) return;
-        Pipe generalPipe = selectedBreak.FindGeneralPipe(pairBreak);
-        if (generalPipe == null) return;
+        Pipe generalPipe = null;
         Element deletePipe = null;
-        var connectElementSelectedBreak = selectedBreak.ConnectedElements.FirstOrDefault(x => x.Id != generalPipe.Id);
-        Connector attachConnector = connectElementSelectedBreak.FindCommonConnector(selectedBreak.FamilyInstance);
-        foreach (var connectedElement in pairBreak.ConnectedElements)
-        {
-            if (connectedElement.Id == generalPipe.Id)
-            {
-                continue;
-            }
-            deletePipe = connectedElement;
-        }
-
-        Element  connectElementDeletePipe =
-            deletePipe.GetConnectedMEPElements().FirstOrDefault(x => x.Id != pairBreak.Id);
+        Connector attachConnector = null;
         Connector targetConnector = null;
         XYZ targetPosition = null;
-        if (connectElementDeletePipe!=null)
+        var pairBreak = selectedBreak.FindPairBreak(familySymbol);
+        if (pairBreak != null)
         {
-            targetConnector = connectElementDeletePipe.FindCommonConnector(deletePipe); 
+            generalPipe = selectedBreak.FindGeneralPipe(pairBreak);
+            if (generalPipe == null) return;
+
+            var connectElementSelectedBreak =
+                selectedBreak.ConnectedElements.FirstOrDefault(x => x.Id != generalPipe.Id);
+
+            if (connectElementSelectedBreak != null)
+            {
+                foreach (var connectedElement in pairBreak.ConnectedElements.Where(connectedElement =>
+                             connectedElement.Id != generalPipe.Id))
+                {
+                    deletePipe = connectedElement;
+                }
+
+                attachConnector = connectElementSelectedBreak.FindCommonConnector(selectedBreak.FamilyInstance);
+                if (deletePipe != null)
+                {
+                    Element connectElementDeletePipe =
+                        deletePipe.GetConnectedMEPElements().FirstOrDefault(x => x.Id != pairBreak.Id);
+
+                    if (connectElementDeletePipe != null)
+                    {
+                        targetConnector = connectElementDeletePipe.FindCommonConnector(deletePipe);
+                    }
+                    else
+                    {
+                        targetPosition = deletePipe.GetConnectors().FirstOrDefault(x => !x.IsConnected)?.Origin;
+                    }
+                }
+                else
+                {
+                    targetPosition = pairBreak.Connectors.FirstOrDefault(x => !x.IsConnected)?.Origin;
+                }
+            }
+            else
+            {
+                attachConnector = pairBreak.ConnectedElements
+                    .FirstOrDefault(connectedElement => connectedElement.Id != generalPipe.Id)
+                    .FindCommonConnector(pairBreak.FamilyInstance);
+                targetPosition = selectedBreak.Connectors.FirstOrDefault(x => !x.IsConnected)?.Origin;
+            }
         }
         else
         {
-            targetPosition = deletePipe.GetConnectors().FirstOrDefault(x => !x.IsConnected).Origin;
+            if (selectedBreak.ConnectedElements.Count > 2)
+            {
+                deletePipe = selectedBreak.ConnectedElements
+                    .MinBy(x => x.FindParameter(BuiltInParameter.CURVE_ELEM_LENGTH)?.AsDouble());
+                if (deletePipe != null)
+                {
+                    attachConnector = selectedBreak.ConnectedElements
+                        .FirstOrDefault(connectedElement => connectedElement.Id != deletePipe.Id)
+                        .FindCommonConnector(selectedBreak.FamilyInstance);
+
+                    Element connectElementDeletePipe =
+                        deletePipe.GetConnectedMEPElements().FirstOrDefault(x => x.Id != selectedBreak.Id);
+
+                    if (connectElementDeletePipe != null)
+                    {
+                        targetConnector = connectElementDeletePipe.FindCommonConnector(deletePipe);
+                    }
+                    else
+                    {
+                        targetPosition = deletePipe.GetConnectors().FirstOrDefault(x => !x.IsConnected)?.Origin;
+                    }
+                }
+            }
         }
-      
+
         using Transaction trans = new Transaction(_doc, "Удалить разрыв");
         trans.Start();
         try
         {
             // Удаляем разрывы и промежуточную трубу
             _doc.Delete(selectedBreak.Id);
-            _doc.Delete(pairBreak.Id);
-            _doc.Delete(generalPipe.Id);
-            _doc.Delete(deletePipe?.Id);
-            if (targetConnector!=null)
+            if (pairBreak != null)
+            {
+                _doc.Delete(pairBreak.Id);
+            }
+
+            if (generalPipe != null)
+            {
+                _doc.Delete(generalPipe.Id);
+            }
+
+            if (deletePipe != null)
+            {
+                _doc.Delete(deletePipe.Id);
+            }
+
+            if (targetConnector != null)
             {
                 LengthenCurve(attachConnector, targetConnector);
                 attachConnector.ConnectTo(targetConnector);
@@ -836,7 +896,7 @@ public class MakeBreakServices
             {
                 LengthenCurveToPosition(attachConnector, targetPosition);
             }
-           
+
             trans.Commit();
         }
         catch (Exception ex)
@@ -850,10 +910,10 @@ public class MakeBreakServices
     /// </summary>
     /// <param name="attachingConnector"></param>
     /// <param name="targetConnector"></param>
-    private static void LengthenCurve( Connector attachingConnector, Connector targetConnector)
+    private static void LengthenCurve(Connector attachingConnector, Connector targetConnector)
     {
-        ArgumentNullException.ThrowIfNull(attachingConnector);
-        ArgumentNullException.ThrowIfNull(targetConnector);
+        if (attachingConnector == null || targetConnector == null) return;
+
         if (attachingConnector.Owner.Location is not LocationCurve locationCurve) return;
         // 1. Удлиняем трубу
         XYZ startPoint = locationCurve.Curve.GetEndPoint(0);
@@ -914,84 +974,85 @@ public class MakeBreakServices
 
         locationCurve.Curve = newCurve;
     }
-  
+
     /// <summary>
-/// Удлиняет кривую до заданной позиции по направлению к этой позиции
-/// </summary>
-/// <param name="attachingConnector">Коннектор элемента, который нужно удлинить</param>
-/// <param name="targetPosition">Целевая позиция, до которой нужно удлинить</param>
-private static void LengthenCurveToPosition(Connector attachingConnector, XYZ targetPosition)
-{
-    ArgumentNullException.ThrowIfNull(attachingConnector);
-    ArgumentNullException.ThrowIfNull(targetPosition);
-
-    if (attachingConnector.Owner.Location is not LocationCurve locationCurve) return;
-
-    // Получаем точки кривой
-    XYZ startPoint = locationCurve.Curve.GetEndPoint(0);
-    XYZ endPoint = locationCurve.Curve.GetEndPoint(1);
-
-    double startDistance = startPoint.DistanceTo(attachingConnector.Origin);
-    double endDistance = endPoint.DistanceTo(attachingConnector.Origin);
-
-    // Определяем, какой конец трубы ближе к соединителю элемента
-    XYZ pointToExtend;
-    XYZ otherPoint;
-    XYZ pipeDirection;
-    XYZ extensionPoint;
-    Line newCurve;
-
-    if (startDistance < endDistance)
+    /// Удлиняет кривую до заданной позиции по направлению к этой позиции
+    /// </summary>
+    /// <param name="attachingConnector">Коннектор элемента, который нужно удлинить</param>
+    /// <param name="targetPosition">Целевая позиция, до которой нужно удлинить</param>
+    private static void LengthenCurveToPosition(Connector attachingConnector, XYZ targetPosition)
     {
-        // Удлиняем от startPoint
-        pointToExtend = startPoint;
-        otherPoint = endPoint;
-        pipeDirection = (startPoint - endPoint).Normalize();
+        if (attachingConnector == null || targetPosition == null) return;
 
-        // Вектор от точки удлинения до целевой позиции
-        XYZ vectorToTarget = targetPosition - pointToExtend;
 
-        // Расстояние вдоль направления pipeDirection
-        double extensionLength = vectorToTarget.DotProduct(pipeDirection);
+        if (attachingConnector.Owner.Location is not LocationCurve locationCurve) return;
 
-        if (extensionLength <= 0)
+        // Получаем точки кривой
+        XYZ startPoint = locationCurve.Curve.GetEndPoint(0);
+        XYZ endPoint = locationCurve.Curve.GetEndPoint(1);
+
+        double startDistance = startPoint.DistanceTo(attachingConnector.Origin);
+        double endDistance = endPoint.DistanceTo(attachingConnector.Origin);
+
+        // Определяем, какой конец трубы ближе к соединителю элемента
+        XYZ pointToExtend;
+        XYZ otherPoint;
+        XYZ pipeDirection;
+        XYZ extensionPoint;
+        Line newCurve;
+
+        if (startDistance < endDistance)
         {
-            return; // Не удлиняем в обратном направлении
+            // Удлиняем от startPoint
+            pointToExtend = startPoint;
+            otherPoint = endPoint;
+            pipeDirection = (startPoint - endPoint).Normalize();
+
+            // Вектор от точки удлинения до целевой позиции
+            XYZ vectorToTarget = targetPosition - pointToExtend;
+
+            // Расстояние вдоль направления pipeDirection
+            double extensionLength = vectorToTarget.DotProduct(pipeDirection);
+
+            if (extensionLength <= 0)
+            {
+                return; // Не удлиняем в обратном направлении
+            }
+
+            // Вычисляем новую точку начала трубы
+            extensionPoint = pointToExtend + pipeDirection * extensionLength;
+
+            // Создаем новую линию от extensionPoint до endPoint
+            newCurve = Line.CreateBound(extensionPoint, otherPoint);
+        }
+        else
+        {
+            // Удлиняем от endPoint
+            pointToExtend = endPoint;
+            otherPoint = startPoint;
+            pipeDirection = (endPoint - startPoint).Normalize();
+
+            // Вектор от точки удлинения до целевой позиции
+            XYZ vectorToTarget = targetPosition - pointToExtend;
+
+            // Расстояние вдоль направления pipeDirection
+            double extensionLength = vectorToTarget.DotProduct(pipeDirection);
+
+            if (extensionLength <= 0)
+            {
+                return; // Не удлиняем в обратном направлении
+            }
+
+            // Вычисляем новую конечную точку трубы
+            extensionPoint = pointToExtend + pipeDirection * extensionLength;
+
+            // Создаем новую линию от startPoint до extensionPoint
+            newCurve = Line.CreateBound(otherPoint, extensionPoint);
         }
 
-        // Вычисляем новую точку начала трубы
-        extensionPoint = pointToExtend + pipeDirection * extensionLength;
-
-        // Создаем новую линию от extensionPoint до endPoint
-        newCurve = Line.CreateBound(extensionPoint, otherPoint);
-    }
-    else
-    {
-        // Удлиняем от endPoint
-        pointToExtend = endPoint;
-        otherPoint = startPoint;
-        pipeDirection = (endPoint - startPoint).Normalize();
-
-        // Вектор от точки удлинения до целевой позиции
-        XYZ vectorToTarget = targetPosition - pointToExtend;
-
-        // Расстояние вдоль направления pipeDirection
-        double extensionLength = vectorToTarget.DotProduct(pipeDirection);
-
-        if (extensionLength <= 0)
-        {
-            return; // Не удлиняем в обратном направлении
-        }
-
-        // Вычисляем новую конечную точку трубы
-        extensionPoint = pointToExtend + pipeDirection * extensionLength;
-
-        // Создаем новую линию от startPoint до extensionPoint
-        newCurve = Line.CreateBound(otherPoint, extensionPoint);
+        locationCurve.Curve = newCurve;
     }
 
-    locationCurve.Curve = newCurve;
-}
 // Вспомогательные методы
     private Element GetConnectedElementExcluding(Gap gap, ElementId excludeId)
     {
