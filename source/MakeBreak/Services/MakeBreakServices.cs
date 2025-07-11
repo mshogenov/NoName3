@@ -841,27 +841,43 @@ public class MakeBreakServices
         }
         else
         {
-            if (selectedBreak.ConnectedElements.Count > 2)
+            if (selectedBreak.ConnectedElements.Count > 1)
             {
-                deletePipe = selectedBreak.ConnectedElements
-                    .MinBy(x => x.FindParameter(BuiltInParameter.CURVE_ELEM_LENGTH)?.AsDouble());
-                if (deletePipe != null)
+                if (selectedBreak.ConnectedElements.All(x => x is Pipe))
                 {
-                    attachConnector = selectedBreak.ConnectedElements
-                        .FirstOrDefault(connectedElement => connectedElement.Id != deletePipe.Id)
-                        .FindCommonConnector(selectedBreak.FamilyInstance);
-
-                    Element connectElementDeletePipe =
-                        deletePipe.GetConnectedMEPElements().FirstOrDefault(x => x.Id != selectedBreak.Id);
-
-                    if (connectElementDeletePipe != null)
+                    deletePipe = selectedBreak.ConnectedElements
+                        .MinBy(x => x.FindParameter(BuiltInParameter.CURVE_ELEM_LENGTH)?.AsDouble());
+                    if (deletePipe != null)
                     {
-                        targetConnector = connectElementDeletePipe.FindCommonConnector(deletePipe);
+                        attachConnector = selectedBreak.ConnectedElements
+                            .FirstOrDefault(connectedElement => connectedElement.Id != deletePipe.Id)
+                            .FindCommonConnector(selectedBreak.FamilyInstance);
+
+                        Element connectElementDeletePipe =
+                            deletePipe.GetConnectedMEPElements().FirstOrDefault(x => x.Id != selectedBreak.Id);
+
+                        if (connectElementDeletePipe != null)
+                        {
+                            targetConnector = connectElementDeletePipe.FindCommonConnector(deletePipe);
+                        }
+                        else
+                        {
+                            targetPosition = deletePipe.GetConnectors().FirstOrDefault(x => !x.IsConnected)?.Origin;
+                        }
                     }
-                    else
+                }
+                else
+                {
+                    var connectElementSelectedBreak =
+                        selectedBreak.ConnectedElements.FirstOrDefault(x => x is Pipe);
+                    if (connectElementSelectedBreak!= null)
                     {
-                        targetPosition = deletePipe.GetConnectors().FirstOrDefault(x => !x.IsConnected)?.Origin;
+                        attachConnector = connectElementSelectedBreak.FindCommonConnector(selectedBreak.FamilyInstance);
+                        targetConnector = selectedBreak.ConnectedElements
+                            .FirstOrDefault(x => x.Id != connectElementSelectedBreak.Id)
+                            .FindCommonConnector(selectedBreak.FamilyInstance);
                     }
+                  
                 }
             }
         }

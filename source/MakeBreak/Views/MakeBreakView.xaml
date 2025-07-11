@@ -49,7 +49,7 @@
         </Grid>
         <DockPanel HorizontalAlignment="Right"
                    Grid.Row="1">
-            <Button Content="Сделать разрыв"
+            <Button Content="Вставить разрыв"
                     Command="{Binding MakeBreakCommand}"
                     Style="{DynamicResource CommonButtonStyle2}" />
             <Button Content="Закрыть"
