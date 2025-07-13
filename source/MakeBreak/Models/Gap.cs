@@ -16,27 +16,27 @@ public class Gap
         {
             return;
         }
-
         Element element = doc.GetElement(reference);
-        if (element is DisplacementElement displacement)
+        switch (element)
         {
-            var pickPoint = reference.GlobalPoint; 
-            FamilyInstance = FindElementInDisplacement(displacement, pickPoint);
-            Id = FamilyInstance.Id; 
+            case FamilyInstance familyInstance:
+                FamilyInstance = familyInstance;
+                Id = familyInstance.Id;
+                break;
+            case DisplacementElement displacement:
+                var pickPoint = reference.GlobalPoint;
+                FamilyInstance = FindElementInDisplacement(displacement, pickPoint);
+                Id = FamilyInstance?.Id;
+                break;
+            default: return;
         }
-        else
-        {
-            if (element is not FamilyInstance familyInstance) return;
-            FamilyInstance = familyInstance;
-            Id = familyInstance.Id; 
-        }
-        
     }
+
     private FamilyInstance FindElementInDisplacement(DisplacementElement displacement, XYZ pickPoint)
     {
-        if (displacement==null || pickPoint==null)  return null;
+        if (displacement == null || pickPoint == null) return null;
         Document doc = displacement.Document;
-        FamilyInstance familyInstance=null;
+        FamilyInstance familyInstance = null;
         var displacementElementIds = displacement.GetDisplacedElementIds();
         double toleranceInMm = 100.0;
 
@@ -69,6 +69,7 @@ public class Gap
 
         return familyInstance;
     }
+
     private Gap(FamilyInstance familyInstance)
     {
         if (familyInstance == null) return;

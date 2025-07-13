@@ -42,6 +42,7 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     ];
 
     private bool _isExecutingDeleteBreak;
+    private bool _isExecutingHidePipe;
 
 
     public MakeBreakViewModel()
@@ -194,7 +195,7 @@ public sealed partial class MakeBreakViewModel : ObservableObject
                 using Transaction tr = new Transaction(_doc, "Загрузить семейство");
                 tr.Start();
                 _makeBreakServices.DownloadFamily("Разрыв");
-               tr.Commit();
+                tr.Commit();
             }
             catch (Exception ex)
             {
@@ -319,4 +320,33 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     }
 
     private bool CanExecuteDeleteBreak() => !_isExecutingDeleteBreak;
+
+    [RelayCommand(CanExecute =nameof(CanExecuteHidePipe))]
+    private void HidePipe()
+    {
+        // Устанавливаем флаг, что команда запущена
+        _isExecutingDeleteBreak = true;
+        (HidePipeCommand as RelayCommand)?.NotifyCanExecuteChanged();
+        _actionEventHandler.Raise(_ =>
+        {
+            try
+            {
+                _makeBreakServices.HidePipe(_familySymbol);
+            }
+            catch (Exception e)
+            {
+                TaskDialog.Show("Ошибка", "Произошла ошибка: " + e.Message);
+            }
+            finally
+            {
+                _actionEventHandler.Cancel();
+                // Сбрасываем флаг после завершения команды
+                _isExecutingHidePipe = false;
+
+                // Уведомляем об изменении состояния
+                (HidePipeCommand as RelayCommand)?.NotifyCanExecuteChanged();
+            }
+        });
+    }
+    private bool CanExecuteHidePipe() => !_isExecutingHidePipe;
 }

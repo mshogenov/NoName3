@@ -731,7 +731,7 @@ public class MakeBreakServices
 
             ConnectorSet fittingConnectors = familyInstance.MEPModel.ConnectorManager.Connectors;
             List<Connector> connectors = fittingConnectors.Cast<Connector>().ToList();
-            Transaction transaction = new Transaction(_doc, "Вернуть видимость трубы");
+            Transaction transaction = new Transaction(_doc, "Показать трубу");
             try
             {
                 transaction.Start();
@@ -759,7 +759,7 @@ public class MakeBreakServices
 
     private FamilyInstance FindElementInDisplacement(DisplacementElement displacement, XYZ pickPoint)
     {
-        FamilyInstance familyInstance=null;
+        FamilyInstance familyInstance = null;
         var displacementElementIds = displacement.GetDisplacedElementIds();
         double toleranceInMm = 100.0;
 
@@ -795,74 +795,37 @@ public class MakeBreakServices
 
     public void DeleteBreaks(FamilySymbol familySymbol)
     {
-        var selectedBreak = SelectGap(familySymbol);
-        if (selectedBreak?.FamilyInstance == null) return;
-        Pipe generalPipe = null;
-        Element deletePipe = null;
-        Connector attachConnector = null;
-        Connector targetConnector = null;
-        XYZ targetPosition = null;
-        var pairBreak = selectedBreak.FindPairBreak(familySymbol);
-        if (pairBreak != null)
+        while (true)
         {
-            generalPipe = selectedBreak.FindGeneralPipe(pairBreak);
-            if (generalPipe == null) return;
-
-            var connectElementSelectedBreak =
-                selectedBreak.ConnectedElements.FirstOrDefault(x => x.Id != generalPipe.Id);
-
-            if (connectElementSelectedBreak != null)
+            var selectedBreak = SelectGap(familySymbol);
+            if (selectedBreak?.FamilyInstance == null) return;
+            Pipe generalPipe = null;
+            Element deletePipe = null;
+            Connector attachConnector = null;
+            Connector targetConnector = null;
+            XYZ targetPosition = null;
+            var pairBreak = selectedBreak.FindPairBreak(familySymbol);
+            if (pairBreak != null)
             {
-                foreach (var connectedElement in pairBreak.ConnectedElements.Where(connectedElement =>
-                             connectedElement.Id != generalPipe.Id))
-                {
-                    deletePipe = connectedElement;
-                }
+                generalPipe = selectedBreak.FindGeneralPipe(pairBreak);
+                if (generalPipe == null) return;
 
-                attachConnector = connectElementSelectedBreak.FindCommonConnector(selectedBreak.FamilyInstance);
-                if (deletePipe != null)
-                {
-                    Element connectElementDeletePipe =
-                        deletePipe.GetConnectedMEPElements().FirstOrDefault(x => x.Id != pairBreak.Id);
+                var connectElementSelectedBreak =
+                    selectedBreak.ConnectedElements.FirstOrDefault(x => x.Id != generalPipe.Id);
 
-                    if (connectElementDeletePipe != null)
+                if (connectElementSelectedBreak != null)
+                {
+                    foreach (var connectedElement in pairBreak.ConnectedElements.Where(connectedElement =>
+                                 connectedElement.Id != generalPipe.Id))
                     {
-                        targetConnector = connectElementDeletePipe.FindCommonConnector(deletePipe);
+                        deletePipe = connectedElement;
                     }
-                    else
-                    {
-                        targetPosition = deletePipe.GetConnectors().FirstOrDefault(x => !x.IsConnected)?.Origin;
-                    }
-                }
-                else
-                {
-                    targetPosition = pairBreak.Connectors.FirstOrDefault(x => !x.IsConnected)?.Origin;
-                }
-            }
-            else
-            {
-                attachConnector = pairBreak.ConnectedElements
-                    .FirstOrDefault(connectedElement => connectedElement.Id != generalPipe.Id)
-                    .FindCommonConnector(pairBreak.FamilyInstance);
-                targetPosition = selectedBreak.Connectors.FirstOrDefault(x => !x.IsConnected)?.Origin;
-            }
-        }
-        else
-        {
-            if (selectedBreak.ConnectedElements.Count > 1)
-            {
-                if (selectedBreak.ConnectedElements.All(x => x is Pipe))
-                {
-                    deletePipe = selectedBreak.ConnectedElements
-                        .MinBy(x => x.FindParameter(BuiltInParameter.CURVE_ELEM_LENGTH)?.AsDouble());
+
+                    attachConnector = connectElementSelectedBreak.FindCommonConnector(selectedBreak.FamilyInstance);
                     if (deletePipe != null)
                     {
-                        attachConnector = selectedBreak.ConnectedElements
-                            .FirstOrDefault(connectedElement => connectedElement.Id != deletePipe.Id)
-                            .FindCommonConnector(selectedBreak.FamilyInstance);
-
                         Element connectElementDeletePipe =
-                            deletePipe.GetConnectedMEPElements().FirstOrDefault(x => x.Id != selectedBreak.Id);
+                            deletePipe.GetConnectedMEPElements().FirstOrDefault(x => x.Id != pairBreak.Id);
 
                         if (connectElementDeletePipe != null)
                         {
@@ -873,58 +836,100 @@ public class MakeBreakServices
                             targetPosition = deletePipe.GetConnectors().FirstOrDefault(x => !x.IsConnected)?.Origin;
                         }
                     }
+                    else
+                    {
+                        targetPosition = pairBreak.Connectors.FirstOrDefault(x => !x.IsConnected)?.Origin;
+                    }
                 }
                 else
                 {
-                    var connectElementSelectedBreak =
-                        selectedBreak.ConnectedElements.FirstOrDefault(x => x is Pipe);
-                    if (connectElementSelectedBreak != null)
-                    {
-                        attachConnector = connectElementSelectedBreak.FindCommonConnector(selectedBreak.FamilyInstance);
-                        targetConnector = selectedBreak.ConnectedElements
-                            .FirstOrDefault(x => x.Id != connectElementSelectedBreak.Id)
-                            .FindCommonConnector(selectedBreak.FamilyInstance);
-                    }
+                    attachConnector = pairBreak.ConnectedElements
+                        .FirstOrDefault(connectedElement => connectedElement.Id != generalPipe.Id)
+                        .FindCommonConnector(pairBreak.FamilyInstance);
+                    targetPosition = selectedBreak.Connectors.FirstOrDefault(x => !x.IsConnected)?.Origin;
                 }
-            }
-        }
-
-        using Transaction trans = new Transaction(_doc, "Удалить разрыв");
-        trans.Start();
-        try
-        {
-            // Удаляем разрывы и промежуточную трубу
-            _doc.Delete(selectedBreak.Id);
-            if (pairBreak != null)
-            {
-                _doc.Delete(pairBreak.Id);
-            }
-
-            if (generalPipe != null)
-            {
-                _doc.Delete(generalPipe.Id);
-            }
-
-            if (deletePipe != null)
-            {
-                _doc.Delete(deletePipe.Id);
-            }
-
-            if (targetConnector != null)
-            {
-                LengthenCurve(attachConnector, targetConnector);
-                attachConnector.ConnectTo(targetConnector);
             }
             else
             {
-                LengthenCurveToPosition(attachConnector, targetPosition);
+                if (selectedBreak.ConnectedElements.Count > 1)
+                {
+                    if (selectedBreak.ConnectedElements.All(x => x is Pipe))
+                    {
+                        deletePipe = selectedBreak.ConnectedElements
+                            .MinBy(x => x.FindParameter(BuiltInParameter.CURVE_ELEM_LENGTH)?.AsDouble());
+                        if (deletePipe != null)
+                        {
+                            attachConnector = selectedBreak.ConnectedElements
+                                .FirstOrDefault(connectedElement => connectedElement.Id != deletePipe.Id)
+                                .FindCommonConnector(selectedBreak.FamilyInstance);
+
+                            Element connectElementDeletePipe =
+                                deletePipe.GetConnectedMEPElements().FirstOrDefault(x => x.Id != selectedBreak.Id);
+
+                            if (connectElementDeletePipe != null)
+                            {
+                                targetConnector = connectElementDeletePipe.FindCommonConnector(deletePipe);
+                            }
+                            else
+                            {
+                                targetPosition = deletePipe.GetConnectors().FirstOrDefault(x => !x.IsConnected)?.Origin;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var connectElementSelectedBreak =
+                            selectedBreak.ConnectedElements.FirstOrDefault(x => x is Pipe);
+                        if (connectElementSelectedBreak != null)
+                        {
+                            attachConnector =
+                                connectElementSelectedBreak.FindCommonConnector(selectedBreak.FamilyInstance);
+                            targetConnector = selectedBreak.ConnectedElements
+                                .FirstOrDefault(x => x.Id != connectElementSelectedBreak.Id)
+                                .FindCommonConnector(selectedBreak.FamilyInstance);
+                        }
+                    }
+                }
             }
 
-            trans.Commit();
-        }
-        catch (Exception ex)
-        {
-            trans.RollBack();
+            using Transaction trans = new Transaction(_doc, "Удалить разрыв");
+            trans.Start();
+            try
+            {
+                // Удаляем разрывы и промежуточную трубу
+                _doc.Delete(selectedBreak.Id);
+                if (pairBreak != null)
+                {
+                    _doc.Delete(pairBreak.Id);
+                }
+
+                if (generalPipe != null)
+                {
+                    _doc.Delete(generalPipe.Id);
+                }
+
+                if (deletePipe != null)
+                {
+                    _doc.Delete(deletePipe.Id);
+                }
+
+                if (targetConnector != null)
+                {
+                    LengthenCurve(attachConnector, targetConnector);
+                    attachConnector.ConnectTo(targetConnector);
+                }
+                else
+                {
+                    LengthenCurveToPosition(attachConnector, targetPosition);
+                }
+
+                trans.Commit();
+            }
+            catch (Exception ex)
+            {
+                trans.RollBack();
+                TaskDialog.Show("Ошибка", ex.Message);
+            }
         }
     }
 
@@ -1471,5 +1476,41 @@ public class MakeBreakServices
         }
 
         File.Delete(tempFamilyPath);
+    }
+
+    public void HidePipe(FamilySymbol familySymbol)
+    {
+        while (true)
+        {
+            var selectedBreak = SelectGap(familySymbol);
+            if (selectedBreak?.FamilyInstance == null) return;
+            var pairBreak = selectedBreak.FindPairBreak(familySymbol);
+            if (pairBreak == null) return;
+            var generalPipe = selectedBreak.FindGeneralPipe(pairBreak);
+            if (generalPipe == null) return;
+            string param = string.Empty;
+            if (generalPipe.Document.ActiveView.ViewType == ViewType.ThreeD)
+            {
+                param = "msh_Разрыв";
+            }
+
+            Transaction transaction = new Transaction(_doc, "Скрыть трубу");
+            try
+            {
+                transaction.Start();
+
+                var paramValue = generalPipe.FindParameter(param);
+                if (paramValue != null && !paramValue.AsBool())
+                {
+                    paramValue.Set(true);
+                }
+
+                transaction.Commit();
+            }
+            catch (Exception e)
+            {
+                transaction.RollBack();
+            }
+        }
     }
 }
