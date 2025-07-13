@@ -7,18 +7,71 @@ public class Gap
 {
     public FamilyInstance FamilyInstance { get; set; }
     public List<Element> ConnectedElements => GetConnectedElements();
-
     public ElementId Id { get; set; }
     public List<Connector> Connectors => [..GetConnectors()];
 
-
-    public Gap(FamilyInstance familyInstance)
+    public Gap(Reference reference, Document doc)
     {
-        if (familyInstance == null)
+        if (reference == null)
         {
             return;
         }
 
+        Element element = doc.GetElement(reference);
+        if (element is DisplacementElement displacement)
+        {
+            var pickPoint = reference.GlobalPoint; 
+            FamilyInstance = FindElementInDisplacement(displacement, pickPoint);
+            Id = FamilyInstance.Id; 
+        }
+        else
+        {
+            if (element is not FamilyInstance familyInstance) return;
+            FamilyInstance = familyInstance;
+            Id = familyInstance.Id; 
+        }
+        
+    }
+    private FamilyInstance FindElementInDisplacement(DisplacementElement displacement, XYZ pickPoint)
+    {
+        if (displacement==null || pickPoint==null)  return null;
+        Document doc = displacement.Document;
+        FamilyInstance familyInstance=null;
+        var displacementElementIds = displacement.GetDisplacedElementIds();
+        double toleranceInMm = 100.0;
+
+        // Преобразование миллиметров в внутренние единицы Revit (футы)
+        double tolerance = UnitUtils.ConvertToInternalUnits(toleranceInMm, UnitTypeId.Millimeters);
+
+        foreach (ElementId displacedId in displacementElementIds)
+        {
+            Element element = doc.GetElement(displacedId);
+
+            if (element is not FamilyInstance instance) continue;
+
+            BoundingBoxXYZ bounding = instance.get_BoundingBox(doc.ActiveView);
+            if (bounding == null) continue;
+
+            // Расширяем BoundingBox на величину погрешности
+            XYZ expandVector = new XYZ(tolerance, tolerance, tolerance);
+            BoundingBoxXYZ expandedBounding = new BoundingBoxXYZ
+            {
+                Min = bounding.Min.Subtract(expandVector),
+                Max = bounding.Max.Add(expandVector)
+            };
+
+            var contains = expandedBounding.Contains(pickPoint);
+            if (!contains) continue;
+
+            familyInstance = instance;
+            break;
+        }
+
+        return familyInstance;
+    }
+    private Gap(FamilyInstance familyInstance)
+    {
+        if (familyInstance == null) return;
         FamilyInstance = familyInstance;
         Id = familyInstance.Id;
     }
@@ -30,14 +83,12 @@ public class Gap
         {
             foreach (var connector in Connectors)
             {
-                if (connector.IsConnected)
+                if (!connector.IsConnected) continue;
+                foreach (Connector connectedConnector in connector.AllRefs.Cast<Connector>())
                 {
-                    foreach (Connector connectedConnector in connector.AllRefs.Cast<Connector>())
+                    if (connectedConnector.Owner.Id != this.Id)
                     {
-                        if (connectedConnector.Owner.Id != this.Id)
-                        {
-                            elements.Add(connectedConnector.Owner);
-                        }
+                        elements.Add(connectedConnector.Owner);
                     }
                 }
             }
@@ -112,7 +163,6 @@ public class Gap
             FindBreaksInPath(connectedElement, familySymbol, breaks, depth + 1, visitedElements);
         }
     }
-
 
     public Pipe FindGeneralPipe(Gap gap)
     {

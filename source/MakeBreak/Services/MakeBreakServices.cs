@@ -115,8 +115,8 @@ public class MakeBreakServices
         }
     }
 
-    private void CreateDisplacementElement(Break break1, PipeWrapper secondSplitPipe, PipeWrapper midPipe,
-        PipeWrapper firstSplitPipe, FamilyInstance secondCoupling, DisplacementElement displacementCreate1)
+    private void CreateDisplacementElement(Break break1, PipeWrp secondSplitPipe, PipeWrp midPipe,
+        PipeWrp firstSplitPipe, FamilyInstance secondCoupling, DisplacementElement displacementCreate1)
     {
         DisplacementElement displacementCreate2 = null;
         if (break1.PrimaryDisplacement == null) return;
@@ -178,25 +178,25 @@ public class MakeBreakServices
         }, break1.PrimaryDisplacement);
     }
 
-    private PipeWrapper GetMidPipe(PipeWrapper secondPipeToCut, Break break1, PipeWrapper secondSplitPipe, Break break2,
-        (PipeWrapper SplitPipe, FamilyInstance Coupling)? firstBreak, PipeWrapper firstSplitPipe)
+    private PipeWrp GetMidPipe(PipeWrp secondPipeToCut, Break break1, PipeWrp secondSplitPipe, Break break2,
+        (PipeWrp SplitPipe, FamilyInstance Coupling)? firstBreak, PipeWrp firstSplitPipe)
     {
-        PipeWrapper midPipe = null;
+        PipeWrp midPipe = null;
         if (secondPipeToCut != null && break1.TargetPipe != null && secondPipeToCut.Id.Equals(break1.TargetPipe.Id) ||
             secondPipeToCut != null && firstBreak != null &&
             secondPipeToCut.Id.Equals(firstSplitPipe.Id))
         {
-            midPipe = new PipeWrapper(DetermineMidPipeByDistance(secondPipeToCut, secondSplitPipe, break1.BreakPoint,
+            midPipe = new PipeWrp(DetermineMidPipeByDistance(secondPipeToCut, secondSplitPipe, break1.BreakPoint,
                 break2.BreakPoint));
         }
 
         return midPipe;
     }
 
-    private static PipeWrapper GetPipeToCut(Break break1, PipeWrapper firstSplitPipe,
+    private static PipeWrp GetPipeToCut(Break break1, PipeWrp firstSplitPipe,
         Break break2)
     {
-        PipeWrapper pipeToCut;
+        PipeWrp pipeToCut;
 
         // Проверяем, какая из труб после разрезания имеет такой же ElementId
         if (break1.TargetPipe?.Id.Value == break2.TargetPipe.Id.Value)
@@ -222,7 +222,7 @@ public class MakeBreakServices
         return pipeToCut;
     }
 
-    private DisplacementElement DisplacementCreate(Break break1, PipeWrapper firstSplitPipe,
+    private DisplacementElement DisplacementCreate(Break break1, PipeWrp firstSplitPipe,
         FamilyInstance firstCoupling)
     {
         DisplacementElement displacementCreate1 = null;
@@ -268,7 +268,7 @@ public class MakeBreakServices
         return displacementCreate1;
     }
 
-    private (PipeWrapper SplitPipe, FamilyInstance Coupling)? InsertBreak(FamilySymbol familySymbol, Break break1)
+    private (PipeWrp SplitPipe, FamilyInstance Coupling)? InsertBreak(FamilySymbol familySymbol, Break break1)
     {
         ElementId firstSplitPipeId = PlumbingUtils.BreakCurve(_doc, break1.TargetPipe.Id, break1.BreakPoint);
         // Разрезаем трубу в первой точке
@@ -278,8 +278,8 @@ public class MakeBreakServices
             return null;
         }
 
-        PipeWrapper firstSplitPipe =
-            new PipeWrapper(_doc.GetElement(firstSplitPipeId) as Pipe); // Вторая часть - новая труба
+        PipeWrp firstSplitPipe =
+            new PipeWrp(_doc.GetElement(firstSplitPipeId) as Pipe); // Вторая часть - новая труба
         // Создаем муфту между первой и второй частью (используя "Разрыв")
         var firstCoupling = CreateCouplingBetweenPipes(break1, firstSplitPipe, familySymbol);
         if (firstCoupling == null)
@@ -330,7 +330,7 @@ public class MakeBreakServices
         return null;
     }
 
-    private FamilyInstance CreateCouplingBetweenPipes(Break bBreak, PipeWrapper splitPipe, FamilySymbol familySymbol)
+    private FamilyInstance CreateCouplingBetweenPipes(Break bBreak, PipeWrp splitPipe, FamilySymbol familySymbol)
     {
         try
         {
@@ -512,7 +512,7 @@ public class MakeBreakServices
             .FirstOrDefault();
     }
 
-    private static void SetDiameterFitting(PipeWrapper pipe, FamilyInstance familyInstance)
+    private static void SetDiameterFitting(PipeWrp pipe, FamilyInstance familyInstance)
     {
         double? pipeDiameter = pipe.GetDiameter();
         Parameter fittingDiameterParam = null;
@@ -682,7 +682,7 @@ public class MakeBreakServices
     /// <summary>
     /// Определяет среднюю трубу между двумя точками по расстоянию
     /// </summary>
-    private Pipe DetermineMidPipeByDistance(PipeWrapper pipe1, PipeWrapper pipe2, XYZ point1, XYZ point2)
+    private Pipe DetermineMidPipeByDistance(PipeWrp pipe1, PipeWrp pipe2, XYZ point1, XYZ point2)
     {
         // Вычисляем средние точки каждой трубы
         XYZ midPoint1 = pipe1.GetPipeCenter();
@@ -715,35 +715,7 @@ public class MakeBreakServices
                     break;
                 case DisplacementElement displacement:
                 {
-                    var displacementElementIds = displacement.GetDisplacedElementIds();
-                    double toleranceInMm = 100.0;
-
-                    // Преобразование миллиметров в внутренние единицы Revit (футы)
-                    double tolerance = UnitUtils.ConvertToInternalUnits(toleranceInMm, UnitTypeId.Millimeters);
-
-                    foreach (ElementId displacedId in displacementElementIds)
-                    {
-                        Element element = _doc.GetElement(displacedId);
-
-                        if (element is not FamilyInstance instance) continue;
-
-                        BoundingBoxXYZ bounding = instance.get_BoundingBox(_doc.ActiveView);
-                        if (bounding == null) continue;
-
-                        // Расширяем BoundingBox на величину погрешности
-                        XYZ expandVector = new XYZ(tolerance, tolerance, tolerance);
-                        BoundingBoxXYZ expandedBounding = new BoundingBoxXYZ
-                        {
-                            Min = bounding.Min.Subtract(expandVector),
-                            Max = bounding.Max.Add(expandVector)
-                        };
-
-                        var contains = expandedBounding.Contains(selectReference.GlobalPoint);
-                        if (!contains) continue;
-
-                        familyInstance = instance;
-                        break;
-                    }
+                    familyInstance = FindElementInDisplacement(displacement, selectReference.GlobalPoint);
 
                     break;
                 }
@@ -785,7 +757,43 @@ public class MakeBreakServices
         }
     }
 
-    public void DeleteBreaksAndCreatePipe(FamilySymbol familySymbol)
+    private FamilyInstance FindElementInDisplacement(DisplacementElement displacement, XYZ pickPoint)
+    {
+        FamilyInstance familyInstance=null;
+        var displacementElementIds = displacement.GetDisplacedElementIds();
+        double toleranceInMm = 100.0;
+
+        // Преобразование миллиметров в внутренние единицы Revit (футы)
+        double tolerance = UnitUtils.ConvertToInternalUnits(toleranceInMm, UnitTypeId.Millimeters);
+
+        foreach (ElementId displacedId in displacementElementIds)
+        {
+            Element element = _doc.GetElement(displacedId);
+
+            if (element is not FamilyInstance instance) continue;
+
+            BoundingBoxXYZ bounding = instance.get_BoundingBox(_doc.ActiveView);
+            if (bounding == null) continue;
+
+            // Расширяем BoundingBox на величину погрешности
+            XYZ expandVector = new XYZ(tolerance, tolerance, tolerance);
+            BoundingBoxXYZ expandedBounding = new BoundingBoxXYZ
+            {
+                Min = bounding.Min.Subtract(expandVector),
+                Max = bounding.Max.Add(expandVector)
+            };
+
+            var contains = expandedBounding.Contains(pickPoint);
+            if (!contains) continue;
+
+            familyInstance = instance;
+            break;
+        }
+
+        return familyInstance;
+    }
+
+    public void DeleteBreaks(FamilySymbol familySymbol)
     {
         var selectedBreak = SelectGap(familySymbol);
         if (selectedBreak?.FamilyInstance == null) return;
@@ -870,14 +878,13 @@ public class MakeBreakServices
                 {
                     var connectElementSelectedBreak =
                         selectedBreak.ConnectedElements.FirstOrDefault(x => x is Pipe);
-                    if (connectElementSelectedBreak!= null)
+                    if (connectElementSelectedBreak != null)
                     {
                         attachConnector = connectElementSelectedBreak.FindCommonConnector(selectedBreak.FamilyInstance);
                         targetConnector = selectedBreak.ConnectedElements
                             .FirstOrDefault(x => x.Id != connectElementSelectedBreak.Id)
                             .FindCommonConnector(selectedBreak.FamilyInstance);
                     }
-                  
                 }
             }
         }
@@ -1216,14 +1223,13 @@ public class MakeBreakServices
 
     private Gap SelectGap(FamilySymbol familySymbol)
     {
-        Element selectedElement = null;
         try
         {
             var reference = _uidoc.Selection
                 .PickObject(ObjectType.Element, new BreakSelectionFilter(familySymbol));
             if (reference != null)
             {
-                selectedElement = _doc.GetElement(reference);
+                return new Gap(reference, _doc);
             }
         }
         catch (OperationCanceledException)
@@ -1231,10 +1237,7 @@ public class MakeBreakServices
             return null;
         }
 
-        Gap selectedBreak = null;
-        if (selectedElement is FamilyInstance familyInstance) selectedBreak = new Gap(familyInstance);
-
-        return selectedBreak;
+        return null;
     }
 
 

@@ -5,7 +5,7 @@ namespace MakeBreak.Models;
 public class Break
 {
     public Element SelectedElement { get; set; }
-    public PipeWrapper TargetPipe { get; set; }
+    public PipeWrp TargetPipe { get; set; }
     public XYZ BreakPoint { get; set; }
     public DisplacementElement PrimaryDisplacement { get; set; }
 
@@ -22,15 +22,15 @@ public class Break
         BreakPoint = TargetPipe.ProjectPointOntoCurve(pickPoint, primaryDisplacement);
     }
 
-    private PipeWrapper GetOriginalPipe(Element selectedElement, XYZ pick, out DisplacementElement primaryDisplacement)
+    private PipeWrp GetOriginalPipe(Element selectedElement, XYZ pick, out DisplacementElement primaryDisplacement)
     {
         Document doc = selectedElement.Document;
-        PipeWrapper originalPipe = null;
+        PipeWrp originalPipe = null;
         primaryDisplacement = null;
         switch (selectedElement)
         {
             case Pipe pipe:
-                originalPipe = new PipeWrapper(pipe);
+                originalPipe = new PipeWrp(pipe);
                 break;
             case DisplacementElement displacementElement:
             {
@@ -48,7 +48,7 @@ public class Break
                     var contains = bounding.Contains(pick);
                     if (!contains) continue;
                     // Нашли трубу, которая проходит через точку
-                    originalPipe = new PipeWrapper(pipe);
+                    originalPipe = new PipeWrp(pipe);
                     break;
                 }
 

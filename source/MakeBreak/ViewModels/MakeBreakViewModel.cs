@@ -300,7 +300,7 @@ public sealed partial class MakeBreakViewModel : ObservableObject
         {
             try
             {
-                _makeBreakServices.DeleteBreaksAndCreatePipe(_familySymbol);
+                _makeBreakServices.DeleteBreaks(_familySymbol);
             }
             catch (Exception e)
             {

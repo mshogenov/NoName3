@@ -2,7 +2,7 @@ using Autodesk.Revit.DB.Plumbing;
 
 namespace MakeBreak.Models;
 
-public sealed class PipeWrapper
+public sealed class PipeWrp
 {
     public Pipe Pipe { get; }
   
@@ -14,7 +14,7 @@ public sealed class PipeWrapper
         Pipe?.ConnectorManager?.Connectors?.Cast<Connector>().ToArray() ?? [];
 
 
-    public PipeWrapper(Pipe pipe)
+    public PipeWrp(Pipe pipe)
     {
         Pipe = pipe ?? throw new ArgumentNullException(nameof(pipe));
         Id = pipe.Id;
