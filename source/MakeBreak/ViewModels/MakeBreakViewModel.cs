@@ -19,6 +19,7 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     [ObservableProperty] private bool _isExistingFilterInDocument;
     [ObservableProperty] private bool _isExistingParameter;
     [ObservableProperty] private bool _isExistingFamily;
+    [ObservableProperty] private bool _isExistingFilterToView;
 
     public View ActiveView
     {
@@ -26,14 +27,11 @@ public sealed partial class MakeBreakViewModel : ObservableObject
         set
         {
             _activeView = value;
-            OnPropertyChanged(nameof(ActiveView));
+            OnPropertyChanged();
         }
     }
 
     private const string _parameterRupture = "msh_Разрыв";
-
-    // Добавьте поле для отслеживания состояния выполнения команды
-    private bool _isExecutingMakeBreak;
 
 
     private readonly List<BuiltInCategory> _categories =
@@ -41,23 +39,19 @@ public sealed partial class MakeBreakViewModel : ObservableObject
         BuiltInCategory.OST_PipeCurves,
     ];
 
-    private bool _isExecutingDeleteBreak;
-    private bool _isExecutingHidePipe;
-
-
     public MakeBreakViewModel()
     {
-        if (!Helpers.CheckParameterExists(_doc, _parameterRupture))
+        if (Helpers.CheckParameterExists(_doc, _parameterRupture))
         {
             IsExistingParameter = true;
         }
 
-        if (!CheckFilterExists(_doc, "Разрыв"))
+        if (CheckFilterExists(_doc, "Разрыв"))
         {
             IsExistingFilterInDocument = true;
         }
 
-        if (!CheckFamilyExists("Разрыв", out var family))
+        if (CheckFamilyExists("Разрыв", out var family))
         {
             IsExistingFamily = true;
         }
@@ -66,18 +60,21 @@ public sealed partial class MakeBreakViewModel : ObservableObject
             _familySymbol = family;
         }
 
-        if (_activeView.ViewType is ViewType.ThreeD or ViewType.FloorPlan)
+        if (HasFilterIsActiveView("Разрыв", _activeView))
         {
-            var filter = new FilteredElementCollector(_doc)
-                .OfClass(typeof(ParameterFilterElement))
-                .Cast<ParameterFilterElement>().FirstOrDefault(x => x.Name == "Разрыв");
-            // проверка фильтра на правильность настроек
-
-            ICollection<ElementId> appliedFilters = _activeView.GetFilters();
+            _isExistingFilterToView = true;
         }
 
-
         uiapp.ViewActivated += OnViewActivated;
+    }
+
+    private bool HasFilterIsActiveView(string filterName, View activeView)
+    {
+        var filter = new FilteredElementCollector(activeView.Document)
+            .OfClass(typeof(ParameterFilterElement))
+            .Cast<ParameterFilterElement>().FirstOrDefault(x => x.Name == filterName);
+        ICollection<ElementId> appliedFilters = activeView.GetFilters();
+        return appliedFilters.Contains(filter?.Id);
     }
 
     private bool CheckFamilyExists(string familyName, out FamilySymbol family)
@@ -156,9 +153,8 @@ public sealed partial class MakeBreakViewModel : ObservableObject
 
     private void OnViewActivated(object sender, ViewActivatedEventArgs e)
     {
-        Document doc = e.Document;
         View activeView = e.CurrentActiveView;
-        // проверка наличия фильтра на виде
+        IsExistingFilterToView = HasFilterIsActiveView("Разрыв", activeView);
     }
 
     [RelayCommand]
@@ -171,7 +167,7 @@ public sealed partial class MakeBreakViewModel : ObservableObject
                 using Transaction tr = new Transaction(_doc, "Добавить фильтр вида");
                 tr.Start();
                 var filter = _makeBreakServices.AddFilter(_categories, "Разрыв", "msh_Разрыв", true);
-                _makeBreakServices.ApplyFilterToView(_activeView, filter);
+                _makeBreakServices.ApplyFilterToView(_activeView, filter, false);
                 tr.Commit();
             }
             catch (Exception ex)
@@ -209,8 +205,10 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void BringBackVisibilityPipe()
+    private void BringBackVisibilityPipe(object param)
     {
+        if (param is not Window window) return;
+        window.Hide();
         _actionEventHandler.Raise(_ =>
         {
             try
@@ -224,6 +222,7 @@ public sealed partial class MakeBreakViewModel : ObservableObject
             finally
             {
                 _actionEventHandler.Cancel();
+                window.Show();
             }
         });
     }
@@ -252,13 +251,12 @@ public sealed partial class MakeBreakViewModel : ObservableObject
         });
     }
 
-    [RelayCommand(CanExecute = nameof(CanExecuteMakeBreak))]
-    private void MakeBreak()
+    [RelayCommand]
+    private void MakeBreak(object param)
     {
-        // Устанавливаем флаг, что команда запущена
-        _isExecutingMakeBreak = true;
-        // Уведомляем об изменении состояния для обновления доступности команды
-        (MakeBreakCommand as RelayCommand)?.NotifyCanExecuteChanged();
+        if (param is not Window window) return;
+        window.Hide();
+
         _actionEventHandler.Raise(_ =>
         {
             try
@@ -279,24 +277,17 @@ public sealed partial class MakeBreakViewModel : ObservableObject
             finally
             {
                 _actionEventHandler.Cancel();
-                // Сбрасываем флаг после завершения команды
-                _isExecutingMakeBreak = false;
-
-                // Уведомляем об изменении состояния
-                (MakeBreakCommand as RelayCommand)?.NotifyCanExecuteChanged();
+                window.Show();
             }
         });
     }
 
-    // Метод для проверки возможности выполнения команды
-    private bool CanExecuteMakeBreak() => !_isExecutingMakeBreak;
-
-    [RelayCommand(CanExecute = nameof(CanExecuteDeleteBreak))]
-    private void DeleteBreak()
+    [RelayCommand]
+    private void DeleteBreak(object param)
     {
-        // Устанавливаем флаг, что команда запущена
-        _isExecutingDeleteBreak = true;
-        (DeleteBreakCommand as RelayCommand)?.NotifyCanExecuteChanged();
+        if (param is not Window window) return;
+        window.Hide();
+
         _actionEventHandler.Raise(_ =>
         {
             try
@@ -310,23 +301,18 @@ public sealed partial class MakeBreakViewModel : ObservableObject
             finally
             {
                 _actionEventHandler.Cancel();
-                // Сбрасываем флаг после завершения команды
-                _isExecutingDeleteBreak = false;
-
-                // Уведомляем об изменении состояния
-                (DeleteBreakCommand as RelayCommand)?.NotifyCanExecuteChanged();
+                window.Show();
             }
         });
     }
 
-    private bool CanExecuteDeleteBreak() => !_isExecutingDeleteBreak;
 
-    [RelayCommand(CanExecute =nameof(CanExecuteHidePipe))]
-    private void HidePipe()
+    [RelayCommand]
+    private void HidePipe(object param)
     {
-        // Устанавливаем флаг, что команда запущена
-        _isExecutingDeleteBreak = true;
-        (HidePipeCommand as RelayCommand)?.NotifyCanExecuteChanged();
+        if (param is not Window window) return;
+        window.Hide();
+
         _actionEventHandler.Raise(_ =>
         {
             try
@@ -340,13 +326,45 @@ public sealed partial class MakeBreakViewModel : ObservableObject
             finally
             {
                 _actionEventHandler.Cancel();
-                // Сбрасываем флаг после завершения команды
-                _isExecutingHidePipe = false;
-
-                // Уведомляем об изменении состояния
-                (HidePipeCommand as RelayCommand)?.NotifyCanExecuteChanged();
+                window.Show();
             }
         });
     }
-    private bool CanExecuteHidePipe() => !_isExecutingHidePipe;
+
+    [RelayCommand]
+    private void AddFilterToView()
+    {
+        _actionEventHandler.Raise(_ =>
+        {
+            using Transaction tr = new Transaction(_doc, "Добавить фильтр к виду");
+            try
+            {
+                tr.Start();
+                if (CheckFilterExists(_doc, "Разрыв"))
+                {
+                    var filter = new FilteredElementCollector(_doc)
+                        .OfClass(typeof(ParameterFilterElement))
+                        .Cast<ParameterFilterElement>().FirstOrDefault(x => x.Name == "Разрыв");
+                    _makeBreakServices.ApplyFilterToView(_activeView, filter, false);
+                }
+                else
+                {
+                    var filter = _makeBreakServices.AddFilter(_categories, "Разрыв", "msh_Разрыв", true);
+                    _makeBreakServices.ApplyFilterToView(_activeView, filter, false);
+                }
+
+                IsExistingFilterToView = true;
+                tr.Commit();
+            }
+            catch (Exception e)
+            {
+                TaskDialog.Show("Ошибка", "Произошла ошибка: " + e.Message);
+                tr.RollBack();
+            }
+            finally
+            {
+                _actionEventHandler.Cancel();
+            }
+        });
+    }
 }

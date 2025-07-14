@@ -1419,14 +1419,13 @@ public class MakeBreakServices
             .FirstOrDefault(pe => pe.Name.Equals(parameterName, StringComparison.OrdinalIgnoreCase));
     }
 
-    public void ApplyFilterToView(View activeView, ParameterFilterElement filter)
+    public void ApplyFilterToView(View activeView, ParameterFilterElement filter, bool filterVisibility)
     {
         if (activeView.GetFilters().Contains(filter.Id)) return;
-
         try
         {
             activeView.AddFilter(filter.Id);
-            activeView.SetFilterVisibility(filter.Id, false);
+            activeView.SetFilterVisibility(filter.Id, filterVisibility);
         }
         catch (Exception ex)
         {

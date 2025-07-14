@@ -17,7 +17,7 @@
     Background="{DynamicResource WindowBackgroundBrush}">
     <Window.Resources>
         <ResourceDictionary>
-            <converter:BoolVisibilityConverter x:Key="BoolVisibilityConverter" />
+            <converter:InverseBoolVisibilityConverter x:Key="InverseBoolVisibilityConverter" />
             <d:ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
@@ -43,9 +43,11 @@
             <DockPanel HorizontalAlignment="Right">
                 <Button HorizontalAlignment="Right" Content="Скрыть трубу"
                         Command="{Binding HidePipeCommand }"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                         Margin="5 7"
                         Style="{DynamicResource CommonButtonStyle2}" />
                 <Button HorizontalAlignment="Right" Content="Показать трубу"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                         Command="{Binding BringBackVisibilityPipeCommand }"
                         Margin="5 7"
                         Style="{DynamicResource CommonButtonStyle2}" />
@@ -54,10 +56,12 @@
 
                 <Button HorizontalAlignment="Right" Content="Удалить разрыв"
                         Margin="5 7"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                         Command="{Binding DeleteBreakCommand }"
                         Style="{DynamicResource CommonButtonStyle2}" />
                 <Button Content="Вставить разрыв"
                         Margin="5 7"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                         Command="{Binding MakeBreakCommand}"
                         Style="{DynamicResource CommonButtonStyle2}" />
             </DockPanel>
@@ -75,25 +79,33 @@
                 <RowDefinition />
                 <RowDefinition />
                 <RowDefinition />
+                <RowDefinition />
             </Grid.RowDefinitions>
-
             <StackPanel Orientation="Horizontal"
+                        Visibility="{Binding IsExistingFilterToView,
+                        Converter={StaticResource InverseBoolVisibilityConverter} }">
+                <TextBlock Text="На активном виде отсутствует фильтр "
+                           Style="{DynamicResource TextBlockStyle}" />
+                <Button Content="Добавить" Command="{Binding AddFilterToViewCommand}" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" Orientation="Horizontal"
                         Visibility="{Binding IsExistingParameter,
-                        Converter={StaticResource BoolVisibilityConverter} }">
+                        Converter={StaticResource InverseBoolVisibilityConverter} }">
                 <TextBlock Text="В документе отсутствует параметр."
                            Style="{DynamicResource TextBlockStyle}" />
                 <Button Content="Добавить" Command="{Binding AddParameterCommand}" />
             </StackPanel>
-            <StackPanel Grid.Row="1" Orientation="Horizontal"
+            <StackPanel Grid.Row="2" Orientation="Horizontal"
                         Visibility="{Binding IsExistingFilterInDocument,
-                        Converter={StaticResource BoolVisibilityConverter} }">
+                        Converter={StaticResource InverseBoolVisibilityConverter} }">
                 <TextBlock Text="В документе отсутствует фильтр вида."
                            Style="{DynamicResource TextBlockStyle}" />
-                <Button Content="Добавить" Command="{Binding AddFilterCommand}" />
+                <Button Content="Добавить" 
+                        Command="{Binding AddFilterCommand}" />
             </StackPanel>
-            <StackPanel Grid.Row="2" Orientation="Horizontal"
+            <StackPanel Grid.Row="3" Orientation="Horizontal"
                         Visibility="{Binding IsExistingFamily,
-                        Converter={StaticResource BoolVisibilityConverter} }">
+                        Converter={StaticResource InverseBoolVisibilityConverter} }">
                 <TextBlock Text="В документе отсутствует семейство."
                            Style="{DynamicResource TextBlockStyle}" />
                 <Button Content="Добавить" Command="{Binding AddFamilyCommand}" />
