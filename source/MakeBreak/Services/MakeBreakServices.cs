@@ -16,7 +16,9 @@ public class MakeBreakServices
 {
     private readonly UIDocument _uidoc = Context.ActiveUiDocument;
     private readonly Document _doc = Context.ActiveDocument;
-
+    private const string _parameterName_msh_Break_3D = "msh_Разрыв_3D";
+    private const string _parameterName_msh_Break_Plan = "msh_Разрыв_План";
+   
     public void CreateTwoCouplingsAndSetMidPipeParameter(FamilySymbol familySymbol)
     {
         while (true)
@@ -297,13 +299,13 @@ public class MakeBreakServices
         {
             case ViewType.ThreeD:
             {
-                Parameter commentParam = pipe?.FindParameter("msh_Разрыв");
+                Parameter commentParam = pipe?.FindParameter(_parameterName_msh_Break_3D);
                 commentParam?.Set(true);
                 break;
             }
             case ViewType.FloorPlan:
             {
-                Parameter commentParam = pipe?.FindParameter("msh_Разрыв_План");
+                Parameter commentParam = pipe?.FindParameter(_parameterName_msh_Break_Plan);
                 commentParam?.Set(true);
                 break;
             }
@@ -555,8 +557,7 @@ public class MakeBreakServices
         XYZ displacementVector = primaryDisplacement.GetRelativeDisplacement();
 
         // Сохраняем список всех элементов для проверки
-        Dictionary<ElementId, DisplacementElement> elementToDisplacement =
-            new Dictionary<ElementId, DisplacementElement>();
+        Dictionary<ElementId, DisplacementElement> elementToDisplacement = [];
 
         foreach (DisplacementElement disp in displacementsToMerge)
         {
@@ -724,10 +725,16 @@ public class MakeBreakServices
             if (familyInstance == null) return;
             var activeView = familyInstance.Document.ActiveView;
             string param = string.Empty;
-            if (activeView.ViewType == ViewType.ThreeD)
+            switch (activeView.ViewType)
             {
-                param = "msh_Разрыв";
+                case ViewType.ThreeD:
+                    param = _parameterName_msh_Break_3D;
+                    break;
+                case ViewType.FloorPlan:
+                    param = _parameterName_msh_Break_Plan;
+                    break;
             }
+
 
             ConnectorSet fittingConnectors = familyInstance.MEPModel.ConnectorManager.Connectors;
             List<Connector> connectors = fittingConnectors.Cast<Connector>().ToList();
@@ -1488,10 +1495,17 @@ public class MakeBreakServices
             var generalPipe = selectedBreak.FindGeneralPipe(pairBreak);
             if (generalPipe == null) return;
             string param = string.Empty;
-            if (generalPipe.Document.ActiveView.ViewType == ViewType.ThreeD)
+            var activeView = generalPipe.Document.ActiveView;
+            switch (activeView.ViewType)
             {
-                param = "msh_Разрыв";
+                case ViewType.ThreeD:
+                    param = _parameterName_msh_Break_3D;
+                    break;
+                case ViewType.FloorPlan:
+                    param = _parameterName_msh_Break_Plan;
+                    break;
             }
+
 
             Transaction transaction = new Transaction(_doc, "Скрыть трубу");
             try

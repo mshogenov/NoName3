@@ -1,7 +1,6 @@
 ﻿using System.Windows;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
-using MakeBreak.Commands;
 using MakeBreak.Services;
 using Nice3point.Revit.Toolkit.External.Handlers;
 using NoNameApi.Utils;
@@ -13,26 +12,21 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     private readonly ActionEventHandler _actionEventHandler = new();
     private readonly MakeBreakServices _makeBreakServices = new();
     private readonly FamilySymbol _familySymbol;
-    private UIApplication uiapp = Context.UiApplication;
+    private readonly UIApplication uiApp = Context.UiApplication;
     private readonly Document _doc = Context.ActiveDocument;
-    private View _activeView = Context.ActiveView;
-    [ObservableProperty] private bool _isExistingFilterInDocument;
-    [ObservableProperty] private bool _isExistingParameter;
+    private readonly View _activeView = Context.ActiveView;
+    [ObservableProperty] private bool _isExistingFilterBreak_3D;
+    [ObservableProperty] private bool _isExistingFilterBreak_Plan;
+    [ObservableProperty] private bool _isExistingParameter_msh_Break_3D;
+    [ObservableProperty] private bool _isExistingParameter_msh_Break_Plan;
     [ObservableProperty] private bool _isExistingFamily;
-    [ObservableProperty] private bool _isExistingFilterToView;
+    [ObservableProperty] private bool _isExistingFilterToViewBreak_3D=true;
+    [ObservableProperty] private bool _isExistingFilterToViewBreak_Plan=true;
 
-    public View ActiveView
-    {
-        get => _activeView;
-        set
-        {
-            _activeView = value;
-            OnPropertyChanged();
-        }
-    }
-
-    private const string _parameterRupture = "msh_Разрыв";
-
+    private const string _parameterName_msh_Break_3D = "msh_Разрыв_3D";
+    private const string _parameterName_msh_Break_Plan = "msh_Разрыв_План";
+    private const string _filterName_Break_Plan = "Разрыв_План";
+    private const string _filterName_Break_3D = "Разрыв_3D";
 
     private readonly List<BuiltInCategory> _categories =
     [
@@ -41,31 +35,53 @@ public sealed partial class MakeBreakViewModel : ObservableObject
 
     public MakeBreakViewModel()
     {
-        if (Helpers.CheckParameterExists(_doc, _parameterRupture))
+        if (Helpers.CheckParameterExists(_doc, _parameterName_msh_Break_3D))
         {
-            IsExistingParameter = true;
+            _isExistingParameter_msh_Break_3D = true;
         }
 
-        if (CheckFilterExists(_doc, "Разрыв"))
+        if (Helpers.CheckParameterExists(_doc, _parameterName_msh_Break_Plan))
         {
-            IsExistingFilterInDocument = true;
+            _isExistingParameter_msh_Break_Plan = true;
+        }
+
+
+        if (CheckFilterExists(_doc, _filterName_Break_3D))
+        {
+            _isExistingFilterBreak_3D = true;
+        }
+
+        if (CheckFilterExists(_doc, _filterName_Break_Plan))
+        {
+            _isExistingFilterBreak_Plan = true;
         }
 
         if (CheckFamilyExists("Разрыв", out var family))
         {
             IsExistingFamily = true;
-        }
-        else
-        {
             _familySymbol = family;
         }
-
-        if (HasFilterIsActiveView("Разрыв", _activeView))
+       
+        switch (_activeView.ViewType)
         {
-            _isExistingFilterToView = true;
+            case ViewType.ThreeD:
+                if (!HasFilterIsActiveView(_filterName_Break_3D, _activeView))
+                {
+                    _isExistingFilterToViewBreak_3D = false;
+                }
+
+                break;
+            case ViewType.FloorPlan:
+                if (!HasFilterIsActiveView(_filterName_Break_Plan, _activeView))
+                {
+                    _isExistingFilterToViewBreak_Plan = false;
+                }
+
+                break;
         }
 
-        uiapp.ViewActivated += OnViewActivated;
+
+        uiApp.ViewActivated += OnViewActivated;
     }
 
     private bool HasFilterIsActiveView(string filterName, View activeView)
@@ -154,11 +170,19 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     private void OnViewActivated(object sender, ViewActivatedEventArgs e)
     {
         View activeView = e.CurrentActiveView;
-        IsExistingFilterToView = HasFilterIsActiveView("Разрыв", activeView);
+        switch (activeView.ViewType)
+        {
+            case ViewType.ThreeD:
+                IsExistingFilterToViewBreak_3D = HasFilterIsActiveView(_filterName_Break_3D, activeView);
+                break;
+            case ViewType.FloorPlan:
+                IsExistingFilterBreak_Plan = HasFilterIsActiveView(_filterName_Break_Plan, activeView);
+                break;
+        }
     }
 
     [RelayCommand]
-    private void AddFilter()
+    private void AddFilter_Break_3D()
     {
         _actionEventHandler.Raise(_ =>
         {
@@ -166,9 +190,47 @@ public sealed partial class MakeBreakViewModel : ObservableObject
             {
                 using Transaction tr = new Transaction(_doc, "Добавить фильтр вида");
                 tr.Start();
-                var filter = _makeBreakServices.AddFilter(_categories, "Разрыв", "msh_Разрыв", true);
-                _makeBreakServices.ApplyFilterToView(_activeView, filter, false);
+                var filter = _makeBreakServices.AddFilter(_categories, _filterName_Break_3D,
+                    _parameterName_msh_Break_3D, true);
+                if (_activeView.ViewType == ViewType.ThreeD)
+                {
+                    _makeBreakServices.ApplyFilterToView(_activeView, filter, false);
+                    IsExistingFilterToViewBreak_3D = true;
+                }
+
                 tr.Commit();
+                IsExistingFilterBreak_3D = true;
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Ошибка", "Произошла ошибка: " + ex.Message);
+            }
+            finally
+            {
+                _actionEventHandler.Cancel();
+            }
+        });
+    }
+
+    [RelayCommand]
+    private void AddFilter_Break_Plan()
+    {
+        _actionEventHandler.Raise(_ =>
+        {
+            try
+            {
+                using Transaction tr = new Transaction(_doc, "Добавить фильтр вида");
+                tr.Start();
+                var filter = _makeBreakServices.AddFilter(_categories, _filterName_Break_Plan,
+                    _parameterName_msh_Break_Plan, true);
+                if (_activeView.ViewType == ViewType.FloorPlan)
+                {
+                    _makeBreakServices.ApplyFilterToView(_activeView, filter, false);
+                    IsExistingFilterToViewBreak_Plan = true;
+                }
+
+                tr.Commit();
+                IsExistingFilterBreak_Plan = true;
             }
             catch (Exception ex)
             {
@@ -192,6 +254,7 @@ public sealed partial class MakeBreakViewModel : ObservableObject
                 tr.Start();
                 _makeBreakServices.DownloadFamily("Разрыв");
                 tr.Commit();
+                IsExistingFamily = true;
             }
             catch (Exception ex)
             {
@@ -228,7 +291,7 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void AddParameter()
+    private void AddParameter_msh_Break_3D()
     {
         _actionEventHandler.Raise(_ =>
         {
@@ -236,9 +299,41 @@ public sealed partial class MakeBreakViewModel : ObservableObject
             {
                 using Transaction tr = new Transaction(_doc, "Добавить общий параметр");
                 tr.Start();
-                var isCreate = Helpers.CreateSharedParameter(_doc, _parameterRupture,
+                var isCreate = Helpers.CreateSharedParameter(_doc, _parameterName_msh_Break_3D,
                     SpecTypeId.Boolean.YesNo, GroupTypeId.Graphics, true, _categories);
                 tr.Commit();
+                if (isCreate)
+                {
+                    IsExistingParameter_msh_Break_3D = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Ошибка", "Произошла ошибка: " + ex.Message);
+            }
+            finally
+            {
+                _actionEventHandler.Cancel();
+            }
+        });
+    }
+
+    [RelayCommand]
+    private void AddParameter_msh_Break_Plan()
+    {
+        _actionEventHandler.Raise(_ =>
+        {
+            try
+            {
+                using Transaction tr = new Transaction(_doc, "Добавить общий параметр");
+                tr.Start();
+                var isCreate = Helpers.CreateSharedParameter(_doc, _parameterName_msh_Break_Plan,
+                    SpecTypeId.Boolean.YesNo, GroupTypeId.Graphics, true, _categories);
+                tr.Commit();
+                if (isCreate)
+                {
+                    IsExistingParameter_msh_Break_Plan = true;
+                }
             }
             catch (Exception ex)
             {
@@ -332,7 +427,7 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void AddFilterToView()
+    private void AddFilterViewBreak_3DToView()
     {
         _actionEventHandler.Raise(_ =>
         {
@@ -340,20 +435,61 @@ public sealed partial class MakeBreakViewModel : ObservableObject
             try
             {
                 tr.Start();
-                if (CheckFilterExists(_doc, "Разрыв"))
+                if (CheckFilterExists(_doc, _filterName_Break_3D))
                 {
                     var filter = new FilteredElementCollector(_doc)
                         .OfClass(typeof(ParameterFilterElement))
-                        .Cast<ParameterFilterElement>().FirstOrDefault(x => x.Name == "Разрыв");
+                        .Cast<ParameterFilterElement>().FirstOrDefault(x => x.Name == _filterName_Break_3D);
                     _makeBreakServices.ApplyFilterToView(_activeView, filter, false);
+                    IsExistingFilterBreak_3D = true;
                 }
                 else
                 {
-                    var filter = _makeBreakServices.AddFilter(_categories, "Разрыв", "msh_Разрыв", true);
+                    var filter = _makeBreakServices.AddFilter(_categories, _filterName_Break_3D,
+                        _parameterName_msh_Break_3D, true);
                     _makeBreakServices.ApplyFilterToView(_activeView, filter, false);
                 }
 
-                IsExistingFilterToView = true;
+                IsExistingFilterToViewBreak_3D = true;
+                tr.Commit();
+            }
+            catch (Exception e)
+            {
+                TaskDialog.Show("Ошибка", "Произошла ошибка: " + e.Message);
+                tr.RollBack();
+            }
+            finally
+            {
+                _actionEventHandler.Cancel();
+            }
+        });
+    }
+
+    [RelayCommand]
+    private void AddFilterViewBreak_PlanToView()
+    {
+        _actionEventHandler.Raise(_ =>
+        {
+            using Transaction tr = new Transaction(_doc, "Добавить фильтр к виду");
+            try
+            {
+                tr.Start();
+                if (CheckFilterExists(_doc, _filterName_Break_Plan))
+                {
+                    var filter = new FilteredElementCollector(_doc)
+                        .OfClass(typeof(ParameterFilterElement))
+                        .Cast<ParameterFilterElement>().FirstOrDefault(x => x.Name == _filterName_Break_Plan);
+                    _makeBreakServices.ApplyFilterToView(_activeView, filter, false);
+                    IsExistingFilterBreak_Plan = true;
+                }
+                else
+                {
+                    var filter = _makeBreakServices.AddFilter(_categories, _filterName_Break_Plan,
+                        _parameterName_msh_Break_Plan, true);
+                    _makeBreakServices.ApplyFilterToView(_activeView, filter, false);
+                }
+
+                IsExistingFilterToViewBreak_Plan = true;
                 tr.Commit();
             }
             catch (Exception e)

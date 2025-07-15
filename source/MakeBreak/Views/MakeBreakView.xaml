@@ -10,8 +10,8 @@
     mc:Ignorable="d"
     d:DataContext="{d:DesignInstance viewModels:MakeBreakViewModel}"
     Title="Разрыв труб"
-    SizeToContent="Height"
-    Width="300"
+    SizeToContent="WidthAndHeight"
+    Width="400"
     WindowStartupLocation="CenterScreen"
     ResizeMode="NoResize"
     Background="{DynamicResource WindowBackgroundBrush}">
@@ -32,9 +32,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <!-- Контент окна -->
-        <Grid Grid.Row="0"
-
-              Margin="0 5">
+        <Grid Grid.Row="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -44,23 +42,23 @@
                 <Button HorizontalAlignment="Right" Content="Скрыть трубу"
                         Command="{Binding HidePipeCommand }"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
-                        Margin="5 7"
+                        Margin="5 5"
                         Style="{DynamicResource CommonButtonStyle2}" />
                 <Button HorizontalAlignment="Right" Content="Показать трубу"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                         Command="{Binding BringBackVisibilityPipeCommand }"
-                        Margin="5 7"
+                        Margin="0 5"
                         Style="{DynamicResource CommonButtonStyle2}" />
             </DockPanel>
             <DockPanel Grid.Row="1" HorizontalAlignment="Right">
 
                 <Button HorizontalAlignment="Right" Content="Удалить разрыв"
-                        Margin="5 7"
+                        Margin="5 5"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                         Command="{Binding DeleteBreakCommand }"
                         Style="{DynamicResource CommonButtonStyle2}" />
                 <Button Content="Вставить разрыв"
-                        Margin="5 7"
+                        Margin="0 5"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                         Command="{Binding MakeBreakCommand}"
                         Style="{DynamicResource CommonButtonStyle2}" />
@@ -68,48 +66,106 @@
             <DockPanel HorizontalAlignment="Right"
                        Grid.Row="2">
                 <Button Content="Закрыть"
-                        Margin="10 0 0 0"
                         Style="{DynamicResource OutlineCloseButtonStyle}"
                         Click="CloseButton_Click" />
             </DockPanel>
         </Grid>
 
-        <Grid Grid.Row="1" Margin="0 5">
-            <Grid.RowDefinitions>
-                <RowDefinition />
-                <RowDefinition />
-                <RowDefinition />
-                <RowDefinition />
-            </Grid.RowDefinitions>
-            <StackPanel Orientation="Horizontal"
-                        Visibility="{Binding IsExistingFilterToView,
+        <StackPanel Grid.Row="1" Margin="0 0">
+            <StackPanel.Resources>
+                <Style x:Key="InfoDockPanelStyle" TargetType="DockPanel">
+                    <Setter Property="Margin" Value="0,2" />
+                </Style>
+            </StackPanel.Resources>
+            <DockPanel Style="{DynamicResource InfoDockPanelStyle}"
+                       Visibility="{Binding IsExistingFilterToViewBreak_3D,
                         Converter={StaticResource InverseBoolVisibilityConverter} }">
-                <TextBlock Text="На активном виде отсутствует фильтр "
+                <TextBlock Text="На активном виде отсутствует фильтр &quot;Разрыв_3D&quot;"
+                           VerticalAlignment="Center"
                            Style="{DynamicResource TextBlockStyle}" />
-                <Button Content="Добавить" Command="{Binding AddFilterToViewCommand}" />
-            </StackPanel>
-            <StackPanel Grid.Row="1" Orientation="Horizontal"
-                        Visibility="{Binding IsExistingParameter,
+                <Button
+                    Content="Добавить"
+                    HorizontalAlignment="Right"
+                    Command="{Binding AddFilterViewBreak_3DToViewCommand}"
+                    Style="{DynamicResource CommonButtonStyle}" />
+            </DockPanel>
+            <DockPanel Style="{DynamicResource InfoDockPanelStyle}"
+                       Visibility="{Binding IsExistingFilterToViewBreak_Plan,
                         Converter={StaticResource InverseBoolVisibilityConverter} }">
-                <TextBlock Text="В документе отсутствует параметр."
+                <TextBlock Text="На активном виде отсутствует фильтр &quot;Разрыв_План&quot;"
+                           VerticalAlignment="Center"
                            Style="{DynamicResource TextBlockStyle}" />
-                <Button Content="Добавить" Command="{Binding AddParameterCommand}" />
-            </StackPanel>
-            <StackPanel Grid.Row="2" Orientation="Horizontal"
-                        Visibility="{Binding IsExistingFilterInDocument,
+                <Button
+                    Content="Добавить"
+                    HorizontalAlignment="Right"
+                    Style="{DynamicResource CommonButtonStyle}"
+                    Command="{Binding AddFilterViewBreak_PlanToViewCommand}" />
+            </DockPanel>
+            <DockPanel Style="{DynamicResource InfoDockPanelStyle}"
+                       Visibility="{Binding IsExistingParameter_msh_Break_3D,
                         Converter={StaticResource InverseBoolVisibilityConverter} }">
-                <TextBlock Text="В документе отсутствует фильтр вида."
-                           Style="{DynamicResource TextBlockStyle}" />
-                <Button Content="Добавить" 
-                        Command="{Binding AddFilterCommand}" />
-            </StackPanel>
-            <StackPanel Grid.Row="3" Orientation="Horizontal"
-                        Visibility="{Binding IsExistingFamily,
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Text="В документе отсутствует параметр &quot;msh_Разрыв_3D&quot;"
+                    Style="{DynamicResource TextBlockStyle}" />
+                <Button
+                    Content="Добавить"
+                    HorizontalAlignment="Right"
+                    Style="{DynamicResource CommonButtonStyle}"
+                    Command="{Binding AddParameter_msh_Break_3DCommand}" />
+            </DockPanel>
+            <DockPanel Style="{DynamicResource InfoDockPanelStyle}"
+                       Visibility="{Binding IsExistingParameter_msh_Break_Plan,
                         Converter={StaticResource InverseBoolVisibilityConverter} }">
-                <TextBlock Text="В документе отсутствует семейство."
-                           Style="{DynamicResource TextBlockStyle}" />
-                <Button Content="Добавить" Command="{Binding AddFamilyCommand}" />
-            </StackPanel>
-        </Grid>
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Text="В документе отсутствует параметр &quot;msh_Разрыв_План&quot;"
+                    Style="{DynamicResource TextBlockStyle}" />
+                <Button
+                    Content="Добавить"
+                    HorizontalAlignment="Right"
+                    Style="{DynamicResource CommonButtonStyle}"
+                    Command="{Binding AddParameter_msh_Break_PlanCommand}" />
+            </DockPanel>
+            <DockPanel Style="{DynamicResource InfoDockPanelStyle}"
+                       Visibility="{Binding IsExistingFilterBreak_3D,
+                        Converter={StaticResource InverseBoolVisibilityConverter} }">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Text="В документе отсутствует фильтр вида &quot;Разрыв_3D&quot;."
+                    Style="{DynamicResource TextBlockStyle}" />
+                <Button
+                    Content="Добавить"
+                    HorizontalAlignment="Right"
+                    Style="{DynamicResource CommonButtonStyle}"
+                    Command="{Binding AddFilter_Break_3DCommand}" />
+            </DockPanel>
+            <DockPanel Style="{DynamicResource InfoDockPanelStyle}"
+                       Visibility="{Binding IsExistingFilterBreak_Plan,
+                        Converter={StaticResource InverseBoolVisibilityConverter} }">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Text="В документе отсутствует фильтр вида &quot;Разрыв_План&quot;."
+                    Style="{DynamicResource TextBlockStyle}" />
+                <Button
+                    Content="Добавить"
+                    HorizontalAlignment="Right"
+                    Style="{DynamicResource CommonButtonStyle}"
+                    Command="{Binding AddParameter_msh_Break_PlanCommand}" />
+            </DockPanel>
+            <DockPanel Style="{DynamicResource InfoDockPanelStyle}"
+                       Visibility="{Binding IsExistingFamily,
+                        Converter={StaticResource InverseBoolVisibilityConverter} }">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Text="В документе отсутствует семейство &quot;Разрыв&quot;."
+                    Style="{DynamicResource TextBlockStyle}" />
+                <Button
+                    Content="Добавить"
+                    HorizontalAlignment="Right"
+                    Style="{DynamicResource CommonButtonStyle}"
+                    Command="{Binding AddFamilyCommand}" />
+            </DockPanel>
+        </StackPanel>
     </Grid>
 </views:BaseRevitWindow>
