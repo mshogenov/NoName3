@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using Autodesk.Revit.UI;
+using CopyAnnotations.Models;
 using CopyAnnotations.Services;
 using Nice3point.Revit.Toolkit.External.Handlers;
 using NoNameApi.Utils;
@@ -8,7 +9,6 @@ namespace CopyAnnotations.ViewModels;
 
 public sealed partial class CopyAnnotationsViewModel : ObservableObject
 {
-   
     private readonly Document? _doc = Context.ActiveDocument;
     private readonly UIDocument? _uiDoc = Context.ActiveUiDocument;
     private List<Reference> _selectedTagRefs = [];
@@ -16,6 +16,7 @@ public sealed partial class CopyAnnotationsViewModel : ObservableObject
     [ObservableProperty] private bool _isBasePointSet;
     [ObservableProperty] private string _basePointStatusTooltip = "Базовая точка не установлена";
     private bool _canInitiateSelection = true;
+
     private List<Reference> SelectedTagRefs
     {
         get => _selectedTagRefs;
@@ -28,7 +29,9 @@ public sealed partial class CopyAnnotationsViewModel : ObservableObject
         }
     }
 
-    private XYZ? SourceBasePoint
+    private CopyAnnContext _sourceBasePoint;
+
+    private CopyAnnContext SourceBasePoint
     {
         get => _sourceBasePoint;
         set
@@ -42,10 +45,10 @@ public sealed partial class CopyAnnotationsViewModel : ObservableObject
 
     private readonly ActionEventHandler _actionEventHandler = new();
 
-    private XYZ? _sourceBasePoint;
-    private readonly CopyAnnotationsServices _copyAnnotationsServices=new();
 
- 
+    private readonly CopyAnnotationsServices _copyAnnotationsServices = new();
+
+
     [RelayCommand]
     private void SelectedAnnotations(object parameter)
     {
@@ -55,16 +58,15 @@ public sealed partial class CopyAnnotationsViewModel : ObservableObject
             window.Hide();
             var selectedElements = Helpers.GetSelectedElements(_uiDoc)
                 .Where(x => x is IndependentTag or TextNote or AnnotationSymbol).ToList();
-            if (selectedElements.Count!=0)
+            if (selectedElements.Count != 0)
             {
                 SelectedTagRefs = selectedElements.Select(x => new Reference(x)).ToList();
-
             }
             else
             {
-                SelectedTagRefs= _copyAnnotationsServices.GetCopyTags().ToList();
+                SelectedTagRefs = _copyAnnotationsServices.GetCopyTags().ToList();
             }
-          
+
 
             if (SelectedTagRefs.Count != 0)
             {
@@ -85,7 +87,7 @@ public sealed partial class CopyAnnotationsViewModel : ObservableObject
         {
             _canInitiateSelection = false;
             SelectBasePointCommand.NotifyCanExecuteChanged();
-            SourceBasePoint = _copyAnnotationsServices.GetPoint("Выберите базовую точку копирования");
+            SourceBasePoint = _copyAnnotationsServices.GetCopyAnnContext("Выберите базовую точку копирования");
             if (SourceBasePoint == null) return;
             IsBasePointSet = true;
             BasePointStatusTooltip = "Базовая точка установлена";
@@ -103,7 +105,7 @@ public sealed partial class CopyAnnotationsViewModel : ObservableObject
     private bool CanSelectBasePoint()
     {
         // Добавляем проверку, что базовая точка еще не установлена
-        return _canInitiateSelection ;
+        return _canInitiateSelection;
     }
 
     [RelayCommand(CanExecute = nameof(CanCopyAnnotations))]

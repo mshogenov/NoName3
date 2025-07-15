@@ -3,69 +3,84 @@ using Marking.Services;
 using Nice3point.Revit.Toolkit.External.Handlers;
 using System.Collections.ObjectModel;
 using System.Windows;
+using Marking.Models;
+using NoNameApi.Services;
 
 namespace Marking.ViewModels
 {
     public sealed partial class MarkingVM : ObservableObject
     {
-        public static ActionEventHandler ActionEventHandler { get; set; }
-        [ObservableProperty] private bool outstandingFamilyVisibility = false;
+        private readonly ActionEventHandler _actionEventHandler = new();
+        [ObservableProperty] private bool _outstandingFamilyVisibility;
         [ObservableProperty] private ObservableCollection<Element> _marks;
-        private Element _selectedItem;
-        private Document doc;
-        DataLoader dataLoader = new("MarkingData");
-        private MarkingServices markingServices;
-        public Element SelectedItem
+
+        private readonly Document _doc = Context.ActiveDocument;
+        private readonly JsonDataLoader _dataLoader = new("MarkingData");
+        private readonly MarkingServices _markingServices = new();
+        private readonly MarkingDTO _markingDTO = new();
+        private Element _selectedMark;
+
+        public Element SelectedMark
         {
-            get => _selectedItem;
+            get => _selectedMark;
             set
             {
-                SetProperty(ref _selectedItem, value);
+                SetProperty(ref _selectedMark, value);
                 PlaceStampsCommand.NotifyCanExecuteChanged();
             }
         }
-        [ObservableProperty][NotifyCanExecuteChangedFor(nameof(PlaceStampsCommand))] private bool _isChecked;
+
+        [ObservableProperty] [NotifyCanExecuteChangedFor(nameof(PlaceStampsCommand))]
+        private bool _recordFloorIsChecked;
 
         public MarkingVM()
         {
-            doc = Context.ActiveDocument;
-            ActionEventHandler = new ActionEventHandler();
             var marks = new FilteredElementCollector(Context.ActiveDocument)
-                                    .OfClass(typeof(FamilySymbol))
-                                    .Where(x => (x as FamilySymbol).Family.Name == "Высотные отметки")
-                                    .OrderBy(e => e.Name)
-                                    .ToList();
+                .OfClass(typeof(FamilySymbol))
+                .Where(x => (x as FamilySymbol)?.Family.Name == "Высотные отметки")
+                .OrderBy(e => e.Name)
+                .ToList();
             _marks = new ObservableCollection<Element>(marks);
             if (_marks.Count == 0)
             {
                 OutstandingFamilyVisibility = true;
             }
-            IsChecked = dataLoader.LoadData<bool>();
-            markingServices = new MarkingServices();
+
+            var dataLoader = _dataLoader.LoadData<MarkingDTO>();
+            if (dataLoader != null)
+            {
+                _markingDTO.RecordFloorIsChecked = dataLoader.RecordFloorIsChecked;
+                RecordFloorIsChecked = dataLoader.RecordFloorIsChecked;
+            }
+            else
+            {
+                RecordFloorIsChecked = true;
+            }
         }
 
         private bool CanPlaceStamps()
         {
-            return SelectedItem != null;
+            return SelectedMark != null;
         }
+
         [RelayCommand(CanExecute = nameof(CanPlaceStamps))]
-        public void PlaceStamps(Window window)
+        private void PlaceStamps(Window window)
         {
             window?.Hide();
-            var selectedElements = markingServices.SelectElements();
-            ActionEventHandler.Raise(_ =>
+            var selectedElements = _markingServices.SelectElements();
+            _actionEventHandler.Raise(_ =>
             {
                 try
                 {
                     using Transaction tr = new(Context.ActiveDocument, "Расстановка марок");
                     tr.Start();
-                    markingServices.PlaceStamps(selectedElements,SelectedItem,IsChecked);
+                    _markingServices.PlaceStamps(selectedElements, SelectedMark, RecordFloorIsChecked);
                     tr.Commit();
-                    dataLoader.SaveData(IsChecked);
+                    _markingDTO.RecordFloorIsChecked = RecordFloorIsChecked;
+                    _dataLoader.SaveData(_markingDTO);
                 }
                 catch (Autodesk.Revit.Exceptions.OperationCanceledException)
                 {
-                    return;
                 }
                 catch (Exception ex)
                 {
@@ -73,18 +88,19 @@ namespace Marking.ViewModels
                 }
                 finally
                 {
-                    ActionEventHandler.Cancel();
+                    _actionEventHandler.Cancel();
                     window?.Show();
                 }
             });
         }
+
         [RelayCommand]
-        public void UpdateMarks()
+        private void UpdateMarks()
         {
             var elems = new FilteredElementCollector(Context.ActiveDocument)
                 .OfClass(typeof(FamilyInstance)).WhereElementIsNotElementType()
                 .Where(x => x.get_Parameter(BuiltInParameter.ELEM_TYPE_PARAM).AsValueString() == "Полимерная труба");
-            ActionEventHandler.Raise(_ =>
+            _actionEventHandler.Raise(_ =>
             {
                 try
                 {
@@ -93,59 +109,56 @@ namespace Marking.ViewModels
                     {
                         foreach (var el in elems)
                         {
-                            markingServices.HeightSetting(el, IsChecked);
+                            MarkingServices.HeightSetting(el, RecordFloorIsChecked);
                         }
                     }
                     tr.Commit();
                 }
-                catch (Exception ex) 
+                catch (Exception ex)
                 {
                     TaskDialog.Show("Ошибка", ex.Message);
                 }
                 finally
                 {
-                    ActionEventHandler.Cancel();
+                    _actionEventHandler.Cancel();
                 }
             });
-           
-            dataLoader.SaveData(IsChecked);
-          
+            _markingDTO.RecordFloorIsChecked = RecordFloorIsChecked;
+            _dataLoader.SaveData(_markingDTO);
         }
+
         [RelayCommand]
         private void DownloadFamily()
         {
+            _actionEventHandler.Raise(_ =>
+            {
+                try
+                {
+                    using Transaction trans = new(_doc, "Загрузить семейство");
+                    trans.Start();
 
-            ActionEventHandler.Raise(_ =>
-{
-    try
-    {
-        using Transaction trans = new(doc, "Загрузить семейство");
-        trans.Start();
-
-      markingServices.DownloadFamily(doc,"Высотные отметки");
-        trans.Commit();
-    }
-    catch (Exception ex)
-    {
-        TaskDialog.Show("Ошибка", ex.Message);
-    }
-    finally
-    {
-        ActionEventHandler.Cancel();
-    }
-});
+                    MarkingServices.DownloadFamily(_doc, "Высотные отметки");
+                    trans.Commit();
+                }
+                catch (Exception ex)
+                {
+                    TaskDialog.Show("Ошибка", ex.Message);
+                }
+                finally
+                {
+                    _actionEventHandler.Cancel();
+                }
+            });
             var marks = new FilteredElementCollector(Context.ActiveDocument)
-                                 .OfClass(typeof(FamilySymbol))
-                                 .Where(x => (x as FamilySymbol).Family.Name == "Высотные отметки")
-                                 .OrderBy(e => e.Name)
-                                 .ToList();
+                .OfClass(typeof(FamilySymbol))
+                .Where(x => (x as FamilySymbol)?.Family.Name == "Высотные отметки")
+                .OrderBy(e => e.Name)
+                .ToList();
             Marks = new ObservableCollection<Element>(marks);
             if (Marks.Count != 0)
             {
                 OutstandingFamilyVisibility = false;
             }
-
         }
     }
-
 }
