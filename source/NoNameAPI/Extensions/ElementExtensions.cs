@@ -1,4 +1,6 @@
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Mechanical;
+using Autodesk.Revit.DB.Plumbing;
 
 namespace NoNameApi.Extensions;
 
@@ -84,15 +86,21 @@ public static class ElementExtensions
 
         return null;
     }
-/// <summary>
-/// Находит 
-/// </summary>
-/// <param name="element"></param>
-/// <returns></returns>
+
+    /// <summary>
+    /// Находит 
+    /// </summary>
+    /// <param name="element"></param>
+    /// <returns></returns>
     public static List<Element> GetConnectedMEPElements(this Element element)
     {
-        var connectedElements = new HashSet<ElementId>(); 
+        var connectedElements = new HashSet<ElementId>();
         var result = new List<Element>();
+        if (element is PipeInsulation or DuctInsulation)
+        {
+            return result;
+        }
+
         var connectors = GetConnectors(element);
         foreach (var connector in connectors)
         {
@@ -112,7 +120,7 @@ public static class ElementExtensions
         return result;
     }
 
-    public static IEnumerable<Connector> GetConnectors( this Element element)
+    public static IEnumerable<Connector> GetConnectors(this Element element)
     {
         return element switch
         {
@@ -151,6 +159,7 @@ public static class ElementExtensions
 
         return mepConnectors;
     }
+
     /// <summary>
     /// Находит соединяющий коннектор с присоединенным элементом
     /// </summary>
