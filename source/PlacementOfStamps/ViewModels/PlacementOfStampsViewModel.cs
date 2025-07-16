@@ -28,27 +28,79 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
             .WhereElementIsNotElementType()
             .Cast<Pipe>()
             .ToList();
-       
+
+        var displacementElements = new FilteredElementCollector(_doc, activeView.Id)
+            .OfClass(typeof(DisplacementElement))
+            .WhereElementIsNotElementType()
+            .Cast<DisplacementElement>();
+        var processedPipeIds = new HashSet<ElementId>();
+        foreach (var displacement in displacementElements)
+        {
+            var displacementPipes = displacement.GetDisplacedElementIds()
+                .Select(x => _doc.GetElement(x))
+                .Where(x => x is Pipe)
+                .Cast<Pipe>().ToList();
+
+            foreach (var pipe in displacementPipes)
+            {
+                if (!processedPipeIds.Add(pipe.Id)) continue; // Add возвращает true, если элемент был добавлен
+                _pipes.Add(new PipeWrp(pipe)
+                {
+                    IsDisplaced = true,
+                    DisplacedPoint = displacement.GetAbsoluteDisplacement()
+                });
+            }
+        }
+
+        // Добавляем оставшиеся трубы
+        foreach (var pipe in collectorPipes)
+        {
+            if (processedPipeIds.Add(pipe.Id))
+            {
+                _pipes.Add(new PipeWrp(pipe));
+            }
+        }
+
         _pipeMarks =
         [
-            ..new FilteredElementCollector(_doc).OfCategory(BuiltInCategory.OST_PipeTags)
-                .WhereElementIsElementType().ToElements()
+            ..new FilteredElementCollector(_doc)
+                .OfCategory(BuiltInCategory.OST_PipeTags)
+                .WhereElementIsElementType()
+                .ToElements()
         ];
-        _pipes.AddRange(collectorPipes.Select(pipe => new PipeWrp(pipe)));
+
+
         _existingTags = _placementOfStampsServices.GetExistingAnnotations(_doc, activeView)
-            .Cast<IndependentTag>().Select(existingAnnotation => new TagWrp(existingAnnotation))
+            .Cast<IndependentTag>()
+            .Select(existingAnnotation => new TagWrp(existingAnnotation))
             .ToList();
+    }
+
+// Вспомогательный метод для получения координат трубы
+    private XYZ GetPipeLocation(Pipe pipe)
+    {
+        if (pipe.Location is LocationCurve locationCurve)
+        {
+            // Возвращаем центральную точку кривой
+            return locationCurve.Curve.Evaluate(0.5, true);
+        }
+        else if (pipe.Location is LocationPoint locationPoint)
+        {
+            return locationPoint.Point;
+        }
+
+        // Если не удалось получить координаты, возвращаем начало координат
+        return XYZ.Zero;
     }
 
     [RelayCommand]
     private void PlacementMarks()
     {
-      
         // FilteredElementCollector collectorDisplacement =
         //     new FilteredElementCollector(_doc, activeView.Id).OfClass(typeof(DisplacementElement))
         //         .WhereElementIsNotElementType();
         // List<Element> displacedElements = [];
-        
+
         // displacedElements.AddRange(collectorDisplacement
         //     .Where(element => element.Category.BuiltInCategory == BuiltInCategory.OST_DisplacementElements));
 
@@ -77,8 +129,7 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
         //     }
         // }
 
-       
-      
+
         // var pipesOuterDiameters = elements.Where(p =>
         //     p.FindParameter(BuiltInParameter.WINDOW_TYPE_ID)?.AsValueString() == "Днар х Стенка");
         using Transaction tr = new(_doc, "Расстановка марок");
@@ -92,7 +143,8 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
 
             if (SystemAbbreviationIsChecked)
             {
-                _placementOfStampsServices.PlacementMarksSystemAbbreviation(_pipes, _existingTags, SystemAbbreviationMarkSelected);
+                _placementOfStampsServices.PlacementMarksSystemAbbreviation(_pipes, _existingTags,
+                    SystemAbbreviationMarkSelected);
             }
 
             // if (PipeInsulationIsChecked)
