@@ -76,7 +76,7 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
             .ToList();
     }
 
-// Вспомогательный метод для получения координат трубы
+    // Вспомогательный метод для получения координат трубы
     private XYZ GetPipeLocation(Pipe pipe)
     {
         if (pipe.Location is LocationCurve locationCurve)
@@ -96,44 +96,10 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
     [RelayCommand]
     private void PlacementMarks()
     {
-        // FilteredElementCollector collectorDisplacement =
-        //     new FilteredElementCollector(_doc, activeView.Id).OfClass(typeof(DisplacementElement))
-        //         .WhereElementIsNotElementType();
-        // List<Element> displacedElements = [];
-
-        // displacedElements.AddRange(collectorDisplacement
-        //     .Where(element => element.Category.BuiltInCategory == BuiltInCategory.OST_DisplacementElements));
-
-        // if (displacedElements.Count != 0)
-        // {
-        //     foreach (var el in displacedElements)
-        //     {
-        //         DisplacementElement displacementElement = el as DisplacementElement;
-        //         XYZ pointDisplaced = displacementElement?.GetRelativeDisplacement();
-        //         var displacedElementIds = displacementElement?.GetDisplacedElementIds();
-        //         if (displacedElementIds == null) continue;
-        //         foreach (var elementId in displacedElementIds)
-        //         {
-        //             var displacedElementFamily = _doc.GetElement(elementId);
-        //             if (displacedElementFamily is not Pipe pipeDisplaced) continue;
-        //             foreach (var pipe in collectorPipes.Where(p => pipeDisplaced.Id == p.Id).ToList())
-        //             {
-        //                 collectorPipes.Remove(pipe);
-        //                 pipeMdls.Add(new PipeWrapper(pipeDisplaced)
-        //                 {
-        //                     IsDisplaced = true,
-        //                     DisplacedPoint = pointDisplaced,
-        //                 });
-        //             }
-        //         }
-        //     }
-        // }
-
-
         // var pipesOuterDiameters = elements.Where(p =>
         //     p.FindParameter(BuiltInParameter.WINDOW_TYPE_ID)?.AsValueString() == "Днар х Стенка");
-        using Transaction tr = new(_doc, "Расстановка марок");
-        tr.Start();
+        using TransactionGroup transactionGroup = new(_doc, "Расстановка марок");
+        transactionGroup.Start();
         try
         {
             // if (PipesOuterDiametersIsChecked)
@@ -143,8 +109,11 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
 
             if (SystemAbbreviationIsChecked)
             {
+                Transaction transaction = new Transaction(_doc, "Расставить сокращения");
+                transaction.Start();
                 _placementOfStampsServices.PlacementMarksSystemAbbreviation(_pipes, _existingTags,
                     SystemAbbreviationMarkSelected);
+                transaction.Commit();
             }
 
             // if (PipeInsulationIsChecked)
@@ -153,11 +122,12 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
             //         PipeInsulationMarkSelected);
             // }
 
-            tr.Commit();
+            transactionGroup.Commit();
+          
         }
         catch (Exception e)
         {
-            tr.RollBack();
+            transactionGroup.RollBack();
             TaskDialog.Show("Ошибка", e.Message);
         }
     }
