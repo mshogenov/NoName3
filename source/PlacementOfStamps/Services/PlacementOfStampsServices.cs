@@ -389,12 +389,7 @@ public class PlacementOfStampsServices
             .ThenBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).Y).ToList();
         bool flag = false;
         var activeView = _doc.ActiveView;
-        SubTransaction subTransaction = new SubTransaction(_doc);
-        subTransaction.Start();
-        var pipeRandom = pipes.FirstOrDefault().Pipe;
-        var createSelectedTag = new TagWrp(IndependentTag.Create(_doc, selectedTag.Id, activeView.Id,
-            new Reference(pipeRandom), false, TagOrientation.Horizontal, XYZ.Zero)) ;
-        subTransaction.Commit();
+       
         foreach (var pipe in pipesSort)
         {
             if (pipe.Length.ToMillimeters() is > 500 and < 4000 && flag)
@@ -407,20 +402,67 @@ public class PlacementOfStampsServices
             {
                 continue;
             }
-
-            // Шаг 4: Вычисление позиций марки для текущей трубы
-            List<XYZ> tagLocations =
-                FindOptimalTagLocation(pipe, createSelectedTag, 3000);
-            if (tagLocations.Count == 0) continue;
-            // Создание марки
-            foreach (var tagLocation in tagLocations)
+            // Вычисляем количество марок
+            double interval = 3000;
+            // Конвертируйте в футы (внутренняя единица Revit)
+            double toInternalUnits = UnitUtils.ConvertToInternalUnits(interval, UnitTypeId.Millimeters);
+            XYZ tagPoint;
+            if (pipe.Length > toInternalUnits)
             {
-                if (tagLocation == null) continue;
-                IndependentTag pipeTag = IndependentTag.Create(_doc, selectedTag.Id, activeView.Id,
-                    new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagLocation);
-                tagWpr.Add(new TagWrp(pipeTag));
-            }
+                int numberOfTags = (int)(pipe.Length / toInternalUnits);
+                if (pipe.Length % toInternalUnits != 0) numberOfTags++;
+                // Итерация по количеству марок
+                for (int i = 1; i < numberOfTags; i++)
+                {
+                    double distance = i * toInternalUnits;
+                    // Ограничиваем расстояние длиной трубы
+                    if (distance > pipe.Length)
+                        distance = pipe.Length;
+                  
+                   
+                    XYZ point = pipe.StartPoint + pipe.Direction * distance;
+                    if (pipe.DisplacedPoint!=null)
+                    {
+                        tagPoint = new XYZ(point.X + pipe.DisplacedPoint.X, point.Y + pipe.DisplacedPoint.Y,
+                            point.Z + pipe.DisplacedPoint.Z);
+                    }
+                    else
+                    {
+                        tagPoint = point;
+                    }
 
+                    if (tagPoint == null) continue;
+                    IndependentTag pipeTag = IndependentTag.Create(_doc, selectedTag.Id, activeView.Id,
+                        new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagPoint);
+                    // поиск свободной позиции для марки
+                    var p = FindFreeTagPosition(tagPoint, new TagWrp(pipeTag), pipe);
+                   ElementTransformUtils.MoveElement(_doc, pipeTag.Id, p);
+                   tagWpr.Add(new TagWrp(pipeTag));
+
+                }
+                
+            }
+            else
+            {
+                XYZ point = (pipe.StartPoint + pipe.EndPoint) / 2;
+                if (pipe.DisplacedPoint!=null)
+                {
+                    tagPoint = new XYZ(point.X + pipe.DisplacedPoint.X, point.Y + pipe.DisplacedPoint.Y,
+                        point.Z + pipe.DisplacedPoint.Z);
+                    
+                }
+                else
+                {
+                    tagPoint = point;
+                }
+                if (tagPoint!= null)
+                {
+                    IndependentTag pipeTag = IndependentTag.Create(_doc, selectedTag.Id, activeView.Id,
+                        new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagPoint);
+                    tagWpr.Add(new TagWrp(pipeTag));
+                }
+            }
+             
             flag = true;
         }
     }
@@ -647,122 +689,44 @@ public class PlacementOfStampsServices
             .WhereElementIsNotElementType();
     }
 
-    /// <summary>
-    /// Находит оптимальную позицию для размещения марки, избегая перекрытий
-    /// </summary>
-    /// <param name="pipe">Труба для маркировки</param>
-    /// <param name="selectedTag"></param>
-    /// <param name="interval">Интервал в мм</param>
-    /// <param name="tagSymbol">Семейство символа тега</param>
-    /// <returns>Позиция для размещения марки или null, если подходящая позиция не найдена</returns>
-    private List<XYZ> FindOptimalTagLocation(PipeWrp pipe, TagWrp selectedTag, double interval)
-    {
-        // Конвертируйте в футы (внутренняя единица Revit)
-        double toInternalUnits = UnitUtils.ConvertToInternalUnits(interval, UnitTypeId.Millimeters);
-        // Вычисляем количество марок
-        // int numberOfTags = (int)(pipe.Length / toInternalUnits);
-        // if (pipe.Length % toInternalUnits != 0) numberOfTags++;
-        // if (!(pipe.Length < toInternalUnits) ||
-        //     !(pipe.Length > UnitUtils.ConvertToInternalUnits(500, UnitTypeId.Millimeters)))
-        //     return GetPositionInterval(numberOfTags, selectedTag, toInternalUnits, pipe);
-        List<XYZ> position =
-        [
-            GetPosition(pipe,selectedTag)
-        ];
-        return position;
-    }
-
-    private List<XYZ> GetPositionInterval(int numberOfTags, TagWrp selectedTag, double interval,
-        PipeWrp pipe)
-    {
-        List<XYZ> positions = [];
-        // Итерация по количеству марок
-        for (int i = 1; i < numberOfTags; i++)
-        {
-            double distance = i * interval;
-            // Ограничиваем расстояние длиной трубы
-            if (distance > pipe.Length)
-                distance = pipe.Length;
-            // Вычисляем позицию марки
-            var activeView = _doc.ActiveView;
-            XYZ tagPoint;
-            XYZ point = pipe.StartPoint + pipe.Direction * distance;
-            if (pipe.IsDisplaced)
-            {
-              var  position = new XYZ(point.X + pipe.DisplacedPoint.X, point.Y + pipe.DisplacedPoint.Y,
-                    point.Z + pipe.DisplacedPoint.Z);
-
-             tagPoint = FindFreeTagPosition(position, selectedTag, pipe);
-            }
-            else
-            {
-                tagPoint = point;
-            }
-
-
-            positions.Add(tagPoint);
-        }
-
-        return positions;
-    }
-
-
-    private XYZ GetPosition(PipeWrp pipe,TagWrp selectedTag)
-    {
-        XYZ tagPoint;
-
-        XYZ point = (pipe.StartPoint + pipe.EndPoint) / 2;
-        if (pipe.IsDisplaced)
-        {
-            var  position = new XYZ(point.X + pipe.DisplacedPoint.X, point.Y + pipe.DisplacedPoint.Y,
-                point.Z + pipe.DisplacedPoint.Z);
-            tagPoint = FindFreeTagPosition(position, selectedTag, pipe);
-        }
-        else
-        {
-            tagPoint = FindFreeTagPosition(point, selectedTag, pipe);
-        }
-
-        return tagPoint;
-    }
 
 // Метод для поиска свободной позиции для марки
     private XYZ FindFreeTagPosition(XYZ originalPosition, TagWrp existingTag, PipeWrp pipe)
     {
         // Максимальное количество попыток смещения для каждой позиции
         int maxAttempts = 10;
-        // Направление смещения (параллельное направлению трубы в плоскости XY)
-        XYZ shiftDirection = GetParallelDirectionXy(pipe);
-        double exclusionTolerance = UnitUtils.ConvertToInternalUnits(500, UnitTypeId.Millimeters);
-        // Дополнительный зазор для предотвращения наложений (в внутренних единицах Revit, обычно футы)
-        double additionalGap = UnitUtils.ConvertToInternalUnits(400, UnitTypeId.Millimeters);
-        // Получаем габариты тега
-        BoundingBoxXYZ boundingBox = existingTag.BoundingBox;
-        XYZ min = boundingBox.Min;
-        XYZ max = boundingBox.Max;
-        double width = (max.X - min.X);
-        double height = (max.Y - min.Y);
-        double shiftStep = width > height ? width : height;
-
-        // Попытки смещения вправо и влево
-        for (int attempt = 1; attempt <= maxAttempts; attempt++)
-        {
-            // Смещение вправо
-            XYZ shiftedPositionRight = originalPosition + shiftDirection * (shiftStep * attempt + additionalGap);
-            if (IsPositionWithinPipeBounds(shiftedPositionRight, pipe, exclusionTolerance) &&
-                !IsPositionOccupied(shiftedPositionRight, existingTag, pipe))
-            {
-                return shiftedPositionRight;
-            }
-
-            // Смещение влево
-            XYZ shiftedPositionLeft = originalPosition - shiftDirection * (shiftStep * attempt + additionalGap);
-            if (IsPositionWithinPipeBounds(shiftedPositionLeft, pipe, exclusionTolerance) &&
-                !IsPositionOccupied(shiftedPositionLeft, existingTag, pipe))
-            {
-                return shiftedPositionLeft;
-            }
-        }
+        // // Направление смещения (параллельное направлению трубы в плоскости XY)
+        // XYZ shiftDirection = GetParallelDirectionXy(pipe);
+        // double exclusionTolerance = UnitUtils.ConvertToInternalUnits(500, UnitTypeId.Millimeters);
+        // // Дополнительный зазор для предотвращения наложений (в внутренних единицах Revit, обычно футы)
+        // double additionalGap = UnitUtils.ConvertToInternalUnits(400, UnitTypeId.Millimeters);
+        // // Получаем габариты тега
+        // BoundingBoxXYZ boundingBox = existingTag.BoundingBox;
+        // XYZ min = boundingBox.Min;
+        // XYZ max = boundingBox.Max;
+        // double width = (max.X - min.X);
+        // double height = (max.Y - min.Y);
+        // double shiftStep = width > height ? width : height;
+        //
+        // // Попытки смещения вправо и влево
+        // for (int attempt = 1; attempt <= maxAttempts; attempt++)
+        // {
+        //     // Смещение вправо
+        //     XYZ shiftedPositionRight = originalPosition + shiftDirection * (shiftStep * attempt + additionalGap);
+        //     if (IsPositionWithinPipeBounds(shiftedPositionRight, pipe, exclusionTolerance) &&
+        //         !IsPositionOccupied(shiftedPositionRight, existingTag, pipe))
+        //     {
+        //         return shiftedPositionRight;
+        //     }
+        //
+        //     // Смещение влево
+        //     XYZ shiftedPositionLeft = originalPosition - shiftDirection * (shiftStep * attempt + additionalGap);
+        //     if (IsPositionWithinPipeBounds(shiftedPositionLeft, pipe, exclusionTolerance) &&
+        //         !IsPositionOccupied(shiftedPositionLeft, existingTag, pipe))
+        //     {
+        //         return shiftedPositionLeft;
+        //     }
+        // }
 
         // Если свободное место не найдено, возвращаем null
         return null;
