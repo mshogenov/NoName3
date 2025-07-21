@@ -377,12 +377,11 @@ public class PlacementOfStampsServices
     //         flag = true;
     //     }
     // }
-
     public void PlacementMarksSystemAbbreviation(List<PipeWrp> pipeWrp, List<TagWrp> tagWpr,
         FamilySymbol selectedTag)
     {
         var existingSelectedTags = tagWpr
-            .Where(x => x.TagTypeId == selectedTag.Id) // Сравниваем по ID типа
+            .Where(x => x.TagTypeId == selectedTag.Id)
             .ToList();
         var pipes = GetPipeNotTags(pipeWrp, existingSelectedTags);
         var pipesSort = pipes.OrderBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).X)
@@ -403,61 +402,22 @@ public class PlacementOfStampsServices
                 continue;
             }
 
-            // Вычисляем количество марок
-            double interval = 3000;
-            // Конвертируйте в футы (внутренняя единица Revit)
-            double toInternalUnits = UnitUtils.ConvertToInternalUnits(interval, UnitTypeId.Millimeters);
-            XYZ tagPoint;
-            if (pipe.Length > toInternalUnits)
+            // Вычисляем оптимальные позиции для марок
+            List<double> tagPositions = CalculateTagPositionsUniform(pipe);
+
+            // Размещаем марки в вычисленных позициях
+            foreach (double position in tagPositions)
             {
-                int numberOfTags = (int)(pipe.Length / toInternalUnits);
-                if (pipe.Length % toInternalUnits != 0) numberOfTags++;
-                // Итерация по количеству марок
-                for (int i = 1; i < numberOfTags; i++)
-                {
-                    double distance = i * toInternalUnits;
-                    // Ограничиваем расстояние длиной трубы
-                    if (distance > pipe.Length)
-                        distance = pipe.Length;
-
-
-                    XYZ point = pipe.StartPoint + pipe.Direction * distance;
-                    if (pipe.DisplacedPoint != null)
-                    {
-                        tagPoint = new XYZ(point.X + pipe.DisplacedPoint.X, point.Y + pipe.DisplacedPoint.Y,
-                            point.Z + pipe.DisplacedPoint.Z);
-                    }
-                    else
-                    {
-                        tagPoint = point;
-                    }
-
-                    if (tagPoint == null) continue;
-                    IndependentTag pipeTag = IndependentTag.Create(_doc, selectedTag.Id, activeView.Id,
-                        new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagPoint);
-                    // поиск свободной позиции для марки
-                    var newPosition = FindFreeTagPosition(tagPoint, new TagWrp(pipeTag), pipe);
-                    pipeTag.TagHeadPosition = newPosition;
-                    tagWpr.Add(new TagWrp(pipeTag));
-                }
-            }
-            else
-            {
-                XYZ point = (pipe.StartPoint + pipe.EndPoint) / 2;
-                if (pipe.DisplacedPoint != null)
-                {
-                    tagPoint = new XYZ(point.X + pipe.DisplacedPoint.X, point.Y + pipe.DisplacedPoint.Y,
-                        point.Z + pipe.DisplacedPoint.Z);
-                }
-                else
-                {
-                    tagPoint = point;
-                }
+                XYZ point = pipe.StartPoint + pipe.Direction * position;
+                XYZ tagPoint = CalculateTagPosition(point, pipe);
 
                 if (tagPoint != null)
                 {
                     IndependentTag pipeTag = IndependentTag.Create(_doc, selectedTag.Id, activeView.Id,
                         new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagPoint);
+
+                    var newPosition = FindFreeTagPosition(tagPoint, new TagWrp(pipeTag), pipe);
+                    pipeTag.TagHeadPosition = newPosition;
                     tagWpr.Add(new TagWrp(pipeTag));
                 }
             }
@@ -465,6 +425,290 @@ public class PlacementOfStampsServices
             flag = true;
         }
     }
+    /// <summary>
+    /// Вычисляет оптимальные позиции для размещения марок на трубе
+    /// </summary>
+    /// <param name="pipe">Труба</param>
+    /// <returns>Список позиций вдоль трубы (в внутренних единицах)</returns>
+    private List<double> CalculateTagPositions(PipeWrp pipe)
+    {
+        List<double> positions = new List<double>();
+
+        // Параметры
+        double intervalMm = 3000; // мм
+        double minDistanceFromEndsMm = 200; // мм
+
+        // Конвертация в внутренние единицы
+        double interval = UnitUtils.ConvertToInternalUnits(intervalMm, UnitTypeId.Millimeters);
+        double minDistanceFromEnds = UnitUtils.ConvertToInternalUnits(minDistanceFromEndsMm, UnitTypeId.Millimeters);
+
+        double pipeLengthMm = pipe.Length.ToMillimeters();
+
+        if (pipeLengthMm <= intervalMm)
+        {
+            // Для коротких труб - одна марка в центре
+            positions.Add(pipe.Length / 2);
+        }
+        else
+        {
+            // Вычисляем количество марок
+            int numberOfTags = (int)Math.Ceiling(pipeLengthMm / intervalMm);
+
+            // Пример: труба 6000мм, интервал 3000мм -> 2 марки
+            // Позиции: 3000мм и 6000мм, но 6000мм смещаем к 5800мм
+
+            for (int i = 1; i <= numberOfTags; i++)
+            {
+                double idealPosition = i * interval;
+                double actualPosition = idealPosition;
+
+                // Корректируем позицию, если она слишком близко к концу
+                if (idealPosition > (pipe.Length - minDistanceFromEnds))
+                {
+                    actualPosition = pipe.Length - minDistanceFromEnds;
+                }
+
+                // Корректируем позицию, если она слишком близко к началу
+                if (actualPosition < minDistanceFromEnds)
+                {
+                    actualPosition = minDistanceFromEnds;
+                }
+
+                // Проверяем, что позиция не дублируется
+                if (!positions.Any(p => Math.Abs(p - actualPosition) < 0.01)) // 0.01 фута ~ 3мм
+                {
+                    positions.Add(actualPosition);
+                }
+            }
+        }
+
+        return positions.OrderBy(p => p).ToList();
+    }
+    /// <summary>
+    /// Альтернативный метод с равномерным распределением марок
+    /// </summary>
+    private List<double> CalculateTagPositionsUniform(PipeWrp pipe)
+    {
+        List<double> positions = new List<double>();
+
+        double intervalMm = 3000; // мм
+        double minDistanceFromEndsMm = 600; // мм
+
+        double interval = UnitUtils.ConvertToInternalUnits(intervalMm, UnitTypeId.Millimeters);
+        double minDistanceFromEnds = UnitUtils.ConvertToInternalUnits(minDistanceFromEndsMm, UnitTypeId.Millimeters);
+
+        double pipeLengthMm = pipe.Length.ToMillimeters();
+
+        if (pipeLengthMm <= intervalMm)
+        {
+            // Короткая труба - марка в центре
+            positions.Add(pipe.Length / 2);
+        }
+        else
+        {
+            // Вычисляем количество марок
+            int numberOfTags = (int)Math.Ceiling(pipeLengthMm / intervalMm);
+
+            // Доступная длина для размещения марок
+            double availableLength = pipe.Length - (2 * minDistanceFromEnds);
+
+            if (availableLength > 0 && numberOfTags > 1)
+            {
+                // Равномерно распределяем марки в доступной области
+                double spacing = availableLength / (numberOfTags - 1);
+
+                for (int i = 0; i < numberOfTags; i++)
+                {
+                    double position = minDistanceFromEnds + (i * spacing);
+                    positions.Add(position);
+                }
+            }
+            else
+            {
+                // Если доступной длины недостаточно, размещаем марки по интервалам со смещением
+                for (int i = 1; i <= numberOfTags; i++)
+                {
+                    double position = i * interval;
+
+                    // Смещаем от конца, если нужно
+                    if (position > (pipe.Length - minDistanceFromEnds))
+                    {
+                        position = pipe.Length - minDistanceFromEnds;
+                    }
+
+                    positions.Add(position);
+                }
+            }
+        }
+
+        return positions.Distinct().OrderBy(p => p).ToList();
+    }
+/// <summary>
+/// Корректирует расстояние, чтобы марка не попадала слишком близко к концам трубы
+/// </summary>
+/// <param name="originalDistance">Исходное расстояние</param>
+/// <param name="pipeLength">Длина трубы</param>
+/// <param name="minDistanceFromEnds">Минимальное расстояние от концов</param>
+/// <returns>Скорректированное расстояние</returns>
+private double AdjustDistanceFromEnds(double originalDistance, double pipeLength, double minDistanceFromEnds)
+{
+    // Если марка слишком близко к началу трубы
+    if (originalDistance < minDistanceFromEnds)
+    {
+        return minDistanceFromEnds;
+    }
+
+    // Если марка слишком близко к концу трубы
+    if (originalDistance > (pipeLength - minDistanceFromEnds))
+    {
+        return pipeLength - minDistanceFromEnds;
+    }
+
+    return originalDistance;
+}
+   /// <summary>
+/// Улучшенный метод размещения марок с избеганием концов труб
+/// </summary>
+public void PlacementMarksSystemAbbreviationImproved(List<PipeWrp> pipeWrp, List<TagWrp> tagWpr,
+    FamilySymbol selectedTag)
+{
+    var existingSelectedTags = tagWpr
+        .Where(x => x.TagTypeId == selectedTag.Id)
+        .ToList();
+    var pipes = GetPipeNotTags(pipeWrp, existingSelectedTags);
+    var pipesSort = pipes.OrderBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).X)
+        .ThenBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).Y).ToList();
+    bool flag = false;
+    var activeView = _doc.ActiveView;
+
+    // Параметры размещения марок
+    double interval = 3000; // мм
+    double minDistanceFromEnds = 200; // мм
+    double minPipeLength = 400; // мм - минимальная длина трубы для размещения марки
+
+    // Конвертация в внутренние единицы
+    double intervalInternal = UnitUtils.ConvertToInternalUnits(interval, UnitTypeId.Millimeters);
+    double minDistanceFromEndsInternal = UnitUtils.ConvertToInternalUnits(minDistanceFromEnds, UnitTypeId.Millimeters);
+    double minPipeLengthInternal = UnitUtils.ConvertToInternalUnits(minPipeLength, UnitTypeId.Millimeters);
+
+    foreach (var pipe in pipesSort)
+    {
+        if (pipe.Length.ToMillimeters() is > 500 and < 4000 && flag)
+        {
+            flag = false;
+            continue;
+        }
+
+        if (activeView.ViewType == ViewType.FloorPlan && pipe.IsRiser)
+        {
+            continue;
+        }
+
+        // Пропускаем слишком короткие трубы
+        if (pipe.Length < minPipeLengthInternal)
+        {
+            continue;
+        }
+
+        // Вычисляем оптимальные позиции для марок
+        List<double> tagPositions = CalculateOptimalTagPositions(pipe, intervalInternal, minDistanceFromEndsInternal);
+
+        // Размещаем марки в вычисленных позициях
+        foreach (double position in tagPositions)
+        {
+            XYZ point = pipe.StartPoint + pipe.Direction * position;
+            XYZ tagPoint = CalculateTagPosition(point, pipe);
+
+            if (tagPoint != null)
+            {
+                IndependentTag pipeTag = IndependentTag.Create(_doc, selectedTag.Id, activeView.Id,
+                    new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagPoint);
+
+                var newPosition = FindFreeTagPosition(tagPoint, new TagWrp(pipeTag), pipe);
+                pipeTag.TagHeadPosition = newPosition;
+                tagWpr.Add(new TagWrp(pipeTag));
+            }
+        }
+
+        flag = true;
+    }
+}
+/// <summary>
+/// Вычисляет позицию марки с учетом смещения
+/// </summary>
+/// <param name="point">Точка на трубе</param>
+/// <param name="pipe">Труба</param>
+/// <returns>Позиция марки</returns>
+private XYZ CalculateTagPosition(XYZ point, PipeWrp pipe)
+{
+    if (pipe.DisplacedPoint != null)
+    {
+        return new XYZ(
+            point.X + pipe.DisplacedPoint.X,
+            point.Y + pipe.DisplacedPoint.Y,
+            point.Z + pipe.DisplacedPoint.Z);
+    }
+    else
+    {
+        return point;
+    }
+}
+/// <summary>
+/// Вычисляет оптимальные позиции для размещения марок на трубе
+/// </summary>
+/// <param name="pipe">Труба</param>
+/// <param name="interval">Интервал между марками</param>
+/// <param name="minDistanceFromEnds">Минимальное расстояние от концов</param>
+/// <returns>Список позиций вдоль трубы</returns>
+private List<double> CalculateOptimalTagPositions(PipeWrp pipe, double interval, double minDistanceFromEnds)
+{
+    List<double> positions = new List<double>();
+
+    // Доступная длина для размещения марок
+    double availableLength = pipe.Length - (2 * minDistanceFromEnds);
+
+    if (availableLength <= 0)
+    {
+        // Если труба слишком короткая для отступов, размещаем марку в центре
+        positions.Add(pipe.Length / 2);
+        return positions;
+    }
+
+    if (pipe.Length <= interval)
+    {
+        // Для коротких труб - одна марка в центре
+        positions.Add(pipe.Length / 2);
+    }
+    else
+    {
+        // Для длинных труб - несколько марок с равномерным распределением
+        int numberOfTags = (int)(availableLength / interval);
+        if (numberOfTags == 0) numberOfTags = 1;
+
+        // Вычисляем равномерное распределение марок в доступной области
+        double actualInterval = availableLength / numberOfTags;
+
+        for (int i = 0; i < numberOfTags; i++)
+        {
+            double position = minDistanceFromEnds + (i + 0.5) * actualInterval;
+            positions.Add(position);
+        }
+    }
+
+    return positions;
+}
+
+/// <summary>
+/// Проверяет, не слишком ли близко марка к концам трубы
+/// </summary>
+/// <param name="position">Позиция вдоль трубы</param>
+/// <param name="pipeLength">Длина трубы</param>
+/// <param name="minDistance">Минимальное расстояние</param>
+/// <returns>True если позиция допустима</returns>
+private bool IsPositionValidFromEnds(double position, double pipeLength, double minDistance)
+{
+    return position >= minDistance && position <= (pipeLength - minDistance);
+}
 
 
     private static List<PipeWrp> GetPipeNotTags(List<PipeWrp> pipesWrp, List<TagWrp> existingSelectedTags)
