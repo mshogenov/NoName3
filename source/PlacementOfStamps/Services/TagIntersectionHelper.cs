@@ -1,4 +1,6 @@
+using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.UI;
+using PlacementOfStamps.Models;
 
 namespace PlacementOfStamps.Services;
 
@@ -13,8 +15,8 @@ public static class TagIntersectionHelper
     /// <param name="excludeTaggedElement">Исключить помеченный элемент из результата</param>
     /// <returns>Список пересекающихся элементов</returns>
     public static List<Element> GetIntersectingElements(
-        Document document, 
-        IndependentTag independentTag, 
+        Document document,
+        IndependentTag independentTag,
         View view,
         bool excludeTaggedElement = true)
     {
@@ -39,7 +41,7 @@ public static class TagIntersectionHelper
             ElementId tagId = independentTag.Id;
             List<ElementId> excludeIds = new List<ElementId> { tagId };
 
-           
+
 
             ExclusionFilter exclusionFilter = new ExclusionFilter(excludeIds);
 
@@ -104,7 +106,7 @@ public static class TagIntersectionHelper
             ElementId tagId = independentTag.Id;
             List<ElementId> excludeIds = new List<ElementId> { tagId };
 
-           
+
             ExclusionFilter exclusionFilter = new ExclusionFilter(excludeIds);
 
             // Комбинируем все фильтры
@@ -125,16 +127,9 @@ public static class TagIntersectionHelper
         }
     }
 
-    /// <summary>
-    /// Проверяет, пересекается ли марка с другими марками
-    /// </summary>
-    /// <param name="document">Документ Revit</param>
-    /// <param name="independentTag">Марка для проверки</param>
-    /// <param name="view">Вид, на котором размещена марка</param>
-    /// <returns>Список пересекающихся марок</returns>
-   /// <summary>
+
     /// Получает список марок, пересекающихся с указанной маркой на виде
-    /// </summary>
+
     /// <param name="document">Документ Revit</param>
     /// <param name="independentTag">Марка для проверки пересечений</param>
     /// <param name="view">Вид, на котором размещена марка</param>
@@ -240,7 +235,36 @@ public static class TagIntersectionHelper
             return null;
         }
     }
+    /// <summary>
+    /// Упрощенный метод получения пересекающихся труб из существующей коллекции
+    /// </summary>
+    /// <param name="tag">Марка</param>
+    /// <param name="currentPipe">Текущая труба (исключается)</param>
+    /// <param name="allPipes">Все трубы в проекте</param>
+    /// <param name="view">Активный вид</param>
+    /// <returns>Список пересекающихся труб</returns>
+    private static List<Pipe> GetIntersectingPipesFromCollection(TagWrp tag, PipeWrp currentPipe, 
+        List<PipeWrp> allPipes, View view)
+    {
+        List<Pipe> intersectingPipes = new List<Pipe>();
 
+        BoundingBoxXYZ tagBoundingBox = tag.IndependentTag.get_BoundingBox(view);
+        if (tagBoundingBox == null) return intersectingPipes;
+
+        foreach (var pipeWrp in allPipes)
+        {
+            // Пропускаем текущую трубу
+            if (pipeWrp.Pipe.Id == currentPipe.Pipe.Id) continue;
+
+            BoundingBoxXYZ pipeBoundingBox = pipeWrp.Pipe.get_BoundingBox(view);
+            if (pipeBoundingBox != null && BoundingBoxesIntersect2D(tagBoundingBox, pipeBoundingBox))
+            {
+                intersectingPipes.Add(pipeWrp.Pipe);
+            }
+        }
+
+        return intersectingPipes;
+    }
     /// <summary>
     /// Проверяет пересечение двух bounding box в 2D (игнорируя Z координату)
     /// </summary>
@@ -401,13 +425,93 @@ public static class TagIntersectionHelper
             List<CurveLoop> curveLoops = new List<CurveLoop> { curveLoop };
 
             return GeometryCreationUtilities.CreateExtrusionGeometry(
-                curveLoops, 
-                XYZ.BasisZ, 
+                curveLoops,
+                XYZ.BasisZ,
                 height);
         }
         catch
         {
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Получает трубы, которые пересекаются с маркой (исключая текущую трубу)
+    /// </summary>
+    /// <param name="tag">Марка для проверки</param>
+    /// <param name="currentPipe">Текущая труба (исключается из результата)</param>
+    /// <param name="view">Активный вид</param>
+    /// <returns>Список пересекающихся труб</returns>
+    public static List<Pipe> GetIntersectingPipes(TagWrp tag, PipeWrp currentPipe, View view)
+    {
+        List<Pipe> intersectingPipes = new List<Pipe>();
+
+        try
+        {
+            // Получаем BoundingBox марки
+            BoundingBoxXYZ tagBoundingBox = tag.IndependentTag.get_BoundingBox(view);
+            if (tagBoundingBox == null) return intersectingPipes;
+
+            // Создаем Outline для фильтрации
+            Outline outline = new Outline(tagBoundingBox.Min, tagBoundingBox.Max);
+
+            // Фильтр для труб
+            ElementCategoryFilter pipeFilter = new ElementCategoryFilter(BuiltInCategory.OST_PipeCurves);
+
+            // Фильтр по BoundingBox
+            BoundingBoxIntersectsFilter boundingBoxFilter = new BoundingBoxIntersectsFilter(outline);
+
+            // Комбинированный фильтр
+            LogicalAndFilter combinedFilter = new LogicalAndFilter(pipeFilter, boundingBoxFilter);
+
+            // Получаем все трубы в области марки
+            FilteredElementCollector collector = new FilteredElementCollector(view.Document, view.Id)
+                .WherePasses(combinedFilter);
+
+            foreach (Element element in collector)
+            {
+                if (element is Pipe pipe && pipe.Id != currentPipe.Pipe.Id)
+                {
+                    // Дополнительная проверка пересечения
+                    if (DoesPipeIntersectWithTag(pipe, tag, view))
+                    {
+                        intersectingPipes.Add(pipe);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Логирование ошибки
+            TaskDialog.Show("Ошибка", $"Ошибка при поиске пересекающихся труб: {ex.Message}");
+        }
+
+        return intersectingPipes;
+    }
+    /// <summary>
+    /// Проверяет, пересекается ли труба с маркой
+    /// </summary>
+    /// <param name="pipe">Труба для проверки</param>
+    /// <param name="tag">Марка</param>
+    /// <param name="view">Вид</param>
+    /// <returns>True если пересекаются</returns>
+    private static bool DoesPipeIntersectWithTag(Pipe pipe, TagWrp tag, View view)
+    {
+        try
+        {
+            // Получаем BoundingBox трубы и марки
+            BoundingBoxXYZ pipeBoundingBox = pipe.get_BoundingBox(view);
+            BoundingBoxXYZ tagBoundingBox = tag.IndependentTag.get_BoundingBox(view);
+
+            if (pipeBoundingBox == null || tagBoundingBox == null)
+                return false;
+
+            // Проверяем пересечение BoundingBox в 2D
+            return BoundingBoxesIntersect2D(pipeBoundingBox, tagBoundingBox);
+        }
+        catch
+        {
+            return false;
         }
     }
 }
