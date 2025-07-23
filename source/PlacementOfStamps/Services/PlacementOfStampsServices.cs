@@ -377,33 +377,35 @@ public class PlacementOfStampsServices
     //         flag = true;
     //     }
     // }
-    public void PlacementMarksSystemAbbreviation(List<PipeWrp> pipeWrp, List<TagWrp> tagWpr,
+    public void PlacementMarksSystemAbbreviation(List<PipeWrp> pipesWrp, List<TagWrp> tagWpr,
         FamilySymbol selectedTag)
     {
+        var pipes = pipesWrp.Where(x => x.Length.ToMillimeters() > 1000).ToList();
+        if (pipes.Count == 0) return;
         var existingSelectedTags = tagWpr
             .Where(x => x.TagTypeId == selectedTag.Id)
             .ToList();
-        var pipes = GetPipeNotTags(pipeWrp, existingSelectedTags);
-        var pipesSort = pipes.OrderBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).X)
-            .ThenBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).Y).ToList();
-        bool flag = false;
+        var pipeNotTags = GetPipeNotTags(pipes, existingSelectedTags);
+        // Сортировка по направлению, затем по координатам
+        var pipesSort = pipeNotTags
+            .OrderBy(p => Math.Round(p.Direction.X, 2))  // Сначала по X компоненте направления
+            .ThenBy(p => Math.Round(p.Direction.Y, 2))   // Затем по Y компоненте направления  
+            .ThenBy(p => Math.Round(p.Direction.Z, 2))   // Затем по Z компоненте направления
+            .ThenBy(p => p.StartPoint.X)                 // Затем по координатам начальной точки
+            .ThenBy(p => p.StartPoint.Y)
+            .ThenBy(p => p.StartPoint.Z)
+            .ToList();
         var activeView = _doc.ActiveView;
 
         foreach (var pipe in pipesSort)
         {
-            if (pipe.Length.ToMillimeters()  < 1000 )
-            {
-                
-                continue;
-            }
-
             if (activeView.ViewType == ViewType.FloorPlan && pipe.IsRiser)
             {
                 continue;
             }
 
             // Вычисляем оптимальные позиции для марок
-            List<double> tagPositions = CalculateTagPositionsUniform(pipe);
+            List<double> tagPositions = CalculateTagPositions(pipe);
 
             // Размещаем марки в вычисленных позициях
             foreach (double position in tagPositions)
@@ -427,14 +429,12 @@ public class PlacementOfStampsServices
                     {
                         _doc.Delete(pipeTag.Id);
                     }
-                   
                 }
             }
-
-            flag = true;
         }
     }
-    // <summary>
+
+    /// <summary>
     /// Проверяет, находится ли марка на трубе
     /// </summary>
     /// <param name="tagPosition">Позиция марки</param>
@@ -457,6 +457,7 @@ public class PlacementOfStampsServices
 
         return isOnPipe;
     }
+
     /// <summary>
     /// Вычисляет оптимальные позиции для размещения марок на трубе
     /// </summary>
@@ -516,6 +517,7 @@ public class PlacementOfStampsServices
 
         return positions.OrderBy(p => p).ToList();
     }
+
     /// <summary>
     /// Альтернативный метод с равномерным распределением марок
     /// </summary>
@@ -575,172 +577,178 @@ public class PlacementOfStampsServices
 
         return positions.Distinct().OrderBy(p => p).ToList();
     }
-/// <summary>
-/// Корректирует расстояние, чтобы марка не попадала слишком близко к концам трубы
-/// </summary>
-/// <param name="originalDistance">Исходное расстояние</param>
-/// <param name="pipeLength">Длина трубы</param>
-/// <param name="minDistanceFromEnds">Минимальное расстояние от концов</param>
-/// <returns>Скорректированное расстояние</returns>
-private double AdjustDistanceFromEnds(double originalDistance, double pipeLength, double minDistanceFromEnds)
-{
-    // Если марка слишком близко к началу трубы
-    if (originalDistance < minDistanceFromEnds)
+
+    /// <summary>
+    /// Корректирует расстояние, чтобы марка не попадала слишком близко к концам трубы
+    /// </summary>
+    /// <param name="originalDistance">Исходное расстояние</param>
+    /// <param name="pipeLength">Длина трубы</param>
+    /// <param name="minDistanceFromEnds">Минимальное расстояние от концов</param>
+    /// <returns>Скорректированное расстояние</returns>
+    private double AdjustDistanceFromEnds(double originalDistance, double pipeLength, double minDistanceFromEnds)
     {
-        return minDistanceFromEnds;
+        // Если марка слишком близко к началу трубы
+        if (originalDistance < minDistanceFromEnds)
+        {
+            return minDistanceFromEnds;
+        }
+
+        // Если марка слишком близко к концу трубы
+        if (originalDistance > (pipeLength - minDistanceFromEnds))
+        {
+            return pipeLength - minDistanceFromEnds;
+        }
+
+        return originalDistance;
     }
 
-    // Если марка слишком близко к концу трубы
-    if (originalDistance > (pipeLength - minDistanceFromEnds))
+    /// <summary>
+    /// Улучшенный метод размещения марок с избеганием концов труб
+    /// </summary>
+    public void PlacementMarksSystemAbbreviationImproved(List<PipeWrp> pipeWrp, List<TagWrp> tagWpr,
+        FamilySymbol selectedTag)
     {
-        return pipeLength - minDistanceFromEnds;
-    }
+        var existingSelectedTags = tagWpr
+            .Where(x => x.TagTypeId == selectedTag.Id)
+            .ToList();
+        var pipes = GetPipeNotTags(pipeWrp, existingSelectedTags);
+        var pipesSort = pipes.OrderBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).X)
+            .ThenBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).Y).ToList();
+        bool flag = false;
+        var activeView = _doc.ActiveView;
 
-    return originalDistance;
-}
-   /// <summary>
-/// Улучшенный метод размещения марок с избеганием концов труб
-/// </summary>
-public void PlacementMarksSystemAbbreviationImproved(List<PipeWrp> pipeWrp, List<TagWrp> tagWpr,
-    FamilySymbol selectedTag)
-{
-    var existingSelectedTags = tagWpr
-        .Where(x => x.TagTypeId == selectedTag.Id)
-        .ToList();
-    var pipes = GetPipeNotTags(pipeWrp, existingSelectedTags);
-    var pipesSort = pipes.OrderBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).X)
-        .ThenBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).Y).ToList();
-    bool flag = false;
-    var activeView = _doc.ActiveView;
+        // Параметры размещения марок
+        double interval = 3000; // мм
+        double minDistanceFromEnds = 200; // мм
+        double minPipeLength = 400; // мм - минимальная длина трубы для размещения марки
 
-    // Параметры размещения марок
-    double interval = 3000; // мм
-    double minDistanceFromEnds = 200; // мм
-    double minPipeLength = 400; // мм - минимальная длина трубы для размещения марки
+        // Конвертация в внутренние единицы
+        double intervalInternal = UnitUtils.ConvertToInternalUnits(interval, UnitTypeId.Millimeters);
+        double minDistanceFromEndsInternal =
+            UnitUtils.ConvertToInternalUnits(minDistanceFromEnds, UnitTypeId.Millimeters);
+        double minPipeLengthInternal = UnitUtils.ConvertToInternalUnits(minPipeLength, UnitTypeId.Millimeters);
 
-    // Конвертация в внутренние единицы
-    double intervalInternal = UnitUtils.ConvertToInternalUnits(interval, UnitTypeId.Millimeters);
-    double minDistanceFromEndsInternal = UnitUtils.ConvertToInternalUnits(minDistanceFromEnds, UnitTypeId.Millimeters);
-    double minPipeLengthInternal = UnitUtils.ConvertToInternalUnits(minPipeLength, UnitTypeId.Millimeters);
-
-    foreach (var pipe in pipesSort)
-    {
-        if (pipe.Length.ToMillimeters() is > 500 and < 4000 && flag)
+        foreach (var pipe in pipesSort)
         {
-            flag = false;
-            continue;
-        }
-
-        if (activeView.ViewType == ViewType.FloorPlan && pipe.IsRiser)
-        {
-            continue;
-        }
-
-        // Пропускаем слишком короткие трубы
-        if (pipe.Length < minPipeLengthInternal)
-        {
-            continue;
-        }
-
-        // Вычисляем оптимальные позиции для марок
-        List<double> tagPositions = CalculateOptimalTagPositions(pipe, intervalInternal, minDistanceFromEndsInternal);
-
-        // Размещаем марки в вычисленных позициях
-        foreach (double position in tagPositions)
-        {
-            XYZ point = pipe.StartPoint + pipe.Direction * position;
-            XYZ tagPoint = CalculateTagPosition(point, pipe);
-
-            if (tagPoint != null)
+            if (pipe.Length.ToMillimeters() is > 500 and < 4000 && flag)
             {
-                IndependentTag pipeTag = IndependentTag.Create(_doc, selectedTag.Id, activeView.Id,
-                    new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagPoint);
+                flag = false;
+                continue;
+            }
 
-                var newPosition = FindFreeTagPosition(tagPoint, new TagWrp(pipeTag), pipe);
-                pipeTag.TagHeadPosition = newPosition;
-                tagWpr.Add(new TagWrp(pipeTag));
+            if (activeView.ViewType == ViewType.FloorPlan && pipe.IsRiser)
+            {
+                continue;
+            }
+
+            // Пропускаем слишком короткие трубы
+            if (pipe.Length < minPipeLengthInternal)
+            {
+                continue;
+            }
+
+            // Вычисляем оптимальные позиции для марок
+            List<double> tagPositions =
+                CalculateOptimalTagPositions(pipe, intervalInternal, minDistanceFromEndsInternal);
+
+            // Размещаем марки в вычисленных позициях
+            foreach (double position in tagPositions)
+            {
+                XYZ point = pipe.StartPoint + pipe.Direction * position;
+                XYZ tagPoint = CalculateTagPosition(point, pipe);
+
+                if (tagPoint != null)
+                {
+                    IndependentTag pipeTag = IndependentTag.Create(_doc, selectedTag.Id, activeView.Id,
+                        new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagPoint);
+
+                    var newPosition = FindFreeTagPosition(tagPoint, new TagWrp(pipeTag), pipe);
+                    pipeTag.TagHeadPosition = newPosition;
+                    tagWpr.Add(new TagWrp(pipeTag));
+                }
+            }
+
+            flag = true;
+        }
+    }
+
+    /// <summary>
+    /// Вычисляет позицию марки с учетом смещения
+    /// </summary>
+    /// <param name="point">Точка на трубе</param>
+    /// <param name="pipe">Труба</param>
+    /// <returns>Позиция марки</returns>
+    private XYZ CalculateTagPosition(XYZ point, PipeWrp pipe)
+    {
+        if (pipe.DisplacedPoint != null)
+        {
+            return new XYZ(
+                point.X + pipe.DisplacedPoint.X,
+                point.Y + pipe.DisplacedPoint.Y,
+                point.Z + pipe.DisplacedPoint.Z);
+        }
+        else
+        {
+            return point;
+        }
+    }
+
+    /// <summary>
+    /// Вычисляет оптимальные позиции для размещения марок на трубе
+    /// </summary>
+    /// <param name="pipe">Труба</param>
+    /// <param name="interval">Интервал между марками</param>
+    /// <param name="minDistanceFromEnds">Минимальное расстояние от концов</param>
+    /// <returns>Список позиций вдоль трубы</returns>
+    private List<double> CalculateOptimalTagPositions(PipeWrp pipe, double interval, double minDistanceFromEnds)
+    {
+        List<double> positions = new List<double>();
+
+        // Доступная длина для размещения марок
+        double availableLength = pipe.Length - (2 * minDistanceFromEnds);
+
+        if (availableLength <= 0)
+        {
+            // Если труба слишком короткая для отступов, размещаем марку в центре
+            positions.Add(pipe.Length / 2);
+            return positions;
+        }
+
+        if (pipe.Length <= interval)
+        {
+            // Для коротких труб - одна марка в центре
+            positions.Add(pipe.Length / 2);
+        }
+        else
+        {
+            // Для длинных труб - несколько марок с равномерным распределением
+            int numberOfTags = (int)(availableLength / interval);
+            if (numberOfTags == 0) numberOfTags = 1;
+
+            // Вычисляем равномерное распределение марок в доступной области
+            double actualInterval = availableLength / numberOfTags;
+
+            for (int i = 0; i < numberOfTags; i++)
+            {
+                double position = minDistanceFromEnds + (i + 0.5) * actualInterval;
+                positions.Add(position);
             }
         }
 
-        flag = true;
-    }
-}
-/// <summary>
-/// Вычисляет позицию марки с учетом смещения
-/// </summary>
-/// <param name="point">Точка на трубе</param>
-/// <param name="pipe">Труба</param>
-/// <returns>Позиция марки</returns>
-private XYZ CalculateTagPosition(XYZ point, PipeWrp pipe)
-{
-    if (pipe.DisplacedPoint != null)
-    {
-        return new XYZ(
-            point.X + pipe.DisplacedPoint.X,
-            point.Y + pipe.DisplacedPoint.Y,
-            point.Z + pipe.DisplacedPoint.Z);
-    }
-    else
-    {
-        return point;
-    }
-}
-/// <summary>
-/// Вычисляет оптимальные позиции для размещения марок на трубе
-/// </summary>
-/// <param name="pipe">Труба</param>
-/// <param name="interval">Интервал между марками</param>
-/// <param name="minDistanceFromEnds">Минимальное расстояние от концов</param>
-/// <returns>Список позиций вдоль трубы</returns>
-private List<double> CalculateOptimalTagPositions(PipeWrp pipe, double interval, double minDistanceFromEnds)
-{
-    List<double> positions = new List<double>();
-
-    // Доступная длина для размещения марок
-    double availableLength = pipe.Length - (2 * minDistanceFromEnds);
-
-    if (availableLength <= 0)
-    {
-        // Если труба слишком короткая для отступов, размещаем марку в центре
-        positions.Add(pipe.Length / 2);
         return positions;
     }
 
-    if (pipe.Length <= interval)
+    /// <summary>
+    /// Проверяет, не слишком ли близко марка к концам трубы
+    /// </summary>
+    /// <param name="position">Позиция вдоль трубы</param>
+    /// <param name="pipeLength">Длина трубы</param>
+    /// <param name="minDistance">Минимальное расстояние</param>
+    /// <returns>True если позиция допустима</returns>
+    private bool IsPositionValidFromEnds(double position, double pipeLength, double minDistance)
     {
-        // Для коротких труб - одна марка в центре
-        positions.Add(pipe.Length / 2);
+        return position >= minDistance && position <= (pipeLength - minDistance);
     }
-    else
-    {
-        // Для длинных труб - несколько марок с равномерным распределением
-        int numberOfTags = (int)(availableLength / interval);
-        if (numberOfTags == 0) numberOfTags = 1;
-
-        // Вычисляем равномерное распределение марок в доступной области
-        double actualInterval = availableLength / numberOfTags;
-
-        for (int i = 0; i < numberOfTags; i++)
-        {
-            double position = minDistanceFromEnds + (i + 0.5) * actualInterval;
-            positions.Add(position);
-        }
-    }
-
-    return positions;
-}
-
-/// <summary>
-/// Проверяет, не слишком ли близко марка к концам трубы
-/// </summary>
-/// <param name="position">Позиция вдоль трубы</param>
-/// <param name="pipeLength">Длина трубы</param>
-/// <param name="minDistance">Минимальное расстояние</param>
-/// <returns>True если позиция допустима</returns>
-private bool IsPositionValidFromEnds(double position, double pipeLength, double minDistance)
-{
-    return position >= minDistance && position <= (pipeLength - minDistance);
-}
 
 
     private static List<PipeWrp> GetPipeNotTags(List<PipeWrp> pipesWrp, List<TagWrp> existingSelectedTags)
@@ -1025,116 +1033,83 @@ private bool IsPositionValidFromEnds(double position, double pipeLength, double 
         List<Pipe> intersectingPipes = TagIntersectionHelper.GetIntersectingPipes(existingTag, pipe, _doc.ActiveView);
         // Если нет пересечений, возвращаем исходную позицию
         // Если нет пересечений, возвращаем исходную позицию
-        if ((intersectingTags == null || intersectingTags.Count == 0) && 
+        if ((intersectingTags == null || intersectingTags.Count == 0) &&
             (intersectingPipes == null || intersectingPipes.Count == 0))
             return originalPosition;
 
         // Направление смещения (параллельное направлению трубы в плоскости XY)
         XYZ shiftDirection = GetParallelDirectionXy(pipe);
 
-       
-        double baseShiftDistance = UnitUtils.ConvertToInternalUnits(400, UnitTypeId.Millimeters); 
-      
+
+        double baseShiftDistance = UnitUtils.ConvertToInternalUnits(400, UnitTypeId.Millimeters);
+
         // Пробуем различные стратегии смещения
-        XYZ newPosition = TryShiftStrategies(originalPosition, existingTag, intersectingTags, 
+        XYZ newPosition = TryShiftStrategies(originalPosition, existingTag, intersectingTags,
             intersectingPipes, shiftDirection, baseShiftDistance, maxAttempts);
 
         return newPosition ?? originalPosition;
     }
+
 // <summary>
-/// Пробует различные стратегии смещения марки
-/// </summary>
-/// <param name="originalPosition">Исходная позиция</param>
-/// <param name="existingTag">Существующая марка</param>
-/// <param name="intersectingTags">Список пересекающихся марок</param>
-/// <param name="primaryDirection">Основное направление смещения</param>
-/// <param name="baseDistance">Базовое расстояние смещения</param>
-/// <param name="maxAttempts">Максимальное количество попыток</param>
-/// <returns>Новая позиция или null</returns>
-private XYZ TryShiftStrategies(XYZ originalPosition, TagWrp existingTag, 
-    List<IndependentTag> intersectingTags, List<Pipe> intersectingPipes,
-    XYZ primaryDirection, double baseDistance, int maxAttempts)
-{
-    // Стратегия 1: Смещение вдоль основного направления
-    XYZ newPosition = TryShiftInDirection(originalPosition, existingTag, intersectingTags, 
-        intersectingPipes, primaryDirection, baseDistance, maxAttempts);
-    if (newPosition != null) return newPosition;
-
-    // Стратегия 2: Смещение в противоположном направлении
-    newPosition = TryShiftInDirection(originalPosition, existingTag, intersectingTags, 
-        intersectingPipes, primaryDirection.Negate(), baseDistance, maxAttempts);
-    if (newPosition != null) return newPosition;
-
-    // Стратегия 3: Смещение перпендикулярно основному направлению
-    XYZ perpendicularDirection = new XYZ(-primaryDirection.Y, primaryDirection.X, 0).Normalize();
-    newPosition = TryShiftInDirection(originalPosition, existingTag, intersectingTags, 
-        intersectingPipes, perpendicularDirection, baseDistance, maxAttempts);
-    if (newPosition != null) return newPosition;
-
-    // Стратегия 4: Смещение в противоположном перпендикулярном направлении
-    newPosition = TryShiftInDirection(originalPosition, existingTag, intersectingTags, 
-        intersectingPipes, perpendicularDirection.Negate(), baseDistance, maxAttempts);
-    if (newPosition != null) return newPosition;
-
-    // Стратегия 5: Радиальное смещение
-    newPosition = TryRadialShift(originalPosition, existingTag, intersectingTags, 
-        intersectingPipes, baseDistance, maxAttempts);
-
-    return newPosition;
-}
-
-
-/// <summary>
-/// Пробует смещение в заданном направлении
-/// </summary>
-/// <param name="originalPosition">Исходная позиция</param>
-/// <param name="existingTag">Существующая марка</param>
-/// <param name="intersectingTags">Список пересекающихся марок</param>
-/// <param name="direction">Направление смещения</param>
-/// <param name="baseDistance">Базовое расстояние</param>
-/// <param name="maxAttempts">Максимальное количество попыток</param>
-/// <returns>Новая позиция или null</returns>
-private XYZ TryShiftInDirection(XYZ originalPosition, TagWrp existingTag, 
-    List<IndependentTag> intersectingTags, List<Pipe> intersectingPipes,
-    XYZ direction, double baseDistance, int maxAttempts)
-{
-    for (int attempt = 1; attempt <= maxAttempts; attempt++)
+    /// Пробует различные стратегии смещения марки
+    /// </summary>
+    /// <param name="originalPosition">Исходная позиция</param>
+    /// <param name="existingTag">Существующая марка</param>
+    /// <param name="intersectingTags">Список пересекающихся марок</param>
+    /// <param name="primaryDirection">Основное направление смещения</param>
+    /// <param name="baseDistance">Базовое расстояние смещения</param>
+    /// <param name="maxAttempts">Максимальное количество попыток</param>
+    /// <returns>Новая позиция или null</returns>
+    private XYZ TryShiftStrategies(XYZ originalPosition, TagWrp existingTag,
+        List<IndependentTag> intersectingTags, List<Pipe> intersectingPipes,
+        XYZ primaryDirection, double baseDistance, int maxAttempts)
     {
-        double distance = baseDistance * attempt;
-        XYZ testPosition = originalPosition + direction * distance;
+        // Стратегия 1: Смещение вдоль основного направления
+        XYZ newPosition = TryShiftInDirection(originalPosition, existingTag, intersectingTags,
+            intersectingPipes, primaryDirection, baseDistance, maxAttempts);
+        if (newPosition != null) return newPosition;
 
-        if (IsPositionFree(testPosition, existingTag, intersectingTags, intersectingPipes))
-        {
-            return testPosition;
-        }
+        // Стратегия 2: Смещение в противоположном направлении
+        newPosition = TryShiftInDirection(originalPosition, existingTag, intersectingTags,
+            intersectingPipes, primaryDirection.Negate(), baseDistance, maxAttempts);
+        if (newPosition != null) return newPosition;
+
+        // Стратегия 3: Смещение перпендикулярно основному направлению
+        XYZ perpendicularDirection = new XYZ(-primaryDirection.Y, primaryDirection.X, 0).Normalize();
+        newPosition = TryShiftInDirection(originalPosition, existingTag, intersectingTags,
+            intersectingPipes, perpendicularDirection, baseDistance, maxAttempts);
+        if (newPosition != null) return newPosition;
+
+        // Стратегия 4: Смещение в противоположном перпендикулярном направлении
+        newPosition = TryShiftInDirection(originalPosition, existingTag, intersectingTags,
+            intersectingPipes, perpendicularDirection.Negate(), baseDistance, maxAttempts);
+        if (newPosition != null) return newPosition;
+
+        // Стратегия 5: Радиальное смещение
+        newPosition = TryRadialShift(originalPosition, existingTag, intersectingTags,
+            intersectingPipes, baseDistance, maxAttempts);
+
+        return newPosition;
     }
 
-    return null;
-}
 
-/// <summary>
-/// Пробует радиальное смещение (по кругу вокруг исходной позиции)
-/// </summary>
-/// <param name="originalPosition">Исходная позиция</param>
-/// <param name="existingTag">Существующая марка</param>
-/// <param name="intersectingTags">Список пересекающихся марок</param>
-/// <param name="baseDistance">Базовое расстояние</param>
-/// <param name="maxAttempts">Максимальное количество попыток</param>
-/// <returns>Новая позиция или null</returns>
-private XYZ TryRadialShift(XYZ originalPosition, TagWrp existingTag, 
-    List<IndependentTag> intersectingTags, List<Pipe> intersectingPipes,
-    double baseDistance, int maxAttempts)
-{
-    int angleSteps = 8; // 8 направлений (каждые 45 градусов)
-
-    for (int distanceStep = 1; distanceStep <= maxAttempts; distanceStep++)
+    /// <summary>
+    /// Пробует смещение в заданном направлении
+    /// </summary>
+    /// <param name="originalPosition">Исходная позиция</param>
+    /// <param name="existingTag">Существующая марка</param>
+    /// <param name="intersectingTags">Список пересекающихся марок</param>
+    /// <param name="direction">Направление смещения</param>
+    /// <param name="baseDistance">Базовое расстояние</param>
+    /// <param name="maxAttempts">Максимальное количество попыток</param>
+    /// <returns>Новая позиция или null</returns>
+    private XYZ TryShiftInDirection(XYZ originalPosition, TagWrp existingTag,
+        List<IndependentTag> intersectingTags, List<Pipe> intersectingPipes,
+        XYZ direction, double baseDistance, int maxAttempts)
     {
-        double distance = baseDistance * distanceStep;
-
-        for (int angleStep = 0; angleStep < angleSteps; angleStep++)
+        for (int attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            double angle = (2 * Math.PI * angleStep) / angleSteps;
-            XYZ direction = new XYZ(Math.Cos(angle), Math.Sin(angle), 0);
+            double distance = baseDistance * attempt;
             XYZ testPosition = originalPosition + direction * distance;
 
             if (IsPositionFree(testPosition, existingTag, intersectingTags, intersectingPipes))
@@ -1142,196 +1117,230 @@ private XYZ TryRadialShift(XYZ originalPosition, TagWrp existingTag,
                 return testPosition;
             }
         }
+
+        return null;
     }
 
-    return null;
-}
-
-private bool IsPositionFree(XYZ testPosition, TagWrp existingTag, 
-    List<IndependentTag> intersectingTags, List<Pipe> intersectingPipes)
-{
-    try
+    /// <summary>
+    /// Пробует радиальное смещение (по кругу вокруг исходной позиции)
+    /// </summary>
+    /// <param name="originalPosition">Исходная позиция</param>
+    /// <param name="existingTag">Существующая марка</param>
+    /// <param name="intersectingTags">Список пересекающихся марок</param>
+    /// <param name="baseDistance">Базовое расстояние</param>
+    /// <param name="maxAttempts">Максимальное количество попыток</param>
+    /// <returns>Новая позиция или null</returns>
+    private XYZ TryRadialShift(XYZ originalPosition, TagWrp existingTag,
+        List<IndependentTag> intersectingTags, List<Pipe> intersectingPipes,
+        double baseDistance, int maxAttempts)
     {
-        // Создаем временный bounding box для тестовой позиции
-        BoundingBoxXYZ testBoundingBox = CreateTestBoundingBox(testPosition, existingTag);
-        if (testBoundingBox == null) return false;
+        int angleSteps = 8; // 8 направлений (каждые 45 градусов)
 
-        // Проверяем пересечение с марками
-        if (intersectingTags != null)
+        for (int distanceStep = 1; distanceStep <= maxAttempts; distanceStep++)
         {
+            double distance = baseDistance * distanceStep;
+
+            for (int angleStep = 0; angleStep < angleSteps; angleStep++)
+            {
+                double angle = (2 * Math.PI * angleStep) / angleSteps;
+                XYZ direction = new XYZ(Math.Cos(angle), Math.Sin(angle), 0);
+                XYZ testPosition = originalPosition + direction * distance;
+
+                if (IsPositionFree(testPosition, existingTag, intersectingTags, intersectingPipes))
+                {
+                    return testPosition;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private bool IsPositionFree(XYZ testPosition, TagWrp existingTag,
+        List<IndependentTag> intersectingTags, List<Pipe> intersectingPipes)
+    {
+        try
+        {
+            // Создаем временный bounding box для тестовой позиции
+            BoundingBoxXYZ testBoundingBox = CreateTestBoundingBox(testPosition, existingTag);
+            if (testBoundingBox == null) return false;
+
+            // Проверяем пересечение с марками
+            if (intersectingTags != null)
+            {
+                foreach (var intersectingTag in intersectingTags)
+                {
+                    BoundingBoxXYZ otherBoundingBox = intersectingTag.get_BoundingBox(_doc.ActiveView);
+                    if (otherBoundingBox != null && BoundingBoxesIntersect2D(testBoundingBox, otherBoundingBox))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            // Проверяем пересечение с трубами
+            if (intersectingPipes != null)
+            {
+                foreach (var intersectingPipe in intersectingPipes)
+                {
+                    BoundingBoxXYZ pipeBoundingBox = intersectingPipe.get_BoundingBox(_doc.ActiveView);
+                    if (pipeBoundingBox != null && BoundingBoxesIntersect2D(testBoundingBox, pipeBoundingBox))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Вычисляет центр масс списка марок
+    /// </summary>
+    /// <param name="tags">Список марок</param>
+    /// <returns>Центр масс или null</returns>
+    private XYZ CalculateTagsCentroid(List<IndependentTag> tags)
+    {
+        if (tags == null || tags.Count == 0) return null;
+
+        double sumX = 0, sumY = 0, sumZ = 0;
+        int validCount = 0;
+
+        foreach (var tag in tags)
+        {
+            XYZ position = tag.TagHeadPosition;
+            if (position != null)
+            {
+                sumX += position.X;
+                sumY += position.Y;
+                sumZ += position.Z;
+                validCount++;
+            }
+        }
+
+        if (validCount == 0) return null;
+
+        return new XYZ(sumX / validCount, sumY / validCount, sumZ / validCount);
+    }
+
+    /// <summary>
+    /// Проверяет, свободна ли позиция от пересечений
+    /// </summary>
+    /// <param name="testPosition">Тестируемая позиция</param>
+    /// <param name="existingTag">Существующая марка</param>
+    /// <param name="intersectingTags">Список пересекающихся марок</param>
+    /// <returns>True если позиция свободна</returns>
+    private bool IsPositionFree(XYZ testPosition, TagWrp existingTag, List<IndependentTag> intersectingTags)
+    {
+        try
+        {
+            // Создаем временный bounding box для тестовой позиции
+            BoundingBoxXYZ testBoundingBox = CreateTestBoundingBox(testPosition, existingTag);
+            if (testBoundingBox == null) return false;
+
+            // Проверяем пересечение с каждой из пересекающихся марок
             foreach (var intersectingTag in intersectingTags)
             {
                 BoundingBoxXYZ otherBoundingBox = intersectingTag.get_BoundingBox(_doc.ActiveView);
                 if (otherBoundingBox != null && BoundingBoxesIntersect2D(testBoundingBox, otherBoundingBox))
                 {
-                    return false;
+                    return false; // Есть пересечение
                 }
             }
-        }
 
-        // Проверяем пересечение с трубами
-        if (intersectingPipes != null)
+            return true; // Пересечений нет
+        }
+        catch
         {
-            foreach (var intersectingPipe in intersectingPipes)
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Создает тестовый bounding box для позиции
+    /// </summary>
+    /// <param name="position">Позиция</param>
+    /// <param name="existingTag">Существующая марка для определения размеров</param>
+    /// <returns>BoundingBox или null</returns>
+    private BoundingBoxXYZ CreateTestBoundingBox(XYZ position, TagWrp existingTag)
+    {
+        try
+        {
+            // Получаем размеры существующей марки
+            BoundingBoxXYZ existingBoundingBox = existingTag.IndependentTag.get_BoundingBox(_doc.ActiveView);
+
+            double width = 1.0; // Значения по умолчанию
+            double height = 0.5;
+
+            if (existingBoundingBox != null)
             {
-                BoundingBoxXYZ pipeBoundingBox = intersectingPipe.get_BoundingBox(_doc.ActiveView);
-                if (pipeBoundingBox != null && BoundingBoxesIntersect2D(testBoundingBox, pipeBoundingBox))
-                {
-                    return false;
-                }
+                width = Math.Abs(existingBoundingBox.Max.X - existingBoundingBox.Min.X);
+                height = Math.Abs(existingBoundingBox.Max.Y - existingBoundingBox.Min.Y);
             }
+
+            BoundingBoxXYZ testBoundingBox = new BoundingBoxXYZ();
+            testBoundingBox.Min = new XYZ(
+                position.X - width / 2,
+                position.Y - height / 2,
+                position.Z - 0.1);
+            testBoundingBox.Max = new XYZ(
+                position.X + width / 2,
+                position.Y + height / 2,
+                position.Z + 0.1);
+
+            return testBoundingBox;
         }
-
-        return true;
-    }
-    catch
-    {
-        return false;
-    }
-}
-/// <summary>
-/// Вычисляет центр масс списка марок
-/// </summary>
-/// <param name="tags">Список марок</param>
-/// <returns>Центр масс или null</returns>
-private XYZ CalculateTagsCentroid(List<IndependentTag> tags)
-{
-    if (tags == null || tags.Count == 0) return null;
-
-    double sumX = 0, sumY = 0, sumZ = 0;
-    int validCount = 0;
-
-    foreach (var tag in tags)
-    {
-        XYZ position = tag.TagHeadPosition;
-        if (position != null)
+        catch
         {
-            sumX += position.X;
-            sumY += position.Y;
-            sumZ += position.Z;
-            validCount++;
+            return null;
         }
     }
 
-    if (validCount == 0) return null;
-
-    return new XYZ(sumX / validCount, sumY / validCount, sumZ / validCount);
-}
-
-/// <summary>
-/// Проверяет, свободна ли позиция от пересечений
-/// </summary>
-/// <param name="testPosition">Тестируемая позиция</param>
-/// <param name="existingTag">Существующая марка</param>
-/// <param name="intersectingTags">Список пересекающихся марок</param>
-/// <returns>True если позиция свободна</returns>
-private bool IsPositionFree(XYZ testPosition, TagWrp existingTag, List<IndependentTag> intersectingTags)
-{
-    try
+    /// <summary>
+    /// Проверяет пересечение двух bounding box в 2D
+    /// </summary>
+    /// <param name="box1">Первый bounding box</param>
+    /// <param name="box2">Второй bounding box</param>
+    /// <returns>True если пересекаются</returns>
+    private bool BoundingBoxesIntersect2D(BoundingBoxXYZ box1, BoundingBoxXYZ box2)
     {
-        // Создаем временный bounding box для тестовой позиции
-        BoundingBoxXYZ testBoundingBox = CreateTestBoundingBox(testPosition, existingTag);
-        if (testBoundingBox == null) return false;
+        if (box1 == null || box2 == null) return false;
 
-        // Проверяем пересечение с каждой из пересекающихся марок
-        foreach (var intersectingTag in intersectingTags)
+        // Проверяем пересечение по X и Y
+        bool xIntersects = box1.Min.X <= box2.Max.X && box1.Max.X >= box2.Min.X;
+        bool yIntersects = box1.Min.Y <= box2.Max.Y && box1.Max.Y >= box2.Min.Y;
+
+        return xIntersects && yIntersects;
+    }
+
+    /// <summary>
+    /// Применяет найденную позицию к марке
+    /// </summary>
+    /// <param name="tag">Марка</param>
+    /// <param name="newPosition">Новая позиция</param>
+    /// <returns>True если успешно</returns>
+    private bool ApplyNewTagPosition(TagWrp tag, XYZ newPosition)
+    {
+        try
         {
-            BoundingBoxXYZ otherBoundingBox = intersectingTag.get_BoundingBox(_doc.ActiveView);
-            if (otherBoundingBox != null && BoundingBoxesIntersect2D(testBoundingBox, otherBoundingBox))
-            {
-                return false; // Есть пересечение
-            }
-        }
-
-        return true; // Пересечений нет
-    }
-    catch
-    {
-        return false;
-    }
-}
-/// <summary>
-/// Создает тестовый bounding box для позиции
-/// </summary>
-/// <param name="position">Позиция</param>
-/// <param name="existingTag">Существующая марка для определения размеров</param>
-/// <returns>BoundingBox или null</returns>
-private BoundingBoxXYZ CreateTestBoundingBox(XYZ position, TagWrp existingTag)
-{
-    try
-    {
-        // Получаем размеры существующей марки
-        BoundingBoxXYZ existingBoundingBox = existingTag.IndependentTag.get_BoundingBox(_doc.ActiveView);
-
-        double width = 1.0;  // Значения по умолчанию
-        double height = 0.5;
-
-        if (existingBoundingBox != null)
-        {
-            width = Math.Abs(existingBoundingBox.Max.X - existingBoundingBox.Min.X);
-            height = Math.Abs(existingBoundingBox.Max.Y - existingBoundingBox.Min.Y);
-        }
-
-        BoundingBoxXYZ testBoundingBox = new BoundingBoxXYZ();
-        testBoundingBox.Min = new XYZ(
-            position.X - width / 2,
-            position.Y - height / 2,
-            position.Z - 0.1);
-        testBoundingBox.Max = new XYZ(
-            position.X + width / 2,
-            position.Y + height / 2,
-            position.Z + 0.1);
-
-        return testBoundingBox;
-    }
-    catch
-    {
-        return null;
-    }
-}
-
-/// <summary>
-/// Проверяет пересечение двух bounding box в 2D
-/// </summary>
-/// <param name="box1">Первый bounding box</param>
-/// <param name="box2">Второй bounding box</param>
-/// <returns>True если пересекаются</returns>
-private bool BoundingBoxesIntersect2D(BoundingBoxXYZ box1, BoundingBoxXYZ box2)
-{
-    if (box1 == null || box2 == null) return false;
-
-    // Проверяем пересечение по X и Y
-    bool xIntersects = box1.Min.X <= box2.Max.X && box1.Max.X >= box2.Min.X;
-    bool yIntersects = box1.Min.Y <= box2.Max.Y && box1.Max.Y >= box2.Min.Y;
-
-    return xIntersects && yIntersects;
-}
-
-/// <summary>
-/// Применяет найденную позицию к марке
-/// </summary>
-/// <param name="tag">Марка</param>
-/// <param name="newPosition">Новая позиция</param>
-/// <returns>True если успешно</returns>
-private bool ApplyNewTagPosition(TagWrp tag, XYZ newPosition)
-{
-    try
-    {
-     
-
             // Перемещаем марку
             tag.IndependentTag.TagHeadPosition = newPosition;
 
-         
+
             return true;
-       
+        }
+        catch (Exception ex)
+        {
+            TaskDialog.Show("Ошибка", $"Не удалось переместить марку: {ex.Message}");
+            return false;
+        }
     }
-    catch (Exception ex)
-    {
-        TaskDialog.Show("Ошибка", $"Не удалось переместить марку: {ex.Message}");
-        return false;
-    }
-}
+
     private bool IsPositionWithinPipeBounds(XYZ position, PipeWrp pipe, double exclusionTolerance)
     {
         // Проецируем позицию на кривую трубы
