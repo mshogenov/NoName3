@@ -54,13 +54,87 @@ public class MepElementsCopyServices
     public void CopyMepElementsToLevel(LevelModel level, List<ElementWrp> mepElementModels,
         List<MepCurveWrp> mepCurveModels)
     {
-        ElementWrp elementWrp = mepElementModels.Where(m => m.BindingLevel != null)
-            .OrderBy(m => m.BindingLevel.Elevation)
-            .FirstOrDefault();
-        Level bindingLevel = elementWrp?.BindingLevel;
+        List<ElementId> elementIds = mepCurveModels
+            .Select(x => x.Id)
+            .Concat(mepCurveModels.Select(x => x.Id))
+            .ToList();
+        Level bindingLevel = FindMostUsedLevelInSelection(elementIds, _doc);
         if (bindingLevel == null) return;
         double offset = level.Elevation - bindingLevel.Elevation;
         CopyingMepElementsAndConnect(offset, mepElementModels, mepCurveModels);
+    }
+
+    public Level FindMostUsedLevelInSelection(List<ElementId> elementIds, Document doc)
+    {
+        if (elementIds.Count == 0)
+        {
+            return null;
+        }
+
+        // Словарь для подсчета, сколько раз каждый уровень используется
+        Dictionary<ElementId, int> levelUsageCount = new Dictionary<ElementId, int>();
+
+        // Проходим по всем выбранным элементам
+        foreach (ElementId id in elementIds)
+        {
+            Element elem = doc.GetElement(id);
+
+            // Пытаемся получить уровень элемента
+            ElementId levelId = GetElementLevel(elem);
+
+            if (levelId != null && levelId != ElementId.InvalidElementId)
+            {
+                // Увеличиваем счетчик использования этого уровня
+                if (levelUsageCount.ContainsKey(levelId))
+                {
+                    levelUsageCount[levelId]++;
+                }
+                else
+                {
+                    levelUsageCount[levelId] = 1;
+                }
+            }
+        }
+
+        // Если не найдено ни одного уровня
+        if (levelUsageCount.Count == 0)
+        {
+            return null;
+        }
+
+        // Находим уровень с наибольшим количеством использований
+        ElementId mostUsedLevelId = levelUsageCount.OrderByDescending(x => x.Value).First().Key;
+
+        // Возвращаем сам уровень
+        return doc.GetElement(mostUsedLevelId) as Level;
+    }
+
+    /// <summary>
+    /// Получает ElementId уровня, связанного с элементом
+    /// </summary>
+    /// <param name="elem">Элемент для проверки</param>
+    /// <returns>ElementId уровня или InvalidElementId, если уровень не найден</returns>
+    private ElementId GetElementLevel(Element elem)
+    {
+        // Проверка на null
+        if (elem == null)
+            return ElementId.InvalidElementId;
+
+        // Проверяем, есть ли у элемента параметр LevelId
+        Parameter levelParam = elem switch
+        {
+            FamilyInstance => elem.get_Parameter(BuiltInParameter.FAMILY_LEVEL_PARAM),
+            MEPCurve => elem.get_Parameter(BuiltInParameter.RBS_START_LEVEL_PARAM),
+            _ => null
+        };
+
+        if (levelParam is { HasValue: true })
+        {
+            return levelParam.AsElementId();
+        }
+
+        // Если не удалось определить уровень
+        return ElementId.InvalidElementId;
     }
 
     public void SetBaseLevel(List<ElementWrp> mepElementModels, LevelModel selectedLevel)
