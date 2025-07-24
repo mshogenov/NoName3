@@ -386,18 +386,16 @@ public class PlacementOfStampsServices
             .Where(x => x.TagTypeId == selectedTag.Id)
             .ToList();
         var pipeNotTags = GetPipeNotTags(pipes, existingSelectedTags);
-        // Сортировка по направлению, затем по координатам
-        var pipesSort = pipeNotTags
-            .OrderBy(p => Math.Round(p.Direction.X, 2))  // Сначала по X компоненте направления
-            .ThenBy(p => Math.Round(p.Direction.Y, 2))   // Затем по Y компоненте направления  
-            .ThenBy(p => Math.Round(p.Direction.Z, 2))   // Затем по Z компоненте направления
-            .ThenBy(p => p.StartPoint.X)                 // Затем по координатам начальной точки
-            .ThenBy(p => p.StartPoint.Y)
-            .ThenBy(p => p.StartPoint.Z)
-            .ToList();
+        // Групировка по направлению
+        var pipeGroupByDirection = pipeNotTags
+            .GroupBy(x => x.Direction).ToList();
+        foreach (var pipeGroup in pipeGroupByDirection)
+        {
+            
+        }
         var activeView = _doc.ActiveView;
 
-        foreach (var pipe in pipesSort)
+        foreach (var pipe in pipeGroupByDirection)
         {
             if (activeView.ViewType == ViewType.FloorPlan && pipe.IsRiser)
             {
