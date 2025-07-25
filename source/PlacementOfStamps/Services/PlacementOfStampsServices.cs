@@ -380,6 +380,7 @@ public class PlacementOfStampsServices
     public void PlacementMarksSystemAbbreviation(List<PipeWrp> pipesWrp, List<TagWrp> tagWpr,
         FamilySymbol selectedTag)
     {
+        var activeView = _doc.ActiveView;
         var pipes = pipesWrp.Where(x => x.Length.ToMillimeters() > 1000).ToList();
         if (pipes.Count == 0) return;
         var existingSelectedTags = tagWpr
@@ -392,43 +393,47 @@ public class PlacementOfStampsServices
         foreach (var pipeGroup in pipeGroupByDirection)
         {
             
-        }
-        var activeView = _doc.ActiveView;
-
-        foreach (var pipe in pipeGroupByDirection)
-        {
-            if (activeView.ViewType == ViewType.FloorPlan && pipe.IsRiser)
+            foreach (var pipe in pipeGroup)
             {
-                continue;
-            }
-
-            // Вычисляем оптимальные позиции для марок
-            List<double> tagPositions = CalculateTagPositions(pipe);
-
-            // Размещаем марки в вычисленных позициях
-            foreach (double position in tagPositions)
-            {
-                XYZ point = pipe.StartPoint + pipe.Direction * position;
-                XYZ tagPoint = CalculateTagPosition(point, pipe);
-
-                if (tagPoint != null)
+                if (activeView.ViewType == ViewType.FloorPlan && pipe.IsRiser)
                 {
-                    IndependentTag pipeTag = IndependentTag.Create(_doc, selectedTag.Id, activeView.Id,
-                        new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagPoint);
+                    continue;
+                }
 
-                    var newPosition = FindFreeTagPosition(tagPoint, new TagWrp(pipeTag), pipe);
-                    pipeTag.TagHeadPosition = newPosition;
-                    // Проверяем, лежит ли марка на трубе
-                    if (IsTagOnPipe(newPosition, pipe))
+                // Вычисляем оптимальные позиции для марок
+                List<double> tagPositions = CalculateTagPositions(pipe);
+
+                // Размещаем марки в вычисленных позициях
+                foreach (double position in tagPositions)
+                {
+                    XYZ point = pipe.StartPoint + pipe.Direction * position;
+                    XYZ tagPoint = CalculateTagPosition(point, pipe);
+
+                    if (tagPoint != null)
                     {
-                        tagWpr.Add(new TagWrp(pipeTag));
-                    }
-                    else
-                    {
-                        _doc.Delete(pipeTag.Id);
+                        IndependentTag pipeTag = IndependentTag.Create(_doc, selectedTag.Id, activeView.Id,
+                            new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagPoint);
+
+                        var newPosition = FindFreeTagPosition(tagPoint, new TagWrp(pipeTag), pipe);
+                        pipeTag.TagHeadPosition = newPosition;
+                        // Проверяем, лежит ли марка на трубе
+                        if (IsTagOnPipe(newPosition, pipe))
+                        {
+                            tagWpr.Add(new TagWrp(pipeTag));
+                        }
+                        else
+                        {
+                            _doc.Delete(pipeTag.Id);
+                        }
                     }
                 }
             }
+        }
+       
+
+        foreach (var pipe in pipeGroupByDirection)
+        {
+            
         }
     }
 
