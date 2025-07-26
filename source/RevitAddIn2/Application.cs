@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using Autodesk.Revit.DB.Events;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
 using LastAllocation.Models;
@@ -20,15 +21,19 @@ public class Application : ExternalApplication
 {
     private RibbonPanel _modifyPanel;
 
+    private  FailureReplacement? _failureReplacement;
+
     // Заменяем одиночный список историей из 10 списков
     public static ObservableCollection<SelectionHistoryData> SelectionHistories { get; } = [];
     private static int MaxHistories => 10;
 
     public override void OnStartup()
     {
+        _failureReplacement = new FailureReplacement();
         CreateRibbon();
         RegisterUpdaterParameters();
         Application.SelectionChanged += LastAllocation;
+         Application.ControlledApplication.FailuresProcessing += ControlledOnFailuresProcessing;
         // Application.SelectionChanged += OnSelectionChanged;
         // Application.ViewActivated += OnViewActivated;
     }
@@ -41,8 +46,27 @@ public class Application : ExternalApplication
         // Application.SelectionChanged -= OnSelectionChanged;
         // Application.ViewActivated -= OnViewActivated;
     }
+    private void ControlledOnFailuresProcessing(object? sender, FailuresProcessingEventArgs e)
+    {
+        var failuresAccessor = e.GetFailuresAccessor();
+        var failureMessages = failuresAccessor.GetFailureMessages(FailureSeverity.Error);
+        //.Where(x => x.GetFailureDefinitionId() == BuiltInFailures.FamilyFailures.UnexpectedFamilyChangeResultsWarning)
+        //.ToList();
+        if (failuresAccessor.GetTransactionName() != "Изменение типа") return;
+        if (failureMessages.Any())
+        {
+            var failureHandlingOptions = failuresAccessor.GetFailureHandlingOptions();
 
-   
+            failureHandlingOptions.SetClearAfterRollback(true);
+
+            failuresAccessor.SetFailureHandlingOptions(failureHandlingOptions);
+            e.SetProcessingResult(FailureProcessingResult.ProceedWithRollBack);
+        }
+
+        var a = failureMessages.SelectMany(x => x.GetAdditionalElementIds());
+        _failureReplacement.PostFailure(failureMessages.SelectMany(x => x.GetFailingElementIds()));
+    }
+
 
     private void UpdatePanelVisibility()
     {
@@ -54,6 +78,7 @@ public class Application : ExternalApplication
             {
                 item.Visible = false;
             }
+
             _modifyPanel.Enabled = false;
             return;
         }
@@ -82,6 +107,7 @@ public class Application : ExternalApplication
         {
             item.Visible = hasSelection;
         }
+
         _modifyPanel.Enabled = hasSelection;
     }
 
