@@ -4,16 +4,42 @@ namespace ShowIn3D.Services;
 
 public class ShowIn3DService
 {
-    private readonly Document _doc = Context.ActiveDocument;
-    private readonly UIDocument _uiDoc = Context.ActiveUiDocument;
-    private readonly View _activeView = Context.ActiveView;
+    private readonly Document _doc = Context.ActiveDocument ?? throw new InvalidOperationException();
+    private readonly UIDocument _uiDoc = Context.ActiveUiDocument ?? throw new InvalidOperationException();
+    private readonly View _activeView = Context.ActiveView ?? throw new InvalidOperationException();
 
     public void ShowIn3D()
     {
         ICollection<ElementId> selectedIds = _uiDoc.Selection.GetElementIds();
         if (selectedIds.Count == 0) return;
 
-        View3D view3D;
+        var filteredIds = selectedIds.Where(id =>
+        {
+            Element element = _uiDoc.Document.GetElement(id);
+            switch (element)
+            {
+                case null:
+                // Исключаем аннотации по типу
+                case Dimension or TextNote or IndependentTag or ViewSection or ViewPlan:
+                    return false;
+                default:
+                    // Исключаем элементы без 3D геометрии
+                    try
+                    {
+                        var geometry = element.get_Geometry(new Options());
+                        return geometry != null;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+            }
+        }).ToList();
+
+        if (filteredIds.Count == 0) return;
+
+
+        View3D? view3D;
         if (_activeView.ViewType == ViewType.ThreeD)
         {
             view3D = _activeView as View3D;
@@ -22,47 +48,33 @@ public class ShowIn3DService
         {
             // Поиск открытого 3D вида
             IList<UIView> openUIViews = _uiDoc.GetOpenUIViews();
+            if (openUIViews.Count == 0) return;
+
             view3D = openUIViews
                 .Select(uiView => _doc.GetElement(uiView.ViewId) as View3D)
-                .FirstOrDefault(v => v?.Name == "{3D}");
-
-            // Если нет открытого 3D вида, ищем существующий или создаем новый
-            if (view3D == null)
-            {
-                view3D = Get3DView("{3D}");
-                if (view3D == null)
-                {
-                    view3D = CreateView3D("3D вид");
-                }
-            }
+                // Если нет открытого 3D вида, ищем существующий или создаем новый
+                .FirstOrDefault(v => v?.Name == "{3D}") ?? (Get3DView("{3D}")?? CreateView3D("3D вид"));
         }
 
         if (view3D == null) return;
         // Проверяем есть ли элементы на виде
-        if (AreElementsVisibleInView(selectedIds, view3D))
+        if (AreElementsVisibleInView(filteredIds, view3D))
         {
             // Активируем 3D вид
             _uiDoc.ActiveView = view3D;
-
             // Зумирование к выбранным элементам
-            _uiDoc.ShowElements(selectedIds);
+            _uiDoc.ShowElements(filteredIds);
         }
         else
         {
-            if (view3D.Name=="3D вид") return;
-            view3D = Get3DView("3D вид");
-            if (view3D == null)
-            {
-                view3D = CreateView3D("3D вид");
-            }
-            if (AreElementsVisibleInView(selectedIds, view3D))
-            {
-                // Активируем 3D вид
-                _uiDoc.ActiveView = view3D;
+            if (view3D.Name == "3D вид") return;
+            view3D = Get3DView("3D вид") ?? CreateView3D("3D вид");
 
-                // Зумирование к выбранным элементам
-                _uiDoc.ShowElements(selectedIds);
-            }
+            if (!AreElementsVisibleInView(filteredIds, view3D)) return;
+            // Активируем 3D вид
+            _uiDoc.ActiveView = view3D;
+            // Зумирование к выбранным элементам
+            _uiDoc.ShowElements(filteredIds);
         }
     }
 
@@ -79,7 +91,7 @@ public class ShowIn3DService
         return view3D;
     }
 
-    public bool AreElementsVisibleInView(ICollection<ElementId> elementIds, View3D view3D)
+    private bool AreElementsVisibleInView(ICollection<ElementId> elementIds, View3D view3D)
     {
         // Получаем все видимые элементы в виде
         var visibleElements = new FilteredElementCollector(_doc, view3D.Id)
@@ -90,7 +102,7 @@ public class ShowIn3DService
         return elementIds.Any(id => visibleElements.Contains(id));
     }
 
-    public View3D Get3DView(string viewName)
+    private View3D? Get3DView(string viewName)
     {
         return new FilteredElementCollector(_doc)
             .OfClass(typeof(View3D))
@@ -99,7 +111,7 @@ public class ShowIn3DService
             .FirstOrDefault(x => x.Name == viewName);
     }
 
-    private ElementId Get3DViewFamilyType(Document doc)
+    private static ElementId? Get3DViewFamilyType(Document doc)
     {
         return new FilteredElementCollector(doc)
             .OfClass(typeof(ViewFamilyType))
