@@ -18,7 +18,7 @@ public class MakeBreakServices
     private readonly Document _doc = Context.ActiveDocument;
     private const string _parameterName_msh_Break_3D = "msh_Разрыв_3D";
     private const string _parameterName_msh_Break_Plan = "msh_Разрыв_План";
-   
+
     public void CreateTwoCouplingsAndSetMidPipeParameter(FamilySymbol familySymbol)
     {
         while (true)
@@ -766,38 +766,214 @@ public class MakeBreakServices
 
     private FamilyInstance FindElementInDisplacement(DisplacementElement displacement, XYZ pickPoint)
     {
-        FamilyInstance familyInstance = null;
         var displacementElementIds = displacement.GetDisplacedElementIds();
         double toleranceInMm = 100.0;
-
-        // Преобразование миллиметров в внутренние единицы Revit (футы)
         double tolerance = UnitUtils.ConvertToInternalUnits(toleranceInMm, UnitTypeId.Millimeters);
 
         foreach (ElementId displacedId in displacementElementIds)
         {
             Element element = _doc.GetElement(displacedId);
-
             if (element is not FamilyInstance instance) continue;
-
-            BoundingBoxXYZ bounding = instance.get_BoundingBox(_doc.ActiveView);
-            if (bounding == null) continue;
-
-            // Расширяем BoundingBox на величину погрешности
-            XYZ expandVector = new XYZ(tolerance, tolerance, tolerance);
-            BoundingBoxXYZ expandedBounding = new BoundingBoxXYZ
+            if (instance.Name != "Разрыв") continue;
+            if (IsFamilyInstanceAtPoint(instance, pickPoint, tolerance))
             {
-                Min = bounding.Min.Subtract(expandVector),
-                Max = bounding.Max.Add(expandVector)
-            };
-
-            var contains = expandedBounding.Contains(pickPoint);
-            if (!contains) continue;
-
-            familyInstance = instance;
-            break;
+                return instance;
+            }
         }
 
-        return familyInstance;
+        return null;
+    }
+
+    private bool IsFamilyInstanceAtPoint(FamilyInstance instance, XYZ pickPoint, double tolerance)
+    {
+        // Способ 1: Расширенный BoundingBox
+        if (CheckBoundingBoxContains(instance, pickPoint, tolerance))
+            return true;
+
+        // Способ 2: Проверка через геометрию
+        if (CheckGeometryContains(instance, pickPoint, tolerance))
+            return true;
+
+        // Способ 3: Проверка через Location (для точечных элементов)
+        if (CheckLocationDistance(instance, pickPoint, tolerance))
+            return true;
+
+        return false;
+    }
+
+    private bool CheckBoundingBoxContains(FamilyInstance instance, XYZ pickPoint, double tolerance)
+    {
+        try
+        {
+            BoundingBoxXYZ bounding = instance.get_BoundingBox(_doc.ActiveView);
+
+            // Если bounding для активного вида null, попробуем без вида
+            if (bounding == null)
+            {
+                bounding = instance.get_BoundingBox(null);
+            }
+
+            if (bounding == null) return false;
+
+            // Расширяем BoundingBox
+            XYZ expandVector = new XYZ(tolerance, tolerance, tolerance);
+
+            XYZ min = bounding.Min.Subtract(expandVector);
+            XYZ max = bounding.Max.Add(expandVector);
+
+            return pickPoint.X >= min.X && pickPoint.X <= max.X &&
+                   pickPoint.Y >= min.Y && pickPoint.Y <= max.Y &&
+                   pickPoint.Z >= min.Z && pickPoint.Z <= max.Z;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in CheckBoundingBoxContains: {ex.Message}");
+            return false;
+        }
+    }
+
+    private bool CheckGeometryContains(FamilyInstance instance, XYZ pickPoint, double tolerance)
+    {
+        try
+        {
+            Options geometryOptions = new Options
+            {
+                DetailLevel = ViewDetailLevel.Medium,
+                IncludeNonVisibleObjects = false,
+                ComputeReferences = false
+            };
+
+            GeometryElement geometryElement = instance.get_Geometry(geometryOptions);
+            if (geometryElement == null) return false;
+
+            foreach (GeometryObject geometryObject in geometryElement)
+            {
+                if (IsPointNearFamilyGeometry(geometryObject, pickPoint, tolerance))
+                {
+                    return true;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in CheckGeometryContains: {ex.Message}");
+        }
+
+        return false;
+    }
+
+    private bool CheckLocationDistance(FamilyInstance instance, XYZ pickPoint, double tolerance)
+    {
+        try
+        {
+            if (instance.Location is LocationPoint locationPoint)
+            {
+                double distance = locationPoint.Point.DistanceTo(pickPoint);
+                return distance <= tolerance;
+            }
+            else if (instance.Location is LocationCurve locationCurve)
+            {
+                Curve curve = locationCurve.Curve;
+                double distance = curve.Distance(pickPoint);
+                return distance <= tolerance;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in CheckLocationDistance: {ex.Message}");
+        }
+
+        return false;
+    }
+
+    private bool IsPointNearFamilyGeometry(GeometryObject geometryObject, XYZ point, double tolerance)
+    {
+        try
+        {
+            switch (geometryObject)
+            {
+                case Solid solid when solid.Volume > 0:
+                    return IsPointNearSolid(solid, point, tolerance);
+
+                case GeometryInstance instance:
+                    Transform transform = instance.Transform;
+                    foreach (GeometryObject obj in instance.GetInstanceGeometry())
+                    {
+                        // Преобразуем точку в локальную систему координат
+                        XYZ localPoint = transform.Inverse.OfPoint(point);
+                        if (IsPointNearFamilyGeometry(obj, localPoint, tolerance))
+                            return true;
+                    }
+
+                    break;
+
+                case Curve curve:
+                    return curve.Distance(point) <= tolerance;
+
+                case Face face:
+                    try
+                    {
+                        IntersectionResult result = face.Project(point);
+                        if (result != null)
+                        {
+                            return result.Distance <= tolerance;
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in IsPointNearFamilyGeometry: {ex.Message}");
+        }
+
+        return false;
+    }
+
+    private bool IsPointNearSolid(Solid solid, XYZ point, double tolerance)
+    {
+        try
+        {
+            // Сначала проверяем расширенный BoundingBox
+            BoundingBoxXYZ bbox = solid.GetBoundingBox();
+            if (bbox != null)
+            {
+                XYZ min = bbox.Min - new XYZ(tolerance, tolerance, tolerance);
+                XYZ max = bbox.Max + new XYZ(tolerance, tolerance, tolerance);
+
+                bool inExpandedBox = point.X >= min.X && point.X <= max.X &&
+                                     point.Y >= min.Y && point.Y <= max.Y &&
+                                     point.Z >= min.Z && point.Z <= max.Z;
+
+                if (!inExpandedBox) return false;
+            }
+
+            // Проверяем каждую грань solid'а
+            foreach (Face face in solid.Faces)
+            {
+                try
+                {
+                    IntersectionResult result = face.Project(point);
+                    if (result != null && result.Distance <= tolerance)
+                    {
+                        return true;
+                    }
+                }
+                catch
+                {
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in IsPointNearSolid: {ex.Message}");
+        }
+
+        return false;
     }
 
     public void DeleteBreaks(FamilySymbol familySymbol)
@@ -832,7 +1008,7 @@ public class MakeBreakServices
                     if (deletePipe != null)
                     {
                         Element connectElementDeletePipe =
-                            deletePipe.GetConnectedMEPElements().FirstOrDefault(x => x.Id != pairBreak.Id);
+                            deletePipe.GetConnectedMEPElements().FirstOrDefault(x => x.Id != pairBreak.Id&& x.Category.BuiltInCategory!= BuiltInCategory.OST_PipeInsulations);
 
                         if (connectElementDeletePipe != null)
                         {

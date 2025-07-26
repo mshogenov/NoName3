@@ -8,7 +8,11 @@ public class BreakSelectionFilter : ISelectionFilter
 
     public BreakSelectionFilter(FamilySymbol familySymbol)
     {
-        _familySymbol = familySymbol;
+        if (familySymbol.Name=="Разрыв")
+        {
+            _familySymbol = familySymbol;
+        }
+      
     }
 
     public bool AllowElement(Element elem)
