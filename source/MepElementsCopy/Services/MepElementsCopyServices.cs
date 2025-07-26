@@ -54,9 +54,8 @@ public class MepElementsCopyServices
     public void CopyMepElementsToLevel(LevelModel level, List<ElementWrp> mepElementModels,
         List<MepCurveWrp> mepCurveModels)
     {
-        List<ElementId> elementIds = mepCurveModels
+        List<ElementId> elementIds = mepElementModels
             .Select(x => x.Id)
-            .Concat(mepCurveModels.Select(x => x.Id))
             .ToList();
         Level bindingLevel = FindMostUsedLevelInSelection(elementIds, _doc);
         if (bindingLevel == null) return;
