@@ -380,6 +380,7 @@ public class PlacementOfStampsServices
     public void PlacementMarksSystemAbbreviation(List<PipeWrp> pipesWrp, List<TagWrp> tagWpr,
         FamilySymbol selectedTag)
     {
+        const double TOL = 1000; //
         var activeView = _doc.ActiveView;
         var pipes = pipesWrp.Where(x => x.Length.ToMillimeters() > 1000).ToList();
         if (pipes.Count == 0) return;
@@ -389,10 +390,19 @@ public class PlacementOfStampsServices
         var pipeNotTags = GetPipeNotTags(pipes, existingSelectedTags);
         // Групировка по направлению
         var pipeGroupByDirection = pipeNotTags
-            .GroupBy(x => x.Direction).ToList();
+            .GroupBy(p => p.Direction, new DirectionEqualityComparer())
+            .ToList();
+        // Дополнительная группировка труб, идущих друг за другом
+        var finalGroupedPipes = new List<List<PipeWrp>>();
+
+        foreach (var directionGroup in pipeGroupByDirection)
+        {
+            var sequentialGroups = GroupSequentialPipes(directionGroup.ToList());
+            finalGroupedPipes.AddRange(sequentialGroups);
+        }
+
         foreach (var pipeGroup in pipeGroupByDirection)
         {
-            
             foreach (var pipe in pipeGroup)
             {
                 if (activeView.ViewType == ViewType.FloorPlan && pipe.IsRiser)
@@ -408,7 +418,6 @@ public class PlacementOfStampsServices
                 {
                     XYZ point = pipe.StartPoint + pipe.Direction * position;
                     XYZ tagPoint = CalculateTagPosition(point, pipe);
-
                     if (tagPoint != null)
                     {
                         IndependentTag pipeTag = IndependentTag.Create(_doc, selectedTag.Id, activeView.Id,
@@ -429,14 +438,107 @@ public class PlacementOfStampsServices
                 }
             }
         }
-       
+    }
 
-        foreach (var pipe in pipeGroupByDirection)
+    public List<List<PipeWrp>> GroupSequentialPipes(List<PipeWrp> pipes)
+{
+    const double proximityThreshold = 1000; // Пороговое расстояние для группировки
+
+    var groupedPipes = new List<List<PipeWrp>>();
+
+    // Сортируем трубы по позиции (например, по Y-координате)
+    pipes = pipes.OrderBy(p => p.StartPoint.Y).ToList();
+
+    List<PipeWrp> currentGroup = new List<PipeWrp>();
+
+    for (int i = 0; i < pipes.Count; i++)
+    {
+        // Добавляем первую трубу в текущую группу
+        if (currentGroup.Count == 0)
         {
-            
+            currentGroup.Add(pipes[i]);
+        }
+        else
+        {
+            // Проверяем, находится ли текущая труба в пределах порогового расстояния
+            var lastPipeInGroup = currentGroup.Last();
+            var distance = CalculateDistance(lastPipeInGroup, pipes[i]);
+
+            if (distance < proximityThreshold.FromMillimeters() && AreAligned(lastPipeInGroup, pipes[i]))
+            {
+                currentGroup.Add(pipes[i]);
+            }
+            else
+            {
+                // Если трубы не достаточно близко, сохраняем текущую группу и начинаем новую
+                groupedPipes.Add(currentGroup);
+                currentGroup = new List<PipeWrp> { pipes[i] };
+            }
         }
     }
 
+    // Добавляем последнюю группу, если она содержит трубы
+    if (currentGroup.Count > 0)
+    {
+        groupedPipes.Add(currentGroup);
+    }
+
+    return groupedPipes;
+}
+
+// Вспомогательный метод для расчета расстояния между трубами
+private double CalculateDistance(PipeWrp pipe1, PipeWrp pipe2)
+{
+    // Расчет расстояния между концом первой трубы и началом второй
+    return Math.Sqrt(
+        Math.Pow(pipe2.StartPoint.X - pipe1.EndPoint.X, 2) +
+        Math.Pow(pipe2.StartPoint.Y - pipe1.EndPoint.Y, 2)
+    );
+}
+
+// Проверка выравнивания труб
+private bool AreAligned(PipeWrp pipe1, PipeWrp pipe2)
+{
+    const double alignmentTolerance = 50; // Допуск для выравнивания
+
+    // Проверяем, идут ли трубы в одном направлении
+    return Math.Abs(pipe1.Direction.X - pipe2.Direction.X) < alignmentTolerance &&
+           Math.Abs(pipe1.Direction.Y - pipe2.Direction.Y) < alignmentTolerance;
+}
+    
+    /// <summary>Абсолютно-нормализованный вектор (всегда «положительный»).</summary>
+    private static XYZ NormalizePositive(XYZ v)
+    {
+        v = v.Normalize();
+        // «Разворачиваем» так, чтобы хотя бы первая ненулевая координата была >0
+        if (v.X < 0 ||
+            (Math.Abs(v.X) < 1e-9 && v.Y < 0) ||
+            (Math.Abs(v.X) < 1e-9 && Math.Abs(v.Y) < 1e-9 && v.Z < 0))
+        {
+            v = v.Negate();
+        }
+        return v;
+    }
+
+    /// <summary>Возвращает трубу с ориентацией приведённой к общей оси.</summary>
+    private static (PipeWrp pipe, XYZ start, XYZ end, double startT) OrientPipe(PipeWrp p, XYZ axis)
+    {
+        XYZ dir = p.Direction.Normalize();
+        XYZ s   = p.StartPoint;
+        XYZ e   = p.EndPoint;
+
+        // Если труба «смотрит» в обратную сторону – разворачиваем
+        if (dir.DotProduct(axis) < 0)
+        {
+            s = p.EndPoint;
+            e = p.StartPoint;
+        }
+
+        // Скалярная координата вдоль оси – удобно для сортировки
+        double t = s.DotProduct(axis);
+
+        return (p, s, e, t);
+    }
     /// <summary>
     /// Проверяет, находится ли марка на трубе
     /// </summary>
