@@ -5,7 +5,7 @@ namespace RevitAddIn2.Services
     public class FailureReplacement : IExternalEventHandler
     {
         private readonly ExternalEvent externalEvent;
-
+ 
         private readonly List<ElementId> failingElementIds = [];
 
         private readonly FailureDefinitionId
@@ -26,10 +26,9 @@ namespace RevitAddIn2.Services
             // Фильтруем только валидные ElementId
             var validIds = failingElements.Where(id => id != null && id != ElementId.InvalidElementId).ToList();
 
-            if (validIds.Count==0) return;
+            if (validIds.Count == 0) return;
             failingElementIds.AddRange(validIds);
             externalEvent.Raise();
-
         }
 
         public void Execute(UIApplication app)
@@ -85,6 +84,7 @@ namespace RevitAddIn2.Services
                         connectedConnectors.Add(refConnector);
                     }
                 }
+
                 connections.Add(new KeyValuePair<Connector, List<Connector>>(connector, connectedConnectors));
             }
 
@@ -117,6 +117,10 @@ namespace RevitAddIn2.Services
                     }
                 }
 
+                Context.ActiveUiDocument.Selection.SetElementIds(new List<ElementId>()
+                {
+                    family.Id
+                });
                 tr.Commit();
             }
             catch (Exception ex)
@@ -124,20 +128,22 @@ namespace RevitAddIn2.Services
                 TaskDialog.Show("Ошибка", ex.Message);
             }
         }
+
         private bool ShouldDisconnectFrom(Element connectedElement)
         {
             // Список категорий, от которых НЕ нужно отсоединяться
             var excludedCategories = new[]
             {
-                BuiltInCategory.OST_PipeCurves,        // Трубы
-                BuiltInCategory.OST_DuctCurves,        // Воздуховоды
-                BuiltInCategory.OST_CableTray,         // Кабельные лотки
-                BuiltInCategory.OST_Conduit            // Кабельные каналы
+                BuiltInCategory.OST_PipeCurves, // Трубы
+                BuiltInCategory.OST_DuctCurves, // Воздуховоды
+                BuiltInCategory.OST_CableTray, // Кабельные лотки
+                BuiltInCategory.OST_Conduit // Кабельные каналы
             };
 
             var categoryId = connectedElement.Category?.Id.Value;
             return excludedCategories.All(cat => (int)cat != categoryId);
         }
+
         public string GetName() => nameof(FailureReplacement);
     }
 }
