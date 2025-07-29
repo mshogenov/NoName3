@@ -72,7 +72,7 @@ public BuiltInCategory BuiltInCategory { get; }
     {
         if (Element is not FamilyInstance) return null;
         Document doc = Element.Document;
-        Element connectedConnector = ConnectedElements.FirstOrDefault();
+        Element connectedConnector = ConnectedElements.FirstOrDefault(x=>x is MEPCurve);
         return connectedConnector != null ? doc.GetElement(connectedConnector.GetTypeId()) as MEPCurveType : null;
     }
 
