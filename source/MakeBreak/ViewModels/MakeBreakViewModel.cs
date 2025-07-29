@@ -20,8 +20,8 @@ public sealed partial class MakeBreakViewModel : ObservableObject
     [ObservableProperty] private bool _isExistingParameter_msh_Break_3D;
     [ObservableProperty] private bool _isExistingParameter_msh_Break_Plan;
     [ObservableProperty] private bool _isExistingFamily;
-    [ObservableProperty] private bool _isExistingFilterToViewBreak_3D=true;
-    [ObservableProperty] private bool _isExistingFilterToViewBreak_Plan=true;
+    [ObservableProperty] private bool _isExistingFilterToViewBreak_3D = true;
+    [ObservableProperty] private bool _isExistingFilterToViewBreak_Plan = true;
 
     private const string _parameterName_msh_Break_3D = "msh_Разрыв_3D";
     private const string _parameterName_msh_Break_Plan = "msh_Разрыв_План";
@@ -61,22 +61,14 @@ public sealed partial class MakeBreakViewModel : ObservableObject
             IsExistingFamily = true;
             _familySymbol = family;
         }
-       
+
         switch (_activeView.ViewType)
         {
             case ViewType.ThreeD:
-                if (!HasFilterIsActiveView(_filterName_Break_3D, _activeView))
-                {
-                    _isExistingFilterToViewBreak_3D = false;
-                }
-
+                _isExistingFilterToViewBreak_3D = HasFilterIsActiveView(_filterName_Break_3D, _activeView);
                 break;
             case ViewType.FloorPlan:
-                if (!HasFilterIsActiveView(_filterName_Break_Plan, _activeView))
-                {
-                    _isExistingFilterToViewBreak_Plan = false;
-                }
-
+                _isExistingFilterToViewBreak_Plan = HasFilterIsActiveView(_filterName_Break_Plan, _activeView);
                 break;
         }
 
@@ -174,9 +166,11 @@ public sealed partial class MakeBreakViewModel : ObservableObject
         {
             case ViewType.ThreeD:
                 IsExistingFilterToViewBreak_3D = HasFilterIsActiveView(_filterName_Break_3D, activeView);
+                IsExistingFilterBreak_Plan = true;
                 break;
             case ViewType.FloorPlan:
                 IsExistingFilterBreak_Plan = HasFilterIsActiveView(_filterName_Break_Plan, activeView);
+                IsExistingFilterToViewBreak_3D = true;
                 break;
         }
     }
