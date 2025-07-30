@@ -397,8 +397,8 @@ public class PlacementOfStampsServices
 
         foreach (var directionGroup in pipeGroupByDirection)
         {
-            var sequentialGroups = GroupSequentialPipes(directionGroup.ToList());
-            finalGroupedPipes.AddRange(sequentialGroups);
+            var axisGroups = GroupPipesByAxisLine(directionGroup.ToList());
+            finalGroupedPipes.AddRange(axisGroups);
         }
 
         foreach (var pipeGroup in pipeGroupByDirection)
@@ -439,7 +439,212 @@ public class PlacementOfStampsServices
             }
         }
     }
+    public List<List<PipeWrp>> GroupPipesByAxisLine(List<PipeWrp> pipes)
+    {
+        const double lineDistanceTolerance = 1; // Допуск расстояния от линии
+        const double overlapTolerance = 1000; // Допуск для определения перекрытия/соединения
 
+        var groupedPipes = new List<List<PipeWrp>>();
+        var processedPipes = new HashSet<PipeWrp>();
+
+        foreach (var basePipe in pipes)
+        {
+            // ИСПРАВЛЕНИЕ: Проверяем в самом начале
+            if (processedPipes.Contains(basePipe)) continue;
+
+            // Создаем линию только для необработанных труб
+            var axisLine = CreateAxisLine(basePipe);
+            VisualizeAxisLine(_doc, axisLine);
+
+            // Находим все трубы, которые лежат на этой линии
+            var pipesOnLine = new List<PipeWrp> { basePipe };
+
+            foreach (var otherPipe in pipes)
+            {
+                // ИСПРАВЛЕНИЕ: Также проверяем, не обработана ли уже otherPipe
+                if (otherPipe == basePipe || processedPipes.Contains(otherPipe)) continue;
+
+                if (IsPipeOnAxisLine(otherPipe, axisLine, lineDistanceTolerance))
+                {
+                    pipesOnLine.Add(otherPipe);
+                }
+            }
+
+            // Сортируем трубы по положению на линии
+            pipesOnLine = SortPipesAlongLine(pipesOnLine, axisLine);
+
+            // Группируем только те трубы, которые идут друг за другом (без больших разрывов)
+            var sequentialGroups = GroupSequentialPipesOnLine(pipesOnLine, overlapTolerance.FromMillimeters());
+
+            // Добавляем группы и помечаем трубы как обработанные
+            foreach (var group in sequentialGroups)
+            {
+                if (group.Count > 0)
+                {
+                    groupedPipes.Add(group);
+                    foreach (var pipe in group)
+                    {
+                        processedPipes.Add(pipe); // Помечаем как обработанные
+                    }
+                }
+            }
+        }
+
+        return groupedPipes;
+    }
+
+// Создание линии по оси трубы
+private Line CreateAxisLine(PipeWrp pipe)
+{
+    // Получаем центральную линию трубы
+    var startPoint = pipe.StartPoint;
+    var endPoint = pipe.EndPoint;
+
+    // Расширяем линию в обе стороны для лучшего захвата соседних труб
+    var direction = (endPoint - startPoint).Normalize();
+    var extendedStart = startPoint - direction * 1000; // Расширяем на 1000 единиц
+    var extendedEnd = endPoint + direction * 1000;
+
+    return Line.CreateBound(extendedStart, extendedEnd);
+}
+private void VisualizeAxisLine(Document doc, Line axisLine, string lineName = "AxisLine")
+{
+  
+        try
+        {
+            // Создаем Model Line для визуализации
+            var sketchPlane = SketchPlane.Create(doc, Plane.CreateByNormalAndOrigin(
+                XYZ.BasisZ, // Нормаль плоскости
+                axisLine.GetEndPoint(0))); // Точка на плоскости
+
+            var modelLine = doc.Create.NewModelCurve(axisLine, sketchPlane);
+
+            // ИСПРАВЛЕННЫЙ способ установки стиля линии
+            var lineStyleCategory = doc.Settings.Categories.get_Item(BuiltInCategory.OST_Lines);
+
+            // Ищем подкатегорию стиля линии
+            Category lineStyleSubCategory = null;
+            foreach (Category subCat in lineStyleCategory.SubCategories)
+            {
+                if (subCat.Name.Contains("Hidden") || 
+                    subCat.Name.Contains("Dashed") || 
+                    subCat.Name.Contains("Medium"))
+                {
+                    lineStyleSubCategory = subCat;
+                    break;
+                }
+            }
+
+            // Устанавливаем стиль линии через GraphicsStyle
+            if (lineStyleSubCategory != null)
+            {
+                var graphicsStyle = lineStyleSubCategory.GetGraphicsStyle(GraphicsStyleType.Projection);
+                if (graphicsStyle != null)
+                {
+                    modelLine.LineStyle = graphicsStyle;
+                }
+            }
+
+            // Добавляем комментарий для идентификации
+            var param = modelLine.LookupParameter("Comments");
+            if (param != null && !param.IsReadOnly)
+            {
+                param.Set(lineName);
+            }
+
+           
+        }
+        catch (Exception ex)
+        {
+           
+            TaskDialog.Show("Error", $"Ошибка создания линии: {ex.Message}");
+        }
+   
+}
+// Проверка, лежит ли труба на оси линии
+private bool IsPipeOnAxisLine(PipeWrp pipe, Line axisLine, double tolerance)
+{
+    // Проверяем расстояние от начальной и конечной точек трубы до линии
+    var startDistance = axisLine.Distance(pipe.StartPoint);
+    var endDistance = axisLine.Distance(pipe.EndPoint);
+
+    // Также проверяем центральную точку трубы
+    var centerPoint = (pipe.StartPoint + pipe.EndPoint) / 2;
+    var centerDistance = axisLine.Distance(centerPoint);
+
+    return startDistance <= tolerance && 
+           endDistance <= tolerance && 
+           centerDistance <= tolerance;
+}
+
+// Сортировка труб по положению на линии
+private List<PipeWrp> SortPipesAlongLine(List<PipeWrp> pipes, Line axisLine)
+{
+    var lineDirection = axisLine.Direction;
+    var lineStart = axisLine.GetEndPoint(0);
+
+    return pipes.OrderBy(pipe => 
+    {
+        // Проецируем центр трубы на линию и вычисляем расстояние от начала линии
+        var pipeCenter = (pipe.StartPoint + pipe.EndPoint) / 2;
+        var vectorToCenter = pipeCenter - lineStart;
+        return vectorToCenter.DotProduct(lineDirection);
+    }).ToList();
+}
+
+// Группировка последовательных труб на линии
+private List<List<PipeWrp>> GroupSequentialPipesOnLine(List<PipeWrp> sortedPipes, double tolerance)
+{
+    var groups = new List<List<PipeWrp>>();
+    var currentGroup = new List<PipeWrp>();
+
+    for (int i = 0; i < sortedPipes.Count; i++)
+    {
+        if (currentGroup.Count == 0)
+        {
+            currentGroup.Add(sortedPipes[i]);
+        }
+        else
+        {
+            var lastPipe = currentGroup.Last();
+            var currentPipe = sortedPipes[i];
+
+            // Проверяем, идут ли трубы друг за другом
+            if (AreConsecutive(lastPipe, currentPipe, tolerance))
+            {
+                currentGroup.Add(currentPipe);
+            }
+            else
+            {
+                // Начинаем новую группу
+                groups.Add(currentGroup);
+                currentGroup = new List<PipeWrp> { currentPipe };
+            }
+        }
+    }
+
+    if (currentGroup.Count > 0)
+    {
+        groups.Add(currentGroup);
+    }
+
+    return groups;
+}
+
+// Проверка, идут ли трубы друг за другом
+private bool AreConsecutive(PipeWrp pipe1, PipeWrp pipe2, double tolerance)
+{
+    // Проверяем расстояние между концами труб
+    var distances = new[]
+    {
+        pipe1.EndPoint.DistanceTo(pipe2.StartPoint),
+        pipe1.EndPoint.DistanceTo(pipe2.EndPoint),
+        pipe1.StartPoint.DistanceTo(pipe2.StartPoint),
+        pipe1.StartPoint.DistanceTo(pipe2.EndPoint)
+    };
+
+    return distances.Min() <= tolerance;
+}
     public List<List<PipeWrp>> GroupSequentialPipes(List<PipeWrp> pipes)
 {
     const double proximityThreshold = 1000; // Пороговое расстояние для группировки
