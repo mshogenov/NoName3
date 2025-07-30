@@ -691,17 +691,18 @@ namespace SystemModelingCommands.Services
             switch (choice)
             {
                 case 1: // Удлинить-укоротить
-
-                    LengthenCurve(ctx.AttachConn.Connector, ctx.TargetConn.Connector);
-                    XYZ newMove = ctx.TargetConn.Origin - ctx.AttachConn.Origin;
-                    ElementTransformUtils.MoveElement(_doc, ctx.Attach.Id, newMove);
-
                     if (ctx.Attach.Element is Pipe or Duct && ctx.Target.Element is Pipe or Duct)
                     {
                         if (DrainPipes(ctx)) return true;
                     }
+                    else
+                    {
+                        LengthenCurve(ctx.AttachConn.Connector, ctx.TargetConn.Connector);
+                        XYZ newMove = ctx.TargetConn.Origin - ctx.AttachConn.Origin;
+                        ElementTransformUtils.MoveElement(_doc, ctx.Attach.Id, newMove);
+                        ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
+                    }
 
-                    ctx.AttachConn.Connector.ConnectTo(ctx.TargetConn.Connector);
                     break;
 
                 case 2: // Переместить
