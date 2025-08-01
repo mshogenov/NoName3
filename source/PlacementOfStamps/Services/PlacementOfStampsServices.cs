@@ -8,6 +8,7 @@ namespace PlacementOfStamps.Services;
 public class PlacementOfStampsServices
 {
     private readonly Document _doc = Context.ActiveDocument;
+    private readonly View _activeView = Context.ActiveView;
     private const double OffsetStep = 1;
     private const int MaxAttempts = 3;
     private const double SpiralAngleStep = Math.PI / 4;
@@ -377,17 +378,11 @@ public class PlacementOfStampsServices
     //         flag = true;
     //     }
     // }
-    public void PlacementMarksSystemAbbreviation(List<PipeWrp> pipesWrp, List<TagWrp> tagWpr,
+    public void PlacementMarksSystemAbbreviation(List<PipeWrp> allPipes, List<TagWrp> existingTags,
         FamilySymbol selectedTag)
     {
-        const double TAG_INTERVAL = 3000; // Промежуток между марками в мм
-        var activeView = _doc.ActiveView;
-        var pipes = pipesWrp.Where(x => x.Length.ToMillimeters() > 1000).ToList();
-        if (pipes.Count == 0) return;
-        var existingSelectedTags = tagWpr
-            .Where(x => x.TagTypeId == selectedTag.Id)
-            .ToList();
-        var pipeNotTags = GetPipeNotTags(pipes, existingSelectedTags);
+        const double TAG_INTERVAL = 6000; // Промежуток между марками в мм
+        var pipeNotTags = GetLabeledPipes(allPipes, existingTags, selectedTag);
         // Групировка по направлению
         var pipeGroupByDirection = pipeNotTags
             .GroupBy(p => p.Direction, new DirectionEqualityComparer())
@@ -405,109 +400,94 @@ public class PlacementOfStampsServices
         foreach (var pipeGroup in finalGroupedPipes)
         {
             if (pipeGroup.Count == 0) continue;
-
-            // Фильтруем стояки для планов этажей
-            var validPipes = pipeGroup.Where(pipe =>
-                !(activeView.ViewType == ViewType.FloorPlan && pipe.IsRiser)).ToList();
-
-            if (validPipes.Count == 0) continue;
-
             // Размещаем марки для группы труб
-            PlaceTagsForPipeGroup(validPipes, selectedTag, activeView, tagWpr, TAG_INTERVAL);
+            PlaceTagsForPipeGroup(pipeGroup, selectedTag, existingTags, TAG_INTERVAL);
         }
+    }
 
+    private List<PipeWrp> GetLabeledPipes(List<PipeWrp> allPipes, List<TagWrp> existingTags, FamilySymbol selectedTag)
+    {
+        var pipes = allPipes.Where(x =>
+        {
+            if (x.Length.ToMillimeters() > 1000)
+            {
+                return _activeView.ViewType != ViewType.FloorPlan || !x.IsRiser;
+            }
 
-        // foreach (var pipeGroup in finalGroupedPipes)
-        // {
-        //     foreach (var pipe in pipeGroup)
-        //     {
-        //         if (activeView.ViewType == ViewType.FloorPlan && pipe.IsRiser)
-        //         {
-        //             continue;
-        //         }
-        //
-        //         // Вычисляем оптимальные позиции для марок
-        //         List<double> tagPositions = CalculateTagPositions(pipe);
-        //
-        //         // Размещаем марки в вычисленных позициях
-        //         foreach (double position in tagPositions)
-        //         {
-        //             XYZ point = pipe.StartPoint + pipe.Direction * position;
-        //             XYZ tagPoint = CalculateTagPosition(point, pipe);
-        //             if (tagPoint != null)
-        //             {
-        //                 IndependentTag pipeTag = IndependentTag.Create(_doc, selectedTag.Id, activeView.Id,
-        //                     new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagPoint);
-        //
-        //                 var newPosition = FindFreeTagPosition(tagPoint, new TagWrp(pipeTag), pipe);
-        //                 pipeTag.TagHeadPosition = newPosition;
-        //                 // Проверяем, лежит ли марка на трубе
-        //                 if (IsTagOnPipe(newPosition, pipe))
-        //                 {
-        //                     tagWpr.Add(new TagWrp(pipeTag));
-        //                 }
-        //                 else
-        //                 {
-        //                     _doc.Delete(pipeTag.Id);
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+            return false;
+        }).ToList();
+        if (pipes.Count == 0) return null;
+        var existingSelectedTags = existingTags
+            .Where(x => x.TagTypeId == selectedTag.Id)
+            .ToList();
+        var pipeNotTags = GetPipeNotTags(pipes, existingSelectedTags);
+        return pipeNotTags;
     }
 
     private void PlaceTagsForPipeGroup(List<PipeWrp> pipeGroup, FamilySymbol selectedTag,
-        View activeView, List<TagWrp> tagWpr, double tagInterval, double endOffset = 500)
+        List<TagWrp> tagWpr, double tagInterval)
     {
+        XYZ targetPosition;
+        double totalLength = CalculateTotalGroupLength(pipeGroup);
+        if (totalLength < tagInterval)
+        {
+            var targetPipe = pipeGroup.FirstOrDefault();
+            if (targetPipe != null)
+            {
+                targetPosition = (targetPipe.StartPoint + targetPipe.EndPoint) / 2;
+                // Если труба найдена, размещаем марку
+                PlaceTagAtPosition(targetPosition, targetPipe, selectedTag, tagWpr);
+                return;
+            }
+        }
+
         // Находим начальную трубу
         PipeWrp startPipe = FindStartPipe(pipeGroup);
         // Определяем направление группы труб
         XYZ groupDirection = startPipe.Direction;
-    
         // Находим начальную точку (край трубы с меньшей координатой)
         XYZ startPoint = GetStartPoint(startPipe, groupDirection);
-      
         // Начальная позиция для размещения марок
-        XYZ targetPosition = startPoint + groupDirection * (tagInterval / 304.8); // Конвертируем мм в футы
+        targetPosition = startPoint + groupDirection * (tagInterval / 304.8); // Конвертируем мм в футы
         // Увеличиваем позицию на 3000 мм и проверяем, попадает ли она на трубу
-        double distanceInFeet = 3000 / 304.8; // Конвертируем 3000 мм в футы
+        double distanceInFeet = tagInterval / 304.8; // Конвертируем мм в футы
+        var pipeGroupEndPoint = GetEndPoint(pipeGroup);
         while (true)
         {
             // Проверяем, попадает ли targetPosition на трубу
             PipeWrp targetPipe = FindPipeAtPosition(targetPosition, pipeGroup);
-        
             if (targetPipe != null)
             {
                 // Если труба найдена, размещаем марку
-                PlaceTagAtPosition(targetPosition, targetPipe, selectedTag, activeView, tagWpr);
+                PlaceTagAtPosition(targetPosition, targetPipe, selectedTag, tagWpr);
             }
 
-            // Увеличиваем targetPosition на 3000 мм
+            // Увеличиваем targetPosition 
             targetPosition += groupDirection * distanceInFeet;
-
             // Можно добавить условие выхода из цикла, например, если позиция выходит за пределы труб
             // Например, если targetPosition превышает длину всех труб
-            if (targetPosition.DistanceTo(GetEndPoint(pipeGroup)) > 10000) // 10000 - примерный предел
+            if (targetPosition.DistanceTo(pipeGroupEndPoint) > 10000) // 10000 - примерный предел
             {
                 break;
             }
         }
     }
-    private void PlaceTagAtPosition(XYZ position, PipeWrp pipe, FamilySymbol selectedTag, 
-        View activeView, List<TagWrp> tagWpr)
+
+    private void PlaceTagAtPosition(XYZ position, PipeWrp pipe, FamilySymbol selectedTag,
+        List<TagWrp> tagWpr)
     {
         XYZ tagPoint = CalculateTagPosition(position, pipe);
-    
+
         if (tagPoint != null)
         {
             try
             {
-                IndependentTag pipeTag = IndependentTag.Create(_doc, selectedTag.Id, activeView.Id,
+                IndependentTag pipeTag = IndependentTag.Create(_doc, selectedTag.Id, _activeView.Id,
                     new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagPoint);
 
                 var newPosition = FindFreeTagPosition(tagPoint, new TagWrp(pipeTag), pipe);
                 pipeTag.TagHeadPosition = newPosition;
-            
+
                 if (IsTagOnPipe(newPosition, pipe))
                 {
                     tagWpr.Add(new TagWrp(pipeTag));
@@ -523,6 +503,7 @@ public class PlacementOfStampsServices
             }
         }
     }
+
     private XYZ GetEndPoint(List<PipeWrp> pipeGroup)
     {
         // Находим конечную точку самой дальней трубы
@@ -531,6 +512,7 @@ public class PlacementOfStampsServices
             .OrderByDescending(point => point.Z) // Можно использовать любую координату для определения "конца"
             .FirstOrDefault();
     }
+
     private PipeWrp FindPipeAtPosition(XYZ targetPosition, List<PipeWrp> pipeGroup)
     {
         // Находим трубу, которая содержит эту позицию
@@ -561,19 +543,21 @@ public class PlacementOfStampsServices
         XYZ closestPoint = lineStart + lineVector.Normalize() * projection;
         return point.DistanceTo(closestPoint);
     }
+
     private XYZ GetStartPoint(PipeWrp startPipe, XYZ direction)
     {
         // Определяем, какой конец трубы является "началом" по направлению
         XYZ startPoint = startPipe.StartPoint;
         XYZ endPoint = startPipe.EndPoint;
-    
+
         // Вычисляем проекции точек на направление
         double startProjection = startPoint.DotProduct(direction);
         double endProjection = endPoint.DotProduct(direction);
-    
+
         // Возвращаем точку с меньшей проекцией (она будет "началом")
         return startProjection <= endProjection ? startPoint : endPoint;
     }
+
     private PipeWrp FindStartPipe(List<PipeWrp> pipeGroup)
     {
         if (pipeGroup.Count == 0) return null;
@@ -581,12 +565,13 @@ public class PlacementOfStampsServices
 
         // Берем направление первой трубы как основное направление группы
         XYZ groupDirection = pipeGroup[0].Direction;
-    
+
         // Находим трубу с минимальной проекцией на направление
         return pipeGroup
             .OrderBy(pipe => pipe.StartPoint.DotProduct(groupDirection))
             .First();
     }
+
     private void PlaceTagAtDistance(List<PipeWrp> sortedPipes, double targetDistance,
         FamilySymbol selectedTag, View activeView, List<TagWrp> tagWpr)
     {
@@ -702,13 +687,11 @@ public class PlacementOfStampsServices
             // Добавляем группы и помечаем трубы как обработанные
             foreach (var group in sequentialGroups)
             {
-                if (group.Count > 0)
+                if (group.Count == 0) continue;
+                groupedPipes.Add(group);
+                foreach (var pipe in group)
                 {
-                    groupedPipes.Add(group);
-                    foreach (var pipe in group)
-                    {
-                        processedPipes.Add(pipe); // Помечаем как обработанные
-                    }
+                    processedPipes.Add(pipe); // Помечаем как обработанные
                 }
             }
         }
