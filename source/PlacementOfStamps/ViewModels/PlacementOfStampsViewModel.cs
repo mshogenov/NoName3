@@ -1,6 +1,7 @@
 ﻿using System.CodeDom.Compiler;
 using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.UI;
+using NoNameApi.Services;
 using PlacementOfStamps.Models;
 using PlacementOfStamps.Services;
 
@@ -11,7 +12,7 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
     [ObservableProperty] private bool _pipesOuterDiametersIsChecked;
     [ObservableProperty] private FamilySymbol _pipesOuterDiameterMarkSelected;
     [ObservableProperty] private HashSet<Element> _pipeMarks;
-    [ObservableProperty] private bool _systemAbbreviationIsChecked = true;
+    [ObservableProperty] private bool _systemAbbreviationIsChecked;
     [ObservableProperty] private FamilySymbol _systemAbbreviationMarkSelected;
     [ObservableProperty] private bool _pipeInsulationIsChecked;
     [ObservableProperty] private FamilySymbol _pipeInsulationMarkSelected;
@@ -19,6 +20,7 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
     private readonly PlacementOfStampsServices _placementOfStampsServices = new();
     private List<PipeWrp> _pipes = [];
     private List<TagWrp> _existingTags;
+    private readonly JsonDataLoader _jsonDataLoader;
 
     public PlacementOfStampsViewModel()
     {
@@ -61,19 +63,29 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
             }
         }
 
-        _pipeMarks =
-        [
-            ..new FilteredElementCollector(_doc)
-                .OfCategory(BuiltInCategory.OST_PipeTags)
-                .WhereElementIsElementType()
-                .ToElements()
-        ];
+        _pipeMarks = new FilteredElementCollector(_doc)
+            .OfCategory(BuiltInCategory.OST_PipeTags)
+            .WhereElementIsElementType()
+            .ToElements()
+            .ToHashSet();
 
 
         _existingTags = _placementOfStampsServices.GetExistingAnnotations(_doc, activeView)
             .Cast<IndependentTag>()
             .Select(existingAnnotation => new TagWrp(existingAnnotation))
             .ToList();
+        _jsonDataLoader = new JsonDataLoader("PlacementOfStampsData");
+        var loadData = _jsonDataLoader.LoadData<PlacementOfStampsDTO>();
+        if (loadData != null)
+        {
+            if (_pipeMarks
+                    .FirstOrDefault(x => x.Name == loadData.SystemAbbreviationMarkName) is FamilySymbol
+                systemAbbreviationMarkSelected)
+            {
+                SystemAbbreviationMarkSelected = systemAbbreviationMarkSelected;
+                SystemAbbreviationIsChecked = loadData.SystemAbbreviationIsChecked;
+            }
+        }
     }
 
     // Вспомогательный метод для получения координат трубы
@@ -123,7 +135,12 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
             // }
 
             transactionGroup.Commit();
-          
+            PlacementOfStampsDTO dto = new PlacementOfStampsDTO
+            {
+                SystemAbbreviationMarkName = SystemAbbreviationMarkSelected.Name,
+                SystemAbbreviationIsChecked = SystemAbbreviationIsChecked
+            };
+            _jsonDataLoader.SaveData(dto);
         }
         catch (Exception e)
         {
