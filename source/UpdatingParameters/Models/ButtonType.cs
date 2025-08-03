@@ -22,5 +22,6 @@
         DuctInsulationFireproofing,
         DuctInsulationThermalInsulation,
         DuctConnectionParts,
+        SetMargin
     }
 }

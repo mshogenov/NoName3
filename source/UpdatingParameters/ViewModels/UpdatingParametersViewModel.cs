@@ -819,4 +819,10 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
 
         return updatedCount;
     }
+
+    [RelayCommand]
+    private void SetMargin()
+    {
+        
+    }
 }

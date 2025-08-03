@@ -217,6 +217,14 @@
                         ConverterParameter={x:Static model:ButtonType.AllCategories}}">
 
                     </Button>
+                    <Button Content="Задать запас"
+                            Style="{DynamicResource CommonButtonStyle}"
+                            Command="{Binding SetMarginCommand}"
+                            Background="{Binding SelectedButton, 
+                        Converter={StaticResource ButtonSelectedConverter},
+                        ConverterParameter={x:Static model:ButtonType.SetMargin}}">
+
+                    </Button>
                     <Separator Style="{DynamicResource ShadowSeparator}" />
                     <Button
                         Content="Обновить все типы"
