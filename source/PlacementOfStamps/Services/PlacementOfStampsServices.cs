@@ -337,47 +337,14 @@ public class PlacementOfStampsServices
                  box1.Max.Y < box2.Min.Y || box1.Min.Y > box2.Max.Y);
     }
 
-    // public void PlacementMarksPipeInsulation(Document doc, List<PipeMdl> pipeMdls, View activeView,
-    //     FamilySymbol selectedTag)
-    // {
-    //     var elements = pipeMdls.Where(pipe => pipe.IsInsulation);
-    //     // Получаем все существующие марки на активном виде
-    //     var existingAnnotations = GetExistingAnnotations(doc, activeView).Cast<IndependentTag>().ToList();
-    //     var pipeTagsInfo = GetPipeTags(existingAnnotations, activeView);
-    //
-    //     var pipesSortered = elements.OrderBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).X)
-    //         .ThenBy(p => ((LocationCurve)p.Pipe.Location).Curve.GetEndPoint(1).Y);
-    //
-    //     bool flag = false;
-    //     foreach (var pipe in pipesSortered)
-    //     {
-    //         if (pipe.Lenght.ToMillimeters() is > 500 and < 4000 && flag)
-    //         {
-    //             flag = false;
-    //             continue;
-    //         }
-    //
-    //         if (activeView.ViewType == ViewType.FloorPlan && pipe.IsRiser)
-    //         {
-    //             continue;
-    //         }
-    //
-    //         // Шаг 4: Вычисление позиций марки для текущей трубы
-    //         List<XYZ> tagLocations =
-    //             FindOptimalTagLocation(pipe, selectedTag, pipeTagsInfo);
-    //         if (tagLocations.Count == 0) continue;
-    //         // Создание марки
-    //         foreach (var tagLocation in tagLocations)
-    //         {
-    //             if (tagLocation == null) continue;
-    //             IndependentTag pipeTag = IndependentTag.Create(doc, selectedTag.Id, activeView.Id,
-    //                 new Reference(pipe.Pipe), false, TagOrientation.Horizontal, tagLocation);
-    //             existingAnnotations.Add(pipeTag);
-    //         }
-    //
-    //         flag = true;
-    //     }
-    // }
+    public void PlacementMarksPipeInsulation(List<PipeWrp> allPipes, List<TagWrp> existingTags,
+        FamilySymbol selectedTag)
+    {
+        const double TAG_INTERVAL = 6000; // Промежуток между марками в мм
+        // var pipeNotTags = GetLabeledPipes(allPipes, existingTags, selectedTag);
+       
+    }
+
     public void PlacementMarksSystemAbbreviation(List<PipeWrp> allPipes, List<TagWrp> existingTags,
         FamilySymbol selectedTag)
     {

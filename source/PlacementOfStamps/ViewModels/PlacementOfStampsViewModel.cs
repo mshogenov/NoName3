@@ -128,11 +128,14 @@ public sealed partial class PlacementOfStampsViewModel : ObservableObject
                 transaction.Commit();
             }
 
-            // if (PipeInsulationIsChecked)
-            // {
-            //     _placementOfStampsServices.PlacementMarksPipeInsulation(_doc, pipeMdls, activeView,
-            //         PipeInsulationMarkSelected);
-            // }
+            if (PipeInsulationIsChecked)
+            {
+                Transaction transaction = new Transaction(_doc, "Расставить марки изоляции");
+                transaction.Start();
+                _placementOfStampsServices.PlacementMarksPipeInsulation( _pipes, _existingTags,
+                    PipeInsulationMarkSelected);
+                transaction.Commit();
+            }
 
             transactionGroup.Commit();
             PlacementOfStampsDTO dto = new PlacementOfStampsDTO
