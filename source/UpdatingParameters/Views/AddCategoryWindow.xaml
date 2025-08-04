@@ -1,0 +1,83 @@
+<Window x:Class="UpdatingParameters.Views.AddCategoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:UpdatingParameters.Views"
+        xmlns:vm = "clr-namespace:UpdatingParameters.ViewModels"
+        d:DataContext="{d:DesignInstance vm:AddCategoryVM}"
+        mc:Ignorable="d"
+        Title="AddCategoryWindow" Height="450" Width="800">
+    <Grid>
+        <StackPanel>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+                <TextBlock Text="Выберите категорию" />
+                <ComboBox ItemsSource="{Binding Categories}"
+                          SelectedItem="{Binding SelectedCategory}"
+                          Width="100">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Из параметр: " />
+                <Button Content="Выбрать параметр"
+                        Command="{Binding SelectParameterCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource Self}}" />
+                <TextBlock Text="В параметр: " />
+                <Button Content="Выбрать параметр"
+                        Command="{Binding SelectParameterCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource Self}}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Запас" />
+                <TextBox Width="100"/>
+                <TextBlock Text="%" />
+            </StackPanel>
+        </StackPanel>
+        <Popup
+            Width="250"
+            IsOpen="{Binding IsPopupOpen}"
+            PlacementTarget="{Binding CurrentPopupTarget}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid>
+                    <TabControl>
+                        <TabItem Header="Параметры экземпляра">
+                            <ListBox ItemsSource="{Binding InstanceParameters}"
+                                     SelectedItem="{Binding SelectedParameter}"
+                                     Height="300">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Definition.Name}" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </TabItem>
+                        <TabItem Header="Параметры типа">
+                            <ListBox ItemsSource="{Binding TypeParameters}"
+                                     Height="300"
+                                     SelectedItem="{Binding SelectedParameter}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Definition.Name}" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </TabItem>
+                    </TabControl>
+                </Grid>
+                <DockPanel Grid.Row="1" HorizontalAlignment="Right">
+                    <Button
+                        Content="Закрыть" Command="{Binding ClosePopupCommand}" />
+                </DockPanel>
+            </Grid>
+        </Popup>
+    </Grid>
+</Window>

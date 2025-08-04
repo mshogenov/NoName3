@@ -93,6 +93,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
     private DuctInsulationFireproofingViewModel _ductInsulationFireproofingViewModel;
     private ParametersViewModel _parametersViewModel;
     private MainViewModel _mainViewModel;
+    private SetMarginViewModel _setMarginViewModel;
 
     private readonly List<ElementId> _mepCategories =
     [
@@ -119,6 +120,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
     private ProgressWindow _progressWindow;
     private readonly DataStorageFactory _storageFactory;
     private readonly SettingsManager _settingsManager;
+   
 
 
     public UpdatingParametersViewModel()
@@ -251,6 +253,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
     private void InitializeViewModels()
     {
         _mainViewModel = new MainViewModel();
+        _setMarginViewModel = new SetMarginViewModel();
         MainIsVisible = true;
         SelectedContent = _mainViewModel;
         _parametersViewModel = new ParametersViewModel(_storageFactory);
@@ -823,6 +826,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
     [RelayCommand]
     private void SetMargin()
     {
-        
+        SelectedContent = _setMarginViewModel;
+        SelectedButton = ButtonType.SetMargin;
     }
 }

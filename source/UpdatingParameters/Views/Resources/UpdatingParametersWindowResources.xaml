@@ -75,4 +75,7 @@
     <DataTemplate DataType="{x:Type settings:SettingsViewModel}">
         <local:SettingsWindow DataContext="{Binding}" />
     </DataTemplate>
+    <DataTemplate DataType="{x:Type viewModels:SetMarginViewModel}">
+        <local:SetMarginWindow DataContext="{Binding}" />
+    </DataTemplate>
 </ResourceDictionary>
