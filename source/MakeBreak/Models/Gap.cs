@@ -26,226 +26,234 @@ public class Gap
                     FamilyInstance = familyInstance;
                     Id = familyInstance.Id;
                 }
+
                 break;
             case DisplacementElement displacement:
                 var pickPoint = reference.GlobalPoint;
-              var family = FindElementInDisplacement(displacement, pickPoint, doc);
+                var family = FindElementInDisplacement(displacement, pickPoint, doc);
+                if (family == null) break;
                 if (family.Name == "Разрыв")
                 {
                     FamilyInstance = family;
                     Id = family.Id;
                 }
+
                 break;
             default: return;
         }
     }
 
-   private FamilyInstance FindElementInDisplacement(DisplacementElement displacement, XYZ pickPoint, Document doc)
-{
-    var displacementElementIds = displacement.GetDisplacedElementIds();
-    double toleranceInMm = 100.0;
-    double tolerance = UnitUtils.ConvertToInternalUnits(toleranceInMm, UnitTypeId.Millimeters);
-
-    foreach (ElementId displacedId in displacementElementIds)
+    private FamilyInstance FindElementInDisplacement(DisplacementElement displacement, XYZ pickPoint, Document doc)
     {
-        Element element = doc.GetElement(displacedId);
-        if (element is not FamilyInstance instance) continue;
+        var displacementElementIds = displacement.GetDisplacedElementIds();
+        double toleranceInMm = 200;
+        double tolerance = UnitUtils.ConvertToInternalUnits(toleranceInMm, UnitTypeId.Millimeters);
 
-        if (IsFamilyInstanceAtPoint(instance, pickPoint, tolerance))
+        foreach (ElementId displacedId in displacementElementIds)
         {
-            return instance;
-        }
-    }
+            Element element = doc.GetElement(displacedId);
+            if (element is not FamilyInstance instance) continue;
 
-    return null;
-}
-
-private bool IsFamilyInstanceAtPoint(FamilyInstance instance, XYZ pickPoint, double tolerance)
-{
-    // Способ 1: Расширенный BoundingBox
-    if (CheckBoundingBoxContains(instance, pickPoint, tolerance))
-        return true;
-
-    // Способ 2: Проверка через геометрию
-    if (CheckGeometryContains(instance, pickPoint, tolerance))
-        return true;
-
-    // Способ 3: Проверка через Location (для точечных элементов)
-    if (CheckLocationDistance(instance, pickPoint, tolerance))
-        return true;
-
-    return false;
-}
-
-private bool CheckBoundingBoxContains(FamilyInstance instance, XYZ pickPoint, double tolerance)
-{
-    try
-    {
-        BoundingBoxXYZ bounding = instance.get_BoundingBox(instance.Document.ActiveView);
-
-        // Если bounding для активного вида null, попробуем без вида
-        if (bounding == null)
-        {
-            bounding = instance.get_BoundingBox(null);
-        }
-
-        if (bounding == null) return false;
-
-        // Расширяем BoundingBox
-        XYZ expandVector = new XYZ(tolerance, tolerance, tolerance);
-
-        XYZ min = bounding.Min.Subtract(expandVector);
-        XYZ max = bounding.Max.Add(expandVector);
-
-        return pickPoint.X >= min.X && pickPoint.X <= max.X &&
-               pickPoint.Y >= min.Y && pickPoint.Y <= max.Y &&
-               pickPoint.Z >= min.Z && pickPoint.Z <= max.Z;
-    }
-    catch (Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine($"Error in CheckBoundingBoxContains: {ex.Message}");
-        return false;
-    }
-}
-
-private bool CheckGeometryContains(FamilyInstance instance, XYZ pickPoint, double tolerance)
-{
-    try
-    {
-        Options geometryOptions = new Options
-        {
-            DetailLevel = ViewDetailLevel.Medium,
-            IncludeNonVisibleObjects = false,
-            ComputeReferences = false
-        };
-
-        GeometryElement geometryElement = instance.get_Geometry(geometryOptions);
-        if (geometryElement == null) return false;
-
-        foreach (GeometryObject geometryObject in geometryElement)
-        {
-            if (IsPointNearFamilyGeometry(geometryObject, pickPoint, tolerance))
+            if (IsFamilyInstanceAtPoint(instance, pickPoint, tolerance))
             {
-                return true;
+                return instance;
             }
         }
-    }
-    catch (Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine($"Error in CheckGeometryContains: {ex.Message}");
+
+        return null;
     }
 
-    return false;
-}
-
-private bool CheckLocationDistance(FamilyInstance instance, XYZ pickPoint, double tolerance)
-{
-    try
+    private bool IsFamilyInstanceAtPoint(FamilyInstance instance, XYZ pickPoint, double tolerance)
     {
-        if (instance.Location is LocationPoint locationPoint)
+        // Способ 1: Расширенный BoundingBox
+        if (CheckBoundingBoxContains(instance, pickPoint, tolerance))
+            return true;
+
+        // Способ 2: Проверка через геометрию
+        if (CheckGeometryContains(instance, pickPoint, tolerance))
+            return true;
+
+        // Способ 3: Проверка через Location (для точечных элементов)
+        if (CheckLocationDistance(instance, pickPoint, tolerance))
+            return true;
+
+        return false;
+    }
+
+    private bool CheckBoundingBoxContains(FamilyInstance instance, XYZ pickPoint, double tolerance)
+    {
+        try
         {
-            double distance = locationPoint.Point.DistanceTo(pickPoint);
-            return distance <= tolerance;
-        }
-        else if (instance.Location is LocationCurve locationCurve)
-        {
-            Curve curve = locationCurve.Curve;
-            double distance = curve.Distance(pickPoint);
-            return distance <= tolerance;
-        }
-    }
-    catch (Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine($"Error in CheckLocationDistance: {ex.Message}");
-    }
+            BoundingBoxXYZ bounding = instance.get_BoundingBox(instance.Document.ActiveView);
 
-    return false;
-}
-
-private bool IsPointNearFamilyGeometry(GeometryObject geometryObject, XYZ point, double tolerance)
-{
-    try
-    {
-        switch (geometryObject)
-        {
-            case Solid solid when solid.Volume > 0:
-                return IsPointNearSolid(solid, point, tolerance);
-
-            case GeometryInstance instance:
-                Transform transform = instance.Transform;
-                foreach (GeometryObject obj in instance.GetInstanceGeometry())
-                {
-                    // Преобразуем точку в локальную систему координат
-                    XYZ localPoint = transform.Inverse.OfPoint(point);
-                    if (IsPointNearFamilyGeometry(obj, localPoint, tolerance))
-                        return true;
-                }
-                break;
-
-            case Curve curve:
-                return curve.Distance(point) <= tolerance;
-
-            case Face face:
-                try
-                {
-                    IntersectionResult result = face.Project(point);
-                    if (result != null)
-                    {
-                        return result.Distance <= tolerance;
-                    }
-                }
-                catch { }
-                break;
-        }
-    }
-    catch (Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine($"Error in IsPointNearFamilyGeometry: {ex.Message}");
-    }
-
-    return false;
-}
-
-private bool IsPointNearSolid(Solid solid, XYZ point, double tolerance)
-{
-    try
-    {
-        // Сначала проверяем расширенный BoundingBox
-        BoundingBoxXYZ bbox = solid.GetBoundingBox();
-        if (bbox != null)
-        {
-            XYZ min = bbox.Min - new XYZ(tolerance, tolerance, tolerance);
-            XYZ max = bbox.Max + new XYZ(tolerance, tolerance, tolerance);
-
-            bool inExpandedBox = point.X >= min.X && point.X <= max.X &&
-                               point.Y >= min.Y && point.Y <= max.Y &&
-                               point.Z >= min.Z && point.Z <= max.Z;
-
-            if (!inExpandedBox) return false;
-        }
-
-        // Проверяем каждую грань solid'а
-        foreach (Face face in solid.Faces)
-        {
-            try
+            // Если bounding для активного вида null, попробуем без вида
+            if (bounding == null)
             {
-                IntersectionResult result = face.Project(point);
-                if (result != null && result.Distance <= tolerance)
+                bounding = instance.get_BoundingBox(null);
+            }
+
+            if (bounding == null) return false;
+
+            // Расширяем BoundingBox
+            XYZ expandVector = new XYZ(tolerance, tolerance, tolerance);
+
+            XYZ min = bounding.Min.Subtract(expandVector);
+            XYZ max = bounding.Max.Add(expandVector);
+
+            return pickPoint.X >= min.X && pickPoint.X <= max.X &&
+                   pickPoint.Y >= min.Y && pickPoint.Y <= max.Y &&
+                   pickPoint.Z >= min.Z && pickPoint.Z <= max.Z;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in CheckBoundingBoxContains: {ex.Message}");
+            return false;
+        }
+    }
+
+    private bool CheckGeometryContains(FamilyInstance instance, XYZ pickPoint, double tolerance)
+    {
+        try
+        {
+            Options geometryOptions = new Options
+            {
+                DetailLevel = ViewDetailLevel.Medium,
+                IncludeNonVisibleObjects = false,
+                ComputeReferences = false
+            };
+
+            GeometryElement geometryElement = instance.get_Geometry(geometryOptions);
+            if (geometryElement == null) return false;
+
+            foreach (GeometryObject geometryObject in geometryElement)
+            {
+                if (IsPointNearFamilyGeometry(geometryObject, pickPoint, tolerance))
                 {
                     return true;
                 }
             }
-            catch { }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in CheckGeometryContains: {ex.Message}");
         }
 
-    }
-    catch (Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine($"Error in IsPointNearSolid: {ex.Message}");
+        return false;
     }
 
-    return false;
-}
+    private bool CheckLocationDistance(FamilyInstance instance, XYZ pickPoint, double tolerance)
+    {
+        try
+        {
+            if (instance.Location is LocationPoint locationPoint)
+            {
+                double distance = locationPoint.Point.DistanceTo(pickPoint);
+                return distance <= tolerance;
+            }
+            else if (instance.Location is LocationCurve locationCurve)
+            {
+                Curve curve = locationCurve.Curve;
+                double distance = curve.Distance(pickPoint);
+                return distance <= tolerance;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in CheckLocationDistance: {ex.Message}");
+        }
+
+        return false;
+    }
+
+    private bool IsPointNearFamilyGeometry(GeometryObject geometryObject, XYZ point, double tolerance)
+    {
+        try
+        {
+            switch (geometryObject)
+            {
+                case Solid solid when solid.Volume > 0:
+                    return IsPointNearSolid(solid, point, tolerance);
+
+                case GeometryInstance instance:
+                    Transform transform = instance.Transform;
+                    foreach (GeometryObject obj in instance.GetInstanceGeometry())
+                    {
+                        // Преобразуем точку в локальную систему координат
+                        XYZ localPoint = transform.Inverse.OfPoint(point);
+                        if (IsPointNearFamilyGeometry(obj, localPoint, tolerance))
+                            return true;
+                    }
+
+                    break;
+
+                case Curve curve:
+                    return curve.Distance(point) <= tolerance;
+
+                case Face face:
+                    try
+                    {
+                        IntersectionResult result = face.Project(point);
+                        if (result != null)
+                        {
+                            return result.Distance <= tolerance;
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in IsPointNearFamilyGeometry: {ex.Message}");
+        }
+
+        return false;
+    }
+
+    private bool IsPointNearSolid(Solid solid, XYZ point, double tolerance)
+    {
+        try
+        {
+            // Сначала проверяем расширенный BoundingBox
+            BoundingBoxXYZ bbox = solid.GetBoundingBox();
+            if (bbox != null)
+            {
+                XYZ min = bbox.Min - new XYZ(tolerance, tolerance, tolerance);
+                XYZ max = bbox.Max + new XYZ(tolerance, tolerance, tolerance);
+
+                bool inExpandedBox = point.X >= min.X && point.X <= max.X &&
+                                     point.Y >= min.Y && point.Y <= max.Y &&
+                                     point.Z >= min.Z && point.Z <= max.Z;
+
+                if (!inExpandedBox) return false;
+            }
+
+            // Проверяем каждую грань solid'а
+            foreach (Face face in solid.Faces)
+            {
+                try
+                {
+                    IntersectionResult result = face.Project(point);
+                    if (result != null && result.Distance <= tolerance)
+                    {
+                        return true;
+                    }
+                }
+                catch
+                {
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in IsPointNearSolid: {ex.Message}");
+        }
+
+        return false;
+    }
 
     private Gap(FamilyInstance familyInstance)
     {

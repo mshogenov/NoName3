@@ -981,7 +981,7 @@ public class MakeBreakServices
         while (true)
         {
             var selectedBreak = SelectGap(familySymbol);
-            if (selectedBreak?.FamilyInstance == null) return;
+            if (selectedBreak?.FamilyInstance == null) break;
             Pipe generalPipe = null;
             Element deletePipe = null;
             Connector attachConnector = null;
