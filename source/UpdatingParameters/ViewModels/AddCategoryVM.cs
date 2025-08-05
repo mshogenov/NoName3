@@ -1,5 +1,8 @@
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
+using UpdatingParameters.Models;
+using UpdatingParameters.Views;
 
 namespace UpdatingParameters.ViewModels;
 
@@ -13,7 +16,8 @@ public partial class AddCategoryVM: ViewModelBase
     [ObservableProperty] private bool _isFromParameterPopupOpen;
     [ObservableProperty] private UIElement _inParameterPopupTarget;
     [ObservableProperty] private bool _isInParameterPopupOpen;
-   private Parameter _selectedFromParameter;
+    [ObservableProperty] private double _margin;
+  
     [ObservableProperty] private Parameter _selectedInParameter;
    private Category _selectedCategory;
    public Category SelectedCategory
@@ -27,7 +31,7 @@ public partial class AddCategoryVM: ViewModelBase
            OnPropertyChanged();
        }
    }
-
+   private Parameter _selectedFromParameter;
    public Parameter SelectedFromParameter
    {
        get => _selectedFromParameter;
@@ -38,7 +42,8 @@ public partial class AddCategoryVM: ViewModelBase
            OnPropertyChanged();
        }
    }
-
+   public MarginCategory Result { get; private set; }
+   public bool IsConfirmed { get; private set; }
    public AddCategoryVM()
     {
         Categories = GetAllCategoryByType(_doc, CategoryType.Model)
@@ -103,5 +108,38 @@ public partial class AddCategoryVM: ViewModelBase
         var elementType = _doc.GetElement(element.GetTypeId());
         var typeParameters = elementType.Parameters;
         return typeParameters.Cast<Parameter>().ToList();
+    }
+    [RelayCommand]
+    private void Confirm()
+    {
+        if (SelectedCategory != null && SelectedFromParameter != null && SelectedInParameter != null)
+        {
+            Result = new MarginCategory
+            {
+                Category = SelectedCategory,
+                Margin = Margin,
+                FromParameter = SelectedFromParameter,
+                InParameter = SelectedInParameter
+            };
+            IsConfirmed = true;
+            
+            // Закрываем окно
+            if (Application.Current.Windows.OfType<AddCategoryWindow>().FirstOrDefault() is AddCategoryWindow window)
+            {
+                window.DialogResult = true;
+                window.Close();
+            }
+        }
+    }
+    
+    [RelayCommand]
+    private void Cancel()
+    {
+        IsConfirmed = false;
+        if (Application.Current.Windows.OfType<AddCategoryWindow>().FirstOrDefault() is AddCategoryWindow window)
+        {
+            window.DialogResult = false;
+            window.Close();
+        }
     }
 }

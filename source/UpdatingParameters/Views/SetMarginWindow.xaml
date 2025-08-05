@@ -8,6 +8,34 @@
              d:DataContext="{d:DesignInstance Type=viewmodel:SetMarginViewModel}"
              mc:Ignorable="d">
     <Grid>
-        <Button Content="Добавить категорию" Command="{Binding AddCategoryCommand}" VerticalAlignment="Top" />
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <Button Content="Добавить категорию"
+                Command="{Binding AddCategoryCommand}"
+                VerticalAlignment="Top" />
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding MarginCategories }">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Category.Name}" />
+                                    <TextBlock Text="{Binding Margin}" />
+                                    <TextBlock Text="{Binding FromParameter.Definition.Name}" />
+                                    <TextBlock Text="{Binding InParameter.Definition.Name}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
     </Grid>
 </UserControl>

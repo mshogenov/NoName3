@@ -9,6 +9,10 @@
         mc:Ignorable="d"
         Title="AddCategoryWindow" Height="450" Width="800">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
         <StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
                 <TextBlock Text="Выберите категорию" />
@@ -36,9 +40,21 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Запас" />
-                <TextBox Width="100" />
+                <TextBox Width="100" Text="{Binding Margin}" />
                 <TextBlock Text="%" />
             </StackPanel>
+        </StackPanel>
+        <StackPanel Grid.Row="1" VerticalAlignment="Top" Orientation="Horizontal" HorizontalAlignment="Right" Margin="10">
+            <Button Content="OK" 
+                    Command="{Binding ConfirmCommand}" 
+                    Margin="5" 
+                    Padding="20,5" 
+                    IsDefault="True"/>
+            <Button Content="Отмена" 
+                    Command="{Binding CancelCommand}" 
+                    Margin="5" 
+                    Padding="20,5" 
+                    IsCancel="True"/>
         </StackPanel>
         <local:ParameterSelectorPopup
             IsPopupOpen="{Binding IsFromParameterPopupOpen}"
