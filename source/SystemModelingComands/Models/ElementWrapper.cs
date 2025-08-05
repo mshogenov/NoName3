@@ -4,7 +4,7 @@ public sealed class ElementWrapper
 {
     public Element Element { get; set; }
     public ElementId Id { get; set; }
-    public BuiltInCategory BuiltInCategory { get; }
+public BuiltInCategory BuiltInCategory { get; }
     public ConnectorManager ConnectorManager => GetConnectorManager(Element);
     public List<ConnectorWrapper> Connectors => GetConnectors();
     public List<Element> ConnectedElements => GetConnectedElements();
@@ -18,8 +18,10 @@ public sealed class ElementWrapper
         BuiltInCategory = element.Category.BuiltInCategory;
     }
 
-    public ElementWrapper(Reference reference, Document doc)
+    public ElementWrapper([NotNull] Reference reference, Document doc)
     {
+        if (reference == null) throw new ArgumentNullException(nameof(reference));
+
         Element = doc.GetElement(reference);
         Id = Element.Id;
         GlobalPoint = reference.GlobalPoint;
@@ -70,7 +72,7 @@ public sealed class ElementWrapper
     {
         if (Element is not FamilyInstance) return null;
         Document doc = Element.Document;
-        Element connectedConnector = ConnectedElements.FirstOrDefault();
+        Element connectedConnector = ConnectedElements.FirstOrDefault(x=>x is MEPCurve);
         return connectedConnector != null ? doc.GetElement(connectedConnector.GetTypeId()) as MEPCurveType : null;
     }
 

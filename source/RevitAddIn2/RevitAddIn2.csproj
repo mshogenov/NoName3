@@ -114,6 +114,12 @@
       <Resource Include="Resources\Icons\kopirovat_v2swjczhusqj_32.png" />
       <None Remove="Resources\Icons\kopirovat_v2swjczhusqj_16.png" />
       <Resource Include="Resources\Icons\kopirovat_v2swjczhusqj_16.png" />
+      <None Remove="Resources\Icons\ShowIn3D-16.png" />
+      <None Remove="Resources\Icons\ShowIn3D-32.png" />
+      <None Remove="Resources\Icons\ShowIn3D-16.ico" />
+      <Resource Include="Resources\Icons\ShowIn3D-16.ico" />
+      <None Remove="Resources\Icons\ShowIn3D-32.ico" />
+      <Resource Include="Resources\Icons\ShowIn3D-32.ico" />
     </ItemGroup>
 
     <ItemGroup>
@@ -128,6 +134,7 @@
       <ProjectReference Include="..\PositionNumbering\PositionNumbering.csproj" />
       <ProjectReference Include="..\RoomsInSpace\RoomsInSpaces.csproj" />
       <ProjectReference Include="..\SetNearestLevelBelow\SetNearestLevelBelow.csproj" />
+      <ProjectReference Include="..\ShowIn3D\ShowIn3D.csproj" />
       <ProjectReference Include="..\SystemModelingComands\SystemModelingCommands.csproj" />
       <ProjectReference Include="..\UpdatingParameters\UpdatingParameters.csproj" />
       <ProjectReference Include="..\ViewOfPipeSystems\ViewOfPipeSystems.csproj" />

@@ -110,7 +110,7 @@ namespace UpdatingParameters.ViewModels.Parameters
                     .SelectMany(fi => fi.GetSubComponentIds()).Where(subId => subId != null).ToList();
                 //Отделение от всех семейств вложенных семейств
                 var elementsIdNotNestedFamilies = _elements.Select(x => x.Id).Except(nestedFamilies)
-                    .Select(x => x.ToElement(Context.ActiveDocument)).ToList();
+                    .Select(x => x.ToElement(_doc)).ToList();
                 if (SystemAbbreviationIsChecked)
                 {
                     UpdaterParametersService.UpdateParamSystemAbbreviation(_doc, elementsIdNotNestedFamilies);

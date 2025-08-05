@@ -19,7 +19,7 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
     [ObservableProperty] private List<LevelModel> _selectedLevelModels = [];
     [ObservableProperty] private List<LevelModel> _levelModels = [];
     [ObservableProperty] private bool _isDirectionSet;
-    [ObservableProperty] private string _directionStatusTooltip="Направление не задано";
+    [ObservableProperty] private string _directionStatusTooltip = "Направление не задано";
 
     private LevelModel _selectedLevelModel;
 
@@ -105,7 +105,10 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
 
     private void FindLargestNumberLevels(object sender, SelectionChangedEventArgs selectionChangedEventArgs)
     {
-        Level mostUsedLevel = FindMostUsedLevelInSelection(_doc);
+        // Получаем текущее выделение пользователя
+        UIDocument uidoc = new UIDocument(_doc);
+        List<ElementId> selectedIds = uidoc.Selection.GetElementIds().ToList();
+        Level mostUsedLevel = _mepElementsCopyServices.FindMostUsedLevelInSelection(selectedIds, _doc);
         if (mostUsedLevel != null)
         {
             // Ищем соответствующую модель в коллекции вместо создания новой
@@ -121,84 +124,10 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
     /// <summary>
     /// Находит уровень, который наиболее часто используется у выделенных элементов
     /// </summary>
+    /// <param name="elementIds"></param>
     /// <param name="doc">Активный документ Revit</param>
     /// <returns>Наиболее часто используемый уровень</returns>
-    public Level FindMostUsedLevelInSelection(Document doc)
-    {
-        // Получаем текущее выделение пользователя
-        UIDocument uidoc = new UIDocument(doc);
-        ICollection<ElementId> selectedIds = uidoc.Selection.GetElementIds();
-
-        if (selectedIds.Count == 0)
-        {
-            return null;
-        }
-
-        // Словарь для подсчета, сколько раз каждый уровень используется
-        Dictionary<ElementId, int> levelUsageCount = new Dictionary<ElementId, int>();
-
-        // Проходим по всем выбранным элементам
-        foreach (ElementId id in selectedIds)
-        {
-            Element elem = doc.GetElement(id);
-
-            // Пытаемся получить уровень элемента
-            ElementId levelId = GetElementLevel(elem);
-
-            if (levelId != null && levelId != ElementId.InvalidElementId)
-            {
-                // Увеличиваем счетчик использования этого уровня
-                if (levelUsageCount.ContainsKey(levelId))
-                {
-                    levelUsageCount[levelId]++;
-                }
-                else
-                {
-                    levelUsageCount[levelId] = 1;
-                }
-            }
-        }
-
-        // Если не найдено ни одного уровня
-        if (levelUsageCount.Count == 0)
-        {
-            return null;
-        }
-
-        // Находим уровень с наибольшим количеством использований
-        ElementId mostUsedLevelId = levelUsageCount.OrderByDescending(x => x.Value).First().Key;
-
-        // Возвращаем сам уровень
-        return doc.GetElement(mostUsedLevelId) as Level;
-    }
-
-    /// <summary>
-    /// Получает ElementId уровня, связанного с элементом
-    /// </summary>
-    /// <param name="elem">Элемент для проверки</param>
-    /// <returns>ElementId уровня или InvalidElementId, если уровень не найден</returns>
-    private ElementId GetElementLevel(Element elem)
-    {
-        // Проверка на null
-        if (elem == null)
-            return ElementId.InvalidElementId;
-
-        // Проверяем, есть ли у элемента параметр LevelId
-        Parameter levelParam = elem switch
-        {
-            FamilyInstance => elem.get_Parameter(BuiltInParameter.FAMILY_LEVEL_PARAM),
-            MEPCurve => elem.get_Parameter(BuiltInParameter.RBS_START_LEVEL_PARAM),
-            _ => null
-        };
-
-        if (levelParam is { HasValue: true })
-        {
-            return levelParam.AsElementId();
-        }
-
-        // Если не удалось определить уровень
-        return ElementId.InvalidElementId;
-    }
+   
 
     [RelayCommand]
     private void SetBaseLevel()
@@ -215,7 +144,7 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
             trans.Start();
             try
             {
-                List<ElementModel> mepElementModels = [];
+                List<ElementWrp> mepElementModels = [];
                 var selectedElements = _mepElementsCopyServices.GetSelectedElements(_uiDoc);
                 if (selectedElements.Count == 0)
                 {
@@ -224,7 +153,7 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
                 }
 
                 mepElementModels.AddRange(selectedElements.Select(selectedElement =>
-                    new ElementModel(selectedElement)));
+                    new ElementWrp(selectedElement)));
                 _mepElementsCopyServices.SetBaseLevel(mepElementModels, SelectedLevelModel);
                 trans.Commit();
                 ShowNotification("Базовый уровень установлен");
@@ -364,7 +293,7 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
     }
 
 
-    private bool GetElementsCopy(out List<MepCurveMdl> mepCurveModels, out List<ElementModel> mepElementModels)
+    private bool GetElementsCopy(out List<MepCurveWrp> mepCurveModels, out List<ElementWrp> mepElementModels)
     {
         mepCurveModels = new FilteredElementCollector(_doc)
             .OfClass(typeof(MEPCurve))
@@ -382,13 +311,13 @@ public sealed partial class MepElementsCopyLevelsViewModel : ObservableObject
                         return m is not InsulationLiningBase;
                 }
             })
-            .Select(m => new MepCurveMdl(m)).ToList();
+            .Select(m => new MepCurveWrp(m)).ToList();
         mepElementModels = [];
         var selectedElements = _mepElementsCopyServices.GetSelectedElements(_uiDoc);
         if (selectedElements.Count == 0) return false;
         foreach (var selectedElement in selectedElements)
         {
-            mepElementModels.Add(new ElementModel(selectedElement));
+            mepElementModels.Add(new ElementWrp(selectedElement));
         }
 
         return true;

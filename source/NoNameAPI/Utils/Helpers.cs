@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using System.IO;
+using System.Reflection;
+using System.Text;
 using System.Windows;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Plumbing;
@@ -12,6 +14,7 @@ namespace NoNameApi.Utils;
 
 public static class Helpers
 {
+   private const string _groupName = "RevitAddIn";
     /// <summary>
     /// Получает все стояки в документе
     /// </summary>
@@ -75,7 +78,7 @@ public static class Helpers
         ForgeTypeId parameterGroup, bool isInstance,
         List<BuiltInCategory> categories)
     {
-        string groupName = "Фигня";
+       
         // Проверка входных данных
         if (doc == null || string.IsNullOrEmpty(parameterName))
             return false;
@@ -83,7 +86,7 @@ public static class Helpers
         DefinitionFile defFile;
         try
         {
-            defFile = GetSharedParameterFile(doc);
+            defFile = GetOrCreateSharedParameterFile(doc);
             if (defFile == null)
             {
                 return false;
@@ -95,7 +98,7 @@ public static class Helpers
         }
 
         // Получение или создание группы параметров
-        DefinitionGroup group = defFile.Groups.get_Item(groupName) ?? defFile.Groups.Create(groupName);
+        DefinitionGroup group = defFile.Groups.get_Item(_groupName) ?? defFile.Groups.Create(_groupName);
 
         // Проверка, существует ли параметр
         Definition definition = group.Definitions.get_Item(parameterName);
@@ -147,32 +150,71 @@ public static class Helpers
         return true;
     }
 
-    public static DefinitionFile GetSharedParameterFile(Document doc)
+
+     /// <summary>
+    /// Возвращает DefinitionFile.  Если файл отсутствует, спрашивает пользователя, можно ли его создать.
+    /// При отказе возвращает null.
+    /// </summary>
+    public static DefinitionFile GetOrCreateSharedParameterFile(Document doc)
     {
         Application app = doc.Application;
+        string spPath = app.SharedParametersFilename;
 
-        // Получаем путь к файлу общих параметров
-        string sharedParametersFilePath = app.SharedParametersFilename;
-        if (string.IsNullOrEmpty(sharedParametersFilePath))
+        bool needCreate = string.IsNullOrEmpty(spPath) || !File.Exists(spPath);
+
+        // ─── 1. Файл отсутствует: спрашиваем пользователя ──────────────────────────
+        if (needCreate)
         {
-            MessageBox.Show("Не найден файл общих параметров", "Информация");
-            return null;
+            TaskDialog dlg = new TaskDialog("Файл общих параметров");
+            dlg.MainInstruction = "Файл общих параметров не найден.";
+            dlg.MainContent     = "Создать новый файл общих параметров?";
+            dlg.CommonButtons   = TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No;
+            dlg.DefaultButton   = TaskDialogResult.Yes;
+
+            if (dlg.Show() != TaskDialogResult.Yes)
+                return null;                        // пользователь отказался
         }
 
-        // Открываем файл общих параметров
+        // ─── 2. Создаём файл при необходимости ──────────────────────────────────────
+        if (needCreate)
+        {
+            spPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "RevitAddIn2.txt");
+
+            Directory.CreateDirectory(Path.GetDirectoryName(spPath)!);
+
+            if (!File.Exists(spPath))
+            {
+                string[] header =
+                {
+                    "# This is a Revit shared parameter file.",
+                    "# Do not edit manually.",
+                    "*META\tVERSION\tMINVERSION",
+                    "META\t2\t1",
+                    "*GROUP\tID\tNAME",
+                    "*PARAM\tGUID\tNAME\tDATATYPE\tDATACATEGORY\tGROUP\tVISIBLE\tDESCRIPTION\tUSERMODIFIABLE"
+                };
+                File.WriteAllLines(spPath, header, new UTF8Encoding(true)); // UTF-8 + BOM
+            }
+
+            app.SharedParametersFilename = spPath;
+        }
+
+        // ─── 3. Открываем файл ───────────────────────────────────────────────────────
         DefinitionFile defFile = app.OpenSharedParameterFile();
         if (defFile == null)
-        {
-            throw new InvalidOperationException("Не удалось открыть файл общих параметров.");
-        }
+            throw new InvalidOperationException(
+                $"Не удалось открыть файл общих параметров: {spPath}");
 
         return defFile;
     }
 
+
     /// <summary>
     /// Получает список категорий, к которым параметр не привязан
     /// </summary>
-    private static List<BuiltInCategory> GetUnboundCategories(Document doc, string parameterName, 
+    private static List<BuiltInCategory> GetUnboundCategories(Document doc, string parameterName,
         List<BuiltInCategory> mepCategories)
     {
         List<BuiltInCategory> unboundCategories = new List<BuiltInCategory>();
@@ -233,114 +275,114 @@ public static class Helpers
     /// Подключает параметр к категориям
     /// </summary>
     /// 
- public static bool BindParameter(Document doc, string parameterName, List<BuiltInCategory> mepCategories,
-    SubTransaction sT)
-{
-    try
+    public static bool BindParameter(Document doc, string parameterName, List<BuiltInCategory> mepCategories,
+        SubTransaction sT)
     {
-        // Получаем только НЕпривязанные категории
-        var unboundCategories = GetUnboundCategories(doc, parameterName, mepCategories);
-        if (unboundCategories.Count <= 0) return true; // Все категории уже привязаны
-
-        // Создаем набор категорий для привязки
-        CategorySet categorySet = new CategorySet();
-
-        // Заполняем набор только неподключенными категориями
-        foreach (var unboundCategory in unboundCategories)
+        try
         {
-            Category category = Category.GetCategory(doc, new ElementId((int)unboundCategory));
-            if (category != null && category.AllowsBoundParameters)
-                categorySet.Insert(category);
-        }
+            // Получаем только НЕпривязанные категории
+            var unboundCategories = GetUnboundCategories(doc, parameterName, mepCategories);
+            if (unboundCategories.Count <= 0) return true; // Все категории уже привязаны
 
-        // Проверяем, что набор категорий не пустой
-        if (categorySet.IsEmpty)
-        {
-            return true; // Все категории, которые могут быть привязаны, уже привязаны
-        }
+            // Создаем набор категорий для привязки
+            CategorySet categorySet = new CategorySet();
 
-        // Находим существующий параметр
-        BindingMap bindingMap = doc.ParameterBindings;
-        Definition paramDef = null;
-        Binding existingBinding = null;
-
-        // Ищем определение параметра
-        DefinitionBindingMapIterator iterator = bindingMap.ForwardIterator();
-        while (iterator.MoveNext())
-        {
-            Definition def = iterator.Key;
-            if (def != null && def.Name == parameterName)
+            // Заполняем набор только неподключенными категориями
+            foreach (var unboundCategory in unboundCategories)
             {
-                paramDef = def;
-                existingBinding = (Binding)iterator.Current;
-                break;
-            }
-        }
-
-        sT.Start();
-
-        // Если параметр существует, добавляем новые категории к существующей привязке
-        if (paramDef != null && existingBinding != null)
-        {
-            // Получаем текущие привязанные категории
-            CategorySet existingCategories;
-            if (existingBinding is InstanceBinding instanceBinding)
-            {
-                existingCategories = instanceBinding.Categories;
-            }
-            else if (existingBinding is TypeBinding typeBinding)
-            {
-                existingCategories = typeBinding.Categories;
-            }
-            else
-            {
-                sT.RollBack();
-                return false;
+                Category category = Category.GetCategory(doc, new ElementId((int)unboundCategory));
+                if (category != null && category.AllowsBoundParameters)
+                    categorySet.Insert(category);
             }
 
-            // Добавляем новые категории к существующим
-            foreach (Category category in categorySet)
+            // Проверяем, что набор категорий не пустой
+            if (categorySet.IsEmpty)
             {
-                if (!existingCategories.Contains(category))
+                return true; // Все категории, которые могут быть привязаны, уже привязаны
+            }
+
+            // Находим существующий параметр
+            BindingMap bindingMap = doc.ParameterBindings;
+            Definition paramDef = null;
+            Binding existingBinding = null;
+
+            // Ищем определение параметра
+            DefinitionBindingMapIterator iterator = bindingMap.ForwardIterator();
+            while (iterator.MoveNext())
+            {
+                Definition def = iterator.Key;
+                if (def != null && def.Name == parameterName)
                 {
-                    existingCategories.Insert(category);
+                    paramDef = def;
+                    existingBinding = (Binding)iterator.Current;
+                    break;
                 }
             }
 
-            // Создаем новую привязку с обновленным набором категорий
-            Binding newBinding;
-            if (existingBinding is InstanceBinding)
+            sT.Start();
+
+            // Если параметр существует, добавляем новые категории к существующей привязке
+            if (paramDef != null && existingBinding != null)
             {
-                newBinding = new InstanceBinding(existingCategories);
+                // Получаем текущие привязанные категории
+                CategorySet existingCategories;
+                if (existingBinding is InstanceBinding instanceBinding)
+                {
+                    existingCategories = instanceBinding.Categories;
+                }
+                else if (existingBinding is TypeBinding typeBinding)
+                {
+                    existingCategories = typeBinding.Categories;
+                }
+                else
+                {
+                    sT.RollBack();
+                    return false;
+                }
+
+                // Добавляем новые категории к существующим
+                foreach (Category category in categorySet)
+                {
+                    if (!existingCategories.Contains(category))
+                    {
+                        existingCategories.Insert(category);
+                    }
+                }
+
+                // Создаем новую привязку с обновленным набором категорий
+                Binding newBinding;
+                if (existingBinding is InstanceBinding)
+                {
+                    newBinding = new InstanceBinding(existingCategories);
+                }
+                else
+                {
+                    newBinding = new TypeBinding(existingCategories);
+                }
+
+                // Обновляем привязку
+                bool result = bindingMap.ReInsert(paramDef, newBinding);
+                sT.Commit();
+                return result;
             }
             else
             {
-                newBinding = new TypeBinding(existingCategories);
+                // Если параметр не существует, нужно его создать
+                // [Код для создания нового параметра]
+
+                sT.RollBack();
+                TaskDialog.Show("Ошибка", "Параметр не найден в документе. Необходимо сначала создать общий параметр.");
+                return false;
             }
-
-            // Обновляем привязку
-            bool result = bindingMap.ReInsert(paramDef, newBinding);
-            sT.Commit();
-            return result;
         }
-        else
+        catch (Exception ex)
         {
-            // Если параметр не существует, нужно его создать
-            // [Код для создания нового параметра]
-
-            sT.RollBack();
-            TaskDialog.Show("Ошибка", "Параметр не найден в документе. Необходимо сначала создать общий параметр.");
+            if (sT.HasStarted())
+                sT.RollBack();
+            TaskDialog.Show("Ошибка", $"Не удалось привязать параметр: {ex.Message}");
             return false;
         }
     }
-    catch (Exception ex)
-    {
-        if (sT.HasStarted())
-            sT.RollBack();
-        TaskDialog.Show("Ошибка", $"Не удалось привязать параметр: {ex.Message}");
-        return false;
-    }
-}
 
     public static bool CheckParameterExists(Document doc, string parameterName)
     {
@@ -427,6 +469,7 @@ public static class Helpers
 
         return (group, created);
     }
+
     /// <summary>
     /// Получает список выделенных элементов в активном документе
     /// </summary>
