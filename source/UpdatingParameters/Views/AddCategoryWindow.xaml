@@ -4,7 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:UpdatingParameters.Views"
-        xmlns:vm = "clr-namespace:UpdatingParameters.ViewModels"
+        xmlns:vm="clr-namespace:UpdatingParameters.ViewModels"
         d:DataContext="{d:DesignInstance vm:AddCategoryVM}"
         mc:Ignorable="d"
         Title="AddCategoryWindow" Height="450" Width="800">
@@ -23,61 +23,37 @@
                 </ComboBox>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Из параметр: " />
+                <TextBlock Text="Из параметра: " />
+                <TextBlock Text="{Binding SelectedFromParameter.Definition.Name, TargetNullValue='Параметр не выбран'}" />
                 <Button Content="Выбрать параметр"
-                        Command="{Binding SelectParameterCommand}"
+                        Command="{Binding SelectFromParameterCommand}"
                         CommandParameter="{Binding RelativeSource={RelativeSource Self}}" />
                 <TextBlock Text="В параметр: " />
+                <TextBlock Text="{Binding SelectedInParameter.Definition.Name}" />
                 <Button Content="Выбрать параметр"
-                        Command="{Binding SelectParameterCommand}"
+                        Command="{Binding SelectInParameterCommand}"
                         CommandParameter="{Binding RelativeSource={RelativeSource Self}}" />
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Запас" />
-                <TextBox Width="100"/>
+                <TextBox Width="100" />
                 <TextBlock Text="%" />
             </StackPanel>
         </StackPanel>
-        <Popup
-            Width="250"
-            IsOpen="{Binding IsPopupOpen}"
-            PlacementTarget="{Binding CurrentPopupTarget}">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <Grid>
-                    <TabControl>
-                        <TabItem Header="Параметры экземпляра">
-                            <ListBox ItemsSource="{Binding InstanceParameters}"
-                                     SelectedItem="{Binding SelectedParameter}"
-                                     Height="300">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Definition.Name}" />
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                        </TabItem>
-                        <TabItem Header="Параметры типа">
-                            <ListBox ItemsSource="{Binding TypeParameters}"
-                                     Height="300"
-                                     SelectedItem="{Binding SelectedParameter}">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Definition.Name}" />
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                        </TabItem>
-                    </TabControl>
-                </Grid>
-                <DockPanel Grid.Row="1" HorizontalAlignment="Right">
-                    <Button
-                        Content="Закрыть" Command="{Binding ClosePopupCommand}" />
-                </DockPanel>
-            </Grid>
-        </Popup>
+        <local:ParameterSelectorPopup
+            IsPopupOpen="{Binding IsFromParameterPopupOpen}"
+            CurrentPopupTarget="{Binding FromParameterPopupTarget}"
+            InstanceParameters="{Binding InstanceParameters}"
+            TypeParameters="{Binding TypeParameters}"
+            SelectedParameter="{Binding SelectedFromParameter, Mode=TwoWay}"
+            ClosePopupCommand="{Binding CloseFromParameterPopupCommand}" />
+
+        <local:ParameterSelectorPopup
+            IsPopupOpen="{Binding IsInParameterPopupOpen}"
+            CurrentPopupTarget="{Binding InParameterPopupTarget}"
+            InstanceParameters="{Binding InstanceParameters}"
+            TypeParameters="{Binding TypeParameters}"
+            SelectedParameter="{Binding SelectedInParameter, Mode=TwoWay}"
+            ClosePopupCommand="{Binding CloseInParameterPopupCommand}" />
     </Grid>
 </Window>

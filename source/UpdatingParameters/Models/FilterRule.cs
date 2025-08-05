@@ -13,7 +13,7 @@ public partial class FilterRule : ObservableObject
     [ObservableProperty] private List<Parameter> _instanceParameters = [];
     [ObservableProperty] private List<Parameter> _typeParameters = [];
     [ObservableProperty] private Parameter _selectedParameter;
-    public FilterGroup Parent { get; init; } // Ссылка на родительскую группу
+    public FilterGroup Parent { get; set; } // Ссылка на родительскую группу
     public Array Conditions => Enum.GetValues(typeof(Condition));
 
     [RelayCommand]

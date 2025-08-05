@@ -9,9 +9,12 @@ public partial class AddCategoryVM: ViewModelBase
     [ObservableProperty] private List<Category> _categories = [];
     [ObservableProperty] private List<Parameter> _instanceParameters = [];
     [ObservableProperty] private List<Parameter> _typeParameters = [];
-    [ObservableProperty] private UIElement _currentPopupTarget;
-    [ObservableProperty] private bool _isPopupOpen;
-    [ObservableProperty] private Parameter _selectedParameter;
+    [ObservableProperty] private UIElement _fromParameterPopupTarget;
+    [ObservableProperty] private bool _isFromParameterPopupOpen;
+    [ObservableProperty] private UIElement _inParameterPopupTarget;
+    [ObservableProperty] private bool _isInParameterPopupOpen;
+   private Parameter _selectedFromParameter;
+    [ObservableProperty] private Parameter _selectedInParameter;
    private Category _selectedCategory;
    public Category SelectedCategory
    {
@@ -25,26 +28,49 @@ public partial class AddCategoryVM: ViewModelBase
        }
    }
 
-    public AddCategoryVM()
+   public Parameter SelectedFromParameter
+   {
+       get => _selectedFromParameter;
+       set
+       {
+           if (Equals(value, _selectedFromParameter)) return;
+           _selectedFromParameter = value;
+           OnPropertyChanged();
+       }
+   }
+
+   public AddCategoryVM()
     {
         Categories = GetAllCategoryByType(_doc, CategoryType.Model)
             .OrderBy(x => x.Name)
             .ToList();
     }
     [RelayCommand]
-    private void SelectParameter(Button button)
+    private void SelectFromParameter(Button button)
     {
         if (button == null) return;
         // Устанавливаем целевой элемент для Popup
-        CurrentPopupTarget = button;
+        FromParameterPopupTarget = button;
 
         // Открываем Popup
-        IsPopupOpen = true;
+        IsFromParameterPopupOpen = true;
     }
     [RelayCommand]
-    private void ClosePopup()
+    private void SelectInParameter(Button button)
     {
-        IsPopupOpen = false;
+        if (button == null) return;
+        InParameterPopupTarget = button;
+        IsInParameterPopupOpen = true;
+    }
+    [RelayCommand]
+    private void CloseFromParameterPopup()
+    {
+        IsFromParameterPopupOpen = false;
+    }
+    [RelayCommand]
+    private void CloseInParameterPopup()
+    {
+        IsInParameterPopupOpen = false;
     }
     private List<Category> GetAllCategoryByType(Document doc, CategoryType categoryType)
     {

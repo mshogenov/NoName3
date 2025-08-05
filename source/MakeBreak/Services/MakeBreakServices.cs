@@ -1008,7 +1008,9 @@ public class MakeBreakServices
                     if (deletePipe != null)
                     {
                         Element connectElementDeletePipe =
-                            deletePipe.GetConnectedMEPElements().FirstOrDefault(x => x.Id != pairBreak.Id&& x.Category.BuiltInCategory!= BuiltInCategory.OST_PipeInsulations);
+                            deletePipe.GetConnectedMEPElements().FirstOrDefault(x =>
+                                x.Id != pairBreak.Id &&
+                                x.Category.BuiltInCategory != BuiltInCategory.OST_PipeInsulations);
 
                         if (connectElementDeletePipe != null)
                         {
@@ -1039,7 +1041,8 @@ public class MakeBreakServices
                     if (selectedBreak.ConnectedElements.All(x => x is Pipe))
                     {
                         deletePipe = selectedBreak.ConnectedElements
-                            .MinBy(x => x.FindParameter(BuiltInParameter.CURVE_ELEM_LENGTH)?.AsDouble());
+                            .OrderBy(x => x.FindParameter(BuiltInParameter.CURVE_ELEM_LENGTH)?.AsDouble())
+                            .FirstOrDefault();
                         if (deletePipe != null)
                         {
                             attachConnector = selectedBreak.ConnectedElements

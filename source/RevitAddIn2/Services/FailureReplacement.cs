@@ -102,13 +102,13 @@ namespace RevitAddIn2.Services
                 Context.ActiveDocument?.PostFailure(failureMessage);
 
                 // Отсоединяем соединения
-                foreach (var (connector, value) in connections)
+                foreach (var kvp in connections)
                 {
-                    foreach (Connector refConnector in value)
+                    foreach (Connector refConnector in kvp.Value)
                     {
                         try
                         {
-                            connector.DisconnectFrom(refConnector);
+                            kvp.Key.DisconnectFrom(refConnector);
                         }
                         catch (Exception ex)
                         {
