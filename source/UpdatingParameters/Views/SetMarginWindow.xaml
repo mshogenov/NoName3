@@ -26,10 +26,15 @@
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
                                 <StackPanel>
-                                    <TextBlock Text="{Binding Category.Name}" />
+                                    <TextBlock Text="{Binding CategoryName}" />
                                     <TextBlock Text="{Binding Margin}" />
-                                    <TextBlock Text="{Binding FromParameter.Definition.Name}" />
-                                    <TextBlock Text="{Binding InParameter.Definition.Name}" />
+                                    <TextBlock Text="{Binding FromParameterName}" />
+                                    <TextBlock Text="{Binding InParameterName}" />
+                                    <Button
+                                        Content="Удалить"
+                                        Command="{Binding DataContext.RemoveCategoryCommand,
+                                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}" />
                                 </StackPanel>
                             </Grid>
                         </Border>

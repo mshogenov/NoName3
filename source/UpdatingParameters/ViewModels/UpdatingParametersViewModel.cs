@@ -73,6 +73,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
     private readonly FlexibleDuctsRoundDataStorage _flexibleDuctsRoundDataStorage;
     private readonly SettingsDataStorage _settingsDataStorage;
     private readonly DuctParametersDataStorage _ductParametersDataStorage;
+    private readonly SetMarginDataStorage _setMarginDataStorage;
     private PipesWithoutViewModel _pipesWithoutViewModel;
     private PipesOuterDiameterViewModel _pipesOuterDiameterViewModel;
     private PipesInternalDiameterViewModel _pipesInternalDiameterViewModel;
@@ -155,6 +156,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
         _settingsDataStorage = _storageFactory.GetStorage<SettingsDataStorage>();
         _ductParametersDataStorage = _storageFactory.GetStorage<DuctParametersDataStorage>();
         _parametersDataStorage = _storageFactory.GetStorage<ParametersDataStorage>();
+        _setMarginDataStorage =  _storageFactory.GetStorage<SetMarginDataStorage>();
         AllocationDataStorages(collector);
         InitializeViewModels();
         _settingsManager = new SettingsManager(_storageFactory);
@@ -253,7 +255,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
     private void InitializeViewModels()
     {
         _mainViewModel = new MainViewModel();
-        _setMarginViewModel = new SetMarginViewModel();
+        _setMarginViewModel = new SetMarginViewModel(_setMarginDataStorage);
         MainIsVisible = true;
         SelectedContent = _mainViewModel;
         _parametersViewModel = new ParametersViewModel(_storageFactory);

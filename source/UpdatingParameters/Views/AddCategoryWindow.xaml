@@ -7,11 +7,11 @@
         xmlns:vm="clr-namespace:UpdatingParameters.ViewModels"
         d:DataContext="{d:DesignInstance vm:AddCategoryVM}"
         mc:Ignorable="d"
-        Title="AddCategoryWindow" Height="450" Width="800">
+       Title="AddCategoryWindow" Height="450" Width="800">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition/>
-            <RowDefinition/>
+            <RowDefinition />
+            <RowDefinition />
         </Grid.RowDefinitions>
         <StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
@@ -44,17 +44,19 @@
                 <TextBlock Text="%" />
             </StackPanel>
         </StackPanel>
-        <StackPanel Grid.Row="1" VerticalAlignment="Top" Orientation="Horizontal" HorizontalAlignment="Right" Margin="10">
-            <Button Content="OK" 
-                    Command="{Binding ConfirmCommand}" 
-                    Margin="5" 
-                    Padding="20,5" 
-                    IsDefault="True"/>
-            <Button Content="Отмена" 
-                    Command="{Binding CancelCommand}" 
-                    Margin="5" 
-                    Padding="20,5" 
-                    IsCancel="True"/>
+        <StackPanel Grid.Row="1" VerticalAlignment="Top" Orientation="Horizontal" HorizontalAlignment="Right"
+                    Margin="10">
+            <Button Content="OK"
+                    Command="{Binding ConfirmCommand}"
+                    Margin="5"
+                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                    Padding="20,5"
+                    IsDefault="True" />
+            <Button Content="Отмена"
+                    Command="{Binding CancelCommand}"
+                    Margin="5"
+                    Padding="20,5"
+                    IsCancel="True" />
         </StackPanel>
         <local:ParameterSelectorPopup
             IsPopupOpen="{Binding IsFromParameterPopupOpen}"

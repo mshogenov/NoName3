@@ -6,7 +6,7 @@ using UpdatingParameters.Views;
 
 namespace UpdatingParameters.ViewModels;
 
-public partial class AddCategoryVM: ViewModelBase
+public partial class AddCategoryVM : ViewModelBase
 {
     private readonly Document _doc = Context.ActiveDocument;
     [ObservableProperty] private List<Category> _categories = [];
@@ -17,39 +17,45 @@ public partial class AddCategoryVM: ViewModelBase
     [ObservableProperty] private UIElement _inParameterPopupTarget;
     [ObservableProperty] private bool _isInParameterPopupOpen;
     [ObservableProperty] private double _margin;
-  
+
     [ObservableProperty] private Parameter _selectedInParameter;
-   private Category _selectedCategory;
-   public Category SelectedCategory
-   {
-       get => _selectedCategory;
-       set
-       {
-           if (Equals(value, _selectedCategory)) return;
-           _selectedCategory = value;
-           UpdateParameters();
-           OnPropertyChanged();
-       }
-   }
-   private Parameter _selectedFromParameter;
-   public Parameter SelectedFromParameter
-   {
-       get => _selectedFromParameter;
-       set
-       {
-           if (Equals(value, _selectedFromParameter)) return;
-           _selectedFromParameter = value;
-           OnPropertyChanged();
-       }
-   }
-   public MarginCategory Result { get; private set; }
-   public bool IsConfirmed { get; private set; }
-   public AddCategoryVM()
+    private Category _selectedCategory;
+
+    public Category SelectedCategory
+    {
+        get => _selectedCategory;
+        set
+        {
+            if (Equals(value, _selectedCategory)) return;
+            _selectedCategory = value;
+            UpdateParameters();
+            OnPropertyChanged();
+        }
+    }
+
+    private Parameter _selectedFromParameter;
+
+    public Parameter SelectedFromParameter
+    {
+        get => _selectedFromParameter;
+        set
+        {
+            if (Equals(value, _selectedFromParameter)) return;
+            _selectedFromParameter = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public MarginCategory Result { get; private set; }
+    public bool IsConfirmed { get; private set; }
+
+    public AddCategoryVM()
     {
         Categories = GetAllCategoryByType(_doc, CategoryType.Model)
             .OrderBy(x => x.Name)
             .ToList();
     }
+
     [RelayCommand]
     private void SelectFromParameter(Button button)
     {
@@ -60,6 +66,7 @@ public partial class AddCategoryVM: ViewModelBase
         // Открываем Popup
         IsFromParameterPopupOpen = true;
     }
+
     [RelayCommand]
     private void SelectInParameter(Button button)
     {
@@ -67,27 +74,32 @@ public partial class AddCategoryVM: ViewModelBase
         InParameterPopupTarget = button;
         IsInParameterPopupOpen = true;
     }
+
     [RelayCommand]
     private void CloseFromParameterPopup()
     {
         IsFromParameterPopupOpen = false;
     }
+
     [RelayCommand]
     private void CloseInParameterPopup()
     {
         IsInParameterPopupOpen = false;
     }
+
     private List<Category> GetAllCategoryByType(Document doc, CategoryType categoryType)
     {
         Categories categories = _doc.Settings.Categories;
         return categories.Cast<Category>()
             .Where(c => c.CategoryType == categoryType).ToList();
     }
+
     private void UpdateParameters()
     {
         InstanceParameters = GetInstanceParameters(_doc, SelectedCategory.BuiltInCategory);
         TypeParameters = GetTypeParameters(_doc, SelectedCategory.BuiltInCategory);
     }
+
     List<Parameter> GetInstanceParameters(Document doc, BuiltInCategory builtInCategory)
     {
         // Получаем первый элемент категории
@@ -95,22 +107,22 @@ public partial class AddCategoryVM: ViewModelBase
         Element element = collector.OfCategory(builtInCategory)
             .WhereElementIsNotElementType()
             .FirstElement();
-        var instanceParameters = element.Parameters;
-        return instanceParameters.Cast<Parameter>().ToList();
+        return element != null ? element.Parameters.Cast<Parameter>().ToList() : [];
     }
+
     private List<Parameter> GetTypeParameters(Document doc, BuiltInCategory builtInCategory)
     {
         // Получаем первый элемент категории
         FilteredElementCollector collector = new FilteredElementCollector(doc);
-        Element element = collector.OfCategory(builtInCategory)
-            .WhereElementIsNotElementType()
-            .FirstElement();
-        var elementType = _doc.GetElement(element.GetTypeId());
-        var typeParameters = elementType.Parameters;
-        return typeParameters.Cast<Parameter>().ToList();
+        return collector.OfCategory(builtInCategory)
+            .WhereElementIsElementType()
+            .FirstElement() is ElementType elementType
+            ? elementType.Parameters.Cast<Parameter>().ToList()
+            : new List<Parameter>();
     }
+
     [RelayCommand]
-    private void Confirm()
+    private void Confirm(object param)
     {
         if (SelectedCategory != null && SelectedFromParameter != null && SelectedInParameter != null)
         {
@@ -122,24 +134,15 @@ public partial class AddCategoryVM: ViewModelBase
                 InParameter = SelectedInParameter
             };
             IsConfirmed = true;
-            
-            // Закрываем окно
-            if (Application.Current.Windows.OfType<AddCategoryWindow>().FirstOrDefault() is AddCategoryWindow window)
-            {
-                window.DialogResult = true;
-                window.Close();
-            }
+            if (param is not Window window) return;
+            window.DialogResult = true;
+            window.Close();
         }
     }
-    
+
     [RelayCommand]
     private void Cancel()
     {
         IsConfirmed = false;
-        if (Application.Current.Windows.OfType<AddCategoryWindow>().FirstOrDefault() is AddCategoryWindow window)
-        {
-            window.DialogResult = false;
-            window.Close();
-        }
     }
 }

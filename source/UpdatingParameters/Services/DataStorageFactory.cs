@@ -102,6 +102,10 @@ public class DataStorageFactory
                 typeof(DuctParametersDataStorage),
                 () => new DuctParametersDataStorage(new JsonDataLoader("DuctParametersDataStorage.json"))
             },
+            {
+                typeof(SetMarginDataStorage),
+                () => new SetMarginDataStorage(new JsonDataLoader("SetMarginDataStorage.json"))
+            },
         };
         foreach (var creator in _creators)
         {
