@@ -12,7 +12,8 @@
                     xmlns:converter="clr-namespace:UpdatingParameters.Views.Converters"
                     xmlns:model="clr-namespace:UpdatingParameters.Models"
                     xmlns:parameters="clr-namespace:UpdatingParameters.ViewModels.Parameters"
-                    xmlns:viewModels="clr-namespace:UpdatingParameters.ViewModels">
+                    xmlns:viewModels="clr-namespace:UpdatingParameters.ViewModels"
+                    xmlns:margin="clr-namespace:UpdatingParameters.Views.Margin">
     <converter:ButtonSelectedConverter x:Key="ButtonSelectedConverter" />
     <converter:BoolVisibilityConverter x:Key="BoolVisibilityConverter" />
     <DataTemplate DataType="{x:Type  viewModels:MainViewModel}">
@@ -76,6 +77,6 @@
         <local:SettingsWindow DataContext="{Binding}" />
     </DataTemplate>
     <DataTemplate DataType="{x:Type viewModels:SetMarginViewModel}">
-        <local:SetMarginWindow DataContext="{Binding}" />
+        <margin:SetMarginWindow DataContext="{Binding}" />
     </DataTemplate>
 </ResourceDictionary>

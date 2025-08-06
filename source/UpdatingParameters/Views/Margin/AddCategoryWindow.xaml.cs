@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace UpdatingParameters.Views;
+namespace UpdatingParameters.Views.Margin;
 
 public partial class AddCategoryWindow : Window
 {

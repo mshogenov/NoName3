@@ -33,14 +33,23 @@ namespace UpdatingParameters.Services
         private DuctWithoutDataStorage _ductWithoutDataStorage;
         private FlexibleDuctsRoundDataStorage _flexibleDuctsRoundDataStorage;
         private DuctParametersDataStorage _ductParametersDataStorage;
-        private readonly PipeInsulationColouredTubesDataStorage _pipeInsulationColoredTubesDataStorage;
-        private readonly DataStorageFactory _storageFactory;
+        private PipeInsulationColouredTubesDataStorage _pipeInsulationColoredTubesDataStorage;
+        private DataStorageFactory _storageFactory;
+        private SetMarginDataStorage _setMarginDataStorage;
         private const string SetParamSystemAbbreviation = "ADSK_Система_Сокращение";
         private const string GetParamSystemAbbreviation = "Сокращение для системы";
         private const string SetParamSystemName = "ADSK_Система_Имя";
         private const string GetParamSystemName = "Имя системы";
 
         public ParametersUpdater()
+        {
+            InitializeStorages();
+            SettingsDataStorage.OnSettingsDataChanged += SettingsDataStorageOnSettingsDataChanged;
+            DataStorageFormulas.OnDataStorageFormulasChanged += DataStorageFormulas_OnDataStorageFormulasChanged;
+            ParametersDataStorage.OnParametersDataStorageChanged += ParametersDataStorageOnParametersDataStorageChanged;
+            SetMarginDataStorage.OnSetMarginDataStorageChanged += SetMarginDataStorageChanged;
+        }
+        private void InitializeStorages()
         {
             _storageFactory = new DataStorageFactory();
             _storageFactory.InitializeAllStorages();
@@ -70,17 +79,18 @@ namespace UpdatingParameters.Services
             _flexibleDuctsRoundDataStorage = _storageFactory.GetStorage<FlexibleDuctsRoundDataStorage>();
             _settingsDataStorage = _storageFactory.GetStorage<SettingsDataStorage>();
             _ductParametersDataStorage = _storageFactory.GetStorage<DuctParametersDataStorage>();
-_parametersDataStorage = _storageFactory.GetStorage<ParametersDataStorage>();
-            SettingsDataStorage.OnSettingsDataChanged += SettingsDataStorageOnSettingsDataChanged;
-            DataStorageFormulas.OnDataStorageFormulasChanged += DataStorageFormulas_OnDataStorageFormulasChanged;
-            ParametersDataStorage.OnParametersDataStorageChanged += ParametersDataStorageOnParametersDataStorageChanged;
+            _parametersDataStorage = _storageFactory.GetStorage<ParametersDataStorage>();
+            _setMarginDataStorage = _storageFactory.GetStorage<SetMarginDataStorage>();
         }
 
         private void ParametersDataStorageOnParametersDataStorageChanged(object sender, EventArgs e)
         {
             _storageFactory.UpdateStorage<ParametersDataStorage>();
         }
-
+        private void SetMarginDataStorageChanged(object sender, EventArgs e)
+        {
+            _storageFactory.UpdateStorage<SetMarginDataStorage>();
+        }
         private void DataStorageFormulas_OnDataStorageFormulasChanged(object sender, EventArgs e)
         {
             switch (sender)
@@ -163,7 +173,6 @@ _parametersDataStorage = _storageFactory.GetStorage<ParametersDataStorage>();
                 foreach (var id in ids)
                 {
                     var element = doc.GetElement(id);
-
 
                     if (_parametersDataStorage.SystemAbbreviationIsChecked &&
                         _settingsDataStorage.AdskSystemAbbreviationIsChecked)
@@ -375,6 +384,21 @@ _parametersDataStorage = _storageFactory.GetStorage<ParametersDataStorage>();
                             }
 
                             break;
+                    }
+
+                    foreach (var marginCategory in _setMarginDataStorage.MarginCategories)
+                    {
+                        if (!marginCategory.IsChecked) continue;
+                        if (element.Category.Id != marginCategory.Category.Id) continue;
+                        // Получаем параметры у конкретного элемента
+                        var fromParam = element.FindParameter(marginCategory.FromParameter.Definition.Name);
+                        var inParam = element.FindParameter(marginCategory.InParameter.Definition.Name);
+                        if (fromParam == null || inParam == null ||
+                            fromParam.StorageType != StorageType.Double ||
+                            inParam.IsReadOnly) continue;
+                        var fromValue = fromParam.AsDouble();
+                        double newValue = (fromValue / 100) * marginCategory.Margin + fromValue;
+                        inParam.Set(newValue);
                     }
                 }
             }

@@ -57,6 +57,16 @@
 
     <ItemGroup>
       <Page Remove="Views\Themes\Generic.xaml" />
+      <Page Update="Views\Margin\SetMarginWindow.xaml">
+        <Generator>MSBuild:Compile</Generator>
+        <XamlRuntime>Wpf</XamlRuntime>
+        <SubType>Designer</SubType>
+      </Page>
+      <Page Update="Views\Margin\AddCategoryWindow.xaml">
+        <Generator>MSBuild:Compile</Generator>
+        <XamlRuntime>Wpf</XamlRuntime>
+        <SubType>Designer</SubType>
+      </Page>
     </ItemGroup>
 
 </Project>

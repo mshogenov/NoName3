@@ -1,14 +1,19 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Threading;
+using Autodesk.Revit.UI;
+using NoNameApi.Extensions;
 using UpdatingParameters.Models;
+using UpdatingParameters.Services;
 using UpdatingParameters.Storages;
 using UpdatingParameters.Views;
+using UpdatingParameters.Views.Margin;
 
 namespace UpdatingParameters.ViewModels;
 
 public partial class SetMarginViewModel : ViewModelBase
 {
+    private readonly Document _doc = Context.ActiveDocument;
     private readonly SetMarginDataStorage _marginDataStorage;
     private readonly Dispatcher _uiDispatcher;
     [ObservableProperty] private ObservableCollection<MarginCategory> _marginCategories;
@@ -44,6 +49,31 @@ public partial class SetMarginViewModel : ViewModelBase
     {
         _marginDataStorage.RemoveCategory(category);
         _marginDataStorage.Save();
+    }
+
+    [RelayCommand]
+    private void UpdateParameters()
+    {
+        Transaction tr = new Transaction(_doc, "Обновить параметр запаса");
+        tr.Start();
+        try
+        {
+            UpdaterParametersService.UpdateAllMarginParameters(_doc, _marginDataStorage);
+            tr.Commit();
+        }
+        catch (Exception e)
+        {
+        }
+
+        MessageBox.Show("Параметры обновлены", "Информация");
+    }
+
+
+    [RelayCommand]
+    private void Save()
+    {
+        _marginDataStorage.Save();
+        MessageBox.Show("Сохранено", "Информация");
     }
 
     // Обработчики событий storage
@@ -83,7 +113,7 @@ public partial class SetMarginViewModel : ViewModelBase
         }
     }
 
-   
+
     private void RefreshCategories()
     {
         MarginCategories.Clear();

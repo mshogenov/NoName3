@@ -1,4 +1,4 @@
-namespace UpdatingParameters.Views;
+namespace UpdatingParameters.Views.Margin;
 
 public partial class SetMarginWindow
 {

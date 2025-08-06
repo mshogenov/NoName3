@@ -10,6 +10,7 @@ public class SetMarginDataStorage : IDataStorage
     private readonly Document _document = Context.ActiveDocument;
 
     public IReadOnlyList<MarginCategory> MarginCategories => _marginCategories.AsReadOnly();
+    public static event EventHandler OnSetMarginDataStorageChanged;
 
     // События для уведомления об изменениях
     public event EventHandler<MarginCategory> CategoryAdded;
@@ -98,6 +99,7 @@ public class SetMarginDataStorage : IDataStorage
                 .ToList();
 
             _dataLoader.SaveData(dtoList);
+            OnSetMarginDataStorageChanged?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
         {
@@ -112,6 +114,7 @@ public class SetMarginDataStorage : IDataStorage
             CategoryName = marginCategory.Category?.Name,
             CategoryId = marginCategory.Category?.Id?.Value ?? -1,
             Margin = marginCategory.Margin,
+            IsChecked = marginCategory.IsChecked,
             FromParameter = ConvertParameterToDto(marginCategory.FromParameter),
             InParameter = ConvertParameterToDto(marginCategory.InParameter)
         };
@@ -125,6 +128,7 @@ public class SetMarginDataStorage : IDataStorage
             {
                 Category = GetCategoryById(dto.CategoryId),
                 Margin = dto.Margin,
+                IsChecked = dto.IsChecked,
                 FromParameter = GetParameterById(dto.FromParameter, dto.CategoryId),
                 InParameter = GetParameterById(dto.InParameter, dto.CategoryId),
                 OriginalFromParameterName = dto.FromParameter?.Name,
@@ -133,7 +137,6 @@ public class SetMarginDataStorage : IDataStorage
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Ошибка конвертации DTO: {ex.Message}");
             return null;
         }
     }
