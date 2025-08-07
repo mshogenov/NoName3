@@ -558,16 +558,44 @@ public class RoomsInSpacesServices
         var missingLevels = uniqueLevels
             .Where(l => !currentLevels.Select(x => Math.Round(x.Elevation, 2))
                 .Contains(Math.Round(l.Elevation, 2)));
+    
+        foreach (var missingLevel in missingLevels)
         {
-            foreach (var missingLevel in missingLevels)
-            {
-                Level newLevel = Level.Create(doc, missingLevel.Elevation);
-                newLevel.Name = missingLevel.Name;
-                currentLevels.Add(newLevel); // Добавляем новый уровень в текущий список уровней
-            }
+            Level newLevel = Level.Create(doc, missingLevel.Elevation);
+        
+            // Генерируем уникальное имя
+            string uniqueName = GenerateUniqueLevelName(doc, missingLevel.Name);
+            newLevel.Name = uniqueName;
+        
+            currentLevels.Add(newLevel);
         }
+    
         return currentLevels;
     }
+
+    private string GenerateUniqueLevelName(Document doc, string baseName)
+    {
+        var existingNames = new FilteredElementCollector(doc)
+            .OfClass(typeof(Level))
+            .Cast<Level>()
+            .Select(l => l.Name)
+            .ToHashSet();
+    
+        if (!existingNames.Contains(baseName))
+            return baseName;
+    
+        int counter = 1;
+        string newName;
+        do
+        {
+            newName = $"{baseName}_{counter}";
+            counter++;
+        }
+        while (existingNames.Contains(newName));
+    
+        return newName;
+    }
+
 
     /// <summary>
     /// Преобразует координаты помещения из связанного файла для совпадения с текущим файлом
