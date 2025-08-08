@@ -4,17 +4,16 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:UpdatingParameters.Views"
-             mc:Ignorable="d"
-           >
+             mc:Ignorable="d">
     <Grid>
         <TextBox x:Name="SearchTextBox"
                  TextChanged="SearchTextBox_OnTextChanged"
-                 VerticalAlignment="Center"/>
+                 VerticalAlignment="Center" />
         <ToggleButton x:Name="DropDownButton"
                       HorizontalAlignment="Right"
                       Margin="1"
                       Width="{Binding ActualHeight, ElementName=SearchTextBox}"
-                      Content="▼"/>
+                      Content="▼" />
         <Popup x:Name="ItemsPopup"
                PlacementTarget="{Binding ElementName=SearchTextBox}"
                Placement="Bottom"
@@ -25,11 +24,9 @@
                          MaxHeight="200"
                          SelectionChanged="ItemsListBox_OnSelectionChanged"
                          DisplayMemberPath="{Binding DisplayMemberPath, ElementName=thisControl}">
-                    
+
                 </ListBox>
-                
             </Border>
-            
         </Popup>
     </Grid>
 </UserControl>

@@ -51,7 +51,7 @@ public partial class AddCategoryVM : ViewModelBase
 
     public AddCategoryVM()
     {
-        Categories = GetAllCategoryByType(_doc, CategoryType.Model)
+        Categories = GetAllCategoryByType(CategoryType.Model)
             .OrderBy(x => x.Name)
             .ToList();
     }
@@ -87,7 +87,7 @@ public partial class AddCategoryVM : ViewModelBase
         IsInParameterPopupOpen = false;
     }
 
-    private List<Category> GetAllCategoryByType(Document doc, CategoryType categoryType)
+    private List<Category> GetAllCategoryByType(CategoryType categoryType)
     {
         Categories categories = _doc.Settings.Categories;
         return categories.Cast<Category>()

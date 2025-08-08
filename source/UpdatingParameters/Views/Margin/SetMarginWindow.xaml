@@ -7,13 +7,25 @@
              xmlns:viewmodel="clr-namespace:UpdatingParameters.ViewModels"
              d:DataContext="{d:DesignInstance Type=viewmodel:SetMarginViewModel}"
              mc:Ignorable="d">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <d:ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
+            </d:ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition />
-            <RowDefinition  Height="Auto"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Button Content="Добавить категорию"
+                Style="{DynamicResource AddButtonStyle2}"
+                Width="Auto"
                 Command="{Binding AddCategoryCommand}"
                 VerticalAlignment="Top" />
         <ScrollViewer Grid.Row="1"
@@ -21,32 +33,75 @@
             <ItemsControl ItemsSource="{Binding MarginCategories }">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border>
+                        <Border Style="{DynamicResource BorderContentStyle}"
+                                Margin="0 5 0 0">
                             <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition />
-                                </Grid.RowDefinitions>
-                                <StackPanel>
-                                    <CheckBox IsChecked="{Binding IsChecked}"/>
-                                    <TextBlock Text="{Binding CategoryName}" />
-                                    <TextBlock Text="{Binding Margin}" />
-                                    <TextBlock Text="{Binding FromParameterName}" />
-                                    <TextBlock Text="{Binding InParameterName}" />
-                                    <Button
-                                        Content="Удалить"
-                                        Command="{Binding DataContext.RemoveCategoryCommand,
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="2*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <CheckBox IsChecked="{Binding IsChecked}"
+                                          Style="{DynamicResource JellyCheckboxStyle}" />
+                                <Grid Grid.Column="1">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Категория: "
+                                                   Style="{DynamicResource TextBlockStyle}" />
+                                        <TextBlock Text="{Binding CategoryName}"
+                                                   Style="{DynamicResource TextBlockStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                        <TextBlock Text="Запас: "
+                                                   Style="{DynamicResource TextBlockStyle}" />
+                                        <TextBlock Text="{Binding Margin}"
+                                                   Style="{DynamicResource TextBlockStyle}" />
+                                        <TextBlock Text=" %"
+                                                   Style="{DynamicResource TextBlockStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="2" Orientation="Horizontal">
+                                        <TextBlock Text="Копировать из параметра: "
+                                                   Style="{DynamicResource TextBlockStyle}" />
+                                        <TextBlock Text="{Binding FromParameterName}"
+                                                   Style="{DynamicResource TextBlockStyle}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="3" Orientation="Horizontal">
+                                        <TextBlock Text="Копировать в параметр: "
+                                                   Style="{DynamicResource TextBlockStyle}" />
+                                        <TextBlock Text="{Binding InParameterName}"
+                                                   Style="{DynamicResource TextBlockStyle}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Button
+                                    Grid.Column="2"
+                                    Content="Удалить"
+                                    HorizontalAlignment="Left"
+                                    Command="{Binding DataContext.RemoveCategoryCommand,
                                                           RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}" />
-                                </StackPanel>
+                                    CommandParameter="{Binding}"
+                                    Style="{DynamicResource DeleteButtonStyle}" />
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
-        <DockPanel Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Top">
-            <Button Content="Обновить параметры" Command="{Binding UpdateParametersCommand}"/>
-            <Button Content="Сохранить данные" Command="{Binding SaveCommand}"/>
+
+        <DockPanel Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Top"
+                   Margin="0 5 0 0">
+            <Button Content="Обновить параметры"
+                    Command="{Binding UpdateParametersCommand}"
+                    Style="{DynamicResource CommonButtonStyle2}"
+                    Margin="0 0 10 0" />
+            <Button Content="Сохранить данные"
+                    Command="{Binding SaveCommand}"
+                    Style="{DynamicResource CommonButtonStyle2}" />
         </DockPanel>
     </Grid>
 </UserControl>
