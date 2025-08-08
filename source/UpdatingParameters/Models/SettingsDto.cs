@@ -24,5 +24,6 @@
         public bool DuctInsulationThermalInsulationIsChecked { get; set; }
         public bool DuctConnectionPartsIsChecked { get; set; }
         public bool HermeticClassIsChecked { get; set; }
+        public bool SetMarginIsChecked { get; set; }
     }
 }

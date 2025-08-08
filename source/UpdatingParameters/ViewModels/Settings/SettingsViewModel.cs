@@ -302,6 +302,20 @@ namespace UpdatingParameters.ViewModels.Settings
             }
         }
 
+        private bool _setMarginIsChecked;
+
+        public bool SetMarginIsChecked
+        {
+            get => _setMarginIsChecked;
+            set
+            {
+                if (value == _setMarginIsChecked) return;
+                _setMarginIsChecked = value;
+                OnPropertyChanged();
+                _settingsDataStorage.SetMarginIsChecked = value;
+            }
+        }
+
         public SettingsViewModel(SettingsDataStorage settingsDataStorage)
         {
             _settingsDataStorage = settingsDataStorage;
@@ -327,6 +341,7 @@ namespace UpdatingParameters.ViewModels.Settings
             DuctRoundIsChecked = settingsDataStorage.DuctRoundIsChecked;
             DuctWithoutIsChecked = settingsDataStorage.DuctWithoutIsChecked;
             PipeInsulationColouredTubesIsChecked = settingsDataStorage.PipeInsulationColouredTubesIsChecked;
+            SetMarginIsChecked = settingsDataStorage.SetMarginIsChecked;
             SettingsManager.OnSettingsChanged += Update;
         }
 
@@ -354,6 +369,7 @@ namespace UpdatingParameters.ViewModels.Settings
             DuctRoundIsChecked = _settingsDataStorage.DuctRoundIsChecked;
             DuctWithoutIsChecked = _settingsDataStorage.DuctWithoutIsChecked;
             PipeInsulationColouredTubesIsChecked = _settingsDataStorage.PipeInsulationColouredTubesIsChecked;
+            SetMarginIsChecked = _settingsDataStorage.SetMarginIsChecked;
         }
 
         [RelayCommand]
@@ -403,6 +419,7 @@ namespace UpdatingParameters.ViewModels.Settings
             DuctRoundIsChecked = true;
             DuctWithoutIsChecked = true;
             PipeInsulationColouredTubesIsChecked = true;
+            SetMarginIsChecked = true;
         }
 
         [RelayCommand]
@@ -429,6 +446,7 @@ namespace UpdatingParameters.ViewModels.Settings
             DuctRoundIsChecked = false;
             DuctWithoutIsChecked = false;
             PipeInsulationColouredTubesIsChecked = false;
+            SetMarginIsChecked = false;
         }
     }
 }

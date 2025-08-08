@@ -10,6 +10,8 @@ public class SetMarginDataStorage : IDataStorage
     private readonly Document _document = Context.ActiveDocument;
 
     public IReadOnlyList<MarginCategory> MarginCategories => _marginCategories.AsReadOnly();
+    public static int MarginUpdateCallCount { get; set; }
+
     public static event EventHandler OnSetMarginDataStorageChanged;
 
     // События для уведомления об изменениях
@@ -21,6 +23,7 @@ public class SetMarginDataStorage : IDataStorage
     {
         _dataLoader = dataLoader;
         LoadData();
+        MarginUpdateCallCount++;
     }
 
     private void LoadData()
@@ -157,13 +160,13 @@ public class SetMarginDataStorage : IDataStorage
     private Category GetCategoryById(long categoryId)
     {
         if (categoryId == -1) return null;
-        return Category.GetCategory(_document, new ElementId(categoryId));
+        return Category.GetCategory(Context.ActiveDocument, new ElementId(categoryId));
     }
 
     private Parameter GetParameterById(ParameterDto dtoFromParameter, long categoryId)
     {
         Category category = GetCategoryById(categoryId);
-        FilteredElementCollector collector = new FilteredElementCollector(_document);
+        FilteredElementCollector collector = new FilteredElementCollector(Context.ActiveDocument);
         Element element = collector.OfCategory(category.BuiltInCategory)
             .WhereElementIsNotElementType()
             .FirstElement();

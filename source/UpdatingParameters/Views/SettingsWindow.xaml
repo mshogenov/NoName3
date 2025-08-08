@@ -131,6 +131,10 @@
                               Margin="3 0 0 3"
                               Style="{DynamicResource JellyCheckboxStyle}"
                               IsChecked="{Binding HermeticClassIsChecked}" />
+                    <CheckBox Content="Добавить запас"
+                              Margin="3 0 0 3"
+                              Style="{DynamicResource JellyCheckboxStyle}"
+                              IsChecked="{Binding SetMarginIsChecked }" />
                 </StackPanel>
                 </ScrollViewer>
                

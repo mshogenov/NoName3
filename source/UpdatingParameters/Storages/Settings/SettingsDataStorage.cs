@@ -29,6 +29,7 @@ namespace UpdatingParameters.Storages.Settings
         public bool DuctInsulationThermalIsChecked { get; set; }
         public bool DuctConnectionPartsIsChecked { get; set; }
         public bool HermeticСlassIsChecked { get; set; }
+        public bool SetMarginIsChecked { get; set; }
 
         private readonly IDataLoader _dataLoader;
         public SettingsDataStorage(IDataLoader dataLoader)
@@ -61,7 +62,8 @@ namespace UpdatingParameters.Storages.Settings
                 DuctInsulationFireproofingIsChecked=DuctInsulationFireproofingIsChecked,
                 DuctInsulationThermalInsulationIsChecked=DuctInsulationThermalIsChecked,
                 DuctConnectionPartsIsChecked=DuctConnectionPartsIsChecked,
-                HermeticClassIsChecked=HermeticСlassIsChecked
+                HermeticClassIsChecked=HermeticСlassIsChecked,
+                SetMarginIsChecked=SetMarginIsChecked,
             };
             _dataLoader.SaveData(dto);
             OnSettingsDataChanged?.Invoke();
@@ -91,6 +93,7 @@ namespace UpdatingParameters.Storages.Settings
             DuctInsulationThermalIsChecked=false;
             DuctConnectionPartsIsChecked=false;
             HermeticСlassIsChecked=false;
+            SetMarginIsChecked=false;
             Save();
         }
 
@@ -130,6 +133,7 @@ namespace UpdatingParameters.Storages.Settings
                 DuctInsulationThermalIsChecked=loaded.DuctInsulationThermalInsulationIsChecked;
                 DuctConnectionPartsIsChecked=loaded.DuctConnectionPartsIsChecked;
                 HermeticСlassIsChecked = loaded.HermeticClassIsChecked;
+                SetMarginIsChecked = loaded.SetMarginIsChecked;
             }
         }
 

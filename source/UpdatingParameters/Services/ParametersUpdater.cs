@@ -49,6 +49,7 @@ namespace UpdatingParameters.Services
             ParametersDataStorage.OnParametersDataStorageChanged += ParametersDataStorageOnParametersDataStorageChanged;
             SetMarginDataStorage.OnSetMarginDataStorageChanged += SetMarginDataStorageChanged;
         }
+
         private void InitializeStorages()
         {
             _storageFactory = new DataStorageFactory();
@@ -87,10 +88,13 @@ namespace UpdatingParameters.Services
         {
             _storageFactory.UpdateStorage<ParametersDataStorage>();
         }
+
         private void SetMarginDataStorageChanged(object sender, EventArgs e)
         {
             _storageFactory.UpdateStorage<SetMarginDataStorage>();
+            _setMarginDataStorage.UpdateData();
         }
+
         private void DataStorageFormulas_OnDataStorageFormulasChanged(object sender, EventArgs e)
         {
             switch (sender)
@@ -386,19 +390,29 @@ namespace UpdatingParameters.Services
                             break;
                     }
 
-                    foreach (var marginCategory in _setMarginDataStorage.MarginCategories)
+
+                    if (_settingsDataStorage.SetMarginIsChecked)
                     {
-                        if (!marginCategory.IsChecked) continue;
-                        if (element.Category.Id != marginCategory.Category.Id) continue;
-                        // Получаем параметры у конкретного элемента
-                        var fromParam = element.FindParameter(marginCategory.FromParameter.Definition.Name);
-                        var inParam = element.FindParameter(marginCategory.InParameter.Definition.Name);
-                        if (fromParam == null || inParam == null ||
-                            fromParam.StorageType != StorageType.Double ||
-                            inParam.IsReadOnly) continue;
-                        var fromValue = fromParam.AsDouble();
-                        double newValue = (fromValue / 100) * marginCategory.Margin + fromValue;
-                        inParam.Set(newValue);
+                        if (SetMarginDataStorage.MarginUpdateCallCount == 2)
+                        {
+                            _setMarginDataStorage.UpdateData();
+                        }
+
+                        foreach (var marginCategory in _setMarginDataStorage.MarginCategories)
+                        {
+                            if (!marginCategory.IsChecked) continue;
+                            if (element.Category.Id != marginCategory.Category.Id) continue;
+                            // Получаем параметры у конкретного элемента
+                            var fromParam = element.FindParameter(marginCategory.FromParameter.Definition.Name);
+                            var inParam = element.FindParameter(marginCategory.InParameter.Definition.Name);
+                            if (fromParam == null || inParam == null ||
+                                fromParam.StorageType != StorageType.Double ||
+                                inParam.IsReadOnly) continue;
+                            var fromValue = fromParam.AsDouble();
+                            double newValue = (fromValue / 100) * marginCategory.Margin + fromValue;
+                            inParam.Set(newValue);
+                        }
+                        SetMarginDataStorage.MarginUpdateCallCount++;
                     }
                 }
             }
