@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
-             d:DesignHeight="30" d:DesignWidth="200">
+             d:DesignHeight="60" d:DesignWidth="200">
     <UserControl.Resources>
         <ResourceDictionary>
             <d:ResourceDictionary.MergedDictionaries>
@@ -19,13 +19,9 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-
         <!-- Основное поле -->
         <Border x:Name="Border"
-                Background="White"
-                BorderBrush="Gray"
-                BorderThickness="1"
-                CornerRadius="3">
+                Style="{DynamicResource BorderContentStyle}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -33,11 +29,8 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBox x:Name="DisplayTextBox"
+                         Style="{DynamicResource ModernTextBoxStyle}"
                          Grid.Column="0"
-                         VerticalAlignment="Center"
-                         Margin="5,2"
-                         Background="Transparent"
-                         BorderThickness="0"
                          IsReadOnly="True"
                          Cursor="Hand"
                          PreviewMouseDown="DisplayTextBox_PreviewMouseDown"
@@ -65,22 +58,18 @@
 
         <!-- Выпадающий список -->
         <Popup x:Name="Popup"
+               Style="{DynamicResource ModernPopupStyle}"
                StaysOpen="True"
-               AllowsTransparency="True"
-               Placement="Bottom"
                PlacementTarget="{Binding ElementName=Border}"
                MinWidth="{Binding ActualWidth, ElementName=Border}"
-               MaxHeight="230"
+               MaxHeight="300"
                VerticalOffset="2">
-            <Border Background="White"
-                    BorderBrush="Gray"
-                    BorderThickness="1"
-                    CornerRadius="3"
-                    Margin="0,0,8,8">
+            <Border
+                Style="{DynamicResource BorderFolding}"
+                Margin="0,0,8,8">
                 <Border.Effect>
                     <DropShadowEffect ShadowDepth="2" Color="Gray" Opacity="0.3" BlurRadius="5" />
                 </Border.Effect>
-
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -89,9 +78,8 @@
 
                     <!-- Поле поиска -->
                     <Border Grid.Row="0"
-                            BorderBrush="LightGray"
-                            BorderThickness="0,0,0,1"
-                            Padding="5">
+                            Margin="0 5"
+                            Style="{DynamicResource BorderContentStyle}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -104,7 +92,7 @@
                                        Margin="0,0,5,0" />
 
                             <TextBox x:Name="SearchTextBox"
-                                     Grid.Column="1"
+                                  Grid.Column="1"
                                      BorderThickness="0"
                                      VerticalAlignment="Center"
                                      TextChanged="SearchTextBox_TextChanged">
@@ -146,20 +134,10 @@
 
                     <!-- Список элементов -->
                     <ListBox x:Name="ItemsListBox"
+                             Style="{DynamicResource ModernListBoxStyle}"
                              Grid.Row="1"
-                             BorderThickness="0"
-                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                             MaxHeight="150">
-                        <ListBox.ItemContainerStyle>
-
-                            <Style TargetType="ListBoxItem">
-                                <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ListBoxItem_Click" />
-                                <Setter Property="Padding" Value="5,3" />
-                                <Setter Property="Cursor" Value="Hand" />
-
-                            </Style>
-                        </ListBox.ItemContainerStyle>
-                    </ListBox>
+                             MaxHeight="300">
+                        </ListBox>
                 </Grid>
             </Border>
         </Popup>

@@ -104,7 +104,11 @@ namespace UpdatingParameters.Views
             {
                 window.PreviewMouseDown += Window_PreviewMouseDown;
             }
-          
+            if (ItemsListBox != null)
+            {
+                ItemsListBox.AddHandler(PreviewMouseLeftButtonDownEvent, 
+                    new MouseButtonEventHandler(ListBoxItem_Click), true);
+            }
         }
 
         private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)
@@ -288,18 +292,33 @@ namespace UpdatingParameters.Views
 
         private void ListBoxItem_Click(object sender, MouseButtonEventArgs e)
         {
-            var listBoxItem = sender as ListBoxItem;
-            if (listBoxItem != null)
+            var originalSource = e.OriginalSource as DependencyObject;
+            if (originalSource != null)
             {
-                SelectedItem = listBoxItem.DataContext;
-                DisplayTextBox.Text = GetItemText(SelectedItem);
-        
-                // Закрываем popup
-                Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+                var listBoxItem = FindParent<ListBoxItem>(originalSource);
+                if (listBoxItem != null)
                 {
-                    Popup.IsOpen = false;
-                }));
+                    SelectedItem = listBoxItem.DataContext;
+                    DisplayTextBox.Text = GetItemText(SelectedItem);
+            
+                    Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+                    {
+                        Popup.IsOpen = false;
+                    }));
+                }
             }
+        }
+        private T FindParent<T>(DependencyObject child) where T : DependencyObject
+        {
+            DependencyObject parentObject = VisualTreeHelper.GetParent(child);
+    
+            if (parentObject == null) return null;
+    
+            T parent = parentObject as T;
+            if (parent != null)
+                return parent;
+            else
+                return FindParent<T>(parentObject);
         }
     }
 }
