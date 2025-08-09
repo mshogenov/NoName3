@@ -3,29 +3,164 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:local="clr-namespace:UpdatingParameters.Views"
-             mc:Ignorable="d">
+             mc:Ignorable="d"
+             d:DesignHeight="30" d:DesignWidth="200">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <d:ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
+                <ResourceDictionary
+                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
+            </d:ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
     <Grid>
-        <TextBox x:Name="SearchTextBox"
-                 TextChanged="SearchTextBox_OnTextChanged"
-                 VerticalAlignment="Center" />
-        <ToggleButton x:Name="DropDownButton"
-                      HorizontalAlignment="Right"
-                      Margin="1"
-                      Width="{Binding ActualHeight, ElementName=SearchTextBox}"
-                      Content="▼" />
-        <Popup x:Name="ItemsPopup"
-               PlacementTarget="{Binding ElementName=SearchTextBox}"
-               Placement="Bottom"
-               StaysOpen="False"
-               IsOpen="{Binding IsChecked, ElementName=DropDownButton, Mode=TwoWay}">
-            <Border Background="White" BorderBrush="Gray" BorderThickness="1">
-                <ListBox x:Name="ItemsListBox"
-                         MaxHeight="200"
-                         SelectionChanged="ItemsListBox_OnSelectionChanged"
-                         DisplayMemberPath="{Binding DisplayMemberPath, ElementName=thisControl}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-                </ListBox>
+        <!-- Основное поле -->
+        <Border x:Name="Border"
+                Background="White"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="3">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="30" />
+                </Grid.ColumnDefinitions>
+
+                <TextBox x:Name="DisplayTextBox"
+                         Grid.Column="0"
+                         VerticalAlignment="Center"
+                         Margin="5,2"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         IsReadOnly="True"
+                         Cursor="Hand"
+                         PreviewMouseDown="DisplayTextBox_PreviewMouseDown"
+                         PreviewMouseUp="DisplayTextBox_PreviewMouseUp"
+                         Focusable="False" />
+
+                <Button x:Name="DropDownButton"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Focusable="False"
+                        Click="DropDownButton_Click">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="Transparent">
+                                <Path Data="M 0 0 L 4 4 L 8 0 Z"
+                                      Fill="Black"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Выпадающий список -->
+        <Popup x:Name="Popup"
+               StaysOpen="True"
+               AllowsTransparency="True"
+               Placement="Bottom"
+               PlacementTarget="{Binding ElementName=Border}"
+               MinWidth="{Binding ActualWidth, ElementName=Border}"
+               MaxHeight="230"
+               VerticalOffset="2">
+            <Border Background="White"
+                    BorderBrush="Gray"
+                    BorderThickness="1"
+                    CornerRadius="3"
+                    Margin="0,0,8,8">
+                <Border.Effect>
+                    <DropShadowEffect ShadowDepth="2" Color="Gray" Opacity="0.3" BlurRadius="5" />
+                </Border.Effect>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Поле поиска -->
+                    <Border Grid.Row="0"
+                            BorderBrush="LightGray"
+                            BorderThickness="0,0,0,1"
+                            Padding="5">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0"
+                                       Text="🔍"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,5,0" />
+
+                            <TextBox x:Name="SearchTextBox"
+                                     Grid.Column="1"
+                                     BorderThickness="0"
+                                     VerticalAlignment="Center"
+                                     TextChanged="SearchTextBox_TextChanged">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="TextBox">
+                                                    <Grid>
+                                                        <TextBlock Text="Поиск..."
+                                                                   Foreground="Gray"
+                                                                   Margin="2,0,0,0"
+                                                                   VerticalAlignment="Center">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger
+                                                                            Binding="{Binding Text, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                            Value="">
+                                                                            <Setter Property="Visibility"
+                                                                                Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                        <ScrollViewer x:Name="PART_ContentHost"
+                                                                      VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                        </Grid>
+                    </Border>
+
+                    <!-- Список элементов -->
+                    <ListBox x:Name="ItemsListBox"
+                             Grid.Row="1"
+                             BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             MaxHeight="150">
+                        <ListBox.ItemContainerStyle>
+
+                            <Style TargetType="ListBoxItem">
+                                <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ListBoxItem_Click" />
+                                <Setter Property="Padding" Value="5,3" />
+                                <Setter Property="Cursor" Value="Hand" />
+
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+                </Grid>
             </Border>
         </Popup>
     </Grid>

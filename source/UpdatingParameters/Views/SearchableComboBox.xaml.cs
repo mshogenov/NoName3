@@ -1,146 +1,305 @@
 using System.Collections;
-using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Threading;
 
-namespace UpdatingParameters.Views;
-
-public partial class SearchableComboBox : UserControl
+namespace UpdatingParameters.Views
 {
-    // Внутренняя коллекция для отфильтрованных элементов
-    private readonly ObservableCollection<object> _filteredItems = new ObservableCollection<object>();
-    private bool _isInternalUpdate = false; // Флаг для предотвращения рекурсивных обновлений
-
-    public SearchableComboBox()
+    public partial class SearchableComboBox : UserControl
     {
-        InitializeComponent();
-        ItemsListBox.ItemsSource = _filteredItems;
-    }
+        private ICollectionView _collectionView;
+        private bool _suppressPopupClose = false;
 
-    #region Dependency Properties (API для MVVM)
-
-    // 1. ItemsSource: Полная коллекция всех элементов для поиска
-    public static readonly DependencyProperty ItemsSourceProperty =
-        DependencyProperty.Register(nameof(ItemsSource), typeof(IEnumerable), typeof(SearchableComboBox),
-            new FrameworkPropertyMetadata(null, OnItemsSourceChanged));
-
-    public IEnumerable ItemsSource
-    {
-        get => (IEnumerable)GetValue(ItemsSourceProperty);
-        set => SetValue(ItemsSourceProperty, value);
-    }
-
-    // 2. SelectedItem: Выбранный элемент (с поддержкой TwoWay биндинга)
-    public static readonly DependencyProperty SelectedItemProperty =
-        DependencyProperty.Register(nameof(SelectedItem), typeof(object), typeof(SearchableComboBox),
-            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
-                OnSelectedItemChanged));
-
-    public object SelectedItem
-    {
-        get => GetValue(SelectedItemProperty);
-        set => SetValue(SelectedItemProperty, value);
-    }
-
-    // 3. DisplayMemberPath: Свойство объекта, которое нужно отображать (как в обычном ComboBox)
-    public static readonly DependencyProperty DisplayMemberPathProperty =
-        DependencyProperty.Register(nameof(DisplayMemberPath), typeof(string), typeof(SearchableComboBox),
-            new PropertyMetadata(string.Empty));
-
-    public string DisplayMemberPath
-    {
-        get => (string)GetValue(DisplayMemberPathProperty);
-        set => SetValue(DisplayMemberPathProperty, value);
-    }
-
-    #endregion
-
-    #region PropertyChanged Callbacks
-
-    // Вызывается, когда ViewModel меняет ItemsSource
-    private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        var control = (SearchableComboBox)d;
-        control.UpdateFilter();
-    }
-
-    // Вызывается, когда ViewModel меняет SelectedItem
-    private static void OnSelectedItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        var control = (SearchableComboBox)d;
-        if (control._isInternalUpdate) return;
-
-        control.UpdateTextFromSelectedItem();
-    }
-
-    #endregion
-
-    #region Event Handlers (Внутренняя логика)
-
-    // При изменении текста в TextBox - фильтруем список
-    private void SearchTextBox_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (_isInternalUpdate) return;
-
-        UpdateFilter();
-        ItemsPopup.IsOpen = true;
-    }
-
-    // При выборе элемента в ListBox - обновляем SelectedItem и закрываем Popup
-    private void ItemsListBox_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (ItemsListBox.SelectedItem == null) return;
-
-        _isInternalUpdate = true;
-        SelectedItem = ItemsListBox.SelectedItem; // Это вызовет OnSelectedItemChanged
-        _isInternalUpdate = false;
-
-        UpdateTextFromSelectedItem();
-        ItemsPopup.IsOpen = false;
-    }
-
-    #endregion
-
-    #region Private Methods
-
-    // Основная логика фильтрации
-    private void UpdateFilter()
-    {
-        _filteredItems.Clear();
-        if (ItemsSource == null) return;
-
-        string searchText = SearchTextBox.Text.ToLower();
-
-        foreach (var item in ItemsSource)
+        public SearchableComboBox()
         {
-            string displayValue = GetDisplayValue(item)?.ToString().ToLower() ?? "";
-            if (string.IsNullOrEmpty(searchText) || displayValue.Contains(searchText))
+            InitializeComponent();
+            Loaded += OnLoaded;
+        }
+
+        #region Dependency Properties
+
+        public static readonly DependencyProperty ItemsSourceProperty =
+            DependencyProperty.Register(nameof(ItemsSource), typeof(IEnumerable),
+                typeof(SearchableComboBox),
+                new PropertyMetadata(null, OnItemsSourceChanged));
+
+        public IEnumerable ItemsSource
+        {
+            get => (IEnumerable)GetValue(ItemsSourceProperty);
+            set => SetValue(ItemsSourceProperty, value);
+        }
+
+        public static readonly DependencyProperty SelectedItemProperty =
+            DependencyProperty.Register(nameof(SelectedItem), typeof(object),
+                typeof(SearchableComboBox),
+                new FrameworkPropertyMetadata(null,
+                    FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+                    OnSelectedItemChanged));
+
+        public object SelectedItem
+        {
+            get => GetValue(SelectedItemProperty);
+            set => SetValue(SelectedItemProperty, value);
+        }
+
+        public static readonly DependencyProperty ItemTemplateProperty =
+            DependencyProperty.Register(nameof(ItemTemplate), typeof(DataTemplate),
+                typeof(SearchableComboBox),
+                new PropertyMetadata(null, OnItemTemplateChanged));
+
+        public DataTemplate ItemTemplate
+        {
+            get { return (DataTemplate)GetValue(ItemTemplateProperty); }
+            set { SetValue(ItemTemplateProperty, value); }
+        }
+
+        private static void OnItemTemplateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = d as SearchableComboBox;
+            if (control != null && control.ItemsListBox != null)
             {
-                _filteredItems.Add(item);
+                control.ItemsListBox.ItemTemplate = e.NewValue as DataTemplate;
+            }
+        }
+
+        public static readonly DependencyProperty DisplayMemberPathProperty =
+            DependencyProperty.Register(nameof(DisplayMemberPath), typeof(string),
+                typeof(SearchableComboBox),
+                new PropertyMetadata(string.Empty, OnDisplayMemberPathChanged));
+
+        public string DisplayMemberPath
+        {
+            get => (string)GetValue(DisplayMemberPathProperty);
+            set => SetValue(DisplayMemberPathProperty, value);
+        }
+
+        public static readonly DependencyProperty PlaceholderTextProperty =
+            DependencyProperty.Register(nameof(PlaceholderText), typeof(string),
+                typeof(SearchableComboBox),
+                new PropertyMetadata("Выберите элемент..."));
+
+        public string PlaceholderText
+        {
+            get => (string)GetValue(PlaceholderTextProperty);
+            set => SetValue(PlaceholderTextProperty, value);
+        }
+
+        #endregion
+
+        #region Event Handlers
+
+        private void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            UpdateItemsSource();
+            UpdateDisplayText();
+          
+
+            // Обработка клика вне контрола
+            var window = Window.GetWindow(this);
+            if (window != null)
+            {
+                window.PreviewMouseDown += Window_PreviewMouseDown;
+            }
+          
+        }
+
+        private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (Popup.IsOpen)
+            {
+                // Проверяем, был ли клик внутри нашего контрола или Popup
+                var hitTest = VisualTreeHelper.HitTest(this, e.GetPosition(this));
+                var popupHitTest = VisualTreeHelper.HitTest(Popup.Child as Visual, e.GetPosition((IInputElement)Popup.Child));
+        
+                if (hitTest == null && popupHitTest == null)
+                {
+                    Popup.IsOpen = false;
+                }
+            }
+        }
+
+        private void Popup_Closed(object sender, EventArgs e)
+        {
+            SearchTextBox.Clear();
+            if (_collectionView != null)
+            {
+                _collectionView.Filter = null;
+            }
+        }
+
+        private void Popup_Opened(object sender, EventArgs e)
+        {
+            // Фокус на поле поиска при открытии
+            Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+            {
+                SearchTextBox.Clear();
+                SearchTextBox.Focus();
+            }));
+        }
+
+        private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = d as SearchableComboBox;
+            control?.UpdateItemsSource();
+        }
+
+        private static void OnSelectedItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = d as SearchableComboBox;
+            if (control != null)
+            {
+                control.UpdateDisplayText();
+            }
+        }
+     
+        private static void OnDisplayMemberPathChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = d as SearchableComboBox;
+            if (control != null && control.ItemsListBox != null)
+            {
+                control.ItemsListBox.DisplayMemberPath = e.NewValue as string;
+            }
+        }
+
+        private void DisplayTextBox_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void DisplayTextBox_PreviewMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            Popup.IsOpen = !Popup.IsOpen;
+            e.Handled = true;
+        }
+
+        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            FilterItems();
+        }
+
+        private void ItemsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+           
+            if (ItemsListBox.SelectedItem != null)
+            {
+                var selectedItem = ItemsListBox.SelectedItem;
+        
+                // Используем SetCurrentValue вместо SetValue
+                SetCurrentValue(SelectedItemProperty, selectedItem);
+        
+                Popup.IsOpen = false;
+        
+                Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+                {
+                    ItemsListBox.SelectedItem = null;
+                }));
+            }
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        private void UpdateItemsSource()
+        {
+            if (ItemsSource != null)
+            {
+                _collectionView = CollectionViewSource.GetDefaultView(ItemsSource);
+                ItemsListBox.ItemsSource = _collectionView;
+
+                // Устанавливаем ItemTemplate если есть, иначе DisplayMemberPath
+                if (ItemTemplate != null)
+                {
+                    ItemsListBox.ItemTemplate = ItemTemplate;
+                }
+                else
+                {
+                    ItemsListBox.DisplayMemberPath = DisplayMemberPath;
+                }
+            }
+        }
+
+        private void FilterItems()
+        {
+            if (_collectionView != null)
+            {
+                _collectionView.Filter = item =>
+                {
+                    if (string.IsNullOrEmpty(SearchTextBox.Text))
+                        return true;
+
+                    string itemText = GetItemText(item);
+                    return itemText.ToLower().Contains(SearchTextBox.Text.ToLower());
+                };
+            }
+        }
+
+        private string GetItemText(object item)
+        {
+            if (item == null)
+                return string.Empty;
+
+            // Если есть DisplayMemberPath, используем его
+            if (!string.IsNullOrEmpty(DisplayMemberPath))
+            {
+                var property = item.GetType().GetProperty(DisplayMemberPath);
+                if (property != null)
+                    return property.GetValue(item)?.ToString() ?? string.Empty;
+            }
+
+            // Для DataTemplate пытаемся найти свойство Name или Title
+            var nameProperty = item.GetType().GetProperty("Name")
+                               ?? item.GetType().GetProperty("Title");
+            if (nameProperty != null)
+                return nameProperty.GetValue(item)?.ToString() ?? string.Empty;
+
+            return item.ToString();
+        }
+
+
+        private void UpdateDisplayText()
+        {
+            var text = GetItemText(SelectedItem);
+            DisplayTextBox.Text = SelectedItem != null ? text : PlaceholderText;
+        }
+
+        #endregion
+
+        private void DropDownButton_Click(object sender, RoutedEventArgs e)
+        {
+            Popup.IsOpen = !Popup.IsOpen;
+        }
+
+        private void ListBoxItem_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            var listBoxItem = sender as ListBoxItem;
+            if (listBoxItem != null && listBoxItem.DataContext != null)
+            {
+                SelectedItem = listBoxItem.DataContext;
+                DisplayTextBox.Text = GetItemText(SelectedItem);
+                Popup.IsOpen = false;
+        
+            }
+        }
+
+        private void ListBoxItem_Click(object sender, MouseButtonEventArgs e)
+        {
+            var listBoxItem = sender as ListBoxItem;
+            if (listBoxItem != null)
+            {
+                SelectedItem = listBoxItem.DataContext;
+                DisplayTextBox.Text = GetItemText(SelectedItem);
+        
+                // Закрываем popup
+                Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+                {
+                    Popup.IsOpen = false;
+                }));
             }
         }
     }
-
-    // Обновляет текст в TextBox на основе выбранного элемента
-    private void UpdateTextFromSelectedItem()
-    {
-        _isInternalUpdate = true;
-        SearchTextBox.Text = SelectedItem != null ? GetDisplayValue(SelectedItem)?.ToString() : string.Empty;
-        _isInternalUpdate = false;
-    }
-
-    // Получает значение для отображения из объекта с помощью DisplayMemberPath
-    private object GetDisplayValue(object item)
-    {
-        if (item == null || string.IsNullOrEmpty(DisplayMemberPath))
-        {
-            return item;
-        }
-
-        // Используем рефлексию для получения значения свойства
-        var property = item.GetType().GetProperty(DisplayMemberPath);
-        return property?.GetValue(item, null);
-    }
-
-    #endregion
 }

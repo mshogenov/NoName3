@@ -5,6 +5,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:UpdatingParameters.Views"
         xmlns:vm="clr-namespace:UpdatingParameters.ViewModels"
+
         d:DataContext="{d:DesignInstance vm:AddCategoryVM}"
         mc:Ignorable="d"
         Title="Выбрать категорию" Height="450" Width="800">
@@ -15,13 +16,19 @@
         </Grid.RowDefinitions>
         <StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
-                <TextBlock Text="Выберите категорию" />
+                <TextBlock Text="Выберите категорию" VerticalAlignment="Center" Margin="0,0,10,0" />
                 <local:SearchableComboBox
-                    Width="200"
+                    Width="250"
+                    Height="30"
                     ItemsSource="{Binding Categories}"
-                    SelectedItem="{Binding SelectedCategory}"
-                    DisplayMemberPath="{Binding }"
-                   />
+                    SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                    PlaceholderText="Выберите категорию...">
+                    <local:SearchableComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </local:SearchableComboBox.ItemTemplate>
+                </local:SearchableComboBox>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Из параметра: " />

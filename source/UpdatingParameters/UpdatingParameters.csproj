@@ -51,12 +51,6 @@
     
 
     <ItemGroup>
-      <Folder Include="Views\Themes\" />
-    </ItemGroup>
-    
-
-    <ItemGroup>
-      <Page Remove="Views\Themes\Generic.xaml" />
       <Page Update="Views\Margin\SetMarginWindow.xaml">
         <Generator>MSBuild:Compile</Generator>
         <XamlRuntime>Wpf</XamlRuntime>
@@ -67,6 +61,18 @@
         <XamlRuntime>Wpf</XamlRuntime>
         <SubType>Designer</SubType>
       </Page>
+    </ItemGroup>
+    
+
+    <ItemGroup>
+      <Reference Include="PresentationFramework.Aero2">
+        <HintPath>..\..\..\..\..\..\Windows\Microsoft.Net\assembly\GAC_MSIL\PresentationFramework.Aero2\v4.0_4.0.0.0__31bf3856ad364e35\PresentationFramework.Aero2.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+    
+
+    <ItemGroup>
+      <Folder Include="Views\Themes\" />
     </ItemGroup>
 
 </Project>
