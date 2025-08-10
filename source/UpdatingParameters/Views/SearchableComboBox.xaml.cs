@@ -13,8 +13,7 @@ namespace UpdatingParameters.Views
     public partial class SearchableComboBox : UserControl
     {
         private ICollectionView _collectionView;
-        private bool _suppressPopupClose = false;
-
+     
         public SearchableComboBox()
         {
             InitializeComponent();
@@ -98,7 +97,6 @@ namespace UpdatingParameters.Views
             UpdateItemsSource();
             UpdateDisplayText();
           
-
             // Обработка клика вне контрола
             var window = Window.GetWindow(this);
             if (window != null)
@@ -114,16 +112,14 @@ namespace UpdatingParameters.Views
 
         private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (Popup.IsOpen)
-            {
-                // Проверяем, был ли клик внутри нашего контрола или Popup
-                var hitTest = VisualTreeHelper.HitTest(this, e.GetPosition(this));
-                var popupHitTest = VisualTreeHelper.HitTest(Popup.Child as Visual, e.GetPosition((IInputElement)Popup.Child));
+            if (!Popup.IsOpen) return;
+            // Проверяем, был ли клик внутри нашего контрола или Popup
+            var hitTest = VisualTreeHelper.HitTest(this, e.GetPosition(this));
+            var popupHitTest = VisualTreeHelper.HitTest(Popup.Child as Visual, e.GetPosition(Popup.Child));
         
-                if (hitTest == null && popupHitTest == null)
-                {
-                    Popup.IsOpen = false;
-                }
+            if (hitTest == null && popupHitTest == null)
+            {
+                Popup.IsOpen = false;
             }
         }
 

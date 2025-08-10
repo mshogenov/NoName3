@@ -403,8 +403,8 @@ namespace UpdatingParameters.Services
                             if (!marginCategory.IsChecked) continue;
                             if (element.Category.Id != marginCategory.Category.Id) continue;
                             // Получаем параметры у конкретного элемента
-                            var fromParam = element.FindParameter(marginCategory.FromParameter.Definition.Name);
-                            var inParam = element.FindParameter(marginCategory.InParameter.Definition.Name);
+                            var fromParam = element.FindParameter(marginCategory.FromParameterName);
+                            var inParam = element.FindParameter(marginCategory.InParameterName);
                             if (fromParam == null || inParam == null ||
                                 fromParam.StorageType != StorageType.Double ||
                                 inParam.IsReadOnly) continue;

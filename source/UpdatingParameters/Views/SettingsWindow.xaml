@@ -30,7 +30,7 @@
         </Grid.RowDefinitions>
         <CheckBox x:Name="UpdaterCheckBox"
                   Style="{DynamicResource JellyCheckboxStyle}"
-                  Content="Обновление параметров"
+                  Content=" Автоматическое обновление параметров"
                    IsChecked="{Binding UpdaterIsChecked}">
       </CheckBox>
 

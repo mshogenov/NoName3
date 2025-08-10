@@ -21,7 +21,7 @@ public class Application : ExternalApplication
 {
     private RibbonPanel _modifyPanel;
 
-    private  FailureReplacement? _failureReplacement;
+    private FailureReplacement? _failureReplacement;
 
     // Заменяем одиночный список историей из 10 списков
     public static ObservableCollection<SelectionHistoryData> SelectionHistories { get; } = [];
@@ -33,7 +33,7 @@ public class Application : ExternalApplication
         CreateRibbon();
         RegisterUpdaterParameters();
         Application.SelectionChanged += LastAllocation;
-         Application.ControlledApplication.FailuresProcessing += ControlledOnFailuresProcessing;
+        Application.ControlledApplication.FailuresProcessing += ControlledOnFailuresProcessing;
         // Application.SelectionChanged += OnSelectionChanged;
         // Application.ViewActivated += OnViewActivated;
     }
@@ -46,6 +46,7 @@ public class Application : ExternalApplication
         // Application.SelectionChanged -= OnSelectionChanged;
         // Application.ViewActivated -= OnViewActivated;
     }
+
     private void ControlledOnFailuresProcessing(object? sender, FailuresProcessingEventArgs e)
     {
         var failuresAccessor = e.GetFailuresAccessor();
@@ -406,19 +407,32 @@ public class Application : ExternalApplication
         var parametersUpdater = new ParametersUpdater();
         UpdaterRegistry.RegisterUpdater(parametersUpdater, true);
         var updaterId = parametersUpdater.GetUpdaterId();
-
         // Создаем фильтры для разных типов элементов
-        var mepCurveFilter = new ElementClassFilter(typeof(MEPCurve));
-        var pipeFittingFilter = new ElementCategoryFilter(BuiltInCategory.OST_PipeFitting);
-        var ductFittingFilter = new ElementCategoryFilter(BuiltInCategory.OST_DuctFitting);
-
-        // Объединяем фильтры
-        var orFilter = new LogicalOrFilter(
-            [mepCurveFilter, pipeFittingFilter, ductFittingFilter]
-        );
-
+        ElementCategoryFilter pipeFilter = new ElementCategoryFilter(BuiltInCategory.OST_PipeCurves);
+        ElementCategoryFilter fittingFilter = new ElementCategoryFilter(BuiltInCategory.OST_PipeFitting);
+        ElementCategoryFilter ductFittingFilter = new ElementCategoryFilter(BuiltInCategory.OST_DuctFitting);
+        ElementCategoryFilter accessoryFilter = new ElementCategoryFilter(BuiltInCategory.OST_PipeAccessory);
+        ElementCategoryFilter fixtureFilter = new ElementCategoryFilter(BuiltInCategory.OST_PlumbingFixtures);
+        ElementCategoryFilter mechanicalEquipmentFilter =
+            new ElementCategoryFilter(BuiltInCategory.OST_MechanicalEquipment);
+        ElementCategoryFilter pipeInsulationsFilter = new ElementCategoryFilter(BuiltInCategory.OST_PipeInsulations);
+        ElementCategoryFilter ductInsulationsFilter = new ElementCategoryFilter(BuiltInCategory.OST_DuctInsulations);
+        ElementCategoryFilter flexPipeCurvesFilter = new ElementCategoryFilter(BuiltInCategory.OST_FlexPipeCurves);
+        // Комбинированный фильтр
+        LogicalOrFilter combinedFilter = new LogicalOrFilter(new List<ElementFilter>
+        {
+            pipeFilter,
+            fittingFilter,
+            accessoryFilter,
+            fixtureFilter,
+            ductFittingFilter,
+            mechanicalEquipmentFilter,
+            pipeInsulationsFilter,
+            flexPipeCurvesFilter,
+            ductInsulationsFilter
+        });
         // Регистрация триггеров
-        UpdaterRegistry.AddTrigger(updaterId, orFilter, Element.GetChangeTypeGeometry());
-        UpdaterRegistry.AddTrigger(updaterId, orFilter, Element.GetChangeTypeElementAddition());
+        UpdaterRegistry.AddTrigger(updaterId, combinedFilter, Element.GetChangeTypeGeometry());
+        UpdaterRegistry.AddTrigger(updaterId, combinedFilter, Element.GetChangeTypeElementAddition());
     }
 }
