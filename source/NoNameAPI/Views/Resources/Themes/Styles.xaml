@@ -4,12 +4,11 @@
                     xmlns:system="clr-namespace:System;assembly=mscorlib"
                     xmlns:converters="clr-namespace:NoNameApi.Views.Converters"
                     xmlns:controls="clr-namespace:NoNameApi.Views.Controls">
-
-
     <converters:ScaleConverter x:Key="ScaleConverter" />
     <converters:ScaleMarginConverter x:Key="ScaleMarginConverter" />
     <converters:MultiplyConverter x:Key="MultiplyConverter" />
     <converters:NegationConverter x:Key="NegationConverter" />
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
     <!-- Общие значения -->
     <FontFamily x:Key="AppFontFamily">Segoe UI</FontFamily>
@@ -1411,7 +1410,7 @@
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
-             </Setter.Value>
+            </Setter.Value>
         </Setter>
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -2280,7 +2279,7 @@
                                     <Trigger Property="IsSelected" Value="True">
                                         <Setter Property="Background" Value="{DynamicResource IsSelectedBrush}" />
                                     </Trigger>
-                                  </ControlTemplate.Triggers>
+                                </ControlTemplate.Triggers>
                             </ControlTemplate>
                         </Setter.Value>
                     </Setter>
@@ -2922,5 +2921,113 @@
         </Setter>
     </Style>
 
+    <Style TargetType="{x:Type controls:SearchBox}">
+        <Setter Property="Height" Value="30" />
+        <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:SearchBox}">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4"
+                            Padding="5,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Icon -->
+                            <TextBlock Grid.Column="0"
+                                       Text="{TemplateBinding Icon}"
+                                       Style="{DynamicResource TextBlockStyle}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,5,0"
+                                       Visibility="{Binding ShowIcon, RelativeSource={RelativeSource TemplatedParent}, 
+                                                    Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                            <!-- Search TextBox -->
+                            <Grid Grid.Column="1">
+                                <!-- Placeholder -->
+                                <TextBlock Text="{TemplateBinding Placeholder}"
+                                           Foreground="{DynamicResource TextBlockColorBrush}"
+                                           VerticalAlignment="Center"
+                                           Margin="2,0,0,0"
+                                           IsHitTestVisible="False">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger
+                                                    Binding="{Binding Text, RelativeSource={RelativeSource TemplatedParent}}"
+                                                    Value="">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
+                                <!-- Actual TextBox -->
+                                <TextBox x:Name="PART_SearchTextBox"
+                                         CaretBrush="{DynamicResource TextBlockColorBrush}"
+                                         Background="Transparent"
+                                         Foreground="{DynamicResource TextBlockColorBrush}"
+                                         BorderThickness="0"
+                                         VerticalAlignment="Center"
+                                         Text="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, 
+                                                UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+
+                            <!-- Clear Button -->
+                            <Button Grid.Column="2"
+                                    x:Name="PART_ClearButton"
+                                    Content="✕"
+                                    Foreground="{DynamicResource TextBlockColorBrush}"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Padding="5,0"
+                                    VerticalAlignment="Center"
+                                    Cursor="Hand">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <ContentPresenter Content="{TemplateBinding Content}"
+                                                                      HorizontalAlignment="Center"
+                                                                      VerticalAlignment="Center" />
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <DataTrigger
+                                                Binding="{Binding Text, RelativeSource={RelativeSource TemplatedParent}}"
+                                                Value="">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition
+                                                        Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}"
+                                                        Value="True" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
 </ResourceDictionary>

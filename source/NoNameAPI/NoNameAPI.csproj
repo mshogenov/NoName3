@@ -41,5 +41,11 @@
         <EmbeddedResource Include="Resources\ФОПФигня.txt"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <Page Update="Views\Themes\Generic.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
+    </ItemGroup>
+
   
 </Project>

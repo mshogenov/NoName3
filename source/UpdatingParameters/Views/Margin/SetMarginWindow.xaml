@@ -23,7 +23,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Button Content="Добавить категорию"
+        <Button Content="Добавить конфигурацию"
                 Style="{DynamicResource AddButtonStyle2}"
                 Width="Auto"
                 Command="{Binding AddCategoryCommand}"

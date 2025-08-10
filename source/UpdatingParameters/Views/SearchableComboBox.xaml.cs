@@ -6,6 +6,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using NoNameApi.Views.Controls;
 
 namespace UpdatingParameters.Views
 {
@@ -180,9 +181,14 @@ namespace UpdatingParameters.Views
             e.Handled = true;
         }
 
-        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        private void SearchTextBox_TextChanged(object sender, RoutedEventArgs routedEventArgs)
         {
-            FilterItems();
+            var searchBox = sender as SearchBox;
+            if (searchBox != null && ItemsListBox != null)
+            {
+                FilterItems(searchBox.Text);
+            }
+         
         }
 
         private void ItemsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -227,17 +233,17 @@ namespace UpdatingParameters.Views
             }
         }
 
-        private void FilterItems()
+        private void FilterItems(string searchBoxText)
         {
             if (_collectionView != null)
             {
                 _collectionView.Filter = item =>
                 {
-                    if (string.IsNullOrEmpty(SearchTextBox.Text))
+                    if (string.IsNullOrEmpty(searchBoxText))
                         return true;
 
                     string itemText = GetItemText(item);
-                    return itemText.ToLower().Contains(SearchTextBox.Text.ToLower());
+                    return itemText.ToLower().Contains(searchBoxText.ToLower());
                 };
             }
         }

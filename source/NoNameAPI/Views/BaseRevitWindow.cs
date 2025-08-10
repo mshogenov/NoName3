@@ -130,7 +130,9 @@ public class BaseRevitWindow : Window
                 UriKind.Absolute)
         };
         Resources.MergedDictionaries.Add(stylesDictionary);
-
+        // var resourceDict = new ResourceDictionary();
+        // resourceDict.Source = new Uri("pack://application:,,,/NoNameApi;component/Views/Themes/Generic.xaml");
+        // Resources.MergedDictionaries.Add(resourceDict);
         // Применяем шаблон окна если он определен
         if (Resources.Contains("CustomWindowTemplate"))
         {
@@ -265,8 +267,7 @@ public class BaseRevitWindow : Window
     public override void OnApplyTemplate()
     {
         base.OnApplyTemplate();
-
-        // Находим кнопки по их именам в шаблоне
+      // Находим кнопки по их именам в шаблоне
         Button minimizeButton = GetTemplateChild("MinimizeButton") as Button;
         Button maximizeButton = GetTemplateChild("MaximizeButton") as Button;
         Button closeButton = GetTemplateChild("CloseButton") as Button;

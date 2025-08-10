@@ -5,11 +5,12 @@
                        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                        xmlns:local="clr-namespace:UpdatingParameters.Views"
                        xmlns:vm="clr-namespace:UpdatingParameters.ViewModels"
+                       xmlns:converter="clr-namespace:UpdatingParameters.Views.Converters"
                        xmlns:views="clr-namespace:NoNameApi.Views;assembly=NoNameAPI"
                        d:DataContext="{d:DesignInstance vm:AddCategoryVM}"
                        Background="{DynamicResource WindowBackgroundBrush}"
                        mc:Ignorable="d"
-                       Title="Выбрать категорию" Height="450" Width="800">
+                       Title="Добавить конфигурацию" Height="250" Width="400">
 
     <Window.Resources>
         <ResourceDictionary>
@@ -19,14 +20,16 @@
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
             </d:ResourceDictionary.MergedDictionaries>
+            <converter:BoolVisibilityConverter x:Key="BoolVisibilityConverter" />
         </ResourceDictionary>
     </Window.Resources>
-    <Grid>
+    <Grid Margin="7">
         <Grid.RowDefinitions>
             <RowDefinition />
-            <RowDefinition />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <StackPanel>
+
             <local:SearchableComboBox
                 Margin="5"
                 ItemsSource="{Binding Categories}"
@@ -39,11 +42,18 @@
                 </local:SearchableComboBox.ItemTemplate>
             </local:SearchableComboBox>
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Из параметра: " />
+                <TextBlock Text="Целевой параметр: " />
                 <TextBlock Text="{Binding SelectedFromParameter.Definition.Name, TargetNullValue='Параметр не выбран'}" />
                 <Button Content="Выбрать параметр"
                         Command="{Binding SelectFromParameterCommand}"
                         CommandParameter="{Binding RelativeSource={RelativeSource Self}}" />
+            </StackPanel>
+            <CheckBox x:Name="IsCopyParameterCheckBox"
+                      Content="Копировать значение целевого параметра в другой параметр"
+                      Style="{DynamicResource JellyCheckboxStyle}"
+                      IsChecked="{Binding IsCopyInParameter}" />
+            <StackPanel Orientation="Horizontal"
+                        Visibility="{Binding IsChecked, ElementName=IsCopyParameterCheckBox, Converter={StaticResource  BoolVisibilityConverter}}">
                 <TextBlock Text="В параметр: " />
                 <TextBlock Text="{Binding SelectedInParameter.Definition.Name}" />
                 <Button Content="Выбрать параметр"
@@ -56,20 +66,18 @@
                 <TextBlock Text="%" />
             </StackPanel>
         </StackPanel>
-        <StackPanel Grid.Row="1" VerticalAlignment="Top" Orientation="Horizontal" HorizontalAlignment="Right"
-                    Margin="10">
+        <DockPanel Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Right">
             <Button Content="OK"
+                    Style="{DynamicResource CommonButtonStyle2}"
                     Command="{Binding ConfirmCommand}"
-                    Margin="5"
+                    Margin="0 0 5 0"
                     CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
-                    Padding="20,5"
-                    IsDefault="True" />
+                  IsDefault="True" />
             <Button Content="Отмена"
+                    Style="{DynamicResource OutlineCloseButtonStyle}"
                     Command="{Binding CancelCommand}"
-                    Margin="5"
-                    Padding="20,5"
                     IsCancel="True" />
-        </StackPanel>
+        </DockPanel>
         <local:ParameterSelectorPopup
             IsPopupOpen="{Binding IsFromParameterPopupOpen}"
             CurrentPopupTarget="{Binding FromParameterPopupTarget}"

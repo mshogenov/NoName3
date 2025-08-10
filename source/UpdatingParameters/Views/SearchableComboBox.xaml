@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:controls="clr-namespace:NoNameApi.Views.Controls;assembly=NoNameAPI"
              mc:Ignorable="d"
              d:DesignHeight="60" d:DesignWidth="200">
     <UserControl.Resources>
@@ -77,67 +78,19 @@
                     </Grid.RowDefinitions>
 
                     <!-- Поле поиска -->
-                    <Border Grid.Row="0"
-                            Margin="0 5"
-                            Style="{DynamicResource BorderContentStyle}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <TextBlock Grid.Column="0"
-                                       Text="🔍"
-                                       VerticalAlignment="Center"
-                                       Margin="0,0,5,0" />
-
-                            <TextBox x:Name="SearchTextBox"
-                                  Grid.Column="1"
-                                     BorderThickness="0"
-                                     VerticalAlignment="Center"
-                                     TextChanged="SearchTextBox_TextChanged">
-                                <TextBox.Style>
-                                    <Style TargetType="TextBox">
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="TextBox">
-                                                    <Grid>
-                                                        <TextBlock Text="Поиск..."
-                                                                   Foreground="Gray"
-                                                                   Margin="2,0,0,0"
-                                                                   VerticalAlignment="Center">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger
-                                                                            Binding="{Binding Text, RelativeSource={RelativeSource TemplatedParent}}"
-                                                                            Value="">
-                                                                            <Setter Property="Visibility"
-                                                                                Value="Visible" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                        <ScrollViewer x:Name="PART_ContentHost"
-                                                                      VerticalAlignment="Center" />
-                                                    </Grid>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </TextBox.Style>
-                            </TextBox>
-                        </Grid>
-                    </Border>
-
+                    <controls:SearchBox x:Name="SearchTextBox"
+                                        Grid.Row="0"
+                                        Margin="0,5"
+                                        Placeholder="Поиск..."
+                                        Icon="🔍"
+                                        ShowIcon="True"
+                                        TextChanged="SearchTextBox_TextChanged"/>
                     <!-- Список элементов -->
                     <ListBox x:Name="ItemsListBox"
                              Style="{DynamicResource ModernListBoxStyle}"
                              Grid.Row="1"
                              MaxHeight="300">
-                        </ListBox>
+                    </ListBox>
                 </Grid>
             </Border>
         </Popup>
