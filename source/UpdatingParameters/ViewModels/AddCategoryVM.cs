@@ -48,6 +48,7 @@ public partial class AddCategoryVM : ViewModelBase
 
     public MarginCategory Result { get; private set; }
     public bool IsConfirmed { get; private set; }
+    [ObservableProperty] private bool _isCopyInParameter;
 
     public AddCategoryVM()
     {
@@ -124,15 +125,30 @@ public partial class AddCategoryVM : ViewModelBase
     [RelayCommand]
     private void Confirm(object param)
     {
-        if (SelectedCategory != null && SelectedFromParameter != null && SelectedInParameter != null)
+        if (SelectedCategory != null && SelectedFromParameter != null)
         {
-            Result = new MarginCategory
+            if (IsCopyInParameter)
             {
-                Category = SelectedCategory,
-                Margin = Margin,
-                FromParameter = SelectedFromParameter,
-                InParameter = SelectedInParameter
-            };
+                Result = new MarginCategory
+                {
+                    Category = SelectedCategory,
+                    Margin = Margin,
+                    FromParameter = SelectedFromParameter,
+                    InParameter = SelectedInParameter,
+                    IsChecked = true
+                };
+            }
+            else
+            {
+                Result = new MarginCategory
+                {
+                    Category = SelectedCategory,
+                    Margin = Margin,
+                    FromParameter = SelectedFromParameter,
+                    IsChecked = true
+                };
+            }
+
             IsConfirmed = true;
             if (param is not Window window) return;
             window.DialogResult = true;
