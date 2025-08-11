@@ -279,18 +279,6 @@ namespace UpdatingParameters.Views
             Popup.IsOpen = !Popup.IsOpen;
         }
 
-        private void ListBoxItem_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            var listBoxItem = sender as ListBoxItem;
-            if (listBoxItem != null && listBoxItem.DataContext != null)
-            {
-                SelectedItem = listBoxItem.DataContext;
-                DisplayTextBox.Text = GetItemText(SelectedItem);
-                Popup.IsOpen = false;
-        
-            }
-        }
-
         private void ListBoxItem_Click(object sender, MouseButtonEventArgs e)
         {
             var originalSource = e.OriginalSource as DependencyObject;

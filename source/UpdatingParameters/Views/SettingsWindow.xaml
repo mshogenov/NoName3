@@ -20,7 +20,6 @@
             </d:ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         </ResourceDictionary>
-
     </UserControl.Resources>
     <Grid Style="{DynamicResource Grid}">
        <Grid.RowDefinitions>

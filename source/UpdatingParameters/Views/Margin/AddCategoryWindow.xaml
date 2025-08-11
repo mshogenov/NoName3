@@ -10,77 +10,208 @@
                        d:DataContext="{d:DesignInstance vm:AddCategoryVM}"
                        Background="{DynamicResource WindowBackgroundBrush}"
                        mc:Ignorable="d"
-                       Title="Добавить конфигурацию" Height="250" Width="400">
-
+                       Title="Настройки конфигурации"
+                       Width="500"
+                       SizeToContent="Height"
+                       ResizeMode="NoResize">
+    
     <Window.Resources>
         <ResourceDictionary>
-            <d:ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary
-                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
-                <ResourceDictionary
-                    Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
-            </d:ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
             <converter:BoolVisibilityConverter x:Key="BoolVisibilityConverter" />
         </ResourceDictionary>
     </Window.Resources>
-    <Grid Margin="7">
+    
+    <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <StackPanel>
+        
+        <!-- Секция выбора категории -->
+        <local:SearchableComboBox
+          Margin="0 5"
+            ItemsSource="{Binding Categories}"
+            SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+            PlaceholderText="Выберите категорию...">
+            <local:SearchableComboBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Name}" />
+                </DataTemplate>
+            </local:SearchableComboBox.ItemTemplate>
+        </local:SearchableComboBox>
 
-            <local:SearchableComboBox
-                Margin="5"
-                ItemsSource="{Binding Categories}"
-                SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
-                PlaceholderText="Выберите категорию...">
-                <local:SearchableComboBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Name}" />
-                    </DataTemplate>
-                </local:SearchableComboBox.ItemTemplate>
-            </local:SearchableComboBox>
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Целевой параметр: "
-                           Style="{DynamicResource TextBlockStyle}" />
-                <TextBlock
-                    Style="{DynamicResource TextBlockStyle}"
-                    Text="{Binding SelectedFromParameter.Definition.Name, TargetNullValue='Параметр не выбран'}" />
-                <Button Content="Выбрать параметр"
-                        Command="{Binding SelectFromParameterCommand}"
-                        CommandParameter="{Binding RelativeSource={RelativeSource Self}}" />
+        <!-- Секция параметров -->
+        <GroupBox Grid.Row="1" 
+                  Header="Настройка параметров" 
+                  Style="{DynamicResource GroupBoxStyle}"
+                  Margin="0,0,0,15">
+            <StackPanel Margin="10">
+                <!-- Целевой параметр -->
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" MinWidth="120"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBlock Grid.Column="0"
+                               Text="Целевой параметр:" 
+                               VerticalAlignment="Center"
+                               Style="{DynamicResource TextBlockStyle}" />
+                    
+                    <Border Grid.Column="1" 
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="3"
+                            Margin="5,0"
+                            MinHeight="28"
+                            Background="{DynamicResource ControlBackgroundBrush}">
+                        <TextBlock Margin="8,0"
+                                   VerticalAlignment="Center"
+                                   FontWeight="SemiBold"
+                                   Style="{DynamicResource TextBlockStyle}">
+                            <TextBlock.Text>
+                                <Binding Path="SelectedFromParameter.Definition.Name" 
+                                         TargetNullValue="Не выбран"
+                                         FallbackValue="Не выбран"/>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </Border>
+                    
+                    <Button Grid.Column="2"
+                            Content="Выбрать"
+                            MinWidth="80"
+                            Style="{DynamicResource CommonButtonStyle2}"
+                            Command="{Binding SelectFromParameterCommand}"
+                            CommandParameter="{Binding RelativeSource={RelativeSource Self}}" />
+                </Grid>
+                
+                <!-- Чекбокс копирования -->
+                <CheckBox x:Name="IsCopyParameterCheckBox" 
+                          Margin="0,10,0,10"
+                          Content="Копировать значение целевого параметра в другой параметр"
+                          Style="{DynamicResource JellyCheckboxStyle}"
+                          IsChecked="{Binding IsCopyInParameter}" />
+                
+                <!-- Параметр для копирования -->
+                <Grid Margin="0,0,0,10"
+                      Visibility="{Binding IsChecked, ElementName=IsCopyParameterCheckBox, Converter={StaticResource BoolVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" MinWidth="120"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBlock Grid.Column="0"
+                               Text="В параметр:" 
+                               VerticalAlignment="Center"
+                               Style="{DynamicResource TextBlockStyle}" />
+                    
+                    <Border Grid.Column="1" 
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="3"
+                            Margin="5,0"
+                            MinHeight="28"
+                            Background="{DynamicResource ControlBackgroundBrush}">
+                        <TextBlock Margin="8,0"
+                                   VerticalAlignment="Center"
+                                   FontWeight="SemiBold"
+                                   Style="{DynamicResource TextBlockStyle}">
+                            <TextBlock.Text>
+                                <Binding Path="SelectedInParameter.Definition.Name" 
+                                         TargetNullValue="Не выбран"
+                                         FallbackValue="Не выбран"/>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </Border>
+                    
+                    <Button Grid.Column="2"
+                            Content="Выбрать"
+                            MinWidth="80"
+                            Style="{DynamicResource CommonButtonStyle2}"
+                            Command="{Binding SelectInParameterCommand}"
+                            CommandParameter="{Binding RelativeSource={RelativeSource Self}}" />
+                </Grid>
+                
+                <!-- Секция запаса -->
+                <Separator Margin="0,10" Style="{DynamicResource SeparatorStyle}"/>
+                
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" MinWidth="120"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBlock Grid.Column="0"
+                               Text="Запас:" 
+                               VerticalAlignment="Center"
+                               Style="{DynamicResource TextBlockStyle}" />
+                    
+                    <TextBox Grid.Column="1"
+                             Width="80" 
+                             Margin="5,0"
+                             Text="{Binding Margin, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource ModernTextBoxStyle}" />
+                    
+                    <TextBlock Grid.Column="2"
+                               Text="%"
+                               VerticalAlignment="Center"
+                               Style="{DynamicResource TextBlockStyle}" />
+                </Grid>
             </StackPanel>
-            <CheckBox x:Name="IsCopyParameterCheckBox"
-                      Content="Копировать значение целевого параметра в другой параметр"
-                      Style="{DynamicResource JellyCheckboxStyle}"
-                      IsChecked="{Binding IsCopyInParameter}" />
-            <StackPanel Orientation="Horizontal"
-                        Visibility="{Binding IsChecked, ElementName=IsCopyParameterCheckBox, Converter={StaticResource  BoolVisibilityConverter}}">
-                <TextBlock Text="В параметр: " />
-                <TextBlock Text="{Binding SelectedInParameter.Definition.Name}" />
-                <Button Content="Выбрать параметр"
-                        Command="{Binding SelectInParameterCommand}"
-                        CommandParameter="{Binding RelativeSource={RelativeSource Self}}" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Запас" />
-                <TextBox Width="100" Text="{Binding Margin}" />
-                <TextBlock Text="%" />
-            </StackPanel>
-        </StackPanel>
-        <DockPanel Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Right">
-            <Button Content="OK"
-                    Style="{DynamicResource CommonButtonStyle2}"
-                    Command="{Binding ConfirmCommand}"
-                    Margin="0 0 5 0"
-                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
-                    IsDefault="True" />
-            <Button Content="Отмена"
-                    Style="{DynamicResource OutlineCloseButtonStyle}"
-                    Command="{Binding CancelCommand}"
-                    IsCancel="True" />
-        </DockPanel>
+        </GroupBox>
+        
+        <!-- Пустое пространство для расширения -->
+        <Grid Grid.Row="3"/>
+        
+        <!-- Кнопки действий -->
+        <Border Grid.Row="4" 
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0"
+                Margin="0,15,0,0"
+                Padding="0,15,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0" 
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Left">
+                    <!-- Дополнительные кнопки или информация, если нужно -->
+                </StackPanel>
+                
+                <Button Grid.Column="1"
+                        Content="OK"
+                        MinWidth="100"
+                        Margin="0,0,10,0"
+                        Style="{DynamicResource CommonButtonStyle2}"
+                        Command="{Binding ConfirmCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                        IsDefault="True" />
+                
+                <Button Grid.Column="2"
+                        Content="Отмена"
+                        MinWidth="100"
+                        Style="{DynamicResource OutlineCloseButtonStyle}"
+                        Command="{Binding CancelCommand}"
+                        IsCancel="True" />
+            </Grid>
+        </Border>
+        
+        <!-- Popup для выбора параметров -->
         <local:ParameterSelectorPopup
             IsPopupOpen="{Binding IsFromParameterPopupOpen}"
             CurrentPopupTarget="{Binding FromParameterPopupTarget}"
@@ -90,7 +221,7 @@
             ClosePopupCommand="{Binding CloseFromParameterPopupCommand}">
             <local:ParameterSelectorPopup.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding Definition.Name }" />
+                    <TextBlock Text="{Binding Definition.Name}" />
                 </DataTemplate>
             </local:ParameterSelectorPopup.ItemTemplate>
         </local:ParameterSelectorPopup>
@@ -101,6 +232,12 @@
             ItemsSourceInstanceParameters="{Binding InstanceParameters}"
             ItemsSourceTypeParameters="{Binding TypeParameters}"
             SelectedItem="{Binding SelectedInParameter, Mode=TwoWay}"
-            ClosePopupCommand="{Binding CloseInParameterPopupCommand}" />
+            ClosePopupCommand="{Binding CloseInParameterPopupCommand}">
+            <local:ParameterSelectorPopup.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Definition.Name}" />
+                </DataTemplate>
+            </local:ParameterSelectorPopup.ItemTemplate>
+        </local:ParameterSelectorPopup>
     </Grid>
 </views:BaseRevitWindow>

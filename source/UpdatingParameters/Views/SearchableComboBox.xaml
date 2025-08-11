@@ -47,7 +47,7 @@
                         <ControlTemplate TargetType="Button">
                             <Border Background="Transparent">
                                 <Path Data="M 0 0 L 4 4 L 8 0 Z"
-                                      Fill="Black"
+                                      Fill="{DynamicResource TextBlockColorBrush}"
                                       HorizontalAlignment="Center"
                                       VerticalAlignment="Center" />
                             </Border>
@@ -84,7 +84,7 @@
                                         Placeholder="Поиск..."
                                         Icon="🔍"
                                         ShowIcon="True"
-                                        TextChanged="SearchTextBox_TextChanged"/>
+                                        TextChanged="SearchTextBox_TextChanged" />
                     <!-- Список элементов -->
                     <ListBox x:Name="ItemsListBox"
                              Style="{DynamicResource ModernListBoxStyle}"
