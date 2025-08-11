@@ -6,10 +6,11 @@
              xmlns:local="clr-namespace:UpdatingParameters.Views"
              xmlns:controls="clr-namespace:NoNameApi.Views.Controls;assembly=NoNameAPI"
              mc:Ignorable="d"
-           d:DesignHeight="300" d:DesignWidth="300">
+             d:DesignHeight="300" d:DesignWidth="300">
     <Popup x:Name="Popup"
+           StaysOpen="True"
            Width="250"
-         IsOpen="{Binding IsPopupOpen, RelativeSource={RelativeSource AncestorType=UserControl}}"
+           IsOpen="{Binding IsPopupOpen, RelativeSource={RelativeSource AncestorType=UserControl}}"
            PlacementTarget="{Binding CurrentPopupTarget, RelativeSource={RelativeSource AncestorType=UserControl}}">
         <Grid>
             <Grid.RowDefinitions>
@@ -17,32 +18,18 @@
                 <RowDefinition />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <controls:SearchBox/>
+            <controls:SearchBox
+                TextChanged="SearchBox_OnTextChanged"/>
             <Grid Grid.Row="1">
                 <TabControl>
                     <TabItem Header="Параметры экземпляра">
-                        <ListBox
-                            ItemsSource="{Binding InstanceParameters, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            SelectedItem="{Binding SelectedParameter, RelativeSource={RelativeSource AncestorType=UserControl},
-                                 Mode=TwoWay}"
-                            Height="300">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Definition.Name}" />
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
+                        <ListBox x:Name="InstanceParametersListBox"
+                                 Height="300">
                         </ListBox>
                     </TabItem>
                     <TabItem Header="Параметры типа">
-                        <ListBox
-                            ItemsSource="{Binding TypeParameters, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            Height="300"
-                            SelectedItem="{Binding SelectedParameter, RelativeSource={RelativeSource AncestorType=UserControl}}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Definition.Name}" />
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
+                        <ListBox x:Name="TypeParametersListBox"
+                                 Height="300">
                         </ListBox>
                     </TabItem>
                 </TabControl>

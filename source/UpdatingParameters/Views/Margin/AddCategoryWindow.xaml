@@ -42,8 +42,11 @@
                 </local:SearchableComboBox.ItemTemplate>
             </local:SearchableComboBox>
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Целевой параметр: " />
-                <TextBlock Text="{Binding SelectedFromParameter.Definition.Name, TargetNullValue='Параметр не выбран'}" />
+                <TextBlock Text="Целевой параметр: "
+                           Style="{DynamicResource TextBlockStyle}" />
+                <TextBlock
+                    Style="{DynamicResource TextBlockStyle}"
+                    Text="{Binding SelectedFromParameter.Definition.Name, TargetNullValue='Параметр не выбран'}" />
                 <Button Content="Выбрать параметр"
                         Command="{Binding SelectFromParameterCommand}"
                         CommandParameter="{Binding RelativeSource={RelativeSource Self}}" />
@@ -72,7 +75,7 @@
                     Command="{Binding ConfirmCommand}"
                     Margin="0 0 5 0"
                     CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
-                  IsDefault="True" />
+                    IsDefault="True" />
             <Button Content="Отмена"
                     Style="{DynamicResource OutlineCloseButtonStyle}"
                     Command="{Binding CancelCommand}"
@@ -81,17 +84,23 @@
         <local:ParameterSelectorPopup
             IsPopupOpen="{Binding IsFromParameterPopupOpen}"
             CurrentPopupTarget="{Binding FromParameterPopupTarget}"
-            InstanceParameters="{Binding InstanceParameters}"
-            TypeParameters="{Binding TypeParameters}"
-            SelectedParameter="{Binding SelectedFromParameter, Mode=TwoWay}"
-            ClosePopupCommand="{Binding CloseFromParameterPopupCommand}" />
+            ItemsSourceInstanceParameters="{Binding InstanceParameters}"
+            ItemsSourceTypeParameters="{Binding TypeParameters}"
+            SelectedItem="{Binding SelectedFromParameter, Mode=TwoWay}"
+            ClosePopupCommand="{Binding CloseFromParameterPopupCommand}">
+            <local:ParameterSelectorPopup.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Definition.Name }" />
+                </DataTemplate>
+            </local:ParameterSelectorPopup.ItemTemplate>
+        </local:ParameterSelectorPopup>
 
         <local:ParameterSelectorPopup
             IsPopupOpen="{Binding IsInParameterPopupOpen}"
             CurrentPopupTarget="{Binding InParameterPopupTarget}"
-            InstanceParameters="{Binding InstanceParameters}"
-            TypeParameters="{Binding TypeParameters}"
-            SelectedParameter="{Binding SelectedInParameter, Mode=TwoWay}"
+            ItemsSourceInstanceParameters="{Binding InstanceParameters}"
+            ItemsSourceTypeParameters="{Binding TypeParameters}"
+            SelectedItem="{Binding SelectedInParameter, Mode=TwoWay}"
             ClosePopupCommand="{Binding CloseInParameterPopupCommand}" />
     </Grid>
 </views:BaseRevitWindow>

@@ -53,14 +53,13 @@ namespace UpdatingParameters.Views
 
         public DataTemplate ItemTemplate
         {
-            get { return (DataTemplate)GetValue(ItemTemplateProperty); }
-            set { SetValue(ItemTemplateProperty, value); }
+            get => (DataTemplate)GetValue(ItemTemplateProperty);
+            set => SetValue(ItemTemplateProperty, value);
         }
 
         private static void OnItemTemplateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var control = d as SearchableComboBox;
-            if (control != null && control.ItemsListBox != null)
+            if (d is SearchableComboBox control && control.ItemsListBox != null)
             {
                 control.ItemsListBox.ItemTemplate = e.NewValue as DataTemplate;
             }
