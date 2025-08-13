@@ -33,9 +33,9 @@ public partial class SetMarginViewModel : ViewModelBase
     [RelayCommand]
     private void AddCategory()
     {
+        AddCategoryVM addCategoryVM = new AddCategoryVM(MarginCategories.ToList());
         AddCategoryWindow addCategoryWindow = new AddCategoryWindow();
-        AddCategoryVM addCategoryVM = new AddCategoryVM();
-        addCategoryWindow.DataContext = addCategoryVM;
+      addCategoryWindow.DataContext = addCategoryVM;
         // Показываем диалог и проверяем результат
         if (addCategoryWindow.ShowDialog() == true && addCategoryVM.IsConfirmed)
         {

@@ -10,6 +10,7 @@
                        d:DataContext="{d:DesignInstance vm:AddCategoryVM}"
                        Background="{DynamicResource WindowBackgroundBrush}"
                        mc:Ignorable="d"
+                       WindowStartupLocation="CenterScreen"
                        Title="Настройки конфигурации"
                        Width="500"
                        SizeToContent="Height"

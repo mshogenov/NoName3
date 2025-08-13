@@ -50,9 +50,12 @@ public partial class AddCategoryVM : ViewModelBase
     public bool IsConfirmed { get; private set; }
     [ObservableProperty] private bool _isCopyInParameter;
 
-    public AddCategoryVM()
+    public AddCategoryVM(List<MarginCategory> marginCategories)
     {
-        Categories = GetAllCategoryByType(CategoryType.Model)
+        Categories = GetAllCategoryByType(CategoryType.Model).Where(x =>
+            {
+                return marginCategories.All(marginCategory => marginCategory.CategoryName != x.Name);
+            })
             .OrderBy(x => x.Name)
             .ToList();
     }
@@ -92,7 +95,8 @@ public partial class AddCategoryVM : ViewModelBase
     {
         Categories categories = _doc.Settings.Categories;
         return categories.Cast<Category>()
-            .Where(c => c.CategoryType == categoryType).ToList();
+            .Where(c => c.CategoryType == categoryType)
+            .ToList();
     }
 
     private void UpdateParameters()
@@ -108,7 +112,13 @@ public partial class AddCategoryVM : ViewModelBase
         Element element = collector.OfCategory(builtInCategory)
             .WhereElementIsNotElementType()
             .FirstElement();
-        return element != null ? element.Parameters.Cast<Parameter>().ToList() : [];
+        return element != null
+            ? element.Parameters
+                .Cast<Parameter>()
+                .Where(x => x.StorageType is StorageType.Double or StorageType.Integer)
+                .OrderBy(x => x.Definition.Name)
+                .ToList()
+            : [];
     }
 
     private List<Parameter> GetTypeParameters(Document doc, BuiltInCategory builtInCategory)
@@ -118,8 +128,12 @@ public partial class AddCategoryVM : ViewModelBase
         return collector.OfCategory(builtInCategory)
             .WhereElementIsElementType()
             .FirstElement() is ElementType elementType
-            ? elementType.Parameters.Cast<Parameter>().ToList()
-            : new List<Parameter>();
+            ? elementType.Parameters
+                .Cast<Parameter>()
+                .Where(x => x.StorageType is StorageType.Double or StorageType.Integer)
+                .OrderBy(x => x.Definition.Name)
+                .ToList()
+            : [];
     }
 
     [RelayCommand]

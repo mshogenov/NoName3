@@ -72,7 +72,7 @@
                                                    Style="{DynamicResource TextBlockStyle}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="3" Orientation="Horizontal">
-                                        <TextBlock Text="Копировать в параметр: "
+                                        <TextBlock Text="Копируется с запасом в параметр: "
                                                    Style="{DynamicResource TextBlockStyle}" />
                                         <TextBlock Text="{Binding InParameterName}"
                                                    Style="{DynamicResource TextBlockStyle}" />

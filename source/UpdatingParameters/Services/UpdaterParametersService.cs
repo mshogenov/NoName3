@@ -144,14 +144,13 @@ public class UpdaterParametersService
             foreach (Element element in elements)
             {
                 // Получаем параметры у конкретного элемента
-                var fromParam = element.FindParameter(marginCategory.FromParameter.Definition.Name);
+                var fromParam = element.FindParameter(marginCategory.FromParameterName);
                 if (fromParam == null) continue;
                 var fromValue = fromParam.AsDouble();
                 double newValue = (fromValue / 100) * marginCategory.Margin + fromValue;
-                ;
-                if (marginCategory.InParameter != null)
+              if (marginCategory.InParameter != null)
                 {
-                    var inParam = element.FindParameter(marginCategory.InParameter.Definition.Name);
+                    var inParam = element.FindParameter(marginCategory.InParameterName);
                     if (inParam == null ||
                         fromParam.StorageType != StorageType.Double ||
                         inParam.IsReadOnly) continue;
