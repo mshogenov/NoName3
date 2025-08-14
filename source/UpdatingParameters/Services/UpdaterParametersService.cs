@@ -148,7 +148,7 @@ public class UpdaterParametersService
                 if (fromParam == null) continue;
                 var fromValue = fromParam.AsDouble();
                 double newValue = (fromValue / 100) * marginCategory.Margin + fromValue;
-              if (marginCategory.InParameter != null)
+                if (marginCategory.IsCopyInParameter)
                 {
                     var inParam = element.FindParameter(marginCategory.InParameterName);
                     if (inParam == null ||
@@ -158,7 +158,7 @@ public class UpdaterParametersService
                 }
                 else
                 {
-                    if (fromParam.StorageType != StorageType.Double) continue;
+                    if (fromParam.IsReadOnly) continue;
                     fromParam.Set(newValue);
                 }
             }

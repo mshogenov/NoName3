@@ -407,7 +407,7 @@ namespace UpdatingParameters.Services
                             var fromParam = element.FindParameter(marginCategory.FromParameterName);
                             var fromValue = fromParam.AsDouble();
                             double newValue = (fromValue / 100) * marginCategory.Margin + fromValue;
-                            if (marginCategory.InParameterName != null)
+                            if (marginCategory.IsCopyInParameter)
                             {
                                 var inParam = element.FindParameter(marginCategory.InParameterName);
                                 if (inParam == null ||

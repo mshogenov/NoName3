@@ -121,7 +121,6 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
     private ProgressWindow _progressWindow;
     private readonly DataStorageFactory _storageFactory;
     private readonly SettingsManager _settingsManager;
-   
 
 
     public UpdatingParametersViewModel()
@@ -156,7 +155,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
         _settingsDataStorage = _storageFactory.GetStorage<SettingsDataStorage>();
         _ductParametersDataStorage = _storageFactory.GetStorage<DuctParametersDataStorage>();
         _parametersDataStorage = _storageFactory.GetStorage<ParametersDataStorage>();
-        _setMarginDataStorage =  _storageFactory.GetStorage<SetMarginDataStorage>();
+        _setMarginDataStorage = _storageFactory.GetStorage<SetMarginDataStorage>();
         AllocationDataStorages(collector);
         InitializeViewModels();
         _settingsManager = new SettingsManager(_storageFactory);
@@ -607,7 +606,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
                     _progressWindow.Dispatcher.Invoke(() => { _progressWindow.UpdateProgress(index); });
                     _progressWindow.Dispatcher.Invoke(DispatcherPriority.Background, new Action(() => { }));
                 }
-
+                UpdaterParametersService.UpdateAllMarginParameters(_doc, _setMarginDataStorage);
                 tr.Commit();
                 FinalizeProgressWorkflow(modalWindow, results);
             }
@@ -636,6 +635,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
                 ExecuteUpdateAction(typeName, updateAction, results);
             }
 
+            UpdaterParametersService.UpdateAllMarginParameters(_doc, _setMarginDataStorage);
             tr.Commit();
         }
 
@@ -766,7 +766,7 @@ public sealed partial class UpdatingParametersViewModel : ViewModelBase
                     catch (Exception)
                     {
                         // Если возникла ошибка при получении подкомпонентов, возвращаем пустой список
-                        return Enumerable.Empty<ElementId>();
+                        return [];
                     }
                 })
                 .ToList();

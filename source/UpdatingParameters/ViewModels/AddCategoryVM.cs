@@ -148,6 +148,7 @@ public partial class AddCategoryVM : ViewModelBase
                     Category = SelectedCategory,
                     Margin = Margin,
                     FromParameter = SelectedFromParameter,
+                    IsCopyInParameter = true,
                     InParameter = SelectedInParameter,
                     IsChecked = true
                 };
@@ -159,6 +160,7 @@ public partial class AddCategoryVM : ViewModelBase
                     Category = SelectedCategory,
                     Margin = Margin,
                     FromParameter = SelectedFromParameter,
+                    IsCopyInParameter = false,
                     IsChecked = true
                 };
             }
