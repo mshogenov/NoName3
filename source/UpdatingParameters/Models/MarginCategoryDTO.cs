@@ -7,6 +7,6 @@ public class MarginCategoryDto
     public double Margin { get; set; }
     public bool IsChecked { get; set; }
     public bool IsCopyInParameter { get; set; }
-    public ParameterDto FromParameter { get; set; }
-    public ParameterDto InParameter { get; set; }
+    public string FromParameterName { get; set; }
+    public string InParameterName { get; set; }
 }

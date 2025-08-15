@@ -30,18 +30,21 @@ public class SetMarginDataStorage : IDataStorage
     {
         try
         {
-            // DTO используем ТОЛЬКО при загрузке из файла
             var loadedDto = _dataLoader.LoadData<List<MarginCategoryDto>>();
             if (loadedDto == null)
             {
-                _marginCategories = new List<MarginCategory>();
+                _marginCategories = [];
             }
             else
             {
-                // Конвертируем DTO → MarginCategory
-                _marginCategories = loadedDto
-                    .Select(ConvertFromDto)
-                    .Where(mc => mc != null)
+                _marginCategories = loadedDto.Select(dto => new MarginCategory
+                    {
+                        Category = GetCategoryById(dto.CategoryId),
+                        OriginalFromParameterName = dto.FromParameterName,
+                        OriginalInParameterName = dto.InParameterName,
+                        IsChecked = dto.IsChecked,
+                        IsCopyInParameter = dto.IsCopyInParameter
+                    })
                     .ToList();
             }
         }
@@ -98,7 +101,15 @@ public class SetMarginDataStorage : IDataStorage
         {
             // DTO используем ТОЛЬКО при сохранении в файл
             var dtoList = _marginCategories
-                .Select(ConvertToDto)
+                .Select(x => new MarginCategoryDto()
+                {
+                    CategoryName = x.CategoryName,
+                    FromParameterName = x.FromParameterName,
+                    InParameterName = x.InParameterName,
+                    IsChecked = x.IsChecked,
+                    Margin = x.Margin,
+                    IsCopyInParameter = x.IsCopyInParameter
+                })
                 .ToList();
 
             _dataLoader.SaveData(dtoList);
@@ -110,66 +121,47 @@ public class SetMarginDataStorage : IDataStorage
         }
     }
 
-    private MarginCategoryDto ConvertToDto(MarginCategory marginCategory)
-    {
-        return new MarginCategoryDto
-        {
-            CategoryName = marginCategory.Category?.Name,
-            CategoryId = marginCategory.Category?.Id?.Value ?? -1,
-            Margin = marginCategory.Margin,
-            IsChecked = marginCategory.IsChecked,
-            FromParameter = ConvertParameterToDto(marginCategory.FromParameter),
-            InParameter = ConvertParameterToDto(marginCategory.InParameter)
-        };
-    }
-
-    private MarginCategory ConvertFromDto(MarginCategoryDto dto)
-    {
-        try
-        {
-            return new MarginCategory
-            {
-                Category = GetCategoryById(dto.CategoryId),
-                Margin = dto.Margin,
-                IsChecked = dto.IsChecked,
-                FromParameter = GetParameterById(dto.FromParameter, dto.CategoryId),
-                InParameter = GetParameterById(dto.InParameter, dto.CategoryId),
-                OriginalFromParameterName = dto.FromParameter?.Name,
-                OriginalInParameterName = dto.InParameter?.Name
-            };
-        }
-        catch (Exception ex)
-        {
-            return null;
-        }
-    }
-
-    private ParameterDto ConvertParameterToDto(Parameter parameter)
-    {
-        if (parameter == null) return null;
-
-        return new ParameterDto
-        {
-            Name = parameter.Definition?.Name,
-            Id = parameter.Id?.Value ?? -1,
-            Definition = parameter.Definition?.Name,
-            StorageType = parameter.StorageType.ToString()
-        };
-    }
-
     private Category GetCategoryById(long categoryId)
     {
         if (categoryId == -1) return null;
         return Category.GetCategory(Context.ActiveDocument, new ElementId(categoryId));
     }
 
-    private Parameter GetParameterById(ParameterDto dtoFromParameter, long categoryId)
+    public List<ParameterInfo> GetAllDocumentParameters(Document doc)
     {
-        Category category = GetCategoryById(categoryId);
-        FilteredElementCollector collector = new FilteredElementCollector(Context.ActiveDocument);
-        Element element = collector.OfCategory(category.BuiltInCategory)
-            .WhereElementIsNotElementType()
-            .FirstElement();
-        return element?.FindParameter(dtoFromParameter.Name);
+        List<ParameterInfo> allParams = new List<ParameterInfo>();
+
+        BindingMap bindingMap = doc.ParameterBindings;
+        DefinitionBindingMapIterator iterator = bindingMap.ForwardIterator();
+
+        while (iterator.MoveNext())
+        {
+            Definition def = iterator.Key;
+            ElementBinding binding = iterator.Current as ElementBinding;
+
+            ParameterInfo paramInfo = new ParameterInfo
+            {
+                Name = def.Name,
+                IsInstance = binding is InstanceBinding,
+                Categories = new List<string>()
+            };
+
+            // Проверяем, является ли shared parameter
+            if (def is ExternalDefinition extDef)
+            {
+                paramInfo.IsShared = true;
+                paramInfo.Guid = extDef.GUID;
+            }
+
+            // Получаем категории
+            foreach (Category cat in binding.Categories)
+            {
+                paramInfo.Categories.Add(cat.Name);
+            }
+
+            allParams.Add(paramInfo);
+        }
+
+        return allParams;
     }
 }

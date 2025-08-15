@@ -70,6 +70,9 @@
                                                    Style="{DynamicResource TextBlockStyle}" />
                                         <TextBlock Text="{Binding FromParameterName}"
                                                    Style="{DynamicResource TextBlockStyle}" />
+                                        <TextBlock Text="Параметр не найден в документе"
+                                                 
+                                                   Style="{DynamicResource TextBlockStyle}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="3" Orientation="Horizontal">
                                         <TextBlock Text="Копируется с запасом в параметр: "
