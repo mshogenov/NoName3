@@ -23,6 +23,7 @@ public class SetMarginDataStorage : IDataStorage
     {
         _dataLoader = dataLoader;
         LoadData();
+        var allParameters = GetAllDocumentParameters(_document);
         MarginUpdateCallCount++;
     }
 
@@ -51,7 +52,7 @@ public class SetMarginDataStorage : IDataStorage
         catch (Exception ex)
         {
             MessageBox.Show($"Ошибка загрузки данных: {ex.Message}");
-            _marginCategories = new List<MarginCategory>();
+            _marginCategories = [];
         }
     }
 
@@ -103,7 +104,7 @@ public class SetMarginDataStorage : IDataStorage
             var dtoList = _marginCategories
                 .Select(x => new MarginCategoryDto()
                 {
-                    CategoryName = x.CategoryName,
+                    CategoryId = x.Category.Id.Value,
                     FromParameterName = x.FromParameterName,
                     InParameterName = x.InParameterName,
                     IsChecked = x.IsChecked,
@@ -127,9 +128,9 @@ public class SetMarginDataStorage : IDataStorage
         return Category.GetCategory(Context.ActiveDocument, new ElementId(categoryId));
     }
 
-    public List<ParameterInfo> GetAllDocumentParameters(Document doc)
+    public List<ParameterWrp> GetAllDocumentParameters(Document doc)
     {
-        List<ParameterInfo> allParams = new List<ParameterInfo>();
+        List<ParameterWrp> allParams = new List<ParameterWrp>();
 
         BindingMap bindingMap = doc.ParameterBindings;
         DefinitionBindingMapIterator iterator = bindingMap.ForwardIterator();
@@ -139,27 +140,28 @@ public class SetMarginDataStorage : IDataStorage
             Definition def = iterator.Key;
             ElementBinding binding = iterator.Current as ElementBinding;
 
-            ParameterInfo paramInfo = new ParameterInfo
+            ParameterWrp paramWrp = new ParameterWrp
             {
                 Name = def.Name,
                 IsInstance = binding is InstanceBinding,
+                
                 Categories = new List<string>()
             };
 
             // Проверяем, является ли shared parameter
             if (def is ExternalDefinition extDef)
             {
-                paramInfo.IsShared = true;
-                paramInfo.Guid = extDef.GUID;
+                paramWrp.IsShared = true;
+                paramWrp.Guid = extDef.GUID;
             }
 
             // Получаем категории
             foreach (Category cat in binding.Categories)
             {
-                paramInfo.Categories.Add(cat.Name);
+                paramWrp.Categories.Add(cat.Name);
             }
 
-            allParams.Add(paramInfo);
+            allParams.Add(paramWrp);
         }
 
         return allParams;
