@@ -8,6 +8,8 @@ public class MarginCategory
     public bool IsCopyInParameter { get; set; }
     public Parameter InParameter { get; set; }
     public bool IsChecked { get; set; }
+    public bool IsFromParameterValid { get; set; }
+    public bool IsInParameterValid { get; set; }
 
     // Сохраняем оригинальные имена из DTO (для случаев когда Parameter == null)
     public string OriginalFromParameterName { get; set; }

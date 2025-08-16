@@ -48,7 +48,35 @@ public partial class AddCategoryVM : ViewModelBase
 
     public MarginCategory Result { get; private set; }
     public bool IsConfirmed { get; private set; }
-    [ObservableProperty] private bool _isCopyInParameter;
+    private bool _isCopyInParameter;
+
+    public bool IsCopyInParameter
+    {
+        get => _isCopyInParameter;
+        set
+        {
+            if (value == _isCopyInParameter) return;
+            _isCopyInParameter = value;
+            if (value && SelectedFromParameter != null)
+            {
+                foreach (var instanceParameter in InstanceParameters.Where(instanceParameter =>
+                             instanceParameter.Definition.Name == SelectedFromParameter.Definition.Name))
+                {
+                    InstanceParameters.Remove(instanceParameter);
+                    break;
+                }
+
+                foreach (var typeParameters in TypeParameters.Where(typeParameters =>
+                             typeParameters.Definition.Name == SelectedFromParameter.Definition.Name))
+                {
+                    TypeParameters.Remove(typeParameters);
+                    break;
+                }
+            }
+
+            OnPropertyChanged();
+        }
+    }
 
     public AddCategoryVM(List<MarginCategory> marginCategories)
     {
@@ -150,7 +178,9 @@ public partial class AddCategoryVM : ViewModelBase
                     FromParameter = SelectedFromParameter,
                     IsCopyInParameter = true,
                     InParameter = SelectedInParameter,
-                    IsChecked = true
+                    IsChecked = true,
+                    IsFromParameterValid = true,
+                    IsInParameterValid = true,
                 };
             }
             else
@@ -161,8 +191,9 @@ public partial class AddCategoryVM : ViewModelBase
                     Margin = Margin,
                     FromParameter = SelectedFromParameter,
                     IsCopyInParameter = false,
-                    IsChecked = true
-                };
+                    IsChecked = true,
+                    IsFromParameterValid = true,
+                  };
             }
 
             IsConfirmed = true;

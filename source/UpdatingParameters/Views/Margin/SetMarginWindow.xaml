@@ -5,10 +5,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:UpdatingParameters.Views"
              xmlns:viewmodel="clr-namespace:UpdatingParameters.ViewModels"
+             xmlns:converter="clr-namespace:NoNameApi.Views.Converters;assembly=NoNameAPI"
              d:DataContext="{d:DesignInstance Type=viewmodel:SetMarginViewModel}"
              mc:Ignorable="d">
     <UserControl.Resources>
         <ResourceDictionary>
+            <converter:InverseBoolVisibilityConverter x:Key="InverseBoolVisibilityConverter" />
+            <converter:BoolVisibilityConverter x:Key="BoolVisibilityConverter" />
             <d:ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
                     Source="pack://application:,,,/NoNameAPI;component/Views/Resources/Themes/DarkTheme.xaml" />
@@ -71,13 +74,22 @@
                                         <TextBlock Text="{Binding FromParameterName}"
                                                    Style="{DynamicResource TextBlockStyle}" />
                                         <TextBlock Text="Параметр не найден в документе"
-                                                 
+                                                   Margin="5  0 0 0 "
+                                                   Visibility="{Binding IsFromParameterValid, 
+                                                   Converter={StaticResource InverseBoolVisibilityConverter}}"
                                                    Style="{DynamicResource TextBlockStyle}" />
                                     </StackPanel>
-                                    <StackPanel Grid.Row="3" Orientation="Horizontal">
+                                    <StackPanel Grid.Row="3" Orientation="Horizontal"
+                                                Visibility="{Binding IsCopyInParameter,
+                                                 Converter={StaticResource BoolVisibilityConverter}}">
                                         <TextBlock Text="Копируется с запасом в параметр: "
                                                    Style="{DynamicResource TextBlockStyle}" />
                                         <TextBlock Text="{Binding InParameterName}"
+                                                   Style="{DynamicResource TextBlockStyle}" />
+                                        <TextBlock Text="Параметр не найден в документе"
+                                                   Margin="5  0 0 0 "
+                                                   Visibility="{Binding IsInParameterValid, 
+                                                   Converter={StaticResource InverseBoolVisibilityConverter}}"
                                                    Style="{DynamicResource TextBlockStyle}" />
                                     </StackPanel>
                                 </Grid>

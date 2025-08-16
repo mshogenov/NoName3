@@ -8,6 +8,7 @@ public class SetMarginDataStorage : IDataStorage
     private readonly IDataLoader _dataLoader;
     private List<MarginCategory> _marginCategories;
     private readonly Document _document = Context.ActiveDocument;
+    private readonly List<ParameterWrp> _allParameters;
 
     public IReadOnlyList<MarginCategory> MarginCategories => _marginCategories.AsReadOnly();
     public static int MarginUpdateCallCount { get; set; }
@@ -22,9 +23,9 @@ public class SetMarginDataStorage : IDataStorage
     public SetMarginDataStorage(IDataLoader dataLoader)
     {
         _dataLoader = dataLoader;
+        _allParameters = GetAllDocumentParameters(_document);
         LoadData();
-        var allParameters = GetAllDocumentParameters(_document);
-        MarginUpdateCallCount++;
+      MarginUpdateCallCount++;
     }
 
     private void LoadData()
@@ -44,7 +45,10 @@ public class SetMarginDataStorage : IDataStorage
                         OriginalFromParameterName = dto.FromParameterName,
                         OriginalInParameterName = dto.InParameterName,
                         IsChecked = dto.IsChecked,
-                        IsCopyInParameter = dto.IsCopyInParameter
+                        Margin = dto.Margin,
+                        IsCopyInParameter = dto.IsCopyInParameter,
+                        IsFromParameterValid = IsParameterValid(dto.FromParameterName),
+                        IsInParameterValid = IsParameterValid(dto.InParameterName)
                     })
                     .ToList();
             }
@@ -54,6 +58,11 @@ public class SetMarginDataStorage : IDataStorage
             MessageBox.Show($"Ошибка загрузки данных: {ex.Message}");
             _marginCategories = [];
         }
+    }
+
+    private bool IsParameterValid(string parameterName)
+    {
+        return _allParameters.Any(x => x.Name == parameterName);
     }
 
     public void AddCategory(MarginCategory category)
@@ -144,7 +153,7 @@ public class SetMarginDataStorage : IDataStorage
             {
                 Name = def.Name,
                 IsInstance = binding is InstanceBinding,
-                
+
                 Categories = new List<string>()
             };
 
